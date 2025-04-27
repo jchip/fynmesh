@@ -1,0 +1,8 @@
+dist
+.parcel-cache
+.fynpo
+node_modules
+rollup-federation
+dist
+dist-*
+*.log

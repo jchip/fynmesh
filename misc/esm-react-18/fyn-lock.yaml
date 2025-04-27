@@ -1,0 +1,32 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg:
+ dev:
+  react: 18.3.1
+js-tokens:
+ _latest: 9.0.1
+ _:
+  '^3.0.0 || ^4.0.0': 4.0.0
+ 4.0.0:
+  $: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
+  _: 'https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz'
+loose-envify:
+ _latest: 1.4.0
+ _:
+  ^1.1.0: 1.4.0
+ 1.4.0:
+  $: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==
+  _: 'https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz'
+  dependencies:
+   js-tokens: '^3.0.0 || ^4.0.0'
+react:
+ _latest: 19.1.0
+ _:
+  18.3.1: 18.3.1
+ 18.3.1:
+  top: 1
+  $: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==
+  _: 'https://registry.npmjs.org/react/-/react-18.3.1.tgz'
+  dependencies:
+   loose-envify: ^1.1.0

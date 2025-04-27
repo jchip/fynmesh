@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SystemJS ESM Demo</title>
+  <!-- Load SystemJS -->
+  <script src="https://cdn.jsdelivr.net/npm/systemjs@6.13.0/dist/system.min.js"></script>
+  <!-- Import map for external dependencies -->
+  <script type="systemjs-importmap">
+    {
+      "imports": {
+        "react": "./dist/vendor.js",
+        "react/jsx-runtime": "./dist/vendor.js",
+        "esm-pkg": "https://cdn.example.com/esm-pkg.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>SystemJS ESM Demo</h1>
+  <script>
+    // First load React vendor bundle
+    System.import('react').then(() => {
+      // Then load the application bundle
+      return System.import('./dist/bundle.js');
+    }).then(module => {
+      console.log('Loaded module:', module);
+      // Use the module
+      console.log('Module exports:', Object.keys(module));
+    }).catch(err => {
+      console.error('Error loading module:', err);
+    });
+  </script>
+</body>
+</html>

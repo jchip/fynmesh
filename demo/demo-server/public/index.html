@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FynMesh Demo Server</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .endpoint {
+            background: #f5f5f5;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .endpoint h2 {
+            margin: 0;
+            color: #365ebf;
+        }
+        .endpoint p {
+            margin: 0.5rem 0;
+            color: #666;
+        }
+    </style>
+    <script src="/system.min.js"></script>
+    <script src="/federation-js/dist/federation-js.min.js"></script>
+    <script src="/core/kernel/dist/fynmesh-kernel.min.js"></script>
+    <script>
+        (async () => {
+
+            const features = {
+                "react-18": true,
+                "react-19": true,
+                "fynapp-1": true,
+                "fynapp-2-react18": true,
+            }
+
+            // globalThis.process = { env: { NODE_ENV: "production" } };
+            // load react 18
+            if (features["react-18"]) {
+                await fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
+                console.log("loading remote fynapp /fynapp-react-18/dist");
+            }
+            // load react 19
+            if (features["react-19"]) {
+                await fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
+                console.log("loading remote fynapp /fynapp-react-19/dist");
+            }
+                        // load fynapp 2 using react 18
+            if (features["fynapp-2-react18"]) {
+                await fynMeshKernel.loadFynApp("/fynapp-2-react18/dist");
+                console.log("loading remote fynapp /fynapp-2-react18/dist");
+                const fynApp2 = await Federation.import("__mf_container_fynapp-2-react18");
+                fynApp2.get("./bootstrap").then(factory => {
+                    console.log("bootstrap fynapp-2-react18");
+                    factory().bootstrap(fynMeshKernel, fynApp2);
+                });
+            }
+            // load fynapp 1
+            if (features["fynapp-1"]) {
+                await fynMeshKernel.loadFynApp("/fynapp-1/dist");
+                console.log("loading remote fynapp /fynapp-1/dist");
+                const fynApp1 = await Federation.import("__mf_container_fynapp-1");
+                fynApp1.get("./bootstrap").then(factory => {
+                    console.log("bootstrap fynapp-1");
+                    factory().bootstrap(fynMeshKernel, fynApp1);
+                });
+            }
+
+        })();
+    </script>
+</head>
+<body>
+    <h1>FynMesh Demo Server</h1>
+    <div id="fynapp-1"></div>
+    <div id="fynapp-2-react18"></div>
+    <div class="endpoint">
+        <h2>/fynmesh/features</h2>
+        <p>Features demo (port 8081)</p>
+    </div>
+    <div class="endpoint">
+        <h2>/fynmesh/react-17</h2>
+        <p>React 17 demo (port 8083)</p>
+    </div>
+    <div class="endpoint">
+        <h2>/fynmesh/react</h2>
+        <p>React demo (port 8085)</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "changeLogMarkers": [
+    "## Packages",
+    "## Commits"
+  ],
+  "command": {
+    "publish": {
+      "tags": {},
+      "versionTagging": {}
+    }
+  }
+}

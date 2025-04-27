@@ -1,0 +1,55 @@
+{
+  "indirects": {
+    "demo/fynapp-1": [
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "@fynmesh/kernel",
+          "version": "1.0.0",
+          "path": "core/kernel"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "esm-react",
+          "version": "19.1.0",
+          "path": "misc/esm-react"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "esm-react-dom",
+          "version": "19.1.0",
+          "path": "misc/esm-react-dom"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      }
+    ]
+  },
+  "__timestamp": 1747117070212
+}

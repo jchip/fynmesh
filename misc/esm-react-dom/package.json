@@ -1,0 +1,35 @@
+{
+  "name": "esm-react-dom",
+  "version": "19.1.0",
+  "description": "",
+  "homepage": "",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    "production": "./dist/react-dom-esm-client.production.js",
+    "development": "./dist/react-dom-esm-client.development.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c"
+  },
+  "author": "",
+  "files": [
+    "src",
+    "lib",
+    "dist"
+  ],
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "react-dom": "19.1.0",
+    "rollup": "^4.40.2"
+  }
+}

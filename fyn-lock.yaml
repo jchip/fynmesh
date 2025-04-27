@@ -1,0 +1,83 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg:
+ dep:
+  fynpo: ^1.1.43
+callsites:
+ _latest: 4.2.0
+ _:
+  ^3.0.0: 3.1.0
+ 3.1.0:
+  $: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
+  _: 'https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz'
+fyn:
+ _latest: 1.1.40
+ _:
+  ^1.1.40: 1.1.40
+ 1.1.40:
+  $: sha512-Rjp8aG11zzgTRwb7+G2bDpJEs3Jf3OI5rGUEox+s6cbv2/yzCoa94o3zdgeQ8k0yLQBD+OXIR2etTzuAJTeQng==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-1.1.40.tgz'
+fynpo:
+ _latest: 1.1.43
+ _:
+  ^1.1.43: 1.1.43
+ 1.1.43:
+  top: 1
+  $: sha512-7yyV6BGmGBdERUx0Zvm1Vxvcc30SPruCUAXbWQJsUoWyPuWYc8zHqBGv20KwSw5UbvPEuAvPaPLdjNH6xjuNhw==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-1.1.43.tgz'
+  dependencies:
+   fyn: ^1.1.40
+   import-fresh: 3.3.0
+   resolve-global: 1.0.0
+global-dirs:
+ _latest: 4.0.0
+ _:
+  ^0.1.1: 0.1.1
+ 0.1.1:
+  $: sha512-NknMLn7F2J7aflwFOlGdNIuCDpN3VGoSoB+aap3KABFWbHVn1TCgFC+np23J8W2BiZbjfEw3BFBycSMv1AFblg==
+  _: 'https://registry.npmjs.org/global-dirs/-/global-dirs-0.1.1.tgz'
+  dependencies:
+   ini: ^1.3.4
+import-fresh:
+ _latest: 3.3.1
+ _:
+  3.3.0: 3.3.0
+ 3.3.0:
+  $: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==
+  _: 'https://registry.npmjs.org/import-fresh/-/import-fresh-3.3.0.tgz'
+  dependencies:
+   parent-module: ^1.0.0
+   resolve-from: ^4.0.0
+ini:
+ _latest: 5.0.0
+ _:
+  ^1.3.4: 1.3.8
+ 1.3.8:
+  $: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
+  _: 'https://registry.npmjs.org/ini/-/ini-1.3.8.tgz'
+parent-module:
+ _latest: 3.1.0
+ _:
+  ^1.0.0: 1.0.1
+ 1.0.1:
+  $: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==
+  _: 'https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz'
+  dependencies:
+   callsites: ^3.0.0
+resolve-from:
+ _latest: 5.0.0
+ _:
+  ^4.0.0: 4.0.0
+ 4.0.0:
+  $: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==
+  _: 'https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz'
+resolve-global:
+ _latest: 2.0.0
+ _:
+  1.0.0: 1.0.0
+ 1.0.0:
+  $: sha512-zFa12V4OLtT5XUX/Q4VLvTfBf+Ok0SPc1FNGM/z9ctUdiU618qwKpWnd0CHs3+RqROfyEg/DhuHbMWYqcgljEw==
+  _: 'https://registry.npmjs.org/resolve-global/-/resolve-global-1.0.0.tgz'
+  dependencies:
+   global-dirs: ^0.1.1

@@ -1,0 +1,49 @@
+{
+  "name": "regular-react-app",
+  "version": "1.0.0",
+  "description": "A regular React app using React 19 with TypeScript",
+  "main": "dist/index.js",
+  "homepage": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "rollup -c -w",
+    "build": "rm -rf dist && rollup -c",
+    "start": "serve -s dist",
+    "check": "tsc --noEmit"
+  },
+  "author": "",
+  "files": [
+    "src",
+    "lib",
+    "dist"
+  ],
+  "keywords": [
+    "react",
+    "rollup",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "esm-react": "^18.3.1",
+    "esm-react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-replace": "^5.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "rollup": "^3.20.0",
+    "rollup-plugin-livereload": "^2.0.0",
+    "rollup-plugin-serve": "^2.0.0",
+    "rollup-plugin-terser": "^7.0.0",
+    "serve": "^14.0.0",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.0"
+  }
+}

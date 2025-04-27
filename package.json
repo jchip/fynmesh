@@ -1,0 +1,29 @@
+{
+  "name": "fynact",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "homepage": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "bootstrap": "test -e node_modules || fyn; fynpo && fyn install-federation",
+    "build": "fynpo",
+    "start": "cd demo/demo-server && fyn start",
+    "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
+    "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git"
+  },
+  "author": "",
+  "files": [
+    "src",
+    "lib",
+    "dist"
+  ],
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "fynpo": "^1.1.43"
+  }
+}

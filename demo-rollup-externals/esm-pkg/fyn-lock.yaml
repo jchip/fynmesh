@@ -1,0 +1,4 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg: {}
