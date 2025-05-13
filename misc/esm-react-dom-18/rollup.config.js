@@ -10,7 +10,7 @@ const createConfig = (env = "production") => {
   return {
     input: ["src/client.js"],
     output: {
-      file: `dist/react-dom-esm-client.${env}.js`,
+      file: `dist/react-dom-esm-18-client.${env}.js`,
       format,
       sourcemap: true,
       exports: "named",

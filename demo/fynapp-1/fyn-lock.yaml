@@ -11,8 +11,8 @@ $pkg:
   '@rollup/plugin-terser': ^0.4.4
   '@rollup/plugin-typescript': ^11.1.6
   '@types/node': ^20.8.9
-  esm-react: ../../misc/esm-react
-  esm-react-dom: ../../misc/esm-react-dom
+  esm-react: ../../misc/esm-react-19
+  esm-react-dom: ../../misc/esm-react-dom-19
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
@@ -300,19 +300,19 @@ error-ex:
 esm-react:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react: 19.1.0-fynlocal_h
+  ../../misc/esm-react-19: 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
-  _: ../../misc/esm-react
+  _: ../../misc/esm-react-19
 esm-react-dom:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react-dom: 19.1.0-fynlocal_h
+  ../../misc/esm-react-dom-19: 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
-  _: ../../misc/esm-react-dom
+  _: ../../misc/esm-react-dom-19
 estree-walker:
  _latest: 3.0.3
  _:

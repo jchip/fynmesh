@@ -12,12 +12,10 @@ FynMesh allows you to:
 
 ## Project Structure
 
-This is a monorepo managed with [fyn](https://github.com/electrode-io/fyn) package manager:
+This is a colorepo managed with [fynpo](https://jchip.github.io/fynpo/):
 
-- `rollup-federation/` - Core federation implementation
-  - `federation-js/` - JavaScript implementation of the Module Federation runtime
+- `rollup-federation/` - Core federation implementation <https://github.com/jchip/rollup-federation>
 - `demo/` - Example applications demonstrating the framework in action
-  - `fynapp-1/` - Sample micro-frontend application
 
 ## Key Features
 
@@ -28,6 +26,13 @@ This is a monorepo managed with [fyn](https://github.com/electrode-io/fyn) packa
 ## Getting Started
 
 1. Clone the repository
+   ```
+   git clone https://github.com/jchip/fynmesh.git
+   ```
+   or
+   ```
+   git clone git@github.com:jchip/fynmesh.git
+   ```
 2. Install fyn if you don't have it already:
    ```
    npm install -g fyn
@@ -36,54 +41,24 @@ This is a monorepo managed with [fyn](https://github.com/electrode-io/fyn) packa
    ```
    fyn bootstrap
    ```
-4. Build the federation library:
+   for production build:
    ```
-   cd rollup-federation/federation-js
-   fyn run build
+   NODE_ENV=production fyn bootstrap
    ```
-5. Run the demo applications:
+4. Run the demo applications:
    ```
-   cd demo/fynapp-1
-   fyn run dev
+   fyn start
    ```
 
-## Configuration Example
 
-A basic Rollup configuration with Module Federation:
 
-```js
-// rollup.config.mjs
-import federation from "rollup-plugin-federation";
+## Colorepo Structure
 
-export default {
-  // ...
-  plugins: [
-    federation({
-      name: "my-app",
-      shareScope: "fynmesh",
-      filename: "app-entry.js",
-      exposes: {
-        "./components/Button": "./src/components/Button.tsx",
-      },
-      shared: {
-        "react": {
-          singleton: true,
-          requiredVersion: "^18.0.0",
-        },
-      },
-    }),
-    // ...
-  ],
-};
-```
-
-## Monorepo Structure
-
-This project uses a monorepo structure to manage multiple packages:
+This project uses a colorepo structure to manage multiple packages:
 
 - Each package can be developed and deployed independently
 - Shared dependencies are managed efficiently by fyn
-- Packages can import from each other easily within the monorepo
+- Packages can import from each other easily within the colorepo
 
 ## Documentation
 

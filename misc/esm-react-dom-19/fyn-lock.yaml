@@ -2,6 +2,8 @@ $fyn:
  layout: normal
  flattenTop: true
 $pkg:
+ dep:
+  esm-react: ../esm-react-19
  dev:
   '@rollup/plugin-alias': ^5.1.1
   '@rollup/plugin-commonjs': ^28.0.3
@@ -206,6 +208,14 @@ deepmerge:
  4.3.1:
   $: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==
   _: 'https://registry.npmjs.org/deepmerge/-/deepmerge-4.3.1.tgz'
+esm-react:
+ _latest: 19.1.0-fynlocal_h
+ _:
+  ../esm-react-19: 19.1.0-fynlocal_h
+ 19.1.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../esm-react-19
 estree-walker:
  _latest: 3.0.3
  _:

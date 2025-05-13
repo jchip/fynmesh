@@ -28,7 +28,7 @@ export default [
         mainFields: ["module", "main"],
         preferBuiltins: false,
         browser: true,
-        exportConditions: [env],
+        exportConditions: [env, "default"],
       }),
       replace({
         preventAssignment: true,

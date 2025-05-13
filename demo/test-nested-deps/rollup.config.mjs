@@ -1,7 +1,8 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import federation from "rollup-plugin-federation";
 import replace from "@rollup/plugin-replace";
-import { terser } from "rollup-plugin-terser";
+import alias from "@rollup/plugin-alias";
+import terser from "@rollup/plugin-terser";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -20,7 +21,6 @@ export default [
         sourcemap: true,
       },
     ],
-    preserveSymlinks: true,
     plugins: [
       nodeResolve({
         extensions: [".js", ".jsx", ".ts", ".tsx"],
@@ -28,13 +28,18 @@ export default [
         preferBuiltins: false,
         browser: true,
         exportConditions: [env],
-        preserveSymlinks: true,
       }),
       replace({
         preventAssignment: true,
         "process.env.NODE_ENV": JSON.stringify(env),
       }),
-      isProduction ? terser() : null,
+      alias({
+        entries: {
+          react: "esm-react",
+          "react-dom": "esm-react-dom",
+          "react-dom/client": "esm-react-dom",
+        },
+      }),
       federation({
         name: "fynapp-react-19",
         // this filename must be in the input config
@@ -52,6 +57,7 @@ export default [
           },
         },
       }),
+      isProduction ? terser() : null,
     ],
   },
 ];

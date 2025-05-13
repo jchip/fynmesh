@@ -6,8 +6,8 @@
   "license": "UNLICENSED",
   "type": "module",
   "exports": {
-    "production": "./src/react-esm.production.js",
-    "development": "./src/react-esm.development.js"
+    "production": "./src/react-esm-19.production.js",
+    "development": "./src/react-esm-19.development.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

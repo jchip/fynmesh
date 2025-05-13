@@ -6,7 +6,7 @@
   "homepage": "",
   "license": "UNLICENSED",
   "scripts": {
-    "bootstrap": "test -e node_modules || fyn; fynpo && fyn install-federation",
+    "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "fynpo",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",

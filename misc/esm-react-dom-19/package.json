@@ -6,8 +6,8 @@
   "license": "UNLICENSED",
   "type": "module",
   "exports": {
-    "production": "./dist/react-dom-esm-client.production.js",
-    "development": "./dist/react-dom-esm-client.development.js"
+    "production": "./dist/react-dom-esm-19-client.production.js",
+    "development": "./dist/react-dom-esm-19-client.development.js"
   },
   "scripts": {
     "build": "rm -rf dist && rollup -c"
@@ -31,5 +31,8 @@
     "@rollup/plugin-terser": "^0.4.4",
     "react-dom": "19.1.0",
     "rollup": "^4.40.2"
+  },
+  "dependencies": {
+    "esm-react": "^19.1.0"
   }
 }

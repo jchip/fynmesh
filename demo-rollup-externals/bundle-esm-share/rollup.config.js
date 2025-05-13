@@ -4,6 +4,7 @@ import replace from "@rollup/plugin-replace";
 import alias from "@rollup/plugin-alias";
 
 const format = "esm";
+const env = process.env.NODE_ENV || "development";
 
 export default [
   // Application bundle
@@ -20,11 +21,12 @@ export default [
     plugins: [
       replace({
         preventAssignment: true,
-        "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+        "process.env.NODE_ENV": JSON.stringify(env),
       }),
       nodeResolve({
         extensions: [".js", ".jsx"],
         browser: true,
+        exportConditions: [env, "default"],
       }),
       commonjs({
         include: /node_modules/,

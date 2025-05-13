@@ -26,7 +26,7 @@
         "onPkg": {
           "name": "esm-react",
           "version": "19.1.0",
-          "path": "misc/esm-react"
+          "path": "misc/esm-react-19"
         },
         "depSection": "dev",
         "indirectSteps": [
@@ -42,7 +42,7 @@
         "onPkg": {
           "name": "esm-react-dom",
           "version": "19.1.0",
-          "path": "misc/esm-react-dom"
+          "path": "misc/esm-react-dom-19"
         },
         "depSection": "dev",
         "indirectSteps": [
@@ -51,5 +51,5 @@
       }
     ]
   },
-  "__timestamp": 1747117070212
+  "__timestamp": 1747147172109
 }

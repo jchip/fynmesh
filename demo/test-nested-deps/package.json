@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "homepage": "",
+  "type": "module",
   "license": "UNLICENSED",
   "scripts": {
     "build": "rm -rf dist && rollup -c"
@@ -25,15 +26,16 @@
     "pkg-esm-react-18": "^1.0.0"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
-    "rollup-plugin-federation": "^1.0.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup-plugin-federation": "^1.0.0"
   },
   "fyn": {
     "dependencies": {

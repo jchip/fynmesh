@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>FynMesh Demo Server</title>
     <style>
         body {
@@ -9,27 +10,216 @@
             margin: 0 auto;
             padding: 2rem;
             line-height: 1.5;
+            background-color: #f8f9fa;
         }
         h1 {
             color: #333;
             border-bottom: 2px solid #eee;
             padding-bottom: 1rem;
         }
-        .endpoint {
-            background: #f5f5f5;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 4px;
+
+        /* App container layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
         }
-        .endpoint h2 {
+
+        /* Side-by-side container for fynapp-1 and fynapp-2 */
+        .side-by-side-container {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            width: 100%;
+            margin: 2rem 0;
+        }
+
+        /* Fynapp containers styling */
+        #fynapp-1, #fynapp-2-react18, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
+            position: relative;
+            min-height: 200px;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+            background-color: white;
+            width: 100%;
+        }
+
+        /* Special styling for side-by-side containers */
+        .side-by-side-container #fynapp-1,
+        .side-by-side-container #fynapp-2-react18 {
             margin: 0;
-            color: #365ebf;
+            width: 50%;
+            flex: 1;
         }
-        .endpoint p {
-            margin: 0.5rem 0;
-            color: #666;
+
+        /* Non-side-by-side containers should keep their margin */
+        #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
+            margin: 2rem 0;
+        }
+
+        #fynapp-1 {
+            border-left: 5px solid #6366f1;
+        }
+
+        #fynapp-2-react18 {
+            border-left: 5px solid #8b5cf6;
+        }
+
+        #fynapp-3-marko {
+            border-left: 5px solid #ff5733;
+        }
+
+        #fynapp-4-vue {
+            border-left: 5px solid #42b883;
+        }
+
+        #fynapp-5-preact {
+            border-left: 5px solid #673ab8;
+        }
+
+        #fynapp-6-react {
+            border-left: 5px solid #4f46e5;
+        }
+
+        #fynapp-7-solid {
+            border-left: 5px solid #2D7FF9;
+        }
+
+        /* Loading state styling */
+        #fynapp-1::before, #fynapp-2-react18::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spinner 0.8s linear infinite;
+        }
+
+        #fynapp-2-react18::before {
+            border-top-color: #8b5cf6;
+        }
+
+        @keyframes spinner {
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        /* Hide spinner once content is loaded */
+        #fynapp-1:not(:empty)::before,
+        #fynapp-2-react18:not(:empty)::before {
+            display: none;
+        }
+
+        /* Button animation styles */
+        button {
+            transition: all 0.3s ease !important;
+            position: relative;
+            overflow: hidden !important;
+            transform: translateZ(0);
+        }
+
+        button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        button:active {
+            transform: translateY(1px) !important;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+
+        button:focus:not(:active)::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0) translate(-50%, -50%);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20) translate(-50%, -50%);
+                opacity: 0;
+            }
+        }
+
+        /* Toast notification styles */
+        .toast-notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            max-width: 80%;
+        }
+
+        .toast-notification.fynapp-1 {
+            border-left: 4px solid #6366f1;
+        }
+
+        .toast-notification.fynapp-2 {
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .toast-notification.show {
+            top: 20px;
+            opacity: 1;
+        }
+
+        .toast-notification::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z'/%3E%3C/svg%3E");
         }
     </style>
+    <script>
+        // Polyfill for setImmediate in browser environments
+        if (typeof window !== 'undefined' && !window.setImmediate) {
+            window.setImmediate = function(callback, ...args) {
+                return setTimeout(() => callback(...args), 0);
+            };
+
+            window.clearImmediate = function(id) {
+                return clearTimeout(id);
+            };
+        }
+    </script>
     <script src="/system.min.js"></script>
     <script src="/federation-js/dist/federation-js.min.js"></script>
     <script src="/core/kernel/dist/fynmesh-kernel.min.js"></script>
@@ -41,58 +231,121 @@
                 "react-19": true,
                 "fynapp-1": true,
                 "fynapp-2-react18": true,
+                "fynapp-3-marko": true,
+                "fynapp-4-vue": true,
+                "fynapp-5-preact": true,
+                "fynapp-6-react": true,
+                "fynapp-7-solid": true,
             }
 
             // globalThis.process = { env: { NODE_ENV: "production" } };
             // load react 18
             if (features["react-18"]) {
-                await fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
+                fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
                 console.log("loading remote fynapp /fynapp-react-18/dist");
             }
             // load react 19
             if (features["react-19"]) {
-                await fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
+                fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
                 console.log("loading remote fynapp /fynapp-react-19/dist");
             }
-                        // load fynapp 2 using react 18
+
+            // load fynapp 2 that uses react 18
             if (features["fynapp-2-react18"]) {
-                await fynMeshKernel.loadFynApp("/fynapp-2-react18/dist");
                 console.log("loading remote fynapp /fynapp-2-react18/dist");
-                const fynApp2 = await Federation.import("__mf_container_fynapp-2-react18");
-                fynApp2.get("./bootstrap").then(factory => {
-                    console.log("bootstrap fynapp-2-react18");
-                    factory().bootstrap(fynMeshKernel, fynApp2);
+                fynMeshKernel.loadFynApp("/fynapp-2-react18/dist").then(async () => {
+                    const fynApp2 = await Federation.import("__mf_container_fynapp-2-react18");
+                    fynApp2.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-2-react18");
+                        factory().bootstrap(fynMeshKernel, fynApp2);
+                    });
                 });
             }
-            // load fynapp 1
+            // load fynapp 1 that uses react 19
             if (features["fynapp-1"]) {
-                await fynMeshKernel.loadFynApp("/fynapp-1/dist");
                 console.log("loading remote fynapp /fynapp-1/dist");
-                const fynApp1 = await Federation.import("__mf_container_fynapp-1");
-                fynApp1.get("./bootstrap").then(factory => {
-                    console.log("bootstrap fynapp-1");
-                    factory().bootstrap(fynMeshKernel, fynApp1);
+                fynMeshKernel.loadFynApp("/fynapp-1/dist").then(async () => {
+                    const fynApp1 = await Federation.import("__mf_container_fynapp-1");
+                    fynApp1.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-1");
+                        factory().bootstrap(fynMeshKernel, fynApp1);
+                    });
+                });
+            }
+            // load fynapp marko
+            if (features["fynapp-3-marko"]) {
+                console.log("loading remote fynapp /fynapp-3-marko/dist");
+                fynMeshKernel.loadFynApp("/fynapp-3-marko/dist").then(async () => {
+                    const fynAppMarko = await Federation.import("__mf_container_fynapp-3-marko");
+                    fynAppMarko.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-3-marko");
+                        factory().bootstrap(fynMeshKernel, fynAppMarko);
+                    });
                 });
             }
 
+            // load fynapp vue
+            if (features["fynapp-4-vue"]) {
+                console.log("loading remote fynapp /fynapp-4-vue/dist");
+                fynMeshKernel.loadFynApp("/fynapp-4-vue/dist").then(async () => {
+                    const fynAppVue = await Federation.import("__mf_container_fynapp-4-vue");
+                    fynAppVue.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-4-vue");
+                        factory().bootstrap(fynMeshKernel, fynAppVue);
+                    });
+                });
+            }
+
+            // load fynapp preact
+            if (features["fynapp-5-preact"]) {
+                console.log("loading remote fynapp /fynapp-5-preact/dist");
+                fynMeshKernel.loadFynApp("/fynapp-5-preact/dist").then(async () => {
+                    const fynAppPreact = await Federation.import("__mf_container_fynapp-5-preact");
+                    fynAppPreact.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-5-preact");
+                        factory().bootstrap(fynMeshKernel, fynAppPreact);
+                    });
+                });
+            }
+
+            // load fynapp react (dashboard)
+            if (features["fynapp-6-react"]) {
+                console.log("loading remote fynapp /fynapp-6-react/dist");
+                fynMeshKernel.loadFynApp("/fynapp-6-react/dist").then(async () => {
+                    const fynAppReact = await Federation.import("__mf_container_fynapp-6-react");
+                    fynAppReact.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-6-react");
+                        factory().bootstrap(fynMeshKernel, fynAppReact);
+                    });
+                });
+            }
+
+            // load fynapp solid
+            if (features["fynapp-7-solid"]) {
+                console.log("loading remote fynapp /fynapp-7-solid/dist");
+                fynMeshKernel.loadFynApp("/fynapp-7-solid/dist").then(async () => {
+                    const fynAppSolid = await Federation.import("__mf_container_fynapp-7-solid");
+                    fynAppSolid.get("./bootstrap").then(factory => {
+                        console.log("bootstrap fynapp-7-solid");
+                        factory().bootstrap(fynMeshKernel, fynAppSolid);
+                    });
+                });
+            }
         })();
     </script>
 </head>
 <body>
-    <h1>FynMesh Demo Server</h1>
-    <div id="fynapp-1"></div>
-    <div id="fynapp-2-react18"></div>
-    <div class="endpoint">
-        <h2>/fynmesh/features</h2>
-        <p>Features demo (port 8081)</p>
-    </div>
-    <div class="endpoint">
-        <h2>/fynmesh/react-17</h2>
-        <p>React 17 demo (port 8083)</p>
-    </div>
-    <div class="endpoint">
-        <h2>/fynmesh/react</h2>
-        <p>React demo (port 8085)</p>
+    <h1>FynMesh Micro Frontend Demo</h1>
+    <div class="app-container">
+        <div class="side-by-side-container">
+            <div id="fynapp-1"></div>
+            <div id="fynapp-2-react18"></div>
+        </div>
+        <div id="fynapp-3-marko"></div>
+        <div id="fynapp-4-vue"></div>
+        <div id="fynapp-5-preact"></div>
+        <div id="fynapp-6-react"></div>
+        <div id="fynapp-7-solid"></div>
     </div>
 </body>
 </html>

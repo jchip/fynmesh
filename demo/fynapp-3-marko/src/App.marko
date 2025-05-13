@@ -1,0 +1,292 @@
+static {
+  const markoVersion = require('marko/package.json').version;
+
+  function increment(state) {
+    state.count++;
+  }
+
+  function toggleTheme(state) {
+    state.darkMode = !state.darkMode;
+  }
+}
+
+class {
+  onCreate() {
+    this.state = {
+      count: 0,
+      darkMode: false,
+      activeTab: "dashboard",
+      markoVersion: markoVersion,
+      cards: [
+        { title: "Analytics", value: "85%", trend: "up", desc: "User engagement" },
+        { title: "Revenue", value: "$12,850", trend: "up", desc: "Monthly revenue" },
+        { title: "Tickets", value: "23", trend: "down", desc: "Open support tickets" },
+        { title: "Users", value: "1,293", trend: "up", desc: "Active users" }
+      ],
+      chartData: [30, 40, 45, 50, 49, 60, 70, 91, 125, 150],
+      projects: [
+        { id: 1, name: "Website Redesign", status: "In Progress", completion: 65, priority: "High" },
+        { id: 2, name: "Mobile App Development", status: "On Hold", completion: 30, priority: "Medium" },
+        { id: 3, name: "API Integration", status: "Completed", completion: 100, priority: "High" },
+        { id: 4, name: "Database Migration", status: "Planning", completion: 10, priority: "Low" },
+        { id: 5, name: "Security Audit", status: "In Progress", completion: 45, priority: "Critical" }
+      ],
+      settings: [
+        { name: "Notifications", enabled: true, description: "Receive email notifications" },
+        { name: "Two-Factor Auth", enabled: false, description: "Add an extra layer of security" },
+        { name: "API Access", enabled: true, description: "Allow third-party API access" },
+        { name: "Dark Mode", enabled: false, description: "Use dark theme by default" }
+      ]
+    };
+  }
+
+  increment() {
+    this.state.count++;
+  }
+
+  toggleTheme() {
+    this.state.darkMode = !this.state.darkMode;
+  }
+
+  setActiveTab(tab) {
+    this.state.activeTab = tab;
+  }
+
+  toggleSetting(index) {
+    const settings = [...this.state.settings];
+    settings[index].enabled = !settings[index].enabled;
+    this.state.settings = settings;
+  }
+}
+
+<div style=(state.darkMode ?
+  "font-family: sans-serif; padding: 20px; background-color: #1a202c; color: #f7fafc; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3)" :
+  "font-family: sans-serif; padding: 20px; background-color: #f7fafc; color: #2d3748; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1)")>
+  <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h2 style=(state.darkMode ? "color: #90cdf4; margin: 0; font-size: 16px; opacity: 0.8; margin-bottom: 4px;" : "color: #4a5568; margin: 0; font-size: 16px; opacity: 0.8; margin-bottom: 4px;")>
+        FynApp using Marko ${state.markoVersion}
+      </h2>
+      <h1 style=(state.darkMode ? "color: #90cdf4; margin: 0" : "color: #3182ce; margin: 0")>
+        ${input.appName}
+      </h1>
+    </div>
+    <div>
+      <button
+        on-click("toggleTheme")
+        style=(state.darkMode ?
+          "background-color: #4a5568; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer" :
+          "background-color: #e2e8f0; color: #2d3748; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer")
+      >
+        Switch to ${state.darkMode ? "Light" : "Dark"} Mode
+      </button>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <div style="margin-bottom: 24px; border-bottom: 1px solid rgba(160, 174, 192, 0.3); display: flex;">
+    <div
+      on-click("setActiveTab", "dashboard")
+      style=(state.activeTab === "dashboard" ?
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #3182ce; color: #3182ce;") :
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; color: #A0AEC0;" :
+          "padding: 12px 16px; cursor: pointer; color: #718096;"))
+    >
+      Dashboard
+    </div>
+    <div
+      on-click("setActiveTab", "projects")
+      style=(state.activeTab === "projects" ?
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #3182ce; color: #3182ce;") :
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; color: #A0AEC0;" :
+          "padding: 12px 16px; cursor: pointer; color: #718096;"))
+    >
+      Projects
+    </div>
+    <div
+      on-click("setActiveTab", "settings")
+      style=(state.activeTab === "settings" ?
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
+          "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #3182ce; color: #3182ce;") :
+        (state.darkMode ?
+          "padding: 12px 16px; cursor: pointer; color: #A0AEC0;" :
+          "padding: 12px 16px; cursor: pointer; color: #718096;"))
+    >
+      Settings
+    </div>
+  </div>
+
+  <!-- Dashboard Tab -->
+  <div style=`display: ${state.activeTab === 'dashboard' ? 'block' : 'none'}`>
+    <!-- Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      <for|card| of=state.cards>
+        <div style=(state.darkMode ?
+          "background-color: #2d3748; padding: 16px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
+          "background-color: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 14px; opacity: 0.8;">${card.title}</span>
+            <span style=(card.trend === "up" ?
+              "font-size: 12px; color: #48bb78; background: rgba(72, 187, 120, 0.1); padding: 2px 6px; border-radius: 12px;" :
+              "font-size: 12px; color: #f56565; background: rgba(245, 101, 101, 0.1); padding: 2px 6px; border-radius: 12px;")>
+              ${card.trend === "up" ? "⬆" : "⬇"} ${card.trend === "up" ? "+" : "-"}${Math.floor(Math.random() * 20) + 1}%
+            </span>
+          </div>
+          <div style="font-size: 24px; font-weight: bold; margin-bottom: 4px;">${card.value}</div>
+          <div style="font-size: 12px; opacity: 0.7;">${card.desc}</div>
+        </div>
+      </for>
+    </div>
+
+    <!-- Chart Section -->
+    <div style=(state.darkMode ?
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      <h3 style="margin-top: 0; margin-bottom: 16px;">Performance Metrics</h3>
+      <div style="height: 150px; display: flex; align-items: flex-end; gap: 4px;">
+        <for|value, index| of=state.chartData>
+          <div style=(state.darkMode ?
+            `width: ${100 / state.chartData.length}%; height: ${value}px; background: linear-gradient(to top, #3182ce, #63b3ed); border-radius: 4px 4px 0 0;` :
+            `width: ${100 / state.chartData.length}%; height: ${value}px; background: linear-gradient(to top, #4299e1, #90cdf4); border-radius: 4px 4px 0 0;`)>
+          </div>
+        </for>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; opacity: 0.7;">
+        <span>Jan</span>
+        <span>Feb</span>
+        <span>Mar</span>
+        <span>Apr</span>
+        <span>May</span>
+        <span>Jun</span>
+        <span>Jul</span>
+        <span>Aug</span>
+        <span>Sep</span>
+        <span>Oct</span>
+      </div>
+    </div>
+
+    <!-- Counter Example -->
+    <div style=(state.darkMode ?
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      <h3 style="margin-top: 0;">Interactive Counter</h3>
+      <p>You clicked the button <strong>${state.count}</strong> times</p>
+
+      <button
+        on-click("increment")
+        style=(state.darkMode ?
+          "background-color: #4299e1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px" :
+          "background-color: #3182ce; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px")
+      >
+        Increment
+      </button>
+    </div>
+  </div>
+
+  <!-- Projects Tab -->
+  <div style=`display: ${state.activeTab === 'projects' ? 'block' : 'none'}`>
+    <div style=(state.darkMode ?
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      <h3 style="margin-top: 0; margin-bottom: 16px;">Project Status</h3>
+
+      <div style="border-radius: 6px; overflow: hidden;">
+        <div style=(state.darkMode ?
+          "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; background-color: #4a5568; padding: 12px 16px; font-weight: bold; font-size: 14px;" :
+          "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; background-color: #e2e8f0; padding: 12px 16px; font-weight: bold; font-size: 14px;")>
+          <div>Project Name</div>
+          <div>Status</div>
+          <div>Priority</div>
+          <div>Progress</div>
+        </div>
+
+        <for|project| of=state.projects>
+          <div style=(state.darkMode ?
+            "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 12px 16px; border-bottom: 1px solid #4a5568;" :
+            "display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 12px 16px; border-bottom: 1px solid #e2e8f0;")>
+            <div>${project.name}</div>
+            <div>
+              <span style=(
+                project.status === "Completed" ?
+                  "background-color: #48bb78; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                project.status === "In Progress" ?
+                  "background-color: #4299e1; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                project.status === "On Hold" ?
+                  "background-color: #ecc94b; color: #744210; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                  "background-color: #a0aec0; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;"
+              )>
+                ${project.status}
+              </span>
+            </div>
+            <div>
+              <span style=(
+                project.priority === "Critical" ?
+                  "background-color: #f56565; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                project.priority === "High" ?
+                  "background-color: #ed8936; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                project.priority === "Medium" ?
+                  "background-color: #ecc94b; color: #744210; font-size: 12px; padding: 2px 8px; border-radius: 12px;" :
+                  "background-color: #a0aec0; color: white; font-size: 12px; padding: 2px 8px; border-radius: 12px;"
+              )>
+                ${project.priority}
+              </span>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <div style="flex-grow: 1; height: 8px; background-color: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                <div style=`width: ${project.completion}%; height: 100%; background-color: ${
+                  project.completion === 100 ? '#48bb78' :
+                  project.completion > 50 ? '#4299e1' :
+                  '#ecc94b'
+                };`></div>
+              </div>
+              <span style="margin-left: 8px; font-size: 12px;">${project.completion}%</span>
+            </div>
+          </div>
+        </for>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div style=`display: ${state.activeTab === 'settings' ? 'block' : 'none'}`>
+    <div style=(state.darkMode ?
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      <h3 style="margin-top: 0; margin-bottom: 16px;">Application Settings</h3>
+
+      <for|setting, index| of=state.settings>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(160, 174, 192, 0.3);">
+          <div>
+            <div style="font-weight: bold; margin-bottom: 4px;">${setting.name}</div>
+            <div style="font-size: 14px; opacity: 0.7;">${setting.description}</div>
+          </div>
+          <div>
+            <button
+              on-click("toggleSetting", index)
+              style=(setting.enabled ?
+                (state.darkMode ?
+                  "background-color: #4299e1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" :
+                  "background-color: #3182ce; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;") :
+                (state.darkMode ?
+                  "background-color: #4a5568; color: #a0aec0; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" :
+                  "background-color: #e2e8f0; color: #718096; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;"))
+            >
+              ${setting.enabled ? "Enabled" : "Disabled"}
+            </button>
+          </div>
+        </div>
+      </for>
+    </div>
+  </div>
+
+  <footer style="font-size: 12px; opacity: 0.7; text-align: center; margin-top: 20px;">
+    <p>Marko.js Micro Frontend Example | Last updated: ${new Date().toLocaleDateString()}</p>
+  </footer>
+</div>

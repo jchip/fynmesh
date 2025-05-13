@@ -1,0 +1,38 @@
+{
+  "name": "fynapp-3-marko",
+  "version": "1.0.0",
+  "description": "Sample FynApp using Marko",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "start": "node dist/index.js",
+    "dev": "rollup -c -w"
+  },
+  "devDependencies": {
+    "@marko/compiler": "^5.33.0",
+    "@marko/rollup": "^4.0.3",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.8.9",
+    "marko": "^5.37.31",
+    "rollup": "^4.40.2",
+    "rollup-plugin-dts": "^6.2.1",
+    "rollup-plugin-federation": "^1.0.0"
+  },
+  "fyn": {
+    "devDependencies": {
+      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
+    }
+  },
+  "dependencies": {
+    "rollup-plugin-postcss": "^4.0.2"
+  }
+}

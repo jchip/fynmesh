@@ -3,24 +3,25 @@ $fyn:
  flattenTop: true
 $pkg:
  dep:
-  esm-react: ../../misc/esm-react
-  esm-react-dom: ../../misc/esm-react-dom
+  esm-react: ../../misc/esm-react-19
+  esm-react-dom: ../../misc/esm-react-dom-19
   pkg-esm-react-18: ../pkg-esm-react-18
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
  dev:
+  '@rollup/plugin-alias': ^5.1.1
   '@rollup/plugin-commonjs': ^25.0.7
   '@rollup/plugin-json': ^6.1.0
   '@rollup/plugin-node-resolve': ^15.2.3
   '@rollup/plugin-replace': ^6.0.2
+  '@rollup/plugin-terser': ^0.4.4
   '@rollup/plugin-typescript': ^11.1.6
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
   rollup-plugin-federation: ^1.0.0
-  rollup-plugin-terser: ^7.0.2
 '@babel/code-frame':
  _latest: 7.27.1
  _:
-  '^7.10.4,^7.21.4,^7.26.2': 7.27.1
+  '^7.21.4,^7.26.2': 7.27.1
  7.27.1:
   $: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==
   _: 'https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.27.1.tgz'
@@ -87,6 +88,16 @@ $pkg:
   dependencies:
    '@jridgewell/resolve-uri': ^3.1.0
    '@jridgewell/sourcemap-codec': ^1.4.14
+'@rollup/plugin-alias':
+ _latest: 5.1.1
+ _:
+  ^5.1.1: 5.1.1
+ 5.1.1:
+  top: 1
+  $: sha512-PR9zDb+rOzkRb2VD+EuKB7UC41vU5DIwZ5qqCpk0KJudcWAyi8rvYOhS7+L5aZCspw1stTViLgN5v6FF1p5cgQ==
+  _: 'https://registry.npmjs.org/@rollup/plugin-alias/-/plugin-alias-5.1.1.tgz'
+  peerDependencies:
+   rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
 '@rollup/plugin-commonjs':
  _latest: 28.0.3
  _:
@@ -145,6 +156,20 @@ $pkg:
    magic-string: ^0.30.3
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+'@rollup/plugin-terser':
+ _latest: 0.4.4
+ _:
+  ^0.4.4: 0.4.4
+ 0.4.4:
+  top: 1
+  $: sha512-XHeJC5Bgvs8LfukDwWZp7yeqin6ns8RTl2B9avbejt6tZqsqvVoWI7ZTQrcNsfKEDWBTnTxM8nMDkO2IFFbd0A==
+  _: 'https://registry.npmjs.org/@rollup/plugin-terser/-/plugin-terser-0.4.4.tgz'
+  dependencies:
+   serialize-javascript: ^6.0.1
+   smob: ^1.0.0
+   terser: ^5.17.4
+  peerDependencies:
+   rollup: ^2.0.0||^3.0.0||^4.0.0
 '@rollup/plugin-typescript':
  _latest: 12.1.2
  _:
@@ -191,15 +216,6 @@ $pkg:
  1.0.7:
   $: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==
   _: 'https://registry.npmjs.org/@types/estree/-/estree-1.0.7.tgz'
-'@types/node':
- _latest: 22.15.17
- _:
-  '*': 22.15.17
- 22.15.17:
-  $: sha512-wIX2aSZL5FE+MR0JlvF87BNVrtFWf6AE6rxSE9X7OwnVvoyCQjpzSRJ+M87se/4QCkCiebQAqrJ0y6fwIyi7nw==
-  _: 'https://registry.npmjs.org/@types/node/-/node-22.15.17.tgz'
-  dependencies:
-   undici-types: ~6.21.0
 '@types/normalize-package-data':
  _latest: 2.4.4
  _:
@@ -277,27 +293,31 @@ error-ex:
 esm-react:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react: 19.1.0-fynlocal_h
-  ../../misc/esm-react-18: 18.3.1-fynlocal_h
+  '../../misc/esm-react-18,../esm-react-18': 18.3.1-fynlocal_h
+  '../../misc/esm-react-19,../esm-react-19': 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
-  _: ../../misc/esm-react
+  _: ../../misc/esm-react-19
  18.3.1-fynlocal_h:
   $: local
   _: ../../misc/esm-react-18
 esm-react-dom:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react-dom: 19.1.0-fynlocal_h
   ../../misc/esm-react-dom-18: 18.3.1-fynlocal_h
+  ../../misc/esm-react-dom-19: 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
-  _: ../../misc/esm-react-dom
+  _: ../../misc/esm-react-dom-19
+  dependencies:
+   esm-react: ^19.1.0
  18.3.1-fynlocal_h:
   $: local
   _: ../../misc/esm-react-dom-18
+  dependencies:
+   esm-react: ^18.3.1
 estree-walker:
  _latest: 3.0.3
  _:
@@ -352,13 +372,6 @@ glob:
    minimatch: ^5.0.1
    once: ^1.3.0
   deprecated: 'Glob versions prior to v9 are no longer supported'
-has-flag:
- _latest: 5.0.1
- _:
-  ^4.0.0: 4.0.0
- 4.0.0:
-  $: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==
-  _: 'https://registry.npmjs.org/has-flag/-/has-flag-4.0.0.tgz'
 hasown:
  _latest: 2.0.2
  _:
@@ -427,17 +440,6 @@ is-reference:
   _: 'https://registry.npmjs.org/is-reference/-/is-reference-1.2.1.tgz'
   dependencies:
    '@types/estree': '*'
-jest-worker:
- _latest: 29.7.0
- _:
-  ^26.2.1: 26.6.2
- 26.6.2:
-  $: sha512-KWYVV1c4i+jbMpaBC+U++4Va0cp8OisU185o73T1vo99hqi7w8tSJfUXYswwqqrjzwxa6KpRK54WhPvwf5w6PQ==
-  _: 'https://registry.npmjs.org/jest-worker/-/jest-worker-26.6.2.tgz'
-  dependencies:
-   '@types/node': '*'
-   merge-stream: ^2.0.0
-   supports-color: ^7.0.0
 js-tokens:
  _latest: 9.0.1
  _:
@@ -491,13 +493,6 @@ magic-string:
   _: 'https://registry.npmjs.org/magic-string/-/magic-string-0.30.17.tgz'
   dependencies:
    '@jridgewell/sourcemap-codec': ^1.5.0
-merge-stream:
- _latest: 2.0.0
- _:
-  ^2.0.0: 2.0.0
- 2.0.0:
-  $: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==
-  _: 'https://registry.npmjs.org/merge-stream/-/merge-stream-2.0.0.tgz'
 minimatch:
  _latest: 10.0.1
  _:
@@ -710,22 +705,6 @@ rollup-plugin-federation:
    pkg-up: ^4.0.0
    read-pkg-up: ^10.0.0
    xaa: ^1.7.3
-rollup-plugin-terser:
- _latest: 7.0.2
- _:
-  ^7.0.2: 7.0.2
- 7.0.2:
-  top: 1
-  $: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==
-  _: 'https://registry.npmjs.org/rollup-plugin-terser/-/rollup-plugin-terser-7.0.2.tgz'
-  dependencies:
-   '@babel/code-frame': ^7.10.4
-   jest-worker: ^26.2.1
-   serialize-javascript: ^4.0.0
-   terser: ^5.0.0
-  peerDependencies:
-   rollup: ^2.0.0
-  deprecated: 'This package has been deprecated and is no longer maintained. Please use @rollup/plugin-terser'
 safe-buffer:
  _latest: 5.2.1
  _:
@@ -743,12 +722,19 @@ semver:
 serialize-javascript:
  _latest: 6.0.2
  _:
-  ^4.0.0: 4.0.0
- 4.0.0:
-  $: sha512-GaNA54380uFefWghODBWEGisLZFj00nS5ACs6yHa9nLqlLpVLO8ChDGeKRjZnV4Nh4n0Qi7nhYZD/9fCPzEqkw==
-  _: 'https://registry.npmjs.org/serialize-javascript/-/serialize-javascript-4.0.0.tgz'
+  ^6.0.1: 6.0.2
+ 6.0.2:
+  $: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==
+  _: 'https://registry.npmjs.org/serialize-javascript/-/serialize-javascript-6.0.2.tgz'
   dependencies:
    randombytes: ^2.1.0
+smob:
+ _latest: 1.5.0
+ _:
+  ^1.0.0: 1.5.0
+ 1.5.0:
+  $: sha512-g6T+p7QO8npa+/hNx9ohv1E5pVCmWrVCUzUXJyLdMmftX6ER0oiWY/w9knEonLpnOp6b6FenKnMfR8gqwWdwig==
+  _: 'https://registry.npmjs.org/smob/-/smob-1.5.0.tgz'
 source-map:
  _latest: 0.7.4
  _:
@@ -800,15 +786,6 @@ spdx-license-ids:
  3.0.21:
   $: sha512-Bvg/8F5XephndSK3JffaRqdT+gyhfqIPwDHpX80tJrF8QQRYMo8sNMeaZ2Dp5+jhwKnUmIOyFFQfHRkjJm5nXg==
   _: 'https://registry.npmjs.org/spdx-license-ids/-/spdx-license-ids-3.0.21.tgz'
-supports-color:
- _latest: 10.0.0
- _:
-  ^7.0.0: 7.2.0
- 7.2.0:
-  $: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==
-  _: 'https://registry.npmjs.org/supports-color/-/supports-color-7.2.0.tgz'
-  dependencies:
-   has-flag: ^4.0.0
 supports-preserve-symlinks-flag:
  _latest: 1.0.0
  _:
@@ -817,12 +794,12 @@ supports-preserve-symlinks-flag:
   $: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
   _: 'https://registry.npmjs.org/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz'
 terser:
- _latest: 5.39.0
+ _latest: 5.39.1
  _:
-  ^5.0.0: 5.39.0
- 5.39.0:
-  $: sha512-LBAhFyLho16harJoWMg/nZsQYgTrg5jXOn2nCYjRUcZZEdE3qa2zb8QEDRUGVZBW4rlazf2fxkg8tztybTaqWw==
-  _: 'https://registry.npmjs.org/terser/-/terser-5.39.0.tgz'
+  ^5.17.4: 5.39.1
+ 5.39.1:
+  $: sha512-Mm6+uad0ZuDtcV8/4uOZQDQ8RuiC5Pu+iZRedJtF7yA/27sPL7d++In/AJKpWZlU3SYMPPkVfwetn6sgZ66pUA==
+  _: 'https://registry.npmjs.org/terser/-/terser-5.39.1.tgz'
   dependencies:
    '@jridgewell/source-map': ^0.3.3
    acorn: ^8.8.2
@@ -846,13 +823,6 @@ type-fest:
  3.13.1:
   $: sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==
   _: 'https://registry.npmjs.org/type-fest/-/type-fest-3.13.1.tgz'
-undici-types:
- _latest: 7.9.0
- _:
-  ~6.21.0: 6.21.0
- 6.21.0:
-  $: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
-  _: 'https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz'
 validate-npm-package-license:
  _latest: 3.0.4
  _:
