@@ -1,0 +1,23 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg:
+ dep:
+  esm-react: ../../misc/esm-react-18
+  esm-react-dom: ../../misc/esm-react-dom-18
+esm-react:
+ _latest: 18.3.1-fynlocal_h
+ _:
+  ../../misc/esm-react-18: 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-18
+esm-react-dom:
+ _latest: 18.3.1-fynlocal_h
+ _:
+  ../../misc/esm-react-dom-18: 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-dom-18

@@ -1,0 +1,43 @@
+{
+  "name": "test-nested-deps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "homepage": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "rm -rf dist && rollup -c"
+  },
+  "author": "",
+  "files": [
+    "src",
+    "lib",
+    "dist"
+  ],
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "dependencies": {
+    "esm-react": "^19.1.0",
+    "esm-react-dom": "^19.1.0",
+    "pkg-esm-react-18": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.9.1",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "fyn": {
+    "dependencies": {
+      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
+    }
+  }
+}
