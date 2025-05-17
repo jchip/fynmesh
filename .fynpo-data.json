@@ -24,6 +24,22 @@
           "path": "demo/fynapp-1"
         },
         "onPkg": {
+          "name": "create-fynapp",
+          "version": "1.0.0",
+          "path": "dev-tools/create-fynapp"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
           "name": "esm-react",
           "version": "19.1.0",
           "path": "misc/esm-react-19"
@@ -51,5 +67,5 @@
       }
     ]
   },
-  "__timestamp": 1747147172109
+  "__timestamp": 1747289355524
 }

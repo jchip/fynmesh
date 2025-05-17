@@ -1,0 +1,66 @@
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
+import typescript from '@rollup/plugin-typescript';
+import css from 'rollup-plugin-css-only';
+import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload';
+import terser from '@rollup/plugin-terser';
+import { createFederationPlugin } from "rollup-plugin-federation";
+import esbuild from 'rollup-plugin-esbuild';
+
+const production = !process.env.ROLLUP_WATCH;
+
+export default {
+  input: 'src/index.ts',
+  output: {
+    file: 'dist/bundle.js',
+    format: 'esm',
+    sourcemap: !production,
+    inlineDynamicImports: true,
+  },
+  plugins: [
+    createFederationPlugin({
+      name: "__mf_container_{{appName}}",
+      filename: "remoteEntry.js",
+      exposes: {
+        "./bootstrap": "./src/bootstrap.ts"
+      },
+      shared: ["react", "react-dom"]
+    }),
+    nodeResolve({
+      extensions: ['.js', '.jsx', '.ts', '.tsx']
+    }),
+    replace({
+      preventAssignment: true,
+      'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development')
+    }),
+    commonjs(),
+    typescript({
+      sourceMap: !production,
+      inlineSources: !production
+    }),
+    esbuild({
+      include: /\.[jt]sx?$/,
+      exclude: /node_modules/,
+      sourceMap: !production,
+      minify: production,
+      target: 'es2018',
+      jsx: 'automatic',
+      tsconfig: 'tsconfig.json',
+    }),
+    css({ output: 'bundle.css' }),
+    !production && serve({
+      contentBase: ['dist'],
+      port: 3001,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      }
+    }),
+    !production && livereload('dist'),
+    production && terser()
+  ],
+  watch: {
+    clearScreen: false
+  }
+};

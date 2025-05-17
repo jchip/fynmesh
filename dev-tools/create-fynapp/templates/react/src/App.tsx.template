@@ -1,0 +1,68 @@
+import React, { useState, useEffect } from 'react';
+import './styles.css';
+
+interface AppProps {
+  appName: string;
+}
+
+const App: React.FC<AppProps> = ({ appName }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    // Run on component mount
+    console.log(`${appName} component mounted`);
+
+    return () => {
+      // Cleanup on unmount
+      console.log(`${appName} component unmounted`);
+    };
+  }, [appName]);
+
+  {{#if counter}}
+  // Counter component
+  const handleIncrement = () => {
+    setCount(prevCount => prevCount + 1);
+  };
+  {{/if counter}}
+
+  return (
+    <div className="fynapp-container">
+      <h2>{appName} using React {React.version}</h2>
+
+      {{#if counter}}
+      <div className="counter-section">
+        <p>You clicked the button <strong>{count}</strong> times</p>
+        <button
+          className="primary-button"
+          onClick={handleIncrement}
+        >
+          Increment
+        </button>
+      </div>
+      {{/if counter}}
+
+      {{#if stats}}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-header">
+            <span className="stat-title">Analytics</span>
+            <span className="stat-trend up">⬆ +{Math.floor(Math.random() * 20) + 1}%</span>
+          </div>
+          <div className="stat-value">85%</div>
+          <div className="stat-desc">User engagement</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-header">
+            <span className="stat-title">Revenue</span>
+            <span className="stat-trend up">⬆ +{Math.floor(Math.random() * 20) + 1}%</span>
+          </div>
+          <div className="stat-value">$12,850</div>
+          <div className="stat-desc">Monthly revenue</div>
+        </div>
+      </div>
+      {{/if stats}}
+    </div>
+  );
+};
+
+export default App;

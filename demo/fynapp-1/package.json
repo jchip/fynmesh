@@ -21,6 +21,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.8.9",
+    "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
     "rollup": "^4.9.1",
