@@ -34,6 +34,18 @@ class FynApp1 {
             }
         });
 
+        // test test
+        // @ts-ignore
+        // const react = await import("esm-react", {
+        //     with: {
+        //         type: "fynapp-shared",
+        //         fynapp: "fynapp-react-18",
+        //         requiredVersion: "^18.2.0",
+        //     },
+        // });
+
+
+
         console.log(`${this.name}: Initialized successfully`);
     }
 }

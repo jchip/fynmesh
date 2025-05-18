@@ -17,6 +17,14 @@ export async function bootstrap(kernel: FynMeshKernel, fynApp: FynApp) {
         document.body.appendChild(targetDiv);
     }
 
+    // @ts-ignore
+    // const reactContext = await import("react-context", {
+    //     with: {
+    //         type: "fynapp-middleware",
+    //         fynapp: "fynapp-react-19",
+    //     }
+    // });
+
     // Render the React component
     ReactDom.createRoot(targetDiv).render(React.createElement(App, { appName: fynApp.name }));
 

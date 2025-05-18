@@ -11,7 +11,7 @@ const isProduction = env === "production";
 export default [
   {
     input: [
-      "src/index.ts",
+      "src/middleware/react-context.tsx",
       // this is the filename from federation plugin config.
       "fynapp-entry.js",
     ],
@@ -46,7 +46,9 @@ export default [
         // this filename must be in the input config
         filename: "fynapp-entry.js",
         shareScope: "fynmesh",
-        exposes: {},
+        exposes: {
+          "./middleware/react-context": "./src/middleware/react-context.tsx",
+        },
         shared: {
           "esm-react": {
             singleton: true,

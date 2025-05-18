@@ -577,7 +577,7 @@ escalade:
 esm-react:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react-19: 19.1.0-fynlocal_h
+  '../../misc/esm-react-19,../esm-react-19': 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
@@ -590,6 +590,8 @@ esm-react-dom:
   top: 1
   $: local
   _: ../../misc/esm-react-dom-19
+  dependencies:
+   esm-react: ^19.1.0
 estree-walker:
  _latest: 3.0.3
  _:

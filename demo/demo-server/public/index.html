@@ -253,83 +253,41 @@
             // load fynapp 2 that uses react 18
             if (features["fynapp-2-react18"]) {
                 console.log("loading remote fynapp /fynapp-2-react18/dist");
-                fynMeshKernel.loadFynApp("/fynapp-2-react18/dist").then(async () => {
-                    const fynApp2 = await Federation.import("__mf_container_fynapp-2-react18");
-                    fynApp2.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-2-react18");
-                        factory().bootstrap(fynMeshKernel, fynApp2);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
             }
             // load fynapp 1 that uses react 19
             if (features["fynapp-1"]) {
                 console.log("loading remote fynapp /fynapp-1/dist");
-                fynMeshKernel.loadFynApp("/fynapp-1/dist").then(async () => {
-                    const fynApp1 = await Federation.import("__mf_container_fynapp-1");
-                    fynApp1.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-1");
-                        factory().bootstrap(fynMeshKernel, fynApp1);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-1/dist");
             }
             // load fynapp marko
             if (features["fynapp-3-marko"]) {
                 console.log("loading remote fynapp /fynapp-3-marko/dist");
-                fynMeshKernel.loadFynApp("/fynapp-3-marko/dist").then(async () => {
-                    const fynAppMarko = await Federation.import("__mf_container_fynapp-3-marko");
-                    fynAppMarko.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-3-marko");
-                        factory().bootstrap(fynMeshKernel, fynAppMarko);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-3-marko/dist")
             }
 
             // load fynapp vue
             if (features["fynapp-4-vue"]) {
                 console.log("loading remote fynapp /fynapp-4-vue/dist");
-                fynMeshKernel.loadFynApp("/fynapp-4-vue/dist").then(async () => {
-                    const fynAppVue = await Federation.import("__mf_container_fynapp-4-vue");
-                    fynAppVue.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-4-vue");
-                        factory().bootstrap(fynMeshKernel, fynAppVue);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-4-vue/dist");
             }
 
             // load fynapp preact
             if (features["fynapp-5-preact"]) {
                 console.log("loading remote fynapp /fynapp-5-preact/dist");
-                fynMeshKernel.loadFynApp("/fynapp-5-preact/dist").then(async () => {
-                    const fynAppPreact = await Federation.import("__mf_container_fynapp-5-preact");
-                    fynAppPreact.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-5-preact");
-                        factory().bootstrap(fynMeshKernel, fynAppPreact);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-5-preact/dist")
             }
 
             // load fynapp react (dashboard)
             if (features["fynapp-6-react"]) {
                 console.log("loading remote fynapp /fynapp-6-react/dist");
-                fynMeshKernel.loadFynApp("/fynapp-6-react/dist").then(async () => {
-                    const fynAppReact = await Federation.import("__mf_container_fynapp-6-react");
-                    fynAppReact.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-6-react");
-                        factory().bootstrap(fynMeshKernel, fynAppReact);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-6-react/dist")
             }
 
             // load fynapp solid
             if (features["fynapp-7-solid"]) {
                 console.log("loading remote fynapp /fynapp-7-solid/dist");
-                fynMeshKernel.loadFynApp("/fynapp-7-solid/dist").then(async () => {
-                    const fynAppSolid = await Federation.import("__mf_container_fynapp-7-solid");
-                    fynAppSolid.get("./bootstrap").then(factory => {
-                        console.log("bootstrap fynapp-7-solid");
-                        factory().bootstrap(fynMeshKernel, fynAppSolid);
-                    });
-                });
+                fynMeshKernel.loadFynApp("/fynapp-7-solid/dist")
             }
         })();
     </script>

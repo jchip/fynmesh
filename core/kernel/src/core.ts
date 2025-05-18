@@ -80,11 +80,16 @@ export const fynMeshKernel: FynMeshKernelCore = {
       // Use SystemJS to load the fynapp entry
       const fynapp = await (globalThis as any).Federation.import(urlPath);
       fynapp.init();
-      if (fynapp.preload) {
-        try { await fynapp.get("./preload"); } catch { }
+      const container = fynapp.container;
+      if (container && container.$E["./config"]) {
+        console.debug('fynMeshKernel loaded fynapp config', fynapp);
+        const factory = await fynapp.get("./config");
+        factory().configure(this, fynapp);
       }
-      if (fynapp.bootstrap) {
-        try { await fynapp.get("./bootstrap"); } catch { }
+      if (container && container.$E["./bootstrap"]) {
+        console.debug('fynMeshKernel loaded fynapp bootstrap', fynapp);
+        const factory = await fynapp.get("./bootstrap");
+        factory().bootstrap(this, fynapp);
       }
       console.debug('fynMeshKernel loaded fynapp', fynapp);
     } catch (err) {
@@ -141,14 +146,6 @@ export const fynMeshKernel: FynMeshKernelCore = {
       if (!appsLoaded[appInfo.name]) {
         const fynApp: FynApp = Object.assign({}, appInfo);
 
-        let initedScope = false;
-        if (fynApp.preload) {
-          // fynApp.preloadSetupModule = (await this.importRemoteModule(fynApp.name, fynApp.preload)) as Module;
-        }
-
-        if (fynApp.bootstrap) {
-          // fynApp.bootstrapModule = (await this.importRemoteModule(fynApp.name, fynApp.bootstrap)) as Module;
-        }
 
         appsLoaded[fynApp.name] = fynApp;
         bootstrapped.push(fynApp);

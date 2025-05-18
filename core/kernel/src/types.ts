@@ -120,10 +120,13 @@ export type FynAppInfo = {
   version: string;
   /* npm package name of the fynapp */
   packageName?: string;
+  /**
+   * name of the config module - this is a module that must be self sufficient without external dependencies, meant to
+   * execute before the rest of the fynapp is loaded.  Its typically used to do configuration before the rest of the fynapp is loaded.
+   */
+  config?: string;
   /** name of the bootstrap module */
   bootstrap?: string;
-  /** name of the preload setup module */
-  preload?: string;
   /** free form object containing build related information */
   buildInfo?: Record<string, unknown>;
   /** modules that the fynapp exposed */
@@ -145,7 +148,7 @@ export type MiddlewareUsage = {
  */
 export type FynApp = FynAppInfo & {
   bootstrapModule?: Module;
-  preloadSetupModule?: Module;
+  configModule?: Module;
   /** Set to true to tell the kernel to skip applying middlewares */
   skipApplyMiddlewares?: boolean;
 };

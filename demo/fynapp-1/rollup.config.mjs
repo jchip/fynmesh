@@ -37,7 +37,7 @@ export default [
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
           "./bootstrap": "./src/bootstrap.ts",
-          "./preload": "./src/preload.ts",
+          "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
         },
         shared: {
@@ -52,6 +52,7 @@ export default [
             requiredVersion: "^19.0.0",
           },
         },
+        debugging: true,
       }),
       alias({
         entries: {

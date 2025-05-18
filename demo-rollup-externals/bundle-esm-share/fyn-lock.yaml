@@ -138,7 +138,7 @@ esm-pkg:
 esm-react:
  _latest: 18.3.1-fynlocal_h
  _:
-  ../../misc/esm-react-18: 18.3.1-fynlocal_h
+  '../../misc/esm-react-18,../esm-react-18': 18.3.1-fynlocal_h
  18.3.1-fynlocal_h:
   top: 1
   $: local
@@ -151,6 +151,8 @@ esm-react-dom:
   top: 1
   $: local
   _: ../../misc/esm-react-dom-18
+  dependencies:
+   esm-react: ^18.3.1
 estree-walker:
  _latest: 3.0.3
  _:
