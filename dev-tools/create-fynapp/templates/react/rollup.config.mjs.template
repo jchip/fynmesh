@@ -24,7 +24,8 @@ export default {
       name: "__mf_container_{{appName}}",
       filename: "remoteEntry.js",
       exposes: {
-        "./bootstrap": "./src/bootstrap.ts"
+        "./config": "./src/config.ts",
+        "./main": "./src/bootstrap.ts"
       },
       shared: ["react", "react-dom"]
     }),

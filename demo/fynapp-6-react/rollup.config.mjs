@@ -12,7 +12,7 @@ const isProduction = env === "production";
 export default [
   {
     input: [
-      "src/index.ts",
+      "src/main.ts",
       // this is the filename from federation plugin config.
       "fynapp-entry.js",
     ],
@@ -36,11 +36,7 @@ export default [
         // this filename must be in the input config array
         filename: "fynapp-entry.js",
         exposes: {
-          "./hello": "./src/hello.ts",
-          "./getInfo": "./src/getInfo.ts",
-          "./bootstrap": "./src/bootstrap.ts",
-          "./preload": "./src/preload.ts",
-          "./App": "./src/App.tsx",
+          "./main": "./src/main.ts",
         },
         shared: {
           "esm-react": {

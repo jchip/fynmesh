@@ -86,10 +86,10 @@ export const fynMeshKernel: FynMeshKernelCore = {
         const factory = await fynapp.get("./config");
         factory().configure(this, fynapp);
       }
-      if (container && container.$E["./bootstrap"]) {
-        console.debug('fynMeshKernel loaded fynapp bootstrap', fynapp);
-        const factory = await fynapp.get("./bootstrap");
-        factory().bootstrap(this, fynapp);
+      if (container && container.$E["./main"]) {
+        console.debug('fynMeshKernel loaded fynapp main', fynapp);
+        const factory = await fynapp.get("./main");
+        factory().main(this, fynapp);
       }
       console.debug('fynMeshKernel loaded fynapp', fynapp);
     } catch (err) {
@@ -104,7 +104,7 @@ export const fynMeshKernel: FynMeshKernelCore = {
   },
 
   /**
-   * bootstrap fynapps by importing their bootstrap module
+   * bootstrap fynapps by importing their main module
    *
    * @param appsInfo - array of fynapps info
    */
@@ -122,8 +122,8 @@ export const fynMeshKernel: FynMeshKernelCore = {
       for (const capId in fynApp.middlewares) {
         const config = fynApp.middlewares[capId];
         const exportName = `__middleware${capId.replace(/^./, (x) => x.toUpperCase())}`;
-        const middleware: FynAppMiddleware = fynApp.bootstrapModule?.[exportName];
-        console.debug("loading middleware", capId, exportName, fynApp.bootstrapModule);
+        const middleware: FynAppMiddleware = fynApp.mainModule?.[exportName];
+        console.debug("loading middleware", capId, exportName, fynApp.mainModule);
 
         if (middleware && middleware.setup) {
           await middleware.setup(this);
@@ -132,7 +132,7 @@ export const fynMeshKernel: FynMeshKernelCore = {
         runTime.middlewares[`${fynApp.packageName}/${capId}`] = {
           fynApp,
           config,
-          moduleName: "",
+          moduleName: "./main",
           exportName,
           implementation: middleware,
         };

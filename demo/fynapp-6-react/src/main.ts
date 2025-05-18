@@ -1,12 +1,13 @@
 import { FynMeshKernel, FynApp } from '@fynmesh/kernel';
-import React from "react";
 // @ts-ignore
+import React from "react";
 
+// @ts-ignore
 import ReactDom from "esm-react-dom";
 // @ts-ignore
 import App from './App';
 
-export async function bootstrap(kernel: FynMeshKernel, fynApp: FynApp) {
+export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
     console.log(`Bootstrapping ${fynApp.name}...`, React, ReactDom, "versions", React.version, ReactDom.version);
 
     // Find or create the div element to render into

@@ -8,6 +8,7 @@
   "scripts": {
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "fynpo",
+    "build-prod": "NODE_ENV=production fynpo",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
     "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git"

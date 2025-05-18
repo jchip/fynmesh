@@ -83,3 +83,23 @@ export function useAppContext(): AppContextValue {
     }
     return context;
 }
+
+/**
+ * When the kernel loads a module that is supposed to contain a middleware, the kernel will
+ * look for exports that are named "__middleware__<middleware-name>".
+ *
+ * This is a simple middleware that will add a React context provider to the FynApp.
+ */
+export const __middleware__ReactContext = {
+    name: "react-context",
+    async setup(kernel: any) {
+        //
+    },
+    /**
+     * Apply the middleware to the FynApp.
+     * @param fynApp The FynApp to apply the middleware to.
+     */
+    async apply(fynApp: any) {
+        console.log("react-context middleware");
+    }
+}

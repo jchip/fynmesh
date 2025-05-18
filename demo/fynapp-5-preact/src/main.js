@@ -1,7 +1,7 @@
 import { h, render } from "preact";
 import App from "./App";
 
-export async function bootstrap(kernel, fynApp) {
+export async function main(kernel, fynApp) {
   console.log(`Bootstrapping ${fynApp.name}...`);
 
   try {

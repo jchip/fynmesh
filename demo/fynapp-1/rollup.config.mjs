@@ -11,7 +11,7 @@ const isProduction = env === "production";
 export default [
   {
     input: [
-      "src/index.ts",
+      "src/main.ts",
       // this is the filename from federation plugin config.
       "fynapp-entry.js",
     ],
@@ -36,7 +36,7 @@ export default [
         exposes: {
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
-          "./bootstrap": "./src/bootstrap.ts",
+          "./main": "./src/main.ts",
           "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
         },

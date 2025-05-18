@@ -1,6 +1,6 @@
 import App from "./App.marko";
 
-export async function bootstrap(kernel, fynApp) {
+export async function main(kernel, fynApp) {
   console.log(`Bootstrapping ${fynApp.name}...`);
 
   try {
