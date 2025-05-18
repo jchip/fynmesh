@@ -40,6 +40,9 @@ export default [
           "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
         },
+        remotes: {
+          "fynapp-x1": "fynapp-x1@[fynapp-x1]/fynapp-entry.js",
+        },
         shared: {
           "esm-react": {
             import: false,

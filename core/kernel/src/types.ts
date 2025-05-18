@@ -281,6 +281,5 @@ export interface FynMeshKernel {
    * @param fynApp
    */
   applyMiddlewares(fynApp: FynApp): Promise<void>;
-
 }
 

@@ -1,11 +1,9 @@
 import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
+// import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
-import babel from "@rollup/plugin-babel";
-import postcss from "rollup-plugin-postcss";
-import json from "@rollup/plugin-json";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -13,7 +11,7 @@ const isProduction = env === "production";
 export default [
   {
     input: [
-      "src/index.js",
+      "src/main.tsx",
       // this is the filename from federation plugin config.
       "fynapp-entry.js",
     ],
@@ -24,33 +22,39 @@ export default [
         sourcemap: true,
       },
     ],
+    external: ["esm-react", "esm-react-dom"],
     plugins: [
-      babel({
-        babelHelpers: "bundled",
-        extensions: [".js", ".jsx", ".ts", ".tsx"],
-        presets: [["@babel/preset-env", { targets: "defaults" }], "babel-preset-solid"],
-      }),
-      postcss(),
       resolve({
-        browser: true,
         exportConditions: [env],
-        extensions: [".js", ".jsx", ".ts", ".tsx"],
       }),
-      commonjs({ transformMixedEsModules: true }),
-      json(),
+      // commonjs({ transformMixedEsModules: true }),
       federation({
-        name: "fynapp-7-solid",
+        name: "fynapp-x1",
         shareScope: "fynmesh",
         // this filename must be in the input config array
         filename: "fynapp-entry.js",
         exposes: {
-          "./main": "./src/main.js",
+          "./main": "./src/main.tsx",
         },
         shared: {
-          "solid-js": {
-            singleton: true,
-            requiredVersion: "^1.8.15",
+          "esm-react": {
+            import: false,
+            singleton: false,
+            requiredVersion: "^19.0.0",
           },
+        },
+        debugging: true,
+      }),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        sourceMap: true,
+        inlineSources: true,
+      }),
+      alias({
+        entries: {
+          react: "esm-react",
+          "react-dom": "esm-react-dom",
+          "react-dom/client": "esm-react-dom",
         },
       }),
       isProduction ? terser() : null,

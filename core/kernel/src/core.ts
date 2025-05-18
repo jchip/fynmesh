@@ -173,6 +173,5 @@ export const fynMeshKernel: FynMeshKernelCore = {
         await middleware.implementation.apply(fynApp);
       }
     }
-  },
-
+  }
 };
