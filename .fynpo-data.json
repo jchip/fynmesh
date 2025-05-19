@@ -64,8 +64,24 @@
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "fynapp-x1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-x1"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
       }
     ]
   },
-  "__timestamp": 1747289355524
+  "__timestamp": 1747624659735
 }

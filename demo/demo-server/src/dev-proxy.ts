@@ -16,5 +16,7 @@ startDevProxy([
   [{ path: "/fynapp-6-react" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-6-react") }],
   [{ path: "/fynapp-7-solid" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-7-solid") }],
   [{ path: "/fynapp-x1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-x1") }],
+  [{ path: "/fynapp-x1-v2" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-x1-v2") }],
+
 ]);
 

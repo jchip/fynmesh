@@ -1,7 +1,7 @@
 {
-  "name": "fynapp-1",
-  "version": "1.0.0",
-  "description": "Sample FynApp 1",
+  "name": "fynapp-x1",
+  "version": "2.0.0",
+  "description": "Sample FynApp providing shared widgets and components",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
@@ -9,8 +9,8 @@
   },
   "scripts": {
     "build": "rm -rf dist && rollup -c",
-    "start": "node dist/index.js",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "compile": "tsc"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",
@@ -24,8 +24,6 @@
     "@types/react": "^19.1.4",
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
-    "esm-react-dom": "^19.1.0",
-    "fynapp-x1": "^1.0.0",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",
@@ -36,5 +34,8 @@
     "devDependencies": {
       "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
     }
+  },
+  "dependencies": {
+    "fynapp-x1": "^1.0.0"
   }
 }
