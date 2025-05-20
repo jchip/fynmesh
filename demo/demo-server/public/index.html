@@ -209,7 +209,7 @@
         }
     </style>
     <script src="/system.min.js"></script>
-    <script src="/federation-js/dist/federation-js.min.js"></script>
+    <script src="/federation-js/dist/federation-js.js"></script>
     <script src="/core/kernel/dist/fynmesh-kernel.min.js"></script>
     <script>
         (async () => {
@@ -239,7 +239,7 @@
             }
 
             fynMeshKernel.loadFynApp("/fynapp-x1/dist");
-            fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
+            await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
 
 
             // load fynapp 2 that uses react 18

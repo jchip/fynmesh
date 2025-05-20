@@ -83,6 +83,7 @@ export const Card: FC<CardProps> = ({
 }) => {
     return (
         <div className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+            <h1>Hello from fynapp-x1-v2</h1>
             {title && (
                 <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
                     <h3 className="text-lg font-medium text-gray-900">{title}</h3>

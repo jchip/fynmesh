@@ -1,7 +1,7 @@
 {
-  "name": "fynapp-react-18",
-  "version": "1.0.0",
-  "description": "Sample FynApp React 18",
+  "name": "fynapp-react-lib",
+  "version": "18.3.0",
+  "description": "FynApp that provides React 18 Library",
   "scripts": {
     "build": "rm -rf dist && rollup -c",
     "start": "node dist/index.js",

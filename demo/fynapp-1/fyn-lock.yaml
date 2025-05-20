@@ -549,13 +549,11 @@ function-bind:
 fynapp-x1:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../fynapp-x1,./': 1.0.0-fynlocal_h
+  ../fynapp-x1: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
   _: ../fynapp-x1
-  dependencies:
-   fynapp-x1: ^1.0.0
 glob:
  _latest: 11.0.2
  _:

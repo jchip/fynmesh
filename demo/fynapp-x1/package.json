@@ -36,6 +36,5 @@
     }
   },
   "dependencies": {
-    "fynapp-x1": "^1.0.0"
   }
 }

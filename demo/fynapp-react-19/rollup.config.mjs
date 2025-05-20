@@ -42,7 +42,7 @@ export default [
       }),
       isProduction ? terser() : null,
       federation({
-        name: "fynapp-react-19",
+        name: "fynapp-react-lib",
         // this filename must be in the input config
         filename: "fynapp-entry.js",
         shareScope: "fynmesh",
