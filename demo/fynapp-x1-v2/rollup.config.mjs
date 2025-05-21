@@ -4,6 +4,10 @@ import typescript from "@rollup/plugin-typescript";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
+import postcss from "rollup-plugin-postcss";
+import postcssImport from "postcss-import";
+import tailwindcss from "@tailwindcss/postcss";
+import autoprefixer from "autoprefixer";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -28,13 +32,17 @@ export default [
         exportConditions: [env],
       }),
       // commonjs({ transformMixedEsModules: true }),
+      postcss({
+        minimize: isProduction,
+        plugins: [postcssImport(), tailwindcss(), autoprefixer()],
+      }),
       federation({
         name: "fynapp-x1",
         shareScope: "fynmesh",
-        // this filename must be in the input config array
         filename: "fynapp-entry.js",
         exposes: {
           "./main": "./src/main.tsx",
+          "./styles.js": "./src/styles.css",
         },
         shared: {
           "esm-react": {
@@ -44,6 +52,7 @@ export default [
           },
         },
         debugging: true,
+        css: true,
       }),
       typescript({
         tsconfig: "./tsconfig.json",

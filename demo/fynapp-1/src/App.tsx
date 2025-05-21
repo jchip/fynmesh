@@ -26,7 +26,7 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
     };
 
     return (
-        <div className="fynapp-container" style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <div className="p-5 max-w-3xl mx-auto">
             <h2>{appName}: Using Components from fynapp-x1</h2>
 
             <Alert variant="info" className="mb-4">
@@ -36,7 +36,7 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
             <Card
                 title="Example Card from fynapp-x1"
                 footer={
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <div className="flex justify-end gap-3">
                         <Button variant="outline" onClick={() => setShowModal(true)}>
                             Open Modal
                         </Button>
@@ -49,9 +49,9 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                 <p>This is a card component from fynapp-x1!</p>
                 <p>Try out different components below:</p>
 
-                <div style={{ marginBottom: '20px' }}>
+                <div className="mb-5">
                     <h4>Badges:</h4>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <div className="flex gap-3 mt-3">
                         <Badge variant="default">Default</Badge>
                         <Badge variant="primary">Primary</Badge>
                         <Badge variant="success">Success</Badge>
@@ -60,9 +60,9 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     </div>
                 </div>
 
-                <div style={{ marginTop: '20px' }}>
+                <div className="mt-5">
                     <h4>Spinner examples:</h4>
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '10px' }}>
+                    <div className="flex gap-5 items-center mt-3">
                         <Spinner size="small" color="primary" />
                         <Spinner size="medium" color="gray" />
                         <Spinner size="large" color="primary" />
@@ -71,33 +71,9 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
             </Card>
 
             {showEffect && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    pointerEvents: 'none',
-                    zIndex: 10
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        width: '150%',
-                        height: '150%',
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0) 70%)',
-                        animation: 'pulse 1s ease-out'
-                    }} />
-                    <div style={{
-                        fontSize: '2rem',
-                        fontWeight: 'bold',
-                        color: '#6366f1',
-                        textShadow: '0 0 8px rgba(99, 102, 241, 0.6)',
-                        animation: 'bounce 0.5s ease-out'
-                    }}>
+                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-10">
+                    <div className="absolute w-[150%] h-[150%] rounded-full bg-gradient-to-r from-indigo-500/20 to-transparent animate-pulse" />
+                    <div className="text-4xl font-bold text-indigo-500 drop-shadow-lg animate-bounce">
                         +1 Click!
                     </div>
                 </div>
@@ -109,7 +85,7 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     onClose={() => setShowModal(false)}
                     title="Example Modal"
                     footer={
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                        <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setShowModal(false)}>
                                 Cancel
                             </Button>
@@ -129,19 +105,6 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     />
                 </Modal>
             )}
-
-            <style jsx>{`
-                @keyframes pulse {
-                    0% { transform: scale(0); opacity: 1; }
-                    100% { transform: scale(1); opacity: 0; }
-                }
-
-                @keyframes bounce {
-                    0% { transform: scale(0); opacity: 0; }
-                    50% { transform: scale(1.2); opacity: 1; }
-                    100% { transform: scale(1); opacity: 0; }
-                }
-            `}</style>
         </div>
     );
 };

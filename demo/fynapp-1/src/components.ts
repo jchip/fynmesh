@@ -23,7 +23,7 @@ export type ComponentLibrary = {
 export const preloadComponents = async (): Promise<ComponentLibrary> => {
     try {
         // Using dynamic import with the module federation remote reference
-        const components = await import('fynapp-x1/main', { with: { type: "mf-expose" } });
+        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^2.0.0" } });
 
         // Return the components library
         return {
@@ -43,14 +43,14 @@ export const preloadComponents = async (): Promise<ComponentLibrary> => {
 
 // Get a specific component by name
 export const getComponent = async (name) => {
-    const components = await importFynappX1Components();
+    const components = await preloadComponents();
     return components[name];
 };
 
 // Export a lazy loading wrapper for each component
 export const createLazyComponent = (componentName) => {
     return React.lazy(() =>
-        importFynappX1Components()
+        preloadComponents()
             .then(module => ({
                 default: module[componentName]
             }))
