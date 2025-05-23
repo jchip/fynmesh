@@ -1,147 +1,110 @@
 // @ts-nocheck
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import type { ComponentLibrary } from './components';
 
 interface AppProps {
     appName: string;
+    components: ComponentLibrary;
 }
 
-const App: React.FC<AppProps> = ({ appName }) => {
-    const [count, setCount] = useState(0);
-    const [particles, setParticles] = useState([]);
+const App: React.FC<AppProps> = ({ appName, components }) => {
+    const [showEffect, setShowEffect] = useState(false);
     const [clickCount, setClickCount] = useState(0);
+    const [showModal, setShowModal] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [count, setCount] = useState(0);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCount(prevCount => prevCount + 1);
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, []);
+    // Destructure the components
+    const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
 
     const handleButtonClick = () => {
-        // Create particles with variety
-        const newParticles = Array.from({ length: 25 }, (_, i) => {
-            // Determine if particle is a circle, square, or triangle
-            const shapeType = Math.floor(Math.random() * 3);
-            // Random color from purple palette
-            const colors = ['#8b5cf6', '#7c3aed', '#6d28d9', '#a78bfa', '#c4b5fd'];
-            const colorIndex = Math.floor(Math.random() * colors.length);
-
-            return {
-                id: Date.now() + i,
-                x: Math.random() * 80 - 40, // Wider spread: Random x offset between -40 and 40
-                y: -(Math.random() * 40 + 20), // Random y uplift between -20 and -60
-                size: Math.random() * 24 + 12, // Larger: Random size between 12 and 36px
-                opacity: Math.random() * 0.5 + 0.5, // Random opacity between 0.5 and 1
-                rotation: Math.random() * 360, // Random rotation
-                color: colors[colorIndex],
-                shape: shapeType // 0: circle, 1: square, 2: triangle
-            };
-        });
-
-        setParticles(prev => [...prev, ...newParticles]);
+        setShowEffect(true);
         setClickCount(prev => prev + 1);
-
-        // Remove particles after animation
-        setTimeout(() => {
-            setParticles(prev => prev.filter(p => p.id !== newParticles[0].id));
-        }, 3000); // Longer animation time
+        setCount(count + 1); // Update the counter immediately for simplicity
+        setTimeout(() => setShowEffect(false), 1000);
     };
 
     return (
-        <div className="fynapp-container" style={{ position: 'relative', overflow: 'hidden' }}>
-            <h2>{appName}FynApp fynapp-2 Using React {React.version}</h2>
-            <p>This component has been running for {count} seconds.</p>
+        <div className="p-5 max-w-3xl mx-auto">
+            <h2>{appName}: React {React.version} using Components from fynapp-x1 v1</h2>
 
-            <div style={{ position: 'relative', minHeight: '80px' }}>
-                {particles.map(particle => {
-                    // Determine shape style
-                    let shapeStyle = {};
-                    if (particle.shape === 0) {
-                        // Circle
-                        shapeStyle = {
-                            borderRadius: '50%'
-                        };
-                    } else if (particle.shape === 1) {
-                        // Square
-                        shapeStyle = {
-                            borderRadius: '4px',
-                            transform: `rotate(${particle.rotation}deg)`
-                        };
-                    } else {
-                        // Triangle - using a pseudo-element for the triangle
-                        shapeStyle = {
-                            width: '0',
-                            height: '0',
-                            backgroundColor: 'transparent',
-                            borderLeft: `${particle.size / 2}px solid transparent`,
-                            borderRight: `${particle.size / 2}px solid transparent`,
-                            borderBottom: `${particle.size}px solid ${particle.color}`,
-                            boxShadow: 'none'
-                        };
-                    }
+            <Alert variant="info" className="mb-4">
+                Component counter: {count}
+            </Alert>
 
-                    return (
-                        <div
-                            key={particle.id}
-                            style={{
-                                position: 'absolute',
-                                left: 'calc(50% + ' + particle.x + 'px)',
-                                bottom: '0',
-                                width: particle.shape !== 2 ? particle.size + 'px' : 'auto',
-                                height: particle.shape !== 2 ? particle.size + 'px' : 'auto',
-                                backgroundColor: particle.shape !== 2 ? particle.color : 'transparent',
-                                opacity: particle.opacity,
-                                animation: 'float 3s ease-out forwards',
-                                boxShadow: particle.shape !== 2 ? `0 0 ${particle.size / 3}px ${particle.color}80` : 'none',
-                                ...shapeStyle
-                            }}
-                        />
-                    );
-                })}
-
-                <button
-                    onClick={handleButtonClick}
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#8b5cf6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        zIndex: 5
-                    }}
-                >
-                    Click Me ({clickCount})
-                </button>
-            </div>
-
-            <style jsx>{`
-                @keyframes float {
-                    0% {
-                        transform: translateY(0) scale(1);
-                        opacity: 1;
-                    }
-                    20% {
-                        opacity: 0.95;
-                        transform: translateY(-${window ? window.innerHeight / 8 : 25}px) scale(1.1);
-                    }
-                    50% {
-                        opacity: 0.8;
-                        transform: translateY(-${window ? window.innerHeight / 4 : 50}px) scale(0.9);
-                    }
-                    75% {
-                        opacity: 0.5;
-                        transform: translateY(-${window ? window.innerHeight / 3 : 100}px) scale(0.7);
-                    }
-                    100% {
-                        transform: translateY(-${window ? window.innerHeight / 2 : 200}px) scale(0.2);
-                        opacity: 0;
-                    }
+            <Card
+                title="Example Card from fynapp-x1 v1"
+                footer={
+                    <div className="flex justify-end gap-3">
+                        <Button variant="outline" onClick={() => setShowModal(true)}>
+                            Open Modal
+                        </Button>
+                        <Button variant="primary" onClick={handleButtonClick}>
+                            Click Me ({clickCount})
+                        </Button>
+                    </div>
                 }
-            `}</style>
+            >
+                <p>This is a card component from fynapp-x1 version 1.0.0!</p>
+                <p>Try out different components below:</p>
+
+                <div className="mb-5">
+                    <h4>Badges:</h4>
+                    <div className="flex gap-3 mt-3">
+                        <Badge variant="default">Default</Badge>
+                        <Badge variant="primary">Primary</Badge>
+                        <Badge variant="success">Success</Badge>
+                        <Badge variant="warning">Warning</Badge>
+                        <Badge variant="danger">Danger</Badge>
+                    </div>
+                </div>
+
+                <div className="mt-5">
+                    <h4>Spinner examples:</h4>
+                    <div className="flex gap-5 items-center mt-3">
+                        <Spinner size="small" color="primary" />
+                        <Spinner size="medium" color="gray" />
+                        <Spinner size="large" color="primary" />
+                    </div>
+                </div>
+            </Card>
+
+            {showEffect && (
+                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-10">
+                    <div className="absolute w-[150%] h-[150%] rounded-full bg-gradient-to-r from-indigo-500/20 to-transparent animate-pulse" />
+                    <div className="text-4xl font-bold text-indigo-500 drop-shadow-lg animate-bounce">
+                        +1 Click!
+                    </div>
+                </div>
+            )}
+
+            {showModal && (
+                <Modal
+                    isOpen={showModal}
+                    onClose={() => setShowModal(false)}
+                    title="Example Modal (v1 components)"
+                    footer={
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setShowModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="primary" onClick={() => setShowModal(false)}>
+                                Confirm
+                            </Button>
+                        </div>
+                    }
+                >
+                    <p>This is a modal component from fynapp-x1 version 1.0.0!</p>
+                    <Input
+                        label="Example Input"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Type something..."
+                        helperText="This is a helper text"
+                    />
+                </Modal>
+            )}
         </div>
     );
 };

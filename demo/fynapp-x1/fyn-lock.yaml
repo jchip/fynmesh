@@ -12,10 +12,10 @@ $pkg:
   '@rollup/plugin-typescript': ^11.1.6
   '@tailwindcss/postcss': ^4.1.7
   '@types/node': ^20.8.9
-  '@types/react': ^19.1.4
+  '@types/react': ^18.3.0
   autoprefixer: ^10.4.16
   create-fynapp: ../../dev-tools/create-fynapp
-  esm-react: ../../misc/esm-react-19
+  esm-react: ../../misc/esm-react-18
   postcss: ^8.5.3
   postcss-import: ^15.1.0
   rollup: ^4.9.1
@@ -341,15 +341,23 @@ $pkg:
  2.4.4:
   $: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==
   _: 'https://registry.npmjs.org/@types/normalize-package-data/-/normalize-package-data-2.4.4.tgz'
-'@types/react':
- _latest: 19.1.4
+'@types/prop-types':
+ _latest: 15.7.14
  _:
-  ^19.1.4: 19.1.4
- 19.1.4:
+  '*': 15.7.14
+ 15.7.14:
+  $: sha512-gNMvNH49DJ7OJYv+KAKn0Xp45p8PLl6zo2YnvDIbTd4J6MER2BmWN49TG7n9LvkyihINxeKW8+3bfS2yDC9dzQ==
+  _: 'https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.14.tgz'
+'@types/react':
+ _latest: 19.1.5
+ _:
+  ^18.3.0: 18.3.22
+ 18.3.22:
   top: 1
-  $: sha512-EB1yiiYdvySuIITtD5lhW4yPyJ31RkJkkDw794LaQYrxCSaQV/47y5o1FMC4zF9ZyjUjzJMZwbovEnT5yHTW6g==
-  _: 'https://registry.npmjs.org/@types/react/-/react-19.1.4.tgz'
+  $: sha512-vUhG0YmQZ7kL/tmKLrD3g5zXbXXreZXB3pmROW8bg3CnLnpjkRVwUlLne7Ufa2r9yJ8+/6B73RzhAek5TBKh2Q==
+  _: 'https://registry.npmjs.org/@types/react/-/react-18.3.22.tgz'
   dependencies:
+   '@types/prop-types': '*'
    csstype: ^3.0.2
 '@types/resolve':
  _latest: 1.20.6
@@ -853,13 +861,13 @@ escalade:
   $: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==
   _: 'https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz'
 esm-react:
- _latest: 19.1.0-fynlocal_h
+ _latest: 18.3.1-fynlocal_h
  _:
-  ../../misc/esm-react-19: 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  ../../misc/esm-react-18: 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
   top: 1
   $: local
-  _: ../../misc/esm-react-19
+  _: ../../misc/esm-react-18
 estree-walker:
  _latest: 3.0.3
  _:

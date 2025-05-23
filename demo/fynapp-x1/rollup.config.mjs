@@ -47,12 +47,11 @@ export default [
         shared: {
           "esm-react": {
             import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
+            singleton: true,
+            requiredVersion: "^18.3.0",
           },
         },
         debugging: true,
-        css: true,
       }),
       typescript({
         tsconfig: "./tsconfig.json",

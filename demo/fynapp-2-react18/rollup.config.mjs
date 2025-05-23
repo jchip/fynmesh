@@ -38,13 +38,11 @@ export default [
         },
         shared: {
           "esm-react": {
-            import: false,
-            singleton: false,
+            singleton: true,
             requiredVersion: "^18.0.0",
           },
           "esm-react-dom": {
-            import: false,
-            singleton: false,
+            singleton: true,
             requiredVersion: "^18.0.0",
           },
         },

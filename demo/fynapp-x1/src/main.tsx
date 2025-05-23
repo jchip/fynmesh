@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 type ReactNode = React.ReactNode;
 type ButtonHTMLAttributes<T> = React.ButtonHTMLAttributes<T>;
 type InputHTMLAttributes<T> = React.InputHTMLAttributes<T>;
-type FC<P = {}> = React.FC<P>;
+type FC<P> = React.FC<P>;
 const forwardRef = React.forwardRef;
 
 export function main() {
