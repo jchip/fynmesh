@@ -187,6 +187,8 @@ interface ModalProps {
     footer?: ReactNode;
     size?: 'small' | 'medium' | 'large';
     closeOnOverlayClick?: boolean;
+    overlayOpacity?: number; // 0 to 1, default 0.2
+    overlayBlur?: string; // CSS blur value like '2px', 'none', default 'none'
 }
 
 export const Modal: FC<ModalProps> = ({
@@ -197,20 +199,19 @@ export const Modal: FC<ModalProps> = ({
     footer,
     size = 'medium',
     closeOnOverlayClick = true,
+    overlayOpacity = 0.2,
+    overlayBlur = 'none',
 }) => {
     useEffect(() => {
         if (isOpen) {
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.paddingRight = `${scrollbarWidth}px`;
-            document.body.style.overflow = 'hidden';
         } else {
             document.body.style.paddingRight = '';
-            document.body.style.overflow = '';
         }
 
         return () => {
             document.body.style.paddingRight = '';
-            document.body.style.overflow = '';
         };
     }, [isOpen]);
 
@@ -223,9 +224,13 @@ export const Modal: FC<ModalProps> = ({
     }[size];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div
-                className="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm"
+                className="fixed inset-0 transition-opacity"
+                style={{
+                    backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
+                    backdropFilter: overlayBlur !== 'none' ? `blur(${overlayBlur})` : 'none',
+                }}
                 onClick={closeOnOverlayClick ? onClose : undefined}
             ></div>
             <div className={`relative z-50 w-full ${sizeClasses} rounded-xl bg-white shadow-2xl transform transition-all duration-300 ease-in-out sm:mx-auto`}>

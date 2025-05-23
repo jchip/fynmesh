@@ -153,26 +153,32 @@ export const Modal: FC<ModalProps> = ({
 }) => {
     useEffect(() => {
         if (isOpen) {
-            // Add padding to prevent layout shift when scrollbar disappears
+            // Only prevent scrollbar jump without hiding the background
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.paddingRight = `${scrollbarWidth}px`;
-            document.body.style.overflow = 'hidden';
         } else {
             document.body.style.paddingRight = '';
-            document.body.style.overflow = '';
         }
 
         return () => {
             document.body.style.paddingRight = '';
-            document.body.style.overflow = '';
         };
     }, [isOpen]);
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto">
-            <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose}></div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Overlay with transparent background */}
+            <div
+                className="fixed inset-0 transition-opacity"
+                style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    backdropFilter: 'none' // Explicitly disable backdrop blur
+                }}
+                onClick={onClose}
+            ></div>
+            {/* Modal content */}
             <div className="relative z-50 w-full max-w-md rounded-lg bg-white shadow-xl sm:mx-auto">
                 {title && (
                     <div className="card-header">

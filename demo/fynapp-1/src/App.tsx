@@ -84,6 +84,8 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     isOpen={showModal}
                     onClose={() => setShowModal(false)}
                     title="Example Modal"
+                    overlayOpacity={0.3}
+                    overlayBlur="6px"
                     footer={
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setShowModal(false)}>

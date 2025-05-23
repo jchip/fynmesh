@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
 * This file handles dynamic imports of the reusable components from fynapp-x1
 * These imports are managed by the fynmesh kernel's module federation system
@@ -22,19 +21,12 @@ export type ComponentLibrary = {
  */
 export const preloadComponents = async (): Promise<ComponentLibrary> => {
     try {
-        // Using dynamic import with the module federation remote reference
-        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^2.0.0" } });
+        // dynamic import exposed modules from module federation remote container
+        // @ts-ignore - TS can't understand module federation remote containers
+        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^2.0.0" } }) as ComponentLibrary;
 
         // Return the components library
-        return {
-            Button: components.Button,
-            Card: components.Card,
-            Input: components.Input,
-            Modal: components.Modal,
-            Alert: components.Alert,
-            Badge: components.Badge,
-            Spinner: components.Spinner,
-        };
+        return components;
     } catch (error) {
         console.error('Failed to load components from fynapp-x1:', error);
         throw error;
@@ -42,13 +34,13 @@ export const preloadComponents = async (): Promise<ComponentLibrary> => {
 };
 
 // Get a specific component by name
-export const getComponent = async (name) => {
+export const getComponent = async (name: keyof ComponentLibrary) => {
     const components = await preloadComponents();
     return components[name];
 };
 
 // Export a lazy loading wrapper for each component
-export const createLazyComponent = (componentName) => {
+export const createLazyComponent = (componentName: keyof ComponentLibrary) => {
     return React.lazy(() =>
         preloadComponents()
             .then(module => ({
