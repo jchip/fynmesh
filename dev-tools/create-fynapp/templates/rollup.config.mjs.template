@@ -1,0 +1,37 @@
+import { federation } from '@module-federation/rollup';
+import virtual from '@rollup/plugin-virtual';
+import noEmit from 'rollup-plugin-no-emit';
+
+export default {
+  input: 'fynapp-dummy-entry',
+  plugins: [
+    virtual({
+      'fynapp-dummy-entry': 'export {};'
+    }),
+    noEmit({
+      match: (fileName) => fileName.includes('fynapp-dummy-entry')
+    }),
+    federation({
+      name: '{{appName}}',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './App': './src/main.ts'
+      },
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: false
+        },
+        'react-dom': {
+          singleton: true,
+          requiredVersion: false
+        }
+      }
+    })
+  ],
+  external: ['react', 'react-dom'],
+  output: {
+    format: 'system',
+    dir: 'dist'
+  }
+};

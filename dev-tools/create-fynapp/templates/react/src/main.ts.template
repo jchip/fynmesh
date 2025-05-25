@@ -1,0 +1,18 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+// Export the App component for federation
+export { default as App } from './App';
+
+// Bootstrap the app if running standalone
+if (typeof window !== 'undefined') {
+  const container = document.getElementById('root');
+  if (container) {
+    const root = ReactDOM.createRoot(container);
+    root.render(React.createElement(App, {
+      appName: '{{appName}}',
+      components: []
+    }));
+  }
+}

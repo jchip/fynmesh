@@ -1,7 +1,7 @@
 // This file is the main entry point for the micro frontend when consumed by FynMesh
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import App from './App';
 
 // Bootstrap function that will be called by FynMesh kernel
@@ -14,16 +14,22 @@ export function bootstrap(kernel: any, fynApp: any) {
     return;
   }
 
-  // Render the React app
-  ReactDOM.render(
-    React.createElement(App, { appName: "{{appName}}" }),
-    rootElement
+  // Render the React app using React 18 createRoot API
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    React.createElement(App, {
+      appName: "{{appName}}",
+      components: []
+    })
   );
 
   return {
     // Add any API methods you want to expose to the kernel here
     sayHello: () => {
       console.log("Hello from {{appName}} micro frontend!");
+    },
+    unmount: () => {
+      root.unmount();
     }
   };
 }

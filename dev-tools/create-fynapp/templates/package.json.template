@@ -1,0 +1,25 @@
+{
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "A Fynmesh application",
+  "main": "dist/remoteEntry.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "serve": "npx serve dist -p 3000"
+  },
+  "keywords": ["fynmesh", "microfrontend"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@module-federation/rollup": "^1.0.8",
+    "@rollup/plugin-virtual": "^3.0.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "esm-react": "^18.3.1",
+    "esm-react-dom": "^18.3.1",
+    "rollup": "^4.28.1",
+    "rollup-plugin-no-emit": "^1.3.0",
+    "typescript": "^5.7.2"
+  }
+}

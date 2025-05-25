@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './styles.css';
 
 interface AppProps {
   appName: string;
+  components?: string[];
 }
 
-const App: React.FC<AppProps> = ({ appName }) => {
-  const [count, setCount] = useState(0);
+const App: React.FC<AppProps> = ({ appName, components = [] }: AppProps) => {
+  const [count, setCount] = React.useState<number>(0);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // Run on component mount
     console.log(`${appName} component mounted`);
 
@@ -21,7 +22,7 @@ const App: React.FC<AppProps> = ({ appName }) => {
   {{#if counter}}
   // Counter component
   const handleIncrement = () => {
-    setCount(prevCount => prevCount + 1);
+    setCount((prevCount: number) => prevCount + 1);
   };
   {{/if counter}}
 
