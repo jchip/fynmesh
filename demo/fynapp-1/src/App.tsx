@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import React, { useState } from 'react';
 import type { ComponentLibrary } from './components';
 
@@ -101,7 +99,7 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     <Input
                         label="Example Input"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e: any) => setInputValue(e.target.value)}
                         placeholder="Type something..."
                         helperText="This is a helper text"
                     />

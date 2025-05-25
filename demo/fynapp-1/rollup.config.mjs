@@ -11,7 +11,7 @@ const isProduction = env === "production";
 export default [
   {
     input: [
-      "src/main.ts",
+      "src/index.ts",
       // this is the filename from federation plugin config.
       "fynapp-entry.js",
     ],
@@ -58,11 +58,11 @@ export default [
         debugging: true,
       }),
       alias({
-        entries: {
-          react: "esm-react",
-          "react-dom": "esm-react-dom",
-          "react-dom/client": "esm-react-dom",
-        },
+        entries: [
+          { find: "react", replacement: "esm-react" },
+          { find: "react-dom/client", replacement: "esm-react-dom" },
+          { find: "react-dom", replacement: "esm-react-dom" },
+        ],
       }),
       typescript({
         tsconfig: "./tsconfig.json",
