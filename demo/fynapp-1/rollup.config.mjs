@@ -1,20 +1,33 @@
 import resolve from "@rollup/plugin-node-resolve";
-// import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
+import virtual from "@rollup/plugin-virtual";
+import noEmit from "rollup-plugin-no-emit";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
 
+/**
+ * Rollup needs at least one entry to get the build started.  We use a virtual entry
+ * to satisfy this requirement.  The dummy entry is not used.
+ */
+const fynappDummyEntryName = "fynapp-dummy-entry";
+/**
+ * The filename of the entry point for the fynapp's module federation bundle.
+ * This is the file that will be used by the fynmesh to load the fynapp.
+ */
+const fynappEntryFilename = "fynapp-entry.js";
+/**
+ * The module federation share scope for the fynmesh.  This is the scope that will be used to share
+ * modules between the fynmesh and the fynapps.
+ */
+const fynmeshShareScope = "fynmesh";
+
 export default [
   {
-    input: [
-      "src/index.ts",
-      // this is the filename from federation plugin config.
-      "fynapp-entry.js",
-    ],
+    input: [fynappDummyEntryName, fynappEntryFilename],
     output: [
       {
         dir: "dist",
@@ -24,24 +37,27 @@ export default [
     ],
     external: ["esm-react", "esm-react-dom"],
     plugins: [
+      virtual({
+        [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
+      }),
+      noEmit({
+        match: (fileName) => fileName.includes(fynappDummyEntryName),
+      }),
       resolve({
         exportConditions: [env],
       }),
       // commonjs({ transformMixedEsModules: true }),
       federation({
         name: "fynapp-1",
-        shareScope: "fynmesh",
+        shareScope: fynmeshShareScope,
         // this filename must be in the input config array
-        filename: "fynapp-entry.js",
+        filename: fynappEntryFilename,
         exposes: {
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
           "./main": "./src/main.ts",
           "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
-        },
-        remotes: {
-          "fynapp-x1": "fynapp-x1@[fynapp-x1]/fynapp-entry.js",
         },
         shared: {
           "esm-react": {
@@ -70,6 +86,6 @@ export default [
         inlineSources: true,
       }),
       isProduction ? terser() : null,
-    ],
+    ].filter(Boolean),
   },
 ];
