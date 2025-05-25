@@ -1,6 +1,6 @@
 import { FynMeshKernel, FynApp } from '@fynmesh/kernel';
 import React from "react";
-import { createRoot } from "react-dom/client";
+import ReactDomClient from "react-dom/client";
 // Used by dynamic component imports
 import './components';
 import App from './App';
@@ -75,7 +75,7 @@ export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
     }
 
     // Render the React component with pre-loaded components
-    const root = createRoot(targetDiv);
+    const root = ReactDomClient.createRoot(targetDiv);
     root.render(
         React.createElement(App, {
             appName: fynApp.name,
