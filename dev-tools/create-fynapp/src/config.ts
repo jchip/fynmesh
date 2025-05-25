@@ -1,6 +1,24 @@
 import fs from "fs";
-import * as fsPromises from "fs/promises";
+import { promises as fsPromises } from "fs";
 import path from "path";
+import AveAzul from "aveazul";
+
+// Use fs.promises directly - cleaner than promisifying
+const readFile = fsPromises.readFile;
+const writeFile = fsPromises.writeFile;
+const mkdir = fsPromises.mkdir;
+
+/**
+ * Async helper to check if a file exists
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await fsPromises.access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 /**
  * FynApp configuration structure
@@ -81,19 +99,23 @@ export class ConfigManager {
      * Initialize the configuration directory structure
      */
     async init(): Promise<void> {
-        try {
-            // Create config directories if they don't exist
-            if (!fs.existsSync(this.configDir)) {
-                await fsPromises.mkdir(this.configDir, { recursive: true });
-            }
+        return AveAzul.try(async () => {
+            // Create config directories if they don't exist using AveAzul's map
+            const directories = [this.configDir, this.appsConfigDir];
 
-            if (!fs.existsSync(this.appsConfigDir)) {
-                await fsPromises.mkdir(this.appsConfigDir, { recursive: true });
-            }
-        } catch (error) {
-            console.error("Failed to initialize configuration directories:", error);
-            throw error;
-        }
+            await AveAzul.resolve(directories)
+                .filter(async (dir) => !(await fileExists(dir)))
+                .map((dir) => mkdir(dir, { recursive: true }))
+                .tap((createdDirs) => {
+                    if (createdDirs.length > 0) {
+                        console.log(`📁 Created configuration directories`);
+                    }
+                });
+        })
+            .catch((error) => {
+                console.error("❌ Failed to initialize configuration directories:", error);
+                throw error;
+            });
     }
 
     /**
@@ -136,12 +158,12 @@ export class ConfigManager {
 
             // Check if index file exists
             const indexPath = path.join(this.configDir, "index.json");
-            if (!fs.existsSync(indexPath)) {
+            if (!(await fileExists(indexPath))) {
                 return null;
             }
 
             // Read the index file
-            const indexContent = await fsPromises.readFile(indexPath, "utf-8");
+            const indexContent = await readFile(indexPath, "utf-8");
             const index = JSON.parse(indexContent);
 
             // Find the config ID for this directory
@@ -174,12 +196,12 @@ export class ConfigManager {
 
         const configPath = path.join(this.appsConfigDir, `${configId}.json`);
 
-        if (!fs.existsSync(configPath)) {
+        if (!(await fileExists(configPath))) {
             return null;
         }
 
         try {
-            const configContent = await fsPromises.readFile(configPath, "utf-8");
+            const configContent = await readFile(configPath, "utf-8");
             return JSON.parse(configContent);
         } catch (error) {
             console.error(`Failed to read config file ${configPath}:`, error);
@@ -267,14 +289,14 @@ export class ConfigManager {
 
             // Save the config file
             const configPath = path.join(this.appsConfigDir, `${configId}.json`);
-            await fsPromises.writeFile(configPath, JSON.stringify(config, null, 2));
+            await writeFile(configPath, JSON.stringify(config, null, 2));
 
             // Update the index file
             const indexPath = path.join(this.configDir, "index.json");
             let index = {};
 
-            if (fs.existsSync(indexPath)) {
-                const indexContent = await fsPromises.readFile(indexPath, "utf-8");
+            if (await fileExists(indexPath)) {
+                const indexContent = await readFile(indexPath, "utf-8");
                 index = JSON.parse(indexContent);
             }
 
@@ -282,7 +304,7 @@ export class ConfigManager {
             index[absAppDir] = configId;
 
             // Save the index
-            await fsPromises.writeFile(indexPath, JSON.stringify(index, null, 2));
+            await writeFile(indexPath, JSON.stringify(index, null, 2));
 
             console.log(`Configuration saved for ${config.name}`);
         } catch (error) {
@@ -297,17 +319,17 @@ export class ConfigManager {
     async extractConfigFromApp(appDir: string): Promise<FynAppConfig | null> {
         try {
             // Check if the app exists
-            if (!fs.existsSync(appDir)) {
+            if (!(await fileExists(appDir))) {
                 throw new Error(`App directory ${appDir} does not exist`);
             }
 
             // Read package.json
             const packageJsonPath = path.join(appDir, "package.json");
-            if (!fs.existsSync(packageJsonPath)) {
+            if (!(await fileExists(packageJsonPath))) {
                 throw new Error(`package.json not found in ${appDir}`);
             }
 
-            const packageJson = JSON.parse(await fsPromises.readFile(packageJsonPath, "utf-8"));
+            const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8"));
 
             // Read rollup.config.mjs to extract federation config
             const rollupConfigPath = path.join(appDir, "rollup.config.mjs");
@@ -318,10 +340,10 @@ export class ConfigManager {
                 sharedDependencies: {}
             };
 
-            if (fs.existsSync(rollupConfigPath)) {
+            if (await fileExists(rollupConfigPath)) {
                 // We'll use a simplified approach to extract info from the rollup config
                 // In a real implementation, you might want to use a more robust parser
-                const rollupContent = await fsPromises.readFile(rollupConfigPath, "utf-8");
+                const rollupContent = await readFile(rollupConfigPath, "utf-8");
 
                 // Extract federation name
                 const nameMatch = rollupContent.match(/name:\s*["']([^"']+)["']/);

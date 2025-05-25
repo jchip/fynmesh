@@ -1,12 +1,26 @@
 import fs from "fs";
+import { promises as fsPromises } from "fs";
 import path from "path";
-import { promisify } from "util";
+import AveAzul from "aveazul";
 import { AppConfig } from "./prompts";
 
-const readFile = promisify(fs.readFile);
-const writeFile = promisify(fs.writeFile);
-const mkdir = promisify(fs.mkdir);
-const copyFile = promisify(fs.copyFile);
+// Use fs.promises directly - cleaner than promisifying
+const readFile = fsPromises.readFile;
+const writeFile = fsPromises.writeFile;
+const mkdir = fsPromises.mkdir;
+const copyFile = fsPromises.copyFile;
+
+/**
+ * Async helper to check if a file exists
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await fsPromises.access(filePath);
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 interface GeneratorConfig extends AppConfig {
     targetDir: string;
@@ -21,7 +35,7 @@ export async function generateApp(config: GeneratorConfig): Promise<void> {
 
     // Create src directory
     const srcDir = path.join(config.targetDir, "src");
-    if (!fs.existsSync(srcDir)) {
+    if (!(await fileExists(srcDir))) {
         await mkdir(srcDir, { recursive: true });
     }
 
@@ -29,7 +43,7 @@ export async function generateApp(config: GeneratorConfig): Promise<void> {
     const templateDir = path.join(__dirname, "..", "templates", config.framework);
 
     // Check if templates exist for the selected framework
-    if (!fs.existsSync(templateDir)) {
+    if (!(await fileExists(templateDir))) {
         throw new Error(`No templates found for framework: ${config.framework}`);
     }
 
@@ -41,17 +55,20 @@ export async function generateApp(config: GeneratorConfig): Promise<void> {
  * Processes template files and generates app files
  */
 async function processTemplates(templateDir: string, config: GeneratorConfig): Promise<void> {
-    // Create package.json
-    await createPackageJson(templateDir, config);
+    // Use AveAzul's mapSeries to process templates sequentially with better error handling
+    const templateTasks = [
+        () => createPackageJson(templateDir, config),
+        () => createRollupConfig(templateDir, config),
+        () => createTsConfig(templateDir, config),
+        () => createSourceFiles(templateDir, config)
+    ];
 
-    // Create rollup.config.mjs
-    await createRollupConfig(templateDir, config);
-
-    // Create tsconfig.json if needed
-    await createTsConfig(templateDir, config);
-
-    // Create source files
-    await createSourceFiles(templateDir, config);
+    await AveAzul.mapSeries(templateTasks, (task) => task())
+        .tap(() => console.log("✅ All templates processed successfully"))
+        .catch((error) => {
+            console.error("❌ Error processing templates:", error.message);
+            throw error;
+        });
 }
 
 /**
@@ -106,7 +123,7 @@ async function createRollupConfig(templateDir: string, config: GeneratorConfig):
 async function createTsConfig(templateDir: string, config: GeneratorConfig): Promise<void> {
     const templatePath = path.join(templateDir, "tsconfig.json.template");
 
-    if (!fs.existsSync(templatePath)) {
+    if (!(await fileExists(templatePath))) {
         return; // Skip if template doesn't exist for this framework
     }
 
@@ -129,45 +146,52 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
     const srcTemplateDir = path.join(templateDir, "src");
     const targetSrcDir = path.join(config.targetDir, "src");
 
-    if (!fs.existsSync(srcTemplateDir)) {
+    if (!(await fileExists(srcTemplateDir))) {
         throw new Error(`Source templates not found for framework: ${config.framework}`);
     }
 
     // Make sure target src directory exists
-    if (!fs.existsSync(targetSrcDir)) {
+    if (!(await fileExists(targetSrcDir))) {
         await mkdir(targetSrcDir, { recursive: true });
     }
 
     // Read the src template directory
     const files = fs.readdirSync(srcTemplateDir);
 
-    for (const file of files) {
-        const srcFilePath = path.join(srcTemplateDir, file);
-        const targetFilePath = path.join(targetSrcDir, file.replace(".template", ""));
+    // Use AveAzul's map for parallel file processing with better error handling
+    await AveAzul.resolve(files)
+        .map(async (file) => {
+            const srcFilePath = path.join(srcTemplateDir, file);
+            const targetFilePath = path.join(targetSrcDir, file.replace(".template", ""));
 
-        // If it's a template file, process it
-        if (file.endsWith(".template")) {
-            let content = await readFile(srcFilePath, "utf-8");
+            // If it's a template file, process it
+            if (file.endsWith(".template")) {
+                let content = await readFile(srcFilePath, "utf-8");
 
-            // Replace template variables
-            content = content
-                .replace(/\{\{appName\}\}/g, config.name)
-                .replace(/\{\{framework\}\}/g, config.framework);
+                // Replace template variables
+                content = content
+                    .replace(/\{\{appName\}\}/g, config.name)
+                    .replace(/\{\{framework\}\}/g, config.framework);
 
-            // Handle component inclusion based on selected components
-            if (content.includes("{{#if counter}}") && config.components) {
-                content = processComponentInclusion(content, config.components);
+                // Handle component inclusion based on selected components
+                if (content.includes("{{#if counter}}") && config.components) {
+                    content = processComponentInclusion(content, config.components);
+                }
+
+                // Write the processed file
+                await writeFile(targetFilePath.replace(".template", ""), content);
+                return `✅ Created ${targetFilePath.replace(".template", "").split("/").pop()}`;
+            } else {
+                // If it's not a template file, just copy it
+                await copyFile(srcFilePath, targetFilePath);
+                return `✅ Created ${targetFilePath.split("/").pop()}`;
             }
-
-            // Write the processed file
-            await writeFile(targetFilePath.replace(".template", ""), content);
-            console.log(`✅ Created ${targetFilePath.replace(".template", "").split("/").pop()}`);
-        } else {
-            // If it's not a template file, just copy it
-            await copyFile(srcFilePath, targetFilePath);
-            console.log(`✅ Created ${targetFilePath.split("/").pop()}`);
-        }
-    }
+        })
+        .each((message) => console.log(message))
+        .catch((error) => {
+            console.error("❌ Error creating source files:", error.message);
+            throw error;
+        });
 }
 
 /**
