@@ -1,13 +1,12 @@
 import { FynMeshKernel, FynApp } from '@fynmesh/kernel';
 import React from "react";
-// @ts-ignore
-import ReactDom from "esm-react-dom";
-// @ts-ignore
+import { version as ReactDomVersion } from "react-dom";
+import ReactDomClient from "react-dom/client";
 import App from './App';
 import { preloadComponents } from './components';
 
 export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
-    console.log(`Bootstrapping ${fynApp.name}...`, React, ReactDom, "versions", React.version, ReactDom.version);
+    console.log(`Bootstrapping ${fynApp.name}...`, React, ReactDomClient, "versions", React.version, ReactDomVersion);
 
     try {
         // Preload components from fynapp-x1 before rendering
@@ -24,7 +23,7 @@ export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
         }
 
         // Render the React component with preloaded components
-        ReactDom.createRoot(targetDiv).render(
+        ReactDomClient.createRoot(targetDiv).render(
             React.createElement(App, {
                 appName: fynApp.name,
                 components: components

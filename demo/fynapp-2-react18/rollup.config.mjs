@@ -48,11 +48,11 @@ export default [
         },
       }),
       alias({
-        entries: {
-          react: "esm-react",
-          "react-dom": "esm-react-dom",
-          "react-dom/client": "esm-react-dom",
-        },
+        entries: [
+          { find: "react", replacement: "esm-react" },
+          { find: "react-dom/client", replacement: "esm-react-dom" },
+          { find: "react-dom", replacement: "esm-react-dom" },
+        ],
       }),
       typescript({
         tsconfig: "./tsconfig.json",

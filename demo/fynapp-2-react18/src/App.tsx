@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import React, { useState } from 'react';
+import React from 'react';
 import type { ComponentLibrary } from './components';
 
 interface AppProps {
@@ -8,19 +6,19 @@ interface AppProps {
     components: ComponentLibrary;
 }
 
-const App: React.FC<AppProps> = ({ appName, components }) => {
-    const [showEffect, setShowEffect] = useState(false);
-    const [clickCount, setClickCount] = useState(0);
-    const [showModal, setShowModal] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [count, setCount] = useState(0);
+const App: React.FC<AppProps> = ({ appName, components }: AppProps) => {
+    const [showEffect, setShowEffect] = React.useState<boolean>(false);
+    const [clickCount, setClickCount] = React.useState<number>(0);
+    const [showModal, setShowModal] = React.useState<boolean>(false);
+    const [inputValue, setInputValue] = React.useState<string>('');
+    const [count, setCount] = React.useState<number>(0);
 
     // Destructure the components
     const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
 
     const handleButtonClick = () => {
         setShowEffect(true);
-        setClickCount(prev => prev + 1);
+        setClickCount((prev: number) => prev + 1);
         setCount(count + 1); // Update the counter immediately for simplicity
         setTimeout(() => setShowEffect(false), 1000);
     };
@@ -99,7 +97,7 @@ const App: React.FC<AppProps> = ({ appName, components }) => {
                     <Input
                         label="Example Input"
                         value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
                         placeholder="Type something..."
                         helperText="This is a helper text"
                     />
