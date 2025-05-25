@@ -10,7 +10,8 @@
   "homepage": "",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc --skipLibCheck",
+    "jest-test": "jest test/spec/config-ast.test.ts",
+    "build": "rm -rf dist && tsc --skipLibCheck",
     "start": "node dist/index.js",
     "test": "xrun xarc/test-only",
     "prepublishOnly": "xrun --serial [[build, docs], xarc/check]",
@@ -42,6 +43,7 @@
     "@xarc/module-dev": "^5.0.0",
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
+    "recast": "^0.23.11",
     "source-map-support": "^0.5.21",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
@@ -60,15 +62,21 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",
-    "tslib": "^2.6.2"
+    "tslib": "^2.6.2",
+    "recast": "^0.23.4",
+    "ast-types": "^0.16.1"
   },
   "prettier": {
     "printWidth": 100
   },
   "jest": {
+    "testMatch": [
+      "**/test/**/*.test.ts"
+    ],
     "transform": {
       "^.+\\.(ts|tsx)$": "ts-jest"
-    }
+    },
+    "testEnvironment": "node"
   },
   "@xarc/module-dev": {
     "features": [

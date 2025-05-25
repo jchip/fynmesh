@@ -83,6 +83,29 @@ Options:
 - `--key, -k`: Configuration key (for set action)
 - `--value, -v`: Configuration value (for set action)
 
+## Development & Testing
+
+### Running Tests
+
+```bash
+# Run Jest test suite
+fyn jest-test
+
+# Run manual AST config manager test
+node test-utils/test-ast.js
+```
+
+### Test Utils
+
+The `test-utils/` directory contains manual testing scripts and utilities:
+
+- **`test-ast.js`** - Manual test for AST-based configuration management
+- **`README.md`** - Documentation for test utilities
+
+### AST Config Manager
+
+The project includes an AST-based configuration management system for programmatically modifying rollup federation configs while preserving formatting and comments.
+
 ## Configuration
 
 FynApp configurations are stored in `~/.fynmesh/fynapps/` for persistent management across sessions.
