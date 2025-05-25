@@ -54,8 +54,8 @@ export default [
       alias({
         entries: {
           react: "esm-react",
-          "react-dom": "esm-react-dom",
           "react-dom/client": "esm-react-dom",
+          "react-dom": "esm-react-dom",
         },
       }),
       typescript({
