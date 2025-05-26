@@ -1,7 +1,7 @@
-import { browserKernel } from "./browser-kernel";
+import { nodeKernel } from "./node-kernel";
 
-// Export the browser kernel instance
-export const fynMeshKernel = browserKernel;
+// Export the Node.js kernel instance
+export const fynMeshKernel = nodeKernel;
 
 // Re-export types
 export type {
@@ -15,5 +15,5 @@ export type { MiddlewareUsage } from "./use-middleware";
 export { useMiddleware } from "./use-middleware";
 
 // Re-export kernel classes and creators
-export { BrowserKernel, createBrowserKernel } from "./browser-kernel";
+export { NodeKernel, createNodeKernel } from "./node-kernel";
 export { FynMeshKernelCore } from "./kernel-core";

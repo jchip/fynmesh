@@ -1,6 +1,6 @@
-# FynMesh - Web Application Framework with Module Federation & Micro Frontends
+# FynMesh - Large Enterprise scale Web Application Framework with Module Federation & Micro Frontends
 
-FynMesh is a web application framework that provides advanced module federation and micro-frontend capabilities using Rollup to enable seamless sharing of code between independently deployed applications.
+FynMesh is a large enterprise scale web application framework that provides advanced module federation and micro-frontend capabilities using Rollup to enable seamless sharing of code between independently deployed applications.
 
 ## Overview
 

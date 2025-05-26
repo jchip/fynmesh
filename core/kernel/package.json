@@ -7,14 +7,28 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/main.js",
-      "require": "./dist/main.cjs",
-      "browser": "./dist/browser.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "browser": "./dist/browser.js",
+      "node": "./dist/node.js"
     },
-    "./core": "./dist~es2x~esm~/core.js",
-    "./package.json": "./package.json",
-    "./cjs": "./dist~es2x~cjs~/main.js"
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.js"
+    },
+    "./core": {
+      "types": "./dist/kernel-core.d.ts",
+      "import": "./dist/kernel-core.js",
+      "require": "./dist/kernel-core.js"
+    },
+    "./package.json": "./package.json"
   },
   "description": "FynMesh Kernel",
   "homepage": "",

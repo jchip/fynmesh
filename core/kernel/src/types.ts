@@ -1,4 +1,6 @@
-export type Module = Record<any, any>;
+// Import and re-export FederationEntry from federation-js
+import type { FederationEntry } from 'federation-js';
+export type { FederationEntry };
 
 // Declare the global fynMeshKernel
 declare global {
@@ -22,23 +24,6 @@ export type FynAppEventTarget = EventTarget & {
 };
 
 /**
- * Interface representing a Module Federation remote container
- */
-export interface MFRemoteContainer {
-  /**
-   * Initialize the container with a share scope
-   * @param shareScope The share scope containing shared modules
-   */
-  init(shareScope: any): void | Promise<void>;
-
-  /**
-   * Get a module from the container
-   * @param moduleName The name of the module to get
-   */
-  get(moduleName: string): Promise<any>;
-}
-
-/**
  * Configuration for the FynMesh kernel
  */
 export type KernelConfig = {
@@ -51,64 +36,6 @@ export type KernelConfig = {
    */
   debug?: boolean;
 };
-
-/**
- * Manifest for a fynapp
- */
-export type FynappManifest = {
-  /**
-   * Name of the fynapp
-   */
-  name: string;
-  /**
-   * Version of the fynapp
-   */
-  version: string;
-  /**
-   * Entry point file for the fynapp
-   */
-  entry: string;
-  /**
-   * Modules exposed by the fynapp
-   */
-  exposes?: Record<string, string>;
-  /**
-   * Shared dependencies
-   */
-  shared?: Record<string, any>;
-};
-
-/**
- * Container for a fynapp
- */
-export interface FynappContainer {
-  /**
-   * Initialize the container with a share scope
-   */
-  init(shareScope: any): Promise<void>;
-  /**
-   * Get a module from the container
-   */
-  get(moduleName: string): Promise<any>;
-}
-
-/**
- * Registry for fynapps
- */
-export interface FynappRegistry {
-  /**
-   * Register a container
-   */
-  register(name: string, container: FynappContainer): void;
-  /**
-   * Get a container by name
-   */
-  get(name: string): FynappContainer | undefined;
-  /**
-   * Check if a container exists
-   */
-  has(name: string): boolean;
-}
 
 /**
  *
@@ -133,6 +60,8 @@ export type FynAppInfo = {
   exposes?: Record<string, string>;
   /** middlewares that the fynapp implemented */
   middlewares?: Record<string, FynAppMiddleware>;
+  /** Federation entry module (for new bootstrap system) */
+  entry?: FederationEntry;
 };
 
 export type MiddlewareUsage = {
@@ -147,8 +76,8 @@ export type MiddlewareUsage = {
  * object that contains implementations of a fynapp
  */
 export type FynApp = FynAppInfo & {
-  mainModule?: Module;
-  configModule?: Module;
+  mainModule?: any;
+  configModule?: any;
   /** Set to true to tell the kernel to skip applying middlewares */
   skipApplyMiddlewares?: boolean;
 };
@@ -200,12 +129,6 @@ export type FynAppMiddlewareMeta = {
  * Run time data for FynMesh fynApp core loader
  */
 export type FynMeshRuntimeData = {
-  /** cache to save remote modules that have been loaded */
-  remoteModuleCache: Record<string, unknown>;
-  /** store inflight promises for loading remote modules */
-  inflightRemote: Record<string, unknown>;
-  /** a fynapp should add its info to this array when it's first fetched for initializing */
-  appsLoading: FynAppInfo[];
   /** FynApps that have been loaded and initialized */
   appsLoaded: Record<string, FynApp>;
   /**
@@ -234,22 +157,7 @@ export interface FynMeshKernel {
   /** federation module share scope name */
   shareScopeName: string;
 
-  /**
-   * Get the remote module federation container
-   *
-   * @remark Core doesn't implement this because it requires global (window) to
-   *   hold the container.
-   */
-  getRemoteContainer(name: string): MFRemoteContainer;
 
-  /**
-   * Queue a fynapp for loading.
-   *
-   * - When a fynapp JS files is loaded, it should have code that automatically queue its info
-   * for loading
-   * @param info
-   */
-  queueFynAppLoading(info: FynAppInfo): void;
 
   /**
    * Clean up a container name to ensure it's a valid identifier
@@ -269,9 +177,11 @@ export interface FynMeshKernel {
   loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
 
   /**
-   * bootstrap fynapps by importing their bootstrap module
+   * Bootstrap fynapps - handles both federation entries and legacy app info
+   * For federation entries: init → config → middlewares → main
+   * For legacy apps: import main module → load middlewares → apply middlewares
    *
-   * @param fynAppInfo - array of fynapps info
+   * @param fynAppInfo - array of fynapps info to bootstrap
    */
   bootstrapFynApp(fynAppInfo: FynAppInfo[]): Promise<void>;
 
@@ -281,5 +191,7 @@ export interface FynMeshKernel {
    * @param fynApp
    */
   applyMiddlewares(fynApp: FynApp): Promise<void>;
+
+
 }
 
