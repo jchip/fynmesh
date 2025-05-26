@@ -1,9 +1,16 @@
 const { startDevProxy } = require("./proxy");
 const Path = require("node:path");
 
+// Determine which federation-js file to serve based on NODE_ENV
+const isProduction = process.env.NODE_ENV === 'production';
+const federationJsPath = isProduction
+  ? Path.join(__dirname, "../node_modules/federation-js/dist/federation-js.min.js")
+  : Path.join(__dirname, "../node_modules/federation-js/dist/federation-js.js");
+
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
+  [{ path: "/federation-js/dist/federation-js.js" }, { protocol: "file", path: federationJsPath }],
   [{ path: "/federation-js" }, { protocol: "file", path: Path.join(__dirname, "../node_modules/federation-js") }],
   [{ path: "/core/kernel" }, { protocol: "file", path: Path.join(__dirname, "../../../core/kernel") }],
   [{ path: "/fynapp-1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-1") }],
@@ -17,6 +24,5 @@ startDevProxy([
   [{ path: "/fynapp-7-solid" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-7-solid") }],
   [{ path: "/fynapp-x1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-x1") }],
   [{ path: "/fynapp-x1-v2" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-x1-v2") }],
-
 ]);
 
