@@ -24,6 +24,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^20.8.9",
     "@vitejs/plugin-vue": "^5.0.0",
+    "create-fynapp": "^1.0.0",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",

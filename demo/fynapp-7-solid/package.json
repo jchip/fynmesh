@@ -26,6 +26,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^20.8.9",
     "babel-preset-solid": "^1.8.11",
+    "create-fynapp": "^1.0.0",
     "postcss": "^8.5.3",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",

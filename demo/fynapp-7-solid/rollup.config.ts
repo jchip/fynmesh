@@ -8,6 +8,7 @@ import postcss from "rollup-plugin-postcss";
 import json from "@rollup/plugin-json";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -47,17 +48,8 @@ export default [
       }),
       babel({
         babelHelpers: "bundled",
-        presets: ["@babel/preset-env"],
-        plugins: [
-          [
-            "@babel/plugin-transform-react-jsx",
-            {
-              pragma: "h",
-              pragmaFrag: "Fragment",
-            },
-          ],
-        ],
         extensions: [".js", ".jsx", ".ts", ".tsx"],
+        presets: [["@babel/preset-env", { targets: "defaults" }], "babel-preset-solid"],
       }),
       postcss(),
       resolve({
@@ -68,7 +60,7 @@ export default [
       commonjs({ transformMixedEsModules: true }),
       json(),
       federation({
-        name: "fynapp-5-preact",
+        name: "fynapp-7-solid",
         shareScope: fynmeshShareScope,
         // this filename must be in the input config array
         filename: fynappEntryFilename,
@@ -76,18 +68,16 @@ export default [
           "./main": "./src/main.js",
         },
         shared: {
-          preact: {
+          "solid-js": {
             singleton: true,
-            requiredVersion: "^10.18.1",
+            requiredVersion: "^1.8.15",
           },
         },
       }),
       alias({
-        entries: [
-          // Ensure we use Preact in its native form without React compatibility
-          { find: "react", replacement: "preact/hooks" },
-          { find: "react-dom", replacement: "preact" },
-        ],
+        entries: {
+          // If needed for aliasing
+        },
       }),
       isProduction ? terser() : null,
     ].filter(Boolean),

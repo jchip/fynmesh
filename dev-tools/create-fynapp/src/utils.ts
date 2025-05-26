@@ -10,7 +10,7 @@ import AveAzul from "aveazul";
 /**
  * Async helper to check if a file exists
  */
-async function fileExists(filePath: string): Promise<boolean> {
+export async function fileExists(filePath: string): Promise<boolean> {
     try {
         await fsPromises.access(filePath);
         return true;

@@ -1,10 +1,13 @@
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import commonjs from "@rollup/plugin-commonjs";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
+import markoPlugin from "@marko/rollup";
+import json from "@rollup/plugin-json";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -35,57 +38,42 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ["esm-react", "esm-react-dom"],
     plugins: [
-      virtual({
+      newRollupPlugin(virtual)({
         [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
       }),
-      noEmit({
+      newRollupPlugin(noEmit)({
         match: (fileName) => fileName.includes(fynappDummyEntryName),
       }),
-      resolve({
+      newRollupPlugin(markoPlugin.browser)(),
+      newRollupPlugin(resolve)({
+        browser: true,
         exportConditions: [env],
+        extensions: [".js", ".marko"],
       }),
-      // commonjs({ transformMixedEsModules: true }),
-      federation({
-        name: "fynapp-1",
+      newRollupPlugin(commonjs)({ transformMixedEsModules: true, extensions: [".js", ".marko"] }),
+      newRollupPlugin(json)(),
+      newRollupPlugin(federation)({
+        name: "fynapp-3-marko",
         shareScope: fynmeshShareScope,
         // this filename must be in the input config array
         filename: fynappEntryFilename,
         exposes: {
-          "./hello": "./src/hello.ts",
-          "./getInfo": "./src/getInfo.ts",
-          "./main": "./src/main.ts",
-          "./config": "./src/config.ts",
-          "./App": "./src/App.tsx",
+          "./main": "./src/main.js",
         },
         shared: {
-          "esm-react": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
-          },
-          "esm-react-dom": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
+          marko: {
+            singleton: true,
+            requiredVersion: "^5.37.31",
           },
         },
-        debugging: true,
       }),
-      alias({
-        entries: [
-          { find: "react", replacement: "esm-react" },
-          { find: "react-dom/client", replacement: "esm-react-dom" },
-          { find: "react-dom", replacement: "esm-react-dom" },
-        ],
+      newRollupPlugin(alias)({
+        entries: {
+          // If needed for aliasing
+        },
       }),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-        inlineSources: true,
-      }),
-      isProduction ? terser() : null,
+      isProduction ? newRollupPlugin(terser)() : null,
     ].filter(Boolean),
   },
 ];

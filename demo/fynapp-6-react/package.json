@@ -24,6 +24,7 @@
     "@types/node": "^20.8.9",
     "@types/react": "^19.1.5",
     "@types/react-dom": "^19.1.5",
+    "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
     "postcss": "^8.5.3",

@@ -1,11 +1,14 @@
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import commonjs from "@rollup/plugin-commonjs";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
+import babel from "@rollup/plugin-babel";
 import postcss from "rollup-plugin-postcss";
+import json from "@rollup/plugin-json";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -36,53 +39,58 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ["esm-react", "esm-react-dom"],
     plugins: [
-      virtual({
+      newRollupPlugin(virtual)({
         [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
       }),
-      noEmit({
+      newRollupPlugin(noEmit)({
         match: (fileName) => fileName.includes(fynappDummyEntryName),
       }),
-      resolve({
-        exportConditions: [env],
+      newRollupPlugin(babel)({
+        babelHelpers: "bundled",
+        presets: ["@babel/preset-env"],
+        plugins: [
+          [
+            "@babel/plugin-transform-react-jsx",
+            {
+              pragma: "h",
+              pragmaFrag: "Fragment",
+            },
+          ],
+        ],
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
       }),
-      // commonjs({ transformMixedEsModules: true }),
-      postcss(),
-      federation({
-        name: "fynapp-6-react",
+      newRollupPlugin(postcss)(),
+      newRollupPlugin(resolve)({
+        browser: true,
+        exportConditions: [env],
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
+      }),
+      newRollupPlugin(commonjs)({ transformMixedEsModules: true }),
+      newRollupPlugin(json)(),
+      newRollupPlugin(federation)({
+        name: "fynapp-5-preact",
         shareScope: fynmeshShareScope,
         // this filename must be in the input config array
         filename: fynappEntryFilename,
         exposes: {
-          "./main": "./src/main.ts",
+          "./main": "./src/main.js",
         },
         shared: {
-          "esm-react": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
-          },
-          "esm-react-dom": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
+          preact: {
+            singleton: true,
+            requiredVersion: "^10.18.1",
           },
         },
       }),
-      alias({
-        entries: {
-          react: "esm-react",
-          "react-dom/client": "esm-react-dom",
-          "react-dom": "esm-react-dom",
-        },
+      newRollupPlugin(alias)({
+        entries: [
+          // Ensure we use Preact in its native form without React compatibility
+          { find: "react", replacement: "preact/hooks" },
+          { find: "react-dom", replacement: "preact" },
+        ],
       }),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-        inlineSources: true,
-      }),
-      isProduction ? terser() : null,
+      isProduction ? newRollupPlugin(terser)() : null,
     ].filter(Boolean),
   },
 ];

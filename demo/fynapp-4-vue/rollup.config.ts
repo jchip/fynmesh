@@ -3,10 +3,13 @@ import commonjs from "@rollup/plugin-commonjs";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
-import markoPlugin from "@marko/rollup";
+import replace from "@rollup/plugin-replace";
+import vue from "rollup-plugin-vue";
+import postcss from "rollup-plugin-postcss";
 import json from "@rollup/plugin-json";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -38,22 +41,35 @@ export default [
       },
     ],
     plugins: [
-      virtual({
+      newRollupPlugin(virtual)({
         [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
       }),
-      noEmit({
+      newRollupPlugin(noEmit)({
         match: (fileName) => fileName.includes(fynappDummyEntryName),
       }),
-      markoPlugin.browser(),
-      resolve({
+      newRollupPlugin(vue)({
+        css: false, // Handled by postcss plugin
+        template: {
+          isProduction,
+        },
+      }),
+      newRollupPlugin(postcss)(),
+      newRollupPlugin(replace)({
+        preventAssignment: true,
+        "process.env.NODE_ENV": JSON.stringify(env),
+        __VUE_OPTIONS_API__: true,
+        __VUE_PROD_DEVTOOLS__: !isProduction,
+        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+      }),
+      newRollupPlugin(resolve)({
         browser: true,
         exportConditions: [env],
-        extensions: [".js", ".marko"],
+        extensions: [".js", ".vue", ".ts"],
       }),
-      commonjs({ transformMixedEsModules: true, extensions: [".js", ".marko"] }),
-      json(),
-      federation({
-        name: "fynapp-3-marko",
+      newRollupPlugin(commonjs)({ transformMixedEsModules: true }),
+      newRollupPlugin(json)(),
+      newRollupPlugin(federation)({
+        name: "fynapp-4-vue",
         shareScope: fynmeshShareScope,
         // this filename must be in the input config array
         filename: fynappEntryFilename,
@@ -61,18 +77,18 @@ export default [
           "./main": "./src/main.js",
         },
         shared: {
-          marko: {
+          vue: {
             singleton: true,
-            requiredVersion: "^5.37.31",
+            requiredVersion: "^3.3.4",
           },
         },
       }),
-      alias({
+      newRollupPlugin(alias)({
         entries: {
           // If needed for aliasing
         },
       }),
-      isProduction ? terser() : null,
+      isProduction ? newRollupPlugin(terser)() : null,
     ].filter(Boolean),
   },
 ];

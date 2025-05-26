@@ -1,14 +1,11 @@
 import resolve from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
 import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
-import replace from "@rollup/plugin-replace";
-import vue from "rollup-plugin-vue";
-import postcss from "rollup-plugin-postcss";
-import json from "@rollup/plugin-json";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -39,55 +36,58 @@ export default [
         sourcemap: true,
       },
     ],
+    external: ["esm-react", "esm-react-dom"],
     plugins: [
-      virtual({
+      newRollupPlugin(virtual)({
         [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
       }),
-      noEmit({
+      newRollupPlugin(noEmit)({
         match: (fileName) => fileName.includes(fynappDummyEntryName),
       }),
-      vue({
-        css: false, // Handled by postcss plugin
-        template: {
-          isProduction,
-        },
-      }),
-      postcss(),
-      replace({
-        preventAssignment: true,
-        "process.env.NODE_ENV": JSON.stringify(env),
-        __VUE_OPTIONS_API__: true,
-        __VUE_PROD_DEVTOOLS__: !isProduction,
-        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
-      }),
-      resolve({
-        browser: true,
+      newRollupPlugin(resolve)({
         exportConditions: [env],
-        extensions: [".js", ".vue", ".ts"],
       }),
-      commonjs({ transformMixedEsModules: true }),
-      json(),
-      federation({
-        name: "fynapp-4-vue",
+      // commonjs({ transformMixedEsModules: true }),
+      newRollupPlugin(federation)({
+        name: "fynapp-1",
         shareScope: fynmeshShareScope,
         // this filename must be in the input config array
         filename: fynappEntryFilename,
         exposes: {
-          "./main": "./src/main.js",
+          "./hello": "./src/hello.ts",
+          "./getInfo": "./src/getInfo.ts",
+          "./main": "./src/main.ts",
+          "./config": "./src/config.ts",
+          "./App": "./src/App.tsx",
         },
         shared: {
-          vue: {
-            singleton: true,
-            requiredVersion: "^3.3.4",
+          "esm-react": {
+            import: false,
+            singleton: false,
+            requiredVersion: "^19.0.0",
+          },
+          "esm-react-dom": {
+            import: false,
+            singleton: false,
+            requiredVersion: "^19.0.0",
           },
         },
+        debugging: true,
       }),
-      alias({
-        entries: {
-          // If needed for aliasing
-        },
+      newRollupPlugin(alias)({
+        entries: [
+          { find: "react", replacement: "esm-react" },
+          { find: "react-dom/client", replacement: "esm-react-dom" },
+          { find: "react-dom", replacement: "esm-react-dom" },
+        ],
       }),
-      isProduction ? terser() : null,
-    ].filter(Boolean),
+      newRollupPlugin(typescript)({
+        tsconfig: "./tsconfig.json",
+        sourceMap: true,
+        inlineSources: true,
+      }),
+      isProduction ? newRollupPlugin(terser)() : null,
+    ],
   },
 ];
+

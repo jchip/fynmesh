@@ -1,7 +1,7 @@
 import fs from 'fs';
-// import recast from 'recast';
-const recast = require('recast');
+import * as recast from 'recast';
 import { builders as b } from 'ast-types';
+import path from 'path';
 
 export interface FynAppConfigOptions {
     appName: string;
@@ -45,13 +45,13 @@ export class RollupConfigManager {
         const allExternals = [...externals, ...frameworkConfig.externals];
 
         // Detect main entry file
-        const srcDir = require('path').join(projectDir, 'src');
+        const srcDir = path.join(projectDir, 'src');
         let mainEntry = 'src/main.ts'; // default fallback
 
         if (fs.existsSync(srcDir)) {
             const mainFiles = ['main.tsx', 'main.ts', 'index.tsx', 'index.ts'];
             for (const mainFile of mainFiles) {
-                if (fs.existsSync(require('path').join(srcDir, mainFile))) {
+                if (fs.existsSync(path.join(srcDir, mainFile))) {
                     mainEntry = `src/${mainFile}`;
                     break;
                 }
@@ -111,7 +111,7 @@ export default [
 
     // Detect React version from package.json
     private static detectReactVersion(projectDir: string): string {
-        const packageJsonPath = require('path').join(projectDir, 'package.json');
+        const packageJsonPath = path.join(projectDir, 'package.json');
 
         if (fs.existsSync(packageJsonPath)) {
             try {
@@ -139,7 +139,7 @@ export default [
     // Auto-detect exposes from project structure
     private static detectExposes(projectDir: string, framework: string): Record<string, string> {
         const exposes: Record<string, string> = {};
-        const srcDir = require('path').join(projectDir, 'src');
+        const srcDir = path.join(projectDir, 'src');
 
         if (!fs.existsSync(srcDir)) {
             return exposes;
@@ -149,7 +149,7 @@ export default [
             // Always expose main entry point
             const mainFiles = ['main.ts', 'main.tsx', 'index.ts', 'index.tsx'];
             for (const mainFile of mainFiles) {
-                if (fs.existsSync(require('path').join(srcDir, mainFile))) {
+                if (fs.existsSync(path.join(srcDir, mainFile))) {
                     exposes['./main'] = `./src/${mainFile}`;
                     break;
                 }
@@ -160,7 +160,7 @@ export default [
 
             for (const [exposeName, patterns] of Object.entries(commonExposes)) {
                 for (const pattern of patterns) {
-                    const filePath = require('path').join(srcDir, pattern);
+                    const filePath = path.join(srcDir, pattern);
                     if (fs.existsSync(filePath)) {
                         exposes[exposeName] = `./src/${pattern}`;
                         break;
@@ -169,11 +169,11 @@ export default [
             }
 
             // Look for components directory
-            const componentsDir = require('path').join(srcDir, 'components');
+            const componentsDir = path.join(srcDir, 'components');
             if (fs.existsSync(componentsDir)) {
                 const indexFiles = ['index.ts', 'index.tsx', 'index.js'];
                 for (const indexFile of indexFiles) {
-                    if (fs.existsSync(require('path').join(componentsDir, indexFile))) {
+                    if (fs.existsSync(path.join(componentsDir, indexFile))) {
                         exposes['./components'] = `./src/components/${indexFile}`;
                         break;
                     }
@@ -181,11 +181,11 @@ export default [
             }
 
             // Look for utils directory
-            const utilsDir = require('path').join(srcDir, 'utils');
+            const utilsDir = path.join(srcDir, 'utils');
             if (fs.existsSync(utilsDir)) {
                 const indexFiles = ['index.ts', 'index.tsx', 'index.js'];
                 for (const indexFile of indexFiles) {
-                    if (fs.existsSync(require('path').join(utilsDir, indexFile))) {
+                    if (fs.existsSync(path.join(utilsDir, indexFile))) {
                         exposes['./utils'] = `./src/utils/${indexFile}`;
                         break;
                     }
@@ -571,8 +571,8 @@ export default [
 
     // Find package.json in the same directory as rollup config
     private findPackageJson(): any {
-        const configDir = require('path').dirname(this.configPath);
-        const packageJsonPath = require('path').join(configDir, 'package.json');
+        const configDir = path.dirname(this.configPath);
+        const packageJsonPath = path.join(configDir, 'package.json');
 
         if (fs.existsSync(packageJsonPath)) {
             return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));

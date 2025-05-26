@@ -8,6 +8,7 @@ import postcss from "rollup-plugin-postcss";
 import postcssImport from "postcss-import";
 import tailwindcss from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
+import { newRollupPlugin } from "create-fynapp";
 
 const env = process.env.NODE_ENV || "development";
 const isProduction = env === "production";
@@ -28,15 +29,15 @@ export default [
     ],
     external: ["esm-react", "esm-react-dom"],
     plugins: [
-      resolve({
+      newRollupPlugin(resolve)({
         exportConditions: [env],
       }),
       // commonjs({ transformMixedEsModules: true }),
-      postcss({
+      newRollupPlugin(postcss)({
         minimize: isProduction,
         plugins: [postcssImport(), tailwindcss(), autoprefixer()],
       }),
-      federation({
+      newRollupPlugin(federation)({
         name: "fynapp-x1",
         shareScope: "fynmesh",
         filename: "fynapp-entry.js",
@@ -53,19 +54,19 @@ export default [
         },
         debugging: true,
       }),
-      typescript({
+      newRollupPlugin(typescript)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
         inlineSources: true,
       }),
-      alias({
+      newRollupPlugin(alias)({
         entries: {
           react: "esm-react",
           "react-dom": "esm-react-dom",
           "react-dom/client": "esm-react-dom",
         },
       }),
-      isProduction ? terser() : null,
+      isProduction ? newRollupPlugin(terser)() : null,
     ],
   },
 ];

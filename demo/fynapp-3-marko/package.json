@@ -23,6 +23,7 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^20.8.9",
+    "create-fynapp": "^1.0.0",
     "marko": "^5.37.31",
     "rollup": "^4.40.2",
     "rollup-plugin-dts": "^6.2.1",

@@ -4,7 +4,8 @@
     "lib": [
       "es2018"
     ],
-    "module": "CommonJS",
+    "module": "ES2022",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "importHelpers": true,
     "target": "ES2018",
@@ -22,5 +23,8 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "test/demo"
   ]
 }

@@ -2,9 +2,13 @@
   "name": "create-fynapp",
   "version": "1.0.0",
   "description": "CLI tool to create new FynApp micro frontends",
+  "type": "module",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "bin": {
-    "create-fynapp": "dist/index.js",
+    "create-fynapp": "dist/create-cli.js",
     "cfa": "dist/cfa.js"
   },
   "homepage": "",
@@ -64,6 +68,7 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "ast-types": "^0.16.1",
     "aveazul": "^1.0.1",
+    "create-fynapp": "^1.0.0",
     "inquirer": "^9.2.10",
     "nix-clap": "^2.0.0",
     "recast": "^0.23.4",
