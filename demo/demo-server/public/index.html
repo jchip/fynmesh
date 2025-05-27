@@ -239,14 +239,14 @@
             }
 
             await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
-            fynMeshKernel.loadFynApp("/fynapp-x1/dist");
-
+            await fynMeshKernel.loadFynApp("/fynapp-x1/dist");
 
             // load fynapp 2 that uses react 18
             if (features["fynapp-2-react18"]) {
                 console.log("loading remote fynapp /fynapp-2-react18/dist");
                 fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
             }
+
             // load fynapp 1 that uses react 19
             if (features["fynapp-1"]) {
                 console.log("loading remote fynapp /fynapp-1/dist");

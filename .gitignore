@@ -6,3 +6,5 @@ rollup-federation
 dist
 dist-*
 *.log
+systemjs
+
