@@ -11,7 +11,6 @@ $pkg:
   '@rollup/plugin-typescript': ^11.1.6
   ast-types: ^0.16.1
   aveazul: ^1.0.1
-  create-fynapp: ./
   inquirer: ^9.2.10
   nix-clap: ^2.0.0
   recast: ^0.23.4
@@ -1607,31 +1606,6 @@ convert-source-map:
  2.0.0:
   $: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==
   _: 'https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz'
-create-fynapp:
- _latest: 1.0.0-fynlocal_h
- _:
-  ./: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
-  top: 1
-  $: local
-  _: ./
-  dependencies:
-   '@rollup/plugin-alias': ^5.1.1
-   '@rollup/plugin-commonjs': ^25.0.7
-   '@rollup/plugin-json': ^6.1.0
-   '@rollup/plugin-node-resolve': ^15.2.3
-   '@rollup/plugin-terser': ^0.4.4
-   '@rollup/plugin-typescript': ^11.1.6
-   ast-types: ^0.16.1
-   aveazul: ^1.0.1
-   create-fynapp: ^1.0.0
-   inquirer: ^9.2.10
-   nix-clap: ^2.0.0
-   recast: ^0.23.4
-   rollup: ^4.9.1
-   rollup-plugin-dts: ^6.1.0
-   rollup-plugin-federation: ^1.0.0
-   tslib: ^2.6.2
 create-jest:
  _latest: 29.7.0
  _:

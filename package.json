@@ -25,6 +25,14 @@
     "url": ""
   },
   "dependencies": {
-    "fynpo": "^1.1.43"
+    "fynpo": "^1.1.44"
+  },
+  "devDependencies": {
+    "fyn": "^1.1.41"
+  },
+  "fyn": {
+    "dependencies": {
+      "fynpo": "../fynpo/packages/fynpo"
+    }
   }
 }

@@ -14,6 +14,7 @@ $pkg:
   '@types/node': ^20.8.9
   '@types/react': ^19.1.4
   autoprefixer: ^10.4.16
+  aveazul: ^1.0.1
   create-fynapp: ../../dev-tools/create-fynapp
   esm-react: ../../misc/esm-react-19
   postcss: ^8.5.3
@@ -424,12 +425,13 @@ autoprefixer:
   peerDependencies:
    postcss: ^8.1.0
 aveazul:
- _latest: 1.0.1
+ _latest: 1.0.2
  _:
-  ^1.0.1: 1.0.1
- 1.0.1:
-  $: sha512-rvjmoi1Nv8V9Pvfe0TF/JrJM9q0tqcQCnRHmoIeyPrmPuLTJtd0hfR6wVxXBV45EuZFI96M7R5uUMACqepEF5Q==
-  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.1.tgz'
+  ^1.0.1: 1.0.2
+ 1.0.2:
+  top: 1
+  $: sha512-AxNC1s5Nv++jqk9qpyD6RojhoUrr5anfYWKIlUXVreXT3bVBjtOiibTc8snQSVNHq+5BAAE5gyM+XkOUR9fbEQ==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.2.tgz'
   dependencies:
    '@jchip/error': ^1.0.3
    xaa: ^1.8.0
@@ -629,7 +631,7 @@ concat-with-sourcemaps:
 create-fynapp:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../../dev-tools/create-fynapp,./': 1.0.0-fynlocal_h
+  ../../dev-tools/create-fynapp: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
@@ -643,7 +645,6 @@ create-fynapp:
    '@rollup/plugin-typescript': ^11.1.6
    ast-types: ^0.16.1
    aveazul: ^1.0.1
-   create-fynapp: ^1.0.0
    inquirer: ^9.2.10
    nix-clap: ^2.0.0
    recast: ^0.23.4

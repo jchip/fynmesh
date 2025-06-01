@@ -885,7 +885,7 @@ convert-source-map:
 create-fynapp:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../../dev-tools/create-fynapp,./': 1.0.0-fynlocal_h
+  ../../dev-tools/create-fynapp: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
@@ -899,7 +899,6 @@ create-fynapp:
    '@rollup/plugin-typescript': ^11.1.6
    ast-types: ^0.16.1
    aveazul: ^1.0.1
-   create-fynapp: ^1.0.0
    inquirer: ^9.2.10
    nix-clap: ^2.0.0
    recast: ^0.23.4
