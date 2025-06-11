@@ -74,7 +74,7 @@
         "onPkg": {
           "name": "fynapp-x1",
           "version": "1.0.0",
-          "path": "demo/fynapp-x1"
+          "path": "demo/fynapp-x1-v1"
         },
         "depSection": "dev",
         "indirectSteps": [
@@ -83,5 +83,5 @@
       }
     ]
   },
-  "__timestamp": 1747624659735
+  "__timestamp": 1749651454488
 }
