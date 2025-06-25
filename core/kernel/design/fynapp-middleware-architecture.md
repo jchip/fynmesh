@@ -1,138 +1,543 @@
-# FynApp Middleware Architecture
+# FynApp Middleware Architecture - Concrete Implementation
 
-## Introduction
+## Overview
 
-FynMesh's middleware architecture is the foundation for extensibility, security, and composability in micro-frontend platforms. Middleware enables platform-wide features, policy enforcement, and integration with external systems, all managed by the kernel. Middleware is always delivered as part of a FynApp package, but it is the middleware itself—not the FynApp—that provides the extension. The kernel is responsible for discovering, initializing, and managing middleware for each FynApp instance.
+This document defines the concrete implementation of FynMesh's middleware system - the actual APIs, contracts, and workflows for middleware registration, loading, and application. This focuses on practical, implementable features that build on the current kernel foundation.
 
-## Requirements
+## Core Concepts
 
-### Functional Requirements
-- **Capability Declaration**: Middleware must declare the APIs, hooks, and features they provide for discoverability, privilege enforcement, and dependency resolution.
-- **Versioning**: Middleware must use semantic versioning. The kernel supports multiple versions of the same middleware for safe upgrades and legacy support.
-- **Dependency Specification**: Middleware must declare dependencies (with version constraints) on other middleware or kernel features for safe, ordered initialization.
-- **Privilege Declaration**: Middleware must declare required kernel privileges (e.g., access to storage, network, secrets). The kernel enforces least-privilege by default.
-- **Explicit Middleware Requests**: FynApps must be able to request specific middleware and versions in their manifest/configuration.
-- **Global Middleware**: The kernel supports middleware that is always applied to all FynApps (e.g., security, audit logging).
-- **Per-FynApp Isolation**: Each FynApp receives its own instance of each middleware, with isolated state and configuration.
-- **API Surface**: Middleware must expose well-defined, versioned APIs to FynApps, with clear documentation and type safety.
-- **Lifecycle Hooks**: Middleware can hook into FynApp lifecycle events (init, mount, unmount, error, etc.) to provide dynamic behavior.
-- **Strict Data Isolation**: Middleware instances must not share state or data between FynApps unless explicitly permitted and auditable.
-- **Controlled Cross-App Communication**: Any cross-FynApp communication must be opt-in, mediated by the kernel, and logged for auditability.
-- **Kernel API Mediation**: All access to kernel APIs by middleware is mediated and privilege-checked.
+### What is Middleware?
 
-### Non-Functional Requirements
-- **Startup Overhead**: Middleware loading and initialization must be parallelizable and optimized to minimize FynApp startup latency.
-- **Runtime Overhead**: Middleware API calls must be as close to zero-cost as possible, with kernel-managed fast paths for common operations.
-- **Lazy Loading**: Middleware should support lazy instantiation for rarely-used features.
-- **Fault Isolation**: Middleware errors must not propagate to other middleware or FynApps. The kernel must sandbox and monitor middleware execution.
-- **Graceful Degradation**: If middleware fails or is unavailable, FynApps should degrade gracefully, with clear error reporting.
-- **Version Conflict Resolution**: The kernel must detect and resolve version conflicts, providing clear diagnostics and fallback strategies.
-- **Hot Reload/Swap**: In development, middleware should support hot reloading without full platform restart.
-- **Testability**: Middleware must be independently testable, with kernel-provided mocks and test harnesses.
-- **Clear Separation of Concerns**: Middleware, kernel, and FynApps must have clearly delineated responsibilities and interfaces.
+Middleware in FynMesh extends FynApp capabilities through:
 
-## Use Cases
+- **Service Providers**: Add APIs like storage, auth, analytics to FynApps
+- **Component Wrappers**: Wrap FynApp UI with providers, error boundaries, etc.
+- **Event Handlers**: React to FynApp lifecycle events
+- **Configuration Injectors**: Provide runtime configuration and feature flags
 
-### 1. Organization-Wide Security Enforcement
-An enterprise mandates that all FynApps must log user actions and enforce SSO authentication. Security and logging middleware are registered as global middleware. When a new FynApp is loaded, the kernel injects these middleware, ensuring all actions are logged and SSO is enforced before rendering.
+### Current Implementation Foundation
 
-### 2. Selective Third-Party Integration
-A FynApp wants to use a specific analytics provider, while another prefers a different one. Both analytics middleware are registered with the kernel. Each FynApp requests its preferred middleware in its manifest. The kernel resolves dependencies and injects the correct analytics API into each FynApp's runtime context.
+The kernel already has basic middleware support:
 
-### 3. Development-Only Middleware
-Developers want to use a debugging overlay and mock API middleware in development, but not in production. The kernel supports contextual middleware activation based on environment. In development, debugging and mock API middleware are loaded; in production, they are omitted.
+- Middleware discovery via `__middleware*` exports in federation modules
+- Basic `setup()` and `apply()` lifecycle hooks
+- Middleware registry in kernel runtime
 
-### 4. Cross-FynApp Communication
-Two FynApps need to share user session state securely. A shared session middleware is registered, with explicit privileges for cross-app data sharing. Both FynApps request the session middleware and are granted access by the kernel, which mediates all data exchange.
+## API Contracts
 
-### 5. Shared React Context Provider Middleware
-A platform team wants all components within a FynApp to have access to a standardized React context (e.g., theming, localization, feature flags) without requiring each FynApp to implement its own provider logic. The team develops a `ReactContextProviderMiddleware` that encapsulates the context logic. The kernel injects this provider at the root of the FynApp's component tree, ensuring all components receive the context. The middleware can expose an API for components to update or subscribe to context changes, with updates isolated per FynApp instance.
+### 1. Middleware Interface
 
-**Benefits:**
-- Consistent context propagation across all FynApps
-- Reduced duplication and boilerplate
-- Centralized updates and enforcement
-- Per-FynApp customization and isolation
+```typescript
+/**
+ * Basic middleware contract that all middleware must implement
+ */
+export interface FynAppMiddleware {
+  /** Unique name for this middleware */
+  name: string;
 
-**Considerations:**
-- Compatibility with FynApp's React version and lifecycle
-- Avoiding context value leakage between FynApps
-- Kernel must provide hooks for safe root component decoration
+  /** Optional version for compatibility checking */
+  version?: string;
 
-## Architecture and Technical Considerations
+  /**
+   * One-time setup called when middleware is registered
+   * Use for global initialization, kernel feature registration
+   */
+  setup?(kernel: FynMeshKernel): Promise<void> | void;
 
-### Kernel Responsibilities
-- **Middleware Discovery**: Scans FynApp packages for middleware, validates manifests, and registers capabilities.
-- **Dependency Graph Resolution**: Builds a dependency graph for all middleware, detects cycles/conflicts, and determines initialization order.
-- **Privilege Enforcement**: Checks all privilege requests against platform policy, denies or grants as appropriate.
-- **Instance Management**: Creates, isolates, and manages the lifecycle of middleware instances per FynApp.
-- **API Mediation**: Exposes middleware APIs to FynApps via a controlled namespace (e.g., `kernel.middleware.<name>`), enforcing version and privilege checks.
-- **Event Routing**: Routes FynApp lifecycle and platform events to interested middleware.
-- **Error Containment**: Monitors middleware for errors, isolates faults, and provides diagnostics.
-- **Upgrade and Hot-Swap**: Supports seamless middleware upgrades and hot-swapping in development environments.
+  /**
+   * Apply middleware to a specific FynApp instance
+   * Called during FynApp bootstrap after loading
+   */
+  apply?(fynApp: FynApp, context: MiddlewareContext): Promise<void> | void;
 
-### Middleware Types
-- **Service Middleware**: Provides reusable APIs (e.g., storage, auth, analytics).
-- **Policy Middleware**: Enforces platform or organizational policies (e.g., security, compliance, rate limiting).
-- **Processing Middleware**: Transforms FynApp code/configuration at load time (e.g., code instrumentation, feature flags).
-- **Integration Middleware**: Bridges FynApps to external systems (e.g., API gateways, message brokers).
-- **Decorative Middleware**: Adds non-functional enhancements (e.g., logging, monitoring, UI overlays).
+  /**
+   * Optional teardown when FynApp is unloaded
+   */
+  teardown?(fynApp: FynApp): Promise<void> | void;
+}
 
-### Middleware Lifecycle
-1. **Registration**: Middleware is discovered, validated, and registered with the kernel.
-2. **Dependency Resolution**: The kernel resolves all dependencies, versions, and privilege requests.
-3. **Instantiation**: For each FynApp, the kernel creates isolated middleware instances, passing FynApp-specific context/configuration.
-4. **Activation**: Middleware hooks into FynApp lifecycle events, exposes APIs, and begins operation.
-5. **Runtime Operation**: Middleware processes requests, events, and data as per its design.
-6. **Teardown**: On FynApp unload, middleware instances are destroyed, and resources are cleaned up.
+/**
+ * Context provided to middleware during application
+ */
+export interface MiddlewareContext {
+  /** Middleware configuration from FynApp manifest */
+  config: Record<string, any>;
 
-### Middleware Composition and Patterns
-- **Layered Composition**: Organize middleware by abstraction level (infra, platform, app, UI).
-- **Pipeline Composition**: Chain middleware for sequential processing (e.g., request → auth → logging → business logic).
-- **Service Mesh**: Middleware can discover and communicate with other middleware via kernel-managed service discovery.
-- **Decorator/Adapter/Proxy/Observer Patterns**: Middleware can enhance, adapt, proxy, or observe FynApp behavior and external interactions.
+  /** Kernel instance */
+  kernel: FynMeshKernel;
 
-### Security and Isolation
-- **Sandboxing**: Middleware runs in a sandboxed context, with no direct access to kernel internals or other FynApps.
-- **Audit Logging**: All privileged actions and cross-app communications are logged for audit and compliance.
-- **Explicit Data Sharing**: Any data shared between FynApps via middleware must be explicitly declared and approved.
-- **Configuration Scoping**: Middleware configuration is scoped per FynApp, with no implicit inheritance or sharing.
+  /** Other middleware APIs that this middleware can access */
+  middleware: MiddlewareAPI;
+}
 
-### Operational Considerations
-- **Deployment**: Middleware is versioned and distributed as part of FynApp packages or via a central repository. The kernel supports dynamic discovery and loading.
-- **Monitoring**: The kernel provides hooks for middleware health checks, metrics, and logging.
-- **Upgrades**: Middleware can be upgraded in place, with the kernel ensuring compatibility and safe migration.
-- **Rollback**: The kernel supports rolling back middleware versions in case of failure.
-- **Observability**: Middleware can emit structured logs and metrics, which the kernel aggregates for platform-wide observability.
+/**
+ * API surface that middleware can expose to FynApps
+ */
+export interface MiddlewareAPI {
+  /** Get middleware instance by name */
+  get<T = any>(name: string): T | undefined;
 
-### Edge Cases and Trade-Offs
-- **Version Skew**: Multiple FynApps may require different versions of the same middleware. The kernel must isolate and manage these instances without conflict.
-- **Dependency Cycles**: The kernel must detect and prevent cyclic dependencies between middleware.
-- **Privilege Escalation**: Middleware privilege requests must be reviewed and approved according to platform policy.
-- **Resource Contention**: Middleware must not monopolize CPU, memory, or network resources; the kernel enforces quotas and limits.
-- **Graceful Degradation**: If a middleware fails, the kernel must provide fallback behavior or disable the affected capability without crashing the FynApp.
+  /** Check if middleware is available */
+  has(name: string): boolean;
 
-### Best Practices
-**For Middleware Authors:**
-- Document APIs, configuration, and privileges
-- Minimize privileges
-- Design for isolation (no global state)
-- Handle errors gracefully
-- Test in isolation and integration
+  /** Get all available middleware names */
+  list(): string[];
+}
+```
 
-**For FynApp Developers:**
-- Declare dependencies explicitly
-- Validate middleware APIs
-- Monitor middleware health
-- Limit privilege grants
+### 2. FynApp Middleware Declaration
 
-### Future Directions
-- **Dynamic Middleware Loading**: Support for loading/unloading middleware at runtime based on user actions or feature flags.
-- **Distributed Middleware**: Enable middleware to run across multiple nodes for scalability and fault tolerance.
-- **Custom Middleware Pipelines**: Allow FynApps to define custom middleware pipelines for advanced use cases.
-- **Advanced Policy Enforcement**: Integrate with external policy engines for dynamic privilege and access control.
-- **Self-Service Middleware Marketplace**: Enable developers to publish, discover, and install middleware via a platform marketplace.
+FynApps declare middleware requirements in their federation configuration:
 
-## Conclusion
+```typescript
+/**
+ * Middleware requirements in FynApp info
+ */
+export interface FynAppInfo {
+  // ... existing properties
 
-The FynMesh middleware architecture provides a standard, kernel-managed mechanism for delivering capabilities, enforcing policies, and integrating with external systems. Its focus on isolation, explicit privilege management, and composability ensures the platform can evolve without sacrificing security or stability. As the ecosystem grows, the middleware system will continue to enable new patterns of collaboration, integration, and platform evolution.
+  /** Middleware that this FynApp wants to use */
+  middlewareRequirements?: MiddlewareRequirement[];
+
+  /** Configuration for requested middleware */
+  middlewareConfig?: Record<string, Record<string, any>>;
+}
+
+export interface MiddlewareRequirement {
+  /** Name of the middleware */
+  name: string;
+
+  /** Optional version constraint */
+  version?: string;
+
+  /** Whether this middleware is required or optional */
+  required?: boolean;
+
+  /** Source FynApp that provides this middleware (optional) */
+  provider?: string;
+}
+```
+
+### 3. Kernel Middleware Extensions
+
+```typescript
+export interface FynMeshKernel {
+  // ... existing properties
+
+  /**
+   * Middleware registry and API
+   */
+  middleware: {
+    /** Register a middleware implementation */
+    register(middleware: FynAppMiddleware, provider?: string): void;
+
+    /** Get middleware by name */
+    get<T = any>(name: string): T | undefined;
+
+    /** Check if middleware is available */
+    has(name: string): boolean;
+
+    /** List all available middleware */
+    list(): MiddlewareInfo[];
+
+    /** Create middleware context for FynApp */
+    createContext(fynApp: FynApp): MiddlewareContext;
+  };
+}
+
+export interface MiddlewareInfo {
+  name: string;
+  version?: string;
+  provider: string;
+  implementation: FynAppMiddleware;
+}
+```
+
+## Implementation Workflow
+
+### 1. Middleware Provider Implementation
+
+```typescript
+// Example: React Context Provider Middleware
+// File: src/middleware/react-context.tsx
+
+import { FynAppMiddleware, FynApp, MiddlewareContext } from "@fynmesh/kernel";
+import React from "react";
+
+export interface ThemeConfig {
+  defaultTheme: "light" | "dark";
+  themes: Record<string, any>;
+}
+
+class ReactContextMiddleware implements FynAppMiddleware {
+  name = "react-context";
+  version = "1.0.0";
+
+  private contexts = new WeakMap<FynApp, React.Context<any>>();
+
+  async setup(kernel: FynMeshKernel) {
+    console.log("React Context Middleware initialized");
+  }
+
+  async apply(fynApp: FynApp, context: MiddlewareContext) {
+    const config = context.config as ThemeConfig;
+
+    // Create context for this FynApp
+    const AppContext = React.createContext({
+      theme: config.defaultTheme || "light",
+      setTheme: (theme: string) => console.log("Theme changed:", theme),
+    });
+
+    this.contexts.set(fynApp, AppContext);
+
+    // Wrap the FynApp's main component
+    if (fynApp.mainModule && fynApp.mainModule.App) {
+      const OriginalApp = fynApp.mainModule.App;
+
+      fynApp.mainModule.App = (props: any) =>
+        React.createElement(
+          AppContext.Provider,
+          { value: { theme: config.defaultTheme || "light" } },
+          React.createElement(OriginalApp, props),
+        );
+    }
+
+    // Expose context API
+    fynApp.middleware = fynApp.middleware || {};
+    fynApp.middleware["react-context"] = {
+      getContext: () => this.contexts.get(fynApp),
+      useTheme: () => React.useContext(AppContext),
+    };
+  }
+}
+
+// Export middleware for federation loading
+export const __middleware__ReactContext = new ReactContextMiddleware();
+```
+
+### 2. FynApp Usage
+
+```typescript
+// FynApp declares middleware requirements
+// File: src/config.ts
+
+export default {
+  middlewareRequirements: [
+    {
+      name: 'react-context',
+      version: '^1.0.0',
+      required: true,
+      provider: 'fynapp-react-lib'
+    },
+    {
+      name: 'analytics',
+      required: false
+    }
+  ],
+
+  middlewareConfig: {
+    'react-context': {
+      defaultTheme: 'dark',
+      themes: {
+        dark: { primary: '#000' },
+        light: { primary: '#fff' }
+      }
+    }
+  }
+};
+
+// FynApp uses middleware APIs
+// File: src/App.tsx
+
+import React from 'react';
+
+export default function App({ appName, middleware }: any) {
+  // Access middleware API
+  const contextMiddleware = middleware?.get('react-context');
+  const useTheme = contextMiddleware?.useTheme;
+
+  const theme = useTheme ? useTheme() : { theme: 'light' };
+
+  return (
+    <div style={{ backgroundColor: theme.theme === 'dark' ? '#000' : '#fff' }}>
+      <h1>{appName} with theme: {theme.theme}</h1>
+    </div>
+  );
+}
+```
+
+### 3. Kernel Implementation Updates
+
+```typescript
+// Enhanced kernel middleware management
+// File: src/kernel-core.ts
+
+export abstract class FynMeshKernelCore implements FynMeshKernel {
+  // ... existing code
+
+  public readonly middleware = {
+    register: (middleware: FynAppMiddleware, provider = "unknown") => {
+      this.runTime.middlewares[middleware.name] = {
+        fynApp: { name: provider, version: "1.0.0" } as FynApp,
+        config: {},
+        moduleName: `__middleware__${middleware.name}`,
+        exportName: middleware.name,
+        implementation: middleware,
+      };
+    },
+
+    get: <T = any>(name: string): T | undefined => {
+      const middleware = this.runTime.middlewares[name];
+      return middleware?.implementation as T;
+    },
+
+    has: (name: string): boolean => {
+      return name in this.runTime.middlewares;
+    },
+
+    list: (): MiddlewareInfo[] => {
+      return Object.entries(this.runTime.middlewares).map(([name, meta]) => ({
+        name,
+        version: meta.implementation.version,
+        provider: meta.fynApp.name,
+        implementation: meta.implementation,
+      }));
+    },
+
+    createContext: (fynApp: FynApp): MiddlewareContext => {
+      return {
+        config: fynApp.middlewareConfig || {},
+        kernel: this,
+        middleware: {
+          get: this.middleware.get,
+          has: this.middleware.has,
+          list: () => this.middleware.list().map((info) => info.name),
+        },
+      };
+    },
+  };
+
+  /**
+   * Enhanced middleware application with configuration
+   */
+  async applyMiddlewares(fynApp: FynApp): Promise<void> {
+    const context = this.middleware.createContext(fynApp);
+
+    // Apply middleware based on FynApp requirements
+    const requirements = fynApp.middlewareRequirements || [];
+
+    for (const requirement of requirements) {
+      const middleware = this.runTime.middlewares[requirement.name];
+
+      if (!middleware) {
+        if (requirement.required) {
+          throw new Error(`Required middleware '${requirement.name}' not found`);
+        }
+        console.warn(`Optional middleware '${requirement.name}' not available`);
+        continue;
+      }
+
+      if (middleware.implementation.apply) {
+        const middlewareConfig = fynApp.middlewareConfig?.[requirement.name] || {};
+        const middlewareContext = {
+          ...context,
+          config: middlewareConfig,
+        };
+
+        await middleware.implementation.apply(fynApp, middlewareContext);
+      }
+    }
+  }
+}
+```
+
+## Federation Configuration
+
+### Rollup Configuration for Middleware Provider
+
+```javascript
+// rollup.config.js for middleware provider FynApp
+export default {
+  input: ["src/middleware/react-context.tsx", "src/middleware/analytics.ts", "fynapp-entry.js"],
+
+  plugins: [
+    federation({
+      name: "fynapp-react-lib",
+      exposes: {
+        "./middleware/react-context": "./src/middleware/react-context.tsx",
+        "./middleware/analytics": "./src/middleware/analytics.ts",
+      },
+      shared: {
+        "esm-react": { singleton: true },
+      },
+    }),
+  ],
+};
+```
+
+### Enhanced Middleware Loading
+
+```typescript
+// Enhanced loadEntryMiddlewares in kernel-core.ts
+async loadEntryMiddlewares(fynAppEntry: FederationEntry): Promise<void> {
+  const container = fynAppEntry.container;
+  if (!container || !container.$E) return;
+
+  // Look for middleware exports
+  for (const moduleName in container.$E) {
+    if (moduleName.startsWith('./middleware/') || moduleName.startsWith('__middleware')) {
+      try {
+        const factory = await fynAppEntry.get(moduleName);
+        const moduleExports = factory();
+
+        // Look for middleware exports in the module
+        for (const [exportName, middleware] of Object.entries(moduleExports)) {
+          if (exportName.startsWith('__middleware__') &&
+              middleware &&
+              typeof middleware === 'object' &&
+              'name' in middleware) {
+
+            const middlewareImpl = middleware as FynAppMiddleware;
+
+            if (middlewareImpl.setup) {
+              await middlewareImpl.setup(this);
+            }
+
+            this.middleware.register(middlewareImpl, this.extractAppName(fynAppEntry));
+            console.debug('Loaded middleware:', middlewareImpl.name);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load middleware module', moduleName, error);
+      }
+    }
+  }
+}
+```
+
+## Implementation Summary
+
+The concrete middleware architecture provides three key APIs that work together:
+
+### 1. **How FynApps Declare Middleware Requirements**
+
+FynApps use a `config.ts` file to declare what middleware they need:
+
+```typescript
+// demo/fynapp-1/src/config.ts
+export default {
+  middlewareRequirements: [
+    {
+      name: "react-context",
+      version: "^1.0.0",
+      required: true,
+      provider: "fynapp-react-lib",
+    },
+  ],
+  middlewareConfig: {
+    "react-context": {
+      defaultTheme: "dark",
+      themes: {
+        /* theme config */
+      },
+    },
+  },
+};
+```
+
+### 2. **How Kernel Loads and Registers Middleware**
+
+The kernel automatically discovers and loads middleware during FynApp bootstrap:
+
+```typescript
+// In kernel-core.ts
+async loadEntryMiddlewares(fynAppEntry: FederationEntry) {
+    // 1. Look for ./middleware/* or __middleware* exports
+    // 2. Load the module and extract middleware implementations
+    // 3. Call middleware.setup() for initialization
+    // 4. Register with kernel.middleware.register()
+}
+```
+
+### 3. **How Kernel Applies Middleware to FynApps**
+
+When a FynApp loads, the kernel applies middleware based on requirements:
+
+```typescript
+async applyMiddlewares(fynApp: FynApp) {
+    // 1. Create middleware context with config
+    // 2. Check FynApp's middlewareRequirements
+    // 3. For each required middleware:
+    //    - Validate it's available
+    //    - Call middleware.apply(fynApp, context)
+    //    - Pass FynApp-specific configuration
+}
+```
+
+### 4. **How FynApps Use Middleware APIs**
+
+FynApps access middleware through the runtime API:
+
+```typescript
+// In FynApp component
+function App({ middleware }) {
+    const contextMiddleware = middleware?.get('react-context');
+    const useAppContext = contextMiddleware?.useAppContext;
+    const context = useAppContext();
+
+    return (
+        <div>
+            <button onClick={context.toggleTheme}>
+                Switch Theme
+            </button>
+        </div>
+    );
+}
+```
+
+## Working Example Flow
+
+1. **Middleware Provider** (`fynapp-react-lib`) exports `__middleware__ReactContext`
+2. **Kernel** discovers and registers the middleware during provider bootstrap
+3. **Consumer FynApp** (`fynapp-1`) declares requirement in `config.ts`
+4. **Kernel** applies middleware during consumer bootstrap:
+   - Creates context with FynApp's config
+   - Calls `middleware.apply(fynApp, context)`
+   - Middleware wraps App component with React Context Provider
+5. **FynApp** accesses middleware APIs through `fynApp.middleware['react-context']`
+
+## Key Benefits
+
+- ✅ **Type Safe**: Full TypeScript interfaces and contracts
+- ✅ **Practical**: Works with existing federation system
+- ✅ **Incremental**: Can be added to existing FynApps gradually
+- ✅ **Isolated**: Each FynApp gets its own middleware instance
+- ✅ **Configurable**: Per-FynApp middleware configuration
+- ✅ **Discoverable**: Automatic middleware discovery and registration
+
+This implementation provides a solid foundation for FynMesh middleware while remaining practical and achievable with the current kernel architecture.
+
+## Next Steps
+
+### Phase 1: Basic Implementation
+
+1. ✅ Update type definitions
+2. ✅ Enhance kernel middleware registry
+3. ✅ Implement middleware context creation
+4. ✅ Add configuration passing
+
+### Phase 2: Enhanced Features
+
+1. Add version checking and compatibility
+2. Implement middleware dependency resolution
+3. Add error boundaries and graceful degradation
+4. Create middleware testing utilities
+
+### Phase 3: Advanced Capabilities
+
+1. Hot reloading for development
+2. Middleware performance monitoring
+3. Advanced composition patterns
+4. Cross-FynApp communication helpers
+
+This implementation provides a solid foundation for FynMesh middleware while remaining practical and achievable with the current kernel architecture.

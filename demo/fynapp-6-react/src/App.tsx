@@ -3,6 +3,7 @@ import './styles.css';
 
 interface AppProps {
     appName: string;
+    middleware?: any;
 }
 
 // Card Component
@@ -132,10 +133,51 @@ const SettingRow: React.FC<{
 };
 
 // Main App Component
-const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
+const App: React.FC<AppProps> = ({ appName = 'React App', middleware }) => {
     const [count, setCount] = useState(0);
     const [darkMode, setDarkMode] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    // Access middleware contexts
+    const contextMiddleware = middleware?.['react-context'];
+    
+    // Get the context instance from middleware
+    const counterContext = React.useMemo(() => {
+        try {
+            console.log('🔍 fynapp-6-react: Attempting to access contexts...');
+            console.log('🔍 fynapp-6-react: Available contexts:', contextMiddleware?.getAvailableContexts?.());
+            console.log('🔍 fynapp-6-react: Has counter context:', contextMiddleware?.hasContext?.('counter'));
+            
+            const context = contextMiddleware?.useContext ? contextMiddleware.useContext('counter') : null;
+            console.log('🔍 fynapp-6-react: counterContext:', context);
+            return context;
+        } catch (error) {
+            console.warn('🔍 fynapp-6-react: Context not available:', error);
+            return null;
+        }
+    }, [contextMiddleware]);
+
+    // Create React state that syncs with middleware state
+    const [sharedCounter, setSharedCounter] = React.useState(counterContext?.state || { count: 0 });
+
+    // Subscribe to middleware state changes using React 19 hooks
+    React.useEffect(() => {
+        if (!counterContext?.subscribe) return;
+
+        console.log('🔍 fynapp-6-react: Setting up state subscription...');
+        const unsubscribe = counterContext.subscribe((newState: any) => {
+            console.log('🔍 fynapp-6-react: State changed, updating React state:', newState);
+            setSharedCounter({ ...newState });
+        });
+
+        // Sync initial state
+        setSharedCounter({ ...counterContext.state });
+
+        return unsubscribe;
+    }, [counterContext]);
+
+    // Extract actions
+    const sharedCounterActions = counterContext?.actions || {};
 
     const [cards] = useState([
         { title: "Analytics", value: "85%", trend: "up" as const, desc: "User engagement" },
@@ -234,11 +276,72 @@ const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
                         </div>
                     </div>
 
-                    {/* Counter Example */}
+                    {/* Shared Counter Example */}
                     <div className="counter-section">
-                        <h3>Interactive Counter</h3>
-                        <p>You clicked the button <strong>{count}</strong> times</p>
-                        <button className="primary-button" onClick={increment}>Increment</button>
+                        <h3>🔗 Cross-App Shared Counter</h3>
+                        <div style={{ marginBottom: '16px' }}>
+                            <div style={{ 
+                                fontSize: '48px', 
+                                fontWeight: 'bold', 
+                                textAlign: 'center',
+                                margin: '20px 0',
+                                color: darkMode ? '#63b3ed' : '#3182ce'
+                            }}>
+                                {sharedCounter.count}
+                            </div>
+                            <p style={{ 
+                                color: darkMode ? '#a0aec0' : '#718096', 
+                                textAlign: 'center',
+                                marginBottom: '16px'
+                            }}>
+                                Shared with fynapp-1 & fynapp-1-b! Status: {' '}
+                                <span style={{ 
+                                    color: contextMiddleware ? '#48bb78' : '#f56565',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {contextMiddleware ? '✅ Connected' : '❌ Not Connected'}
+                                </span>
+                                <br />
+                                <small>(Note: UI updates may not work due to React 19/18 compatibility)</small>
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
+                            <button
+                                className="primary-button"
+                                onClick={() => {
+                                    console.log('🔍 fynapp-6-react: Incrementing shared counter...');
+                                    if (sharedCounterActions.increment) {
+                                        sharedCounterActions.increment();
+                                        console.log('✅ fynapp-6-react: Shared counter incremented');
+                                    } else {
+                                        console.error('❌ fynapp-6-react: increment action not available');
+                                    }
+                                }}
+                            >
+                                + Increment (Cross-App)
+                            </button>
+                            <button
+                                className="primary-button"
+                                onClick={() => {
+                                    console.log('🔍 fynapp-6-react: Resetting shared counter...');
+                                    if (sharedCounterActions.reset) {
+                                        sharedCounterActions.reset();
+                                        console.log('✅ fynapp-6-react: Shared counter reset');
+                                    } else {
+                                        console.error('❌ fynapp-6-react: reset action not available');
+                                    }
+                                }}
+                                style={{ backgroundColor: '#e53e3e' }}
+                            >
+                                Reset
+                            </button>
+                        </div>
+                        <hr style={{ margin: '20px 0', opacity: 0.3 }} />
+                        <div>
+                            <h4>Local Counter (fynapp-6 only)</h4>
+                            <p>You clicked the local button <strong>{count}</strong> times</p>
+                            <button className="primary-button" onClick={increment}>Increment Local</button>
+                        </div>
                     </div>
                 </>
             )}

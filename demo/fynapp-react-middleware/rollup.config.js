@@ -1,0 +1,59 @@
+import { nodeResolve } from "@rollup/plugin-node-resolve";
+import typescript from "@rollup/plugin-typescript";
+import federation from "rollup-plugin-federation";
+import replace from "@rollup/plugin-replace";
+import terser from "@rollup/plugin-terser";
+
+const env = process.env.NODE_ENV || "development";
+const isProduction = env === "production";
+
+export default [
+  {
+    input: [
+      "src/middleware/react-context.tsx",
+      // this is the filename from federation plugin config.
+      "fynapp-entry.js",
+    ],
+    output: [
+      {
+        dir: "dist",
+        format: "system",
+        sourcemap: true,
+      },
+    ],
+    plugins: [
+      nodeResolve({
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
+        mainFields: ["module", "main"],
+        preferBuiltins: false,
+        browser: true,
+        exportConditions: [env, "default"],
+      }),
+      replace({
+        preventAssignment: true,
+        "process.env.NODE_ENV": JSON.stringify(env),
+      }),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        sourceMap: true,
+        inlineSources: true,
+      }),
+      isProduction ? terser() : null,
+      federation({
+        name: "fynapp-react-middleware",
+        // this filename must be in the input config
+        filename: "fynapp-entry.js",
+        shareScope: "fynmesh",
+        exposes: {
+          "./middleware/react-context": "./src/middleware/react-context.tsx",
+        },
+        shared: {
+          "esm-react": {
+            singleton: true,
+            requiredVersion: "^18.0.0",
+          },
+        },
+      }),
+    ].filter(Boolean),
+  },
+];

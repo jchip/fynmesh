@@ -3,8 +3,8 @@ $fyn:
  flattenTop: true
 $pkg:
  dep:
-  fyn: ^1.1.41
-  fynpo: ^1.1.44
+  fyn: ^1.1.45
+  fynpo: ^1.1.48
 callsites:
  _latest: 4.2.0
  _:
@@ -13,25 +13,26 @@ callsites:
   $: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
   _: 'https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz'
 fyn:
- _latest: 1.1.42
- _:
-  '^1.1.41,^1.1.42': 1.1.42
- 1.1.42:
-  top: 1
-  $: sha512-fiWRKSY4/WQ+3wt/K6i/s83fzVn4FYD0E7hw8xaBvcovTSN4x5yi5vf9p+fmq2gk07luYwAjKAdVhwbzRqRixA==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-1.1.42.tgz'
-fynpo:
  _latest: 1.1.45
  _:
-  ^1.1.44: 1.1.45
+  ^1.1.45: 1.1.45
  1.1.45:
   top: 1
-  $: sha512-KV7LHU35nK2QAnZUWW8ieJ2GMPC2jx8NRv4CpJyIsBbxv9Laj3nOtIhoEEPNGPUBWuAsb/k6jqcPJG4II7NL7Q==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-1.1.45.tgz'
+  $: sha512-KV3AbN9yI7YD53KDsLtaAavCy3S062qSFjkMeoW2G1BSR6rVOOq1SFUNoaJsoeXT4sUU4f5yb0W7O3hXJ1smqw==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-1.1.45.tgz'
+fynpo:
+ _latest: 1.1.48
+ _:
+  ^1.1.48: 1.1.48
+ 1.1.48:
+  top: 1
+  $: sha512-Kbn60mkTzrYOBsI0hRArk4vzH28tpkDfyQLQrWDuMef/YhWwx/2wbTdRPW93EhxxP+7iZqKErWFXVfq/OcrYeg==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-1.1.48.tgz'
   dependencies:
-   fyn: ^1.1.42
+   fyn: ^1.1.45
    import-fresh: 3.3.0
    resolve-global: 1.0.0
+   prettier: 2.4.1
 global-dirs:
  _latest: 4.0.0
  _:
@@ -67,6 +68,13 @@ parent-module:
   _: 'https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz'
   dependencies:
    callsites: ^3.0.0
+prettier:
+ _latest: 3.6.2
+ _:
+  2.4.1: 2.4.1
+ 2.4.1:
+  $: sha512-9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA==
+  _: 'https://registry.npmjs.org/prettier/-/prettier-2.4.1.tgz'
 resolve-from:
  _latest: 5.0.0
  _:

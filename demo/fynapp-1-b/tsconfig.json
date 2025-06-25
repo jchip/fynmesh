@@ -14,8 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["node"]
+    "lib": ["DOM", "DOM.Iterable", "ESNext"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

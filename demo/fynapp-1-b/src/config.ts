@@ -49,3 +49,10 @@ export default {
     },
   },
 };
+
+/**
+ * Optional configure function that the kernel can call during config phase
+ */
+export function configure(kernel: any, fynAppEntry: any) {
+  console.log("Configuring fynapp-1-b with kernel:", kernel.version);
+}
