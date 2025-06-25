@@ -1,5 +1,6 @@
 // @ts-ignore
 import React, { createContext, useContext, useState, ReactNode } from 'esm-react';
+import { FynAppMiddleware, FynApp, MiddlewareContext } from '@fynmesh/kernel';
 
 // Define the shape of our context state
 export interface AppContextState {
@@ -20,6 +21,12 @@ export interface AppContextActions {
 // Combine state and actions for the full context type
 export interface AppContextValue extends AppContextState, AppContextActions { }
 
+// Configuration interface for this middleware
+export interface ThemeConfig {
+    defaultTheme?: 'light' | 'dark';
+    themes?: Record<string, any>;
+}
+
 // Initial state for our context
 const initialState: AppContextState = {
     theme: 'light',
@@ -33,8 +40,14 @@ const initialState: AppContextState = {
 export const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 // Provider component that wraps app and makes context available
-export function AppContextProvider({ children }: { children: ReactNode }) {
-    const [state, setState] = useState<AppContextState>(initialState);
+export function AppContextProvider({ children, initialTheme = 'light' }: { 
+    children: ReactNode;
+    initialTheme?: 'light' | 'dark';
+}) {
+    const [state, setState] = useState<AppContextState>({
+        ...initialState,
+        theme: initialTheme
+    });
 
     // Define our actions
     const toggleTheme = () => {
@@ -85,21 +98,61 @@ export function useAppContext(): AppContextValue {
 }
 
 /**
- * When the kernel loads a module that is supposed to contain a middleware, the kernel will
- * look for exports that are named "__middleware__<middleware-name>".
- *
- * This is a simple middleware that will add a React context provider to the FynApp.
+ * React Context Middleware Implementation
+ * Provides React context functionality to FynApps
  */
-export const __middleware__ReactContext = {
-    name: "react-context",
+class ReactContextMiddleware implements FynAppMiddleware {
+    name = 'react-context';
+    version = '1.0.0';
+    
+    private contexts = new WeakMap<FynApp, React.Context<any>>();
+
     async setup(kernel: any) {
-        //
-    },
+        console.log('React Context Middleware initialized');
+    }
+
     /**
-     * Apply the middleware to the FynApp.
-     * @param fynApp The FynApp to apply the middleware to.
+     * Apply the middleware to the FynApp by wrapping its main component with context provider
      */
-    async apply(fynApp: any) {
-        console.log("react-context middleware");
+    async apply(fynApp: FynApp, context: MiddlewareContext) {
+        const config = context.config as ThemeConfig;
+        const defaultTheme = config.defaultTheme || 'light';
+        
+        console.log('Applying react-context middleware to', fynApp.name, 'with theme:', defaultTheme);
+
+        // Store the context for this FynApp
+        this.contexts.set(fynApp, AppContext);
+
+        // Wrap the FynApp's main component if it exists
+        if (fynApp.mainModule && fynApp.mainModule.App) {
+            const OriginalApp = fynApp.mainModule.App;
+            
+            // Create a wrapped version that includes the context provider
+            fynApp.mainModule.App = (props: any) => {
+                return React.createElement(AppContextProvider, 
+                    { initialTheme: defaultTheme },
+                    React.createElement(OriginalApp, props)
+                );
+            };
+            
+            console.log('Wrapped', fynApp.name, 'App component with theme context');
+        }
+
+        // Expose context API to the FynApp
+        fynApp.middleware = fynApp.middleware || {};
+        fynApp.middleware['react-context'] = {
+            getContext: () => this.contexts.get(fynApp),
+            useAppContext: useAppContext,
+            AppContext: AppContext,
+            AppContextProvider: AppContextProvider
+        };
+        
+        console.log('Exposed react-context APIs to', fynApp.name);
     }
 }
+
+/**
+ * Export middleware for federation loading
+ * The kernel will look for exports that start with __middleware__
+ */
+export const __middleware__ReactContext = new ReactContextMiddleware();

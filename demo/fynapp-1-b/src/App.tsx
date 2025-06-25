@@ -14,12 +14,12 @@ const App: React.FC<AppProps> = ({ appName, components, middleware }: AppProps) 
     // Get the context instance from middleware
     const counterContext = React.useMemo(() => {
         try {
-            console.log('🔍 fynapp-1: Attempting to access contexts...');
-            console.log('🔍 fynapp-1: Available contexts:', contextMiddleware?.getAvailableContexts?.());
-            console.log('🔍 fynapp-1: Has counter context:', contextMiddleware?.hasContext?.('counter'));
-            
-            const context = contextMiddleware?.useContext ? contextMiddleware.useContext('counter') : null;
-            console.log('🔍 fynapp-1: counterContext:', context);
+                    console.log('🔍 fynapp-1-b: Attempting to access contexts...');
+        console.log('🔍 fynapp-1-b: Available contexts:', contextMiddleware?.getAvailableContexts?.());
+        console.log('🔍 fynapp-1-b: Has counter context:', contextMiddleware?.hasContext?.('counter'));
+        
+        const context = contextMiddleware?.useContext ? contextMiddleware.useContext('counter') : null;
+        console.log('🔍 fynapp-1-b: counterContext:', context);
             return context;
         } catch (error) {
             console.warn('Context not available:', error);
@@ -34,9 +34,9 @@ const App: React.FC<AppProps> = ({ appName, components, middleware }: AppProps) 
     React.useEffect(() => {
         if (!counterContext?.subscribe) return;
 
-        console.log('🔍 fynapp-1: Setting up state subscription...');
+        console.log('🔍 fynapp-1-b: Setting up state subscription...');
         const unsubscribe = counterContext.subscribe((newState: any) => {
-            console.log('🔍 fynapp-1: State changed, updating React state:', newState);
+            console.log('🔍 fynapp-1-b: State changed, updating React state:', newState);
             setCounter({ ...newState });
         });
 
@@ -77,12 +77,12 @@ const App: React.FC<AppProps> = ({ appName, components, middleware }: AppProps) 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                     <Button 
                         onClick={() => {
-                            console.log('🔍 fynapp-1: Incrementing counter...');
+                            console.log('🔍 fynapp-1-b: Incrementing counter...');
                             if (counterActions.increment) {
                                 counterActions.increment();
-                                console.log('✅ fynapp-1: Counter incremented');
+                                console.log('✅ fynapp-1-b: Counter incremented');
                             } else {
-                                console.error('❌ fynapp-1: increment action not available');
+                                console.error('❌ fynapp-1-b: increment action not available');
                             }
                         }}
                         style={{ 
@@ -91,18 +91,18 @@ const App: React.FC<AppProps> = ({ appName, components, middleware }: AppProps) 
                             padding: '10px 20px',
                             fontSize: '16px'
                         }}
-                    >
-                        Increment from fynapp-1
-                    </Button>
+                                            >
+                            Increment from fynapp-1-b
+                        </Button>
                     
                     <Button 
                         onClick={() => {
-                            console.log('🔍 fynapp-1: Resetting counter...');
+                            console.log('🔍 fynapp-1-b: Resetting counter...');
                             if (counterActions.reset) {
                                 counterActions.reset();
-                                console.log('✅ fynapp-1: Counter reset');
+                                console.log('✅ fynapp-1-b: Counter reset');
                             } else {
-                                console.error('❌ fynapp-1: reset action not available');
+                                console.error('❌ fynapp-1-b: reset action not available');
                             }
                         }}
                         style={{ 

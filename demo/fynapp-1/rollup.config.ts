@@ -39,7 +39,8 @@ export default [
     external: ["esm-react", "esm-react-dom"],
     plugins: [
       newRollupPlugin(virtual)({
-        [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
+        [fynappDummyEntryName]:
+          "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
       }),
       newRollupPlugin(noEmit)({
         match: (fileName) => fileName.includes(fynappDummyEntryName),
@@ -57,7 +58,6 @@ export default [
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
           "./main": "./src/main.ts",
-          "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
         },
         shared: {
@@ -71,6 +71,16 @@ export default [
             singleton: false,
             requiredVersion: "^19.0.0",
           },
+        },
+        entry: {
+          header: `
+console.log('fynapp-1 entry header');
+import config from "./src/config.ts";
+export {config};
+`,
+          footer: `
+console.log('fynapp-1 entry footer');
+`,
         },
         debugging: true,
       }),
@@ -90,4 +100,3 @@ export default [
     ],
   },
 ];
-

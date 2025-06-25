@@ -16,7 +16,7 @@ export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
   // Create a loading indicator
   const createLoadingIndicator = () => {
     const loadingDiv = document.createElement("div");
-    loadingDiv.id = "fynapp-1-loading";
+    loadingDiv.id = "fynapp-1-b-loading";
     loadingDiv.style.padding = "20px";
     loadingDiv.style.textAlign = "center";
     loadingDiv.innerHTML = `
@@ -37,10 +37,10 @@ export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
   };
 
   // Find or create the div element to render into
-  let targetDiv = document.getElementById("fynapp-1");
+  let targetDiv = document.getElementById("fynapp-1-b");
   if (!targetDiv) {
     targetDiv = document.createElement("div");
-    targetDiv.id = "fynapp-1";
+    targetDiv.id = "fynapp-1-b";
     document.body.appendChild(targetDiv);
   }
 

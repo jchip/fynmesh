@@ -1,6 +1,11 @@
+import { FynMeshKernel, FederationEntry } from "@fynmesh/kernel";
+
 /**
- * FynApp Configuration and Middleware Requirements
- * This module exports configuration that tells the kernel what middleware this FynApp needs
+ * FynApp-6-React Configuration with React Context Middleware
+ *
+ * This demonstrates:
+ * - Shared counter context (same as fynapp-1 and fynapp-2)
+ * - Cross-app state management between React 19 apps
  */
 
 export default {
@@ -18,7 +23,7 @@ export default {
   middlewareConfig: {
     "react-context": {
       contexts: {
-        // SHARED: Simple counter (shared between fynapp-1 and fynapp-2)
+        // SHARED: Simple counter (shared with fynapp-1 and fynapp-2)
         counter: {
           shared: true,
           initialState: {
@@ -49,3 +54,10 @@ export default {
     },
   },
 };
+
+/**
+ * Optional configure function that the kernel can call during config phase
+ */
+export function configure(kernel: FynMeshKernel, entry: FederationEntry) {
+  console.log("Configuring fynapp-6-react with kernel:", kernel.version);
+}
