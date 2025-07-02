@@ -19,10 +19,5 @@
   },
   "dependencies": {
     "esm-react": "^18.2.0"
-  },
-  "fyn": {
-    "devDependencies": {
-      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
-    }
   }
 }

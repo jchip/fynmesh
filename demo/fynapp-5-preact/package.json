@@ -40,10 +40,5 @@
     "preact": "^10.18.1",
     "preact-custom-element": "^4.3.0",
     "preact-router": "^4.1.2"
-  },
-  "fyn": {
-    "devDependencies": {
-      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
-    }
   }
 }

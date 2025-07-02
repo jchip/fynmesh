@@ -80,8 +80,24 @@
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "rollup-plugin-federation",
+          "version": "1.0.0",
+          "path": "rollup-federation/rollup-plugin-federation"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
       }
     ]
   },
-  "__timestamp": 1749651454488
+  "__timestamp": 1751326552498
 }

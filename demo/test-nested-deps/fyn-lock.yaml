@@ -6,7 +6,6 @@ $pkg:
   esm-react: ../../misc/esm-react-19
   esm-react-dom: ../../misc/esm-react-dom-19
   pkg-esm-react-18: ../pkg-esm-react-18
-  rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
  dev:
   '@rollup/plugin-alias': ^5.1.1
   '@rollup/plugin-commonjs': ^25.0.7
@@ -17,7 +16,7 @@ $pkg:
   '@rollup/plugin-typescript': ^11.1.6
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
-  rollup-plugin-federation: ^1.0.0
+  rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
 '@babel/code-frame':
  _latest: 7.27.1
  _:
@@ -713,7 +712,7 @@ rollup-plugin-dts:
 rollup-plugin-federation:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../../rollup-federation/rollup-plugin-federation,^1.0.0': 1.0.0-fynlocal_h
+  ../../rollup-federation/rollup-plugin-federation: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
