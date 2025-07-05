@@ -2,6 +2,8 @@
 
 This FynApp provides generic React Context middleware for the FynMesh ecosystem.
 
+**Note**: The middleware is automatically detected and applied by the FynMesh kernel when this FynApp is loaded. No explicit requirements declaration is needed.
+
 ## Features
 
 - ✅ **Generic Context Factory**: Create any type of React context with configuration
@@ -18,14 +20,6 @@ This FynApp provides generic React Context middleware for the FynMesh ecosystem.
 ```typescript
 // src/config.ts
 export default {
-  middlewareRequirements: [
-    {
-      name: "react-context",
-      version: "^1.0.0",
-      required: true,
-      provider: "fynapp-react-middleware",
-    },
-  ],
   middlewareConfig: {
     "react-context": {
       contexts: [

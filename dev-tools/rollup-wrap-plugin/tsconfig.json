@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "lib": [
-      "es2022"
+      "es2018"
     ],
     "module": "ES2022",
     "moduleResolution": "bundler",
@@ -13,16 +13,12 @@
     "sourceMap": true,
     "declaration": true,
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "alwaysStrict": true,
-    "strictFunctionTypes": true,
-    "skipLibCheck": true,
-    "rewriteRelativeImportExtensions": true,
-    "allowImportingTsExtensions": true
+    "strictFunctionTypes": true
   },
   "include": [
     "src"

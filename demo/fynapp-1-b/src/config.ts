@@ -1,20 +1,11 @@
 /**
- * FynApp Configuration and Middleware Requirements
- * This module exports configuration that tells the kernel what middleware this FynApp needs
+ * FynApp Configuration and Middleware Setup
+ * This module exports configuration for middleware (automatically detected by kernel)
  */
 
 export default {
-  // Declare what middleware this FynApp wants to use
-  middlewareRequirements: [
-    {
-      name: "react-context",
-      version: "^1.0.0",
-      required: true,
-      provider: "fynapp-react-middleware",
-    },
-  ],
-
-  // Configuration for the middleware we're using
+  // Configuration for the middleware (automatically detected and applied)
+  // Note: Middleware is automatically applied by the kernel when detected
   middlewareConfig: {
     "react-context": {
       contexts: {

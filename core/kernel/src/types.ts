@@ -38,41 +38,13 @@ export type KernelConfig = {
 };
 
 /**
- * Middleware requirement declaration
- */
-export interface MiddlewareRequirement {
-  /** Name of the middleware */
-  name: string;
-  /** Optional version constraint */
-  version?: string;
-  /** Whether this middleware is required or optional */
-  required?: boolean;
-  /** Source FynApp that provides this middleware (optional) */
-  provider?: string;
-}
-
-/**
- * API surface that middleware can expose to FynApps
- */
-export interface MiddlewareAPI {
-  /** Get middleware instance by name */
-  get<T = any>(name: string): T | undefined;
-  /** Check if middleware is available */
-  has(name: string): boolean;
-  /** Get all available middleware names */
-  list(): string[];
-}
-
-/**
  * Context provided to middleware during application
  */
 export interface MiddlewareContext {
   /** Middleware configuration from FynApp manifest */
-  config: Record<string, any>;
+  config: any;
   /** Kernel instance */
   kernel: FynMeshKernel;
-  /** Other middleware APIs that this middleware can access */
-  middleware: MiddlewareAPI;
 }
 
 /**
@@ -98,20 +70,25 @@ export type FynAppInfo = {
   exposes?: Record<string, string>;
   /** middlewares that the fynapp implemented */
   middlewares?: Record<string, FynAppMiddleware>;
-  /** Middleware that this FynApp wants to use */
-  middlewareRequirements?: MiddlewareRequirement[];
   /** Configuration for requested middleware */
   middlewareConfig?: Record<string, Record<string, any>>;
   /** Federation entry module (for new bootstrap system) */
   entry?: FederationEntry;
 };
 
-export type MiddlewareUsage = {
-  __middlewareInfo: {
-    pkg: string;
-    middleware: string;
-  };
-  user: unknown;
+/**
+ * Middleware info for registry and usage
+ */
+export interface MiddlewareInfo {
+  name: string;
+  provider: string;
+  version?: string;
+}
+
+export type MiddlewareUsage<ConfigT = any, UserT = unknown> = {
+  __middlewareInfo: MiddlewareInfo;
+  config: ConfigT;
+  user: UserT;
 };
 
 /**
@@ -122,8 +99,6 @@ export type FynApp = FynAppInfo & {
   configModule?: any;
   /** Set to true to tell the kernel to skip applying middlewares */
   skipApplyMiddlewares?: boolean;
-  /** Runtime middleware API access */
-  middleware?: Record<string, any>;
 };
 
 /**
@@ -142,20 +117,6 @@ export type FynAppMiddleware = {
   teardown?(fynApp: FynApp): Promise<void> | void;
 };
 
-export type FynAppMiddlewareConfig = {
-  //
-};
-
-/**
- * Middleware info for registry
- */
-export interface MiddlewareInfo {
-  name: string;
-  version?: string;
-  provider: string;
-  implementation: FynAppMiddleware;
-}
-
 /**
  * object that holds all parts of a middleware together
  */
@@ -167,7 +128,7 @@ export type FynAppMiddlewareMeta = {
   /**
    * config for the middleware
    */
-  config: FynAppMiddlewareConfig;
+  config: any;
   /**
    * name of the module that implemented the middleware
    */
@@ -182,6 +143,8 @@ export type FynAppMiddlewareMeta = {
   implementation: FynAppMiddleware;
 };
 
+export type FynAppMiddlewareVersionMap = Record<string, FynAppMiddlewareMeta>;
+
 /**
  * Run time data for FynMesh fynApp core loader
  */
@@ -191,7 +154,7 @@ export type FynMeshRuntimeData = {
   /**
    * middlewares that the loaded fynapps registered
    */
-  middlewares: Record<string, FynAppMiddlewareMeta>;
+  middlewares: Record<string, FynAppMiddlewareVersionMap>;
 };
 
 /**
@@ -215,20 +178,14 @@ export interface FynMeshKernel {
   shareScopeName: string;
 
   /**
-   * Middleware registry and API
+   * Register a middleware implementation (called automatically during FynApp loading)
    */
-  middleware: {
-    /** Register a middleware implementation */
-    register(middleware: FynAppMiddleware, provider?: string): void;
-    /** Get middleware by name */
-    get<T = any>(name: string): T | undefined;
-    /** Check if middleware is available */
-    has(name: string): boolean;
-    /** List all available middleware */
-    list(): MiddlewareInfo[];
-    /** Create middleware context for FynApp */
-    createContext(fynApp: FynApp): MiddlewareContext;
-  };
+  registerMiddleware(middleware: FynAppMiddleware, provider: string, fynAppVersion?: string): void;
+
+  /**
+   * Get middleware by name and provider
+   */
+  getMiddleware<T = any>(name: string, provider: string): T | undefined;
 
   /**
    * Clean up a container name to ensure it's a valid identifier
@@ -257,7 +214,7 @@ export interface FynMeshKernel {
   bootstrapFynApp(fynAppInfo: FynAppInfo[]): Promise<void>;
 
   /**
-   * Apply middlewares to a fynapp
+   * Apply middlewares to a fynapp (called automatically during FynApp loading)
    *
    * @param fynApp
    */

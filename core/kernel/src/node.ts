@@ -4,14 +4,8 @@ import { nodeKernel } from "./node-kernel";
 export const fynMeshKernel = nodeKernel;
 
 // Re-export types
-export type {
-    FynMeshKernel,
-    FynMeshRuntimeData,
-    FynApp,
-    FynAppMiddleware,
-} from "./types";
+export type { FynMeshKernel, FynMeshRuntimeData, FynApp, FynAppMiddleware } from "./types";
 
-export type { MiddlewareUsage } from "./use-middleware";
 export { useMiddleware } from "./use-middleware";
 
 // Re-export kernel classes and creators

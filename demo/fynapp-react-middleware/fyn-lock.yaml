@@ -5,12 +5,13 @@ $pkg:
  dep:
   esm-react: ../../misc/esm-react-18
  dev:
+  '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-node-resolve': ^15.2.3
   '@rollup/plugin-replace': ^5.0.5
+  '@rollup/plugin-terser': ^0.4.4
   '@rollup/plugin-typescript': ^11.1.5
   rollup: ^4.9.1
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
-  '@rollup/plugin-terser': ^0.4.4
   typescript: ^5.3.3
 '@babel/code-frame':
  _latest: 7.27.1
@@ -30,6 +31,16 @@ $pkg:
  7.27.1:
   $: sha512-D2hP9eA+Sqx1kBZgzxZh0y1trbuU+JoDkiEwqhQ36nodYqJwyEIhPSdMNd7lOm/4io72luTPWH20Yda0xOuUow==
   _: 'https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.27.1.tgz'
+'@fynmesh/kernel':
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../../core/kernel: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../core/kernel
+  dependencies:
+   tslib: ^2.6.2
 '@jchip/error':
  _latest: 1.0.3
  _:

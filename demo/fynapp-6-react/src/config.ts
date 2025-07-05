@@ -6,20 +6,12 @@ import { FynMeshKernel, FederationEntry } from "@fynmesh/kernel";
  * This demonstrates:
  * - Shared counter context (same as fynapp-1 and fynapp-2)
  * - Cross-app state management between React 19 apps
+ * - Automatic middleware detection and application by kernel
  */
 
 export default {
-  // Declare what middleware this FynApp wants to use
-  middlewareRequirements: [
-    {
-      name: "react-context",
-      version: "^1.0.0",
-      required: true,
-      provider: "fynapp-react-middleware",
-    },
-  ],
-
-  // Configuration for the middleware we're using
+  // Configuration for the middleware (automatically detected and applied)
+  // Note: Middleware is automatically applied by the kernel when detected
   middlewareConfig: {
     "react-context": {
       contexts: {

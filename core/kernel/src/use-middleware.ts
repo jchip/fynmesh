@@ -1,25 +1,4 @@
-/**
- * info about a middleware marked for usage
- */
-export type MiddlewareInfo = {
-  /** npm package that provided the middleware */
-  pkg: string;
-  /** name of the middleware */
-  middleware: string;
-};
-
-/**
- * contains information about a user application
- * that wants to use a middleware
- */
-export type MiddlewareUsage<ConfigT = any, UserT = unknown> = {
-  /** info about the middleware */
-  __middlewareInfo: MiddlewareInfo;
-  /** configuration for the middleware */
-  config: ConfigT;
-  /** user code that uses the middleware */
-  user: UserT;
-};
+import type { MiddlewareInfo, MiddlewareUsage } from "./types";
 
 /**
  * mark some user code for middleware usage
@@ -32,7 +11,20 @@ export type MiddlewareUsage<ConfigT = any, UserT = unknown> = {
 export const useMiddleware = <ConfigT, UserT = unknown>(
   info: MiddlewareInfo,
   config: ConfigT,
-  user: UserT
-): MiddlewareUsage<ConfigT> => {
+  user: UserT,
+): MiddlewareUsage<ConfigT, UserT> => {
   return { __middlewareInfo: info, config, user };
 };
+
+// example usage of useMiddleware
+export const main = useMiddleware<any, any>(
+  {
+    name: "react-context",
+    version: "^1.0.0",
+    provider: "fynapp-react-lib",
+  },
+  { theme: "light" },
+  () => {
+    console.log("Hello from react context middleware");
+  },
+);

@@ -1,35 +1,8 @@
 // @ts-ignore
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from 'esm-react';
 
-// Type definitions (copying from kernel types since we can't import them directly in federation)
-interface FynAppMiddleware {
-  name: string;
-  version?: string;
-  setup?(kernel: any): Promise<void> | void;
-  apply?(fynApp: FynApp, context: MiddlewareContext): Promise<void> | void;
-  teardown?(fynApp: FynApp): Promise<void> | void;
-}
+import type { FynApp, FynAppMiddleware, MiddlewareContext } from "@fynmesh/kernel";
 
-interface FynApp {
-  name: string;
-  version: string;
-  mainModule?: any;
-  configModule?: any;
-  skipApplyMiddlewares?: boolean;
-  middleware?: Record<string, any>;
-  middlewareRequirements?: any[];
-  middlewareConfig?: Record<string, Record<string, any>>;
-}
-
-interface MiddlewareContext {
-  config: Record<string, any>;
-  kernel: any;
-  middleware: {
-    get<T = any>(name: string): T | undefined;
-    has(name: string): boolean;
-    list(): string[];
-  };
-}
 
 // =============================================================================
 // Type Definitions
@@ -73,7 +46,7 @@ function createContextProvider<T>(config: ContextConfig<T>) {
     const getInitialState = useCallback((): T => {
       if (config.persistence) {
         try {
-          const key = fynAppId ? `${config.persistence.key}-${fynAppId}` : config.persistence.key;
+          const key = fynAppId ? `${config.persistence.key}-${fynAppId}` : config.persistence.key!;
           
           switch (config.persistence.storage) {
             case 'localStorage':
@@ -110,7 +83,7 @@ function createContextProvider<T>(config: ContextConfig<T>) {
     useEffect(() => {
       if (config.persistence && prevStateRef.current !== state) {
         try {
-          const key = fynAppId ? `${config.persistence.key}-${fynAppId}` : config.persistence.key;
+          const key = fynAppId ? `${config.persistence.key}-${fynAppId}` : config.persistence.key!;
           
           switch (config.persistence.storage) {
             case 'localStorage':
@@ -347,60 +320,7 @@ class GenericReactContextMiddleware implements FynAppMiddleware {
   }
 
   private exposeContextAPIs(fynApp: FynApp, fynAppContexts: Map<string, any>) {
-    fynApp.middleware = fynApp.middleware || {};
-    fynApp.middleware['react-context'] = {
-      // Get context state and actions (framework-agnostic, no React hooks)
-      useContext: (contextName: string) => {
-        const contextData = fynAppContexts.get(contextName);
-        if (!contextData) {
-          throw new Error(`Context "${contextName}" not found in ${fynApp.name}`);
-        }
-        
-        const contextInstance = this.getContextInstance(contextName, contextData);
-        
-        // Return direct access to state, actions, and subscription
-        // This avoids React hook compatibility issues across versions
-        return {
-          state: contextInstance.state,
-          actions: contextInstance.actions,
-          setState: contextInstance.setState,
-          subscribe: contextInstance.subscribe
-        };
-      },
-
-      // Get context selector hook
-      useContextSelector: (contextName: string) => {
-        const contextData = fynAppContexts.get(contextName);
-        if (!contextData) {
-          throw new Error(`Context "${contextName}" not found in ${fynApp.name}`);
-        }
-        return (selector: any) => {
-          const contextInstance = this.getContextInstance(contextName, contextData);
-          return selector(contextInstance.state);
-        };
-      },
-
-      // Use multiple contexts efficiently
-      useMultipleContexts: (contextNames: string[]) => {
-        const result: Record<string, any> = {};
-        for (const name of contextNames) {
-          const contextData = fynAppContexts.get(name);
-          if (contextData) {
-            const contextInstance = this.getContextInstance(name, contextData);
-            result[name] = contextInstance.state;
-          }
-        }
-        return result;
-      },
-
-      // Get available context names
-      getAvailableContexts: () => Array.from(fynAppContexts.keys()),
-
-      // Check if context exists
-      hasContext: (contextName: string) => fynAppContexts.has(contextName),
-    };
-
-    console.log(`Exposed react-context APIs to ${fynApp.name}:`, Array.from(fynAppContexts.keys()));
+    //
   }
 
   // Framework-agnostic context instance manager

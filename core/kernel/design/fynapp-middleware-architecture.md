@@ -1,543 +1,339 @@
-# FynApp Middleware Architecture - Concrete Implementation
+# FynApp Middleware Architecture - Top-Level Management
 
 ## Overview
 
-This document defines the concrete implementation of FynMesh's middleware system - the actual APIs, contracts, and workflows for middleware registration, loading, and application. This focuses on practical, implementable features that build on the current kernel foundation.
+This document defines the FynMesh middleware system where middleware is managed at the kernel level with collision avoidance through fynapp-name-prefixed keys. Middleware is tracked by the version of the hosting FynApp, and consumers specify the provider FynApp to avoid naming conflicts.
 
-## Core Concepts
+The system includes auto-detection of middleware exports, a standardized `useMiddleware` API, and ambient middleware availability across all FynApps.
 
-### What is Middleware?
+## Architecture Principles
 
-Middleware in FynMesh extends FynApp capabilities through:
+### 1. **Kernel-Level Management**
 
-- **Service Providers**: Add APIs like storage, auth, analytics to FynApps
-- **Component Wrappers**: Wrap FynApp UI with providers, error boundaries, etc.
-- **Event Handlers**: React to FynApp lifecycle events
-- **Configuration Injectors**: Provide runtime configuration and feature flags
+- All middleware is managed at the kernel level in a single registry
+- Registry uses format: `"fynapp-name::middleware-name"` as keys
+- Prevents middleware name collisions between different FynApp providers
 
-### Current Implementation Foundation
+### 2. **Version-Based Tracking**
 
-The kernel already has basic middleware support:
+- Middleware versions are tracked by the hosting FynApp's version
+- Multiple FynApp versions can provide different versions of the same middleware
+- Version resolution uses latest available version by default
 
-- Middleware discovery via `__middleware*` exports in federation modules
-- Basic `setup()` and `apply()` lifecycle hooks
-- Middleware registry in kernel runtime
+### 3. **Provider Specification**
 
-## API Contracts
+- Consumers specify the `provider` field in `useMiddleware` calls
+- Enables precise middleware resolution and avoids ambiguity
+- Fallback behavior searches across all providers when no provider specified
 
-### 1. Middleware Interface
+### 4. **Auto-Detection and Registration**
 
-```typescript
-/**
- * Basic middleware contract that all middleware must implement
- */
-export interface FynAppMiddleware {
-  /** Unique name for this middleware */
-  name: string;
+- Kernel automatically detects middleware from exposed modules with names starting with `./middleware`
+- Middleware exports must be prefixed with `__middleware__` (e.g., `__middleware__ReactContext`)
+- Automatic registration eliminates manual middleware registration steps
 
-  /** Optional version for compatibility checking */
-  version?: string;
+### 5. **Standardized Consumption API**
 
-  /**
-   * One-time setup called when middleware is registered
-   * Use for global initialization, kernel feature registration
-   */
-  setup?(kernel: FynMeshKernel): Promise<void> | void;
+- `useMiddleware` API provides a standardized way to consume middleware
+- Returns objects with `__middlewareInfo` field for kernel detection
+- Enables declarative middleware usage patterns
 
-  /**
-   * Apply middleware to a specific FynApp instance
-   * Called during FynApp bootstrap after loading
-   */
-  apply?(fynApp: FynApp, context: MiddlewareContext): Promise<void> | void;
+### 6. **Ambient Availability**
 
-  /**
-   * Optional teardown when FynApp is unloaded
-   */
-  teardown?(fynApp: FynApp): Promise<void> | void;
-}
+- Once loaded, middleware are available to all subsequent FynApps
+- Eliminates need for repeated middleware loading across FynApps
+- Promotes middleware reuse and consistency
 
-/**
- * Context provided to middleware during application
- */
-export interface MiddlewareContext {
-  /** Middleware configuration from FynApp manifest */
-  config: Record<string, any>;
+## Middleware Provider Pattern
 
-  /** Kernel instance */
-  kernel: FynMeshKernel;
+### Convention and Structure
 
-  /** Other middleware APIs that this middleware can access */
-  middleware: MiddlewareAPI;
-}
+- **File Structure**: Place middleware source code files at the root or in subdirectories of `src/`
+- **Module Exposure**: Expose middleware modules with names starting with `./middleware`, mirroring the actual file structure
+  - `./middleware-react-context` → `./src/middleware-react-context.ts`
+  - `./middleware/analytics` → `./src/middleware/analytics.ts`
+- **Export Naming**: Export middleware using the pattern `__middleware__<MiddlewareName>`
 
-/**
- * API surface that middleware can expose to FynApps
- */
-export interface MiddlewareAPI {
-  /** Get middleware instance by name */
-  get<T = any>(name: string): T | undefined;
-
-  /** Check if middleware is available */
-  has(name: string): boolean;
-
-  /** Get all available middleware names */
-  list(): string[];
-}
-```
-
-### 2. FynApp Middleware Declaration
-
-FynApps declare middleware requirements in their federation configuration:
+### Example Provider Structure
 
 ```typescript
-/**
- * Middleware requirements in FynApp info
- */
-export interface FynAppInfo {
-  // ... existing properties
-
-  /** Middleware that this FynApp wants to use */
-  middlewareRequirements?: MiddlewareRequirement[];
-
-  /** Configuration for requested middleware */
-  middlewareConfig?: Record<string, Record<string, any>>;
-}
-
-export interface MiddlewareRequirement {
-  /** Name of the middleware */
-  name: string;
-
-  /** Optional version constraint */
-  version?: string;
-
-  /** Whether this middleware is required or optional */
-  required?: boolean;
-
-  /** Source FynApp that provides this middleware (optional) */
-  provider?: string;
-}
-```
-
-### 3. Kernel Middleware Extensions
-
-```typescript
-export interface FynMeshKernel {
-  // ... existing properties
-
-  /**
-   * Middleware registry and API
-   */
-  middleware: {
-    /** Register a middleware implementation */
-    register(middleware: FynAppMiddleware, provider?: string): void;
-
-    /** Get middleware by name */
-    get<T = any>(name: string): T | undefined;
-
-    /** Check if middleware is available */
-    has(name: string): boolean;
-
-    /** List all available middleware */
-    list(): MiddlewareInfo[];
-
-    /** Create middleware context for FynApp */
-    createContext(fynApp: FynApp): MiddlewareContext;
-  };
-}
-
-export interface MiddlewareInfo {
-  name: string;
-  version?: string;
-  provider: string;
-  implementation: FynAppMiddleware;
-}
-```
-
-## Implementation Workflow
-
-### 1. Middleware Provider Implementation
-
-```typescript
-// Example: React Context Provider Middleware
-// File: src/middleware/react-context.tsx
-
-import { FynAppMiddleware, FynApp, MiddlewareContext } from "@fynmesh/kernel";
-import React from "react";
-
-export interface ThemeConfig {
-  defaultTheme: "light" | "dark";
-  themes: Record<string, any>;
-}
+// src/middleware-react-context.ts
+import { FynAppMiddleware } from "@fynmesh/kernel";
 
 class ReactContextMiddleware implements FynAppMiddleware {
   name = "react-context";
   version = "1.0.0";
 
-  private contexts = new WeakMap<FynApp, React.Context<any>>();
-
-  async setup(kernel: FynMeshKernel) {
-    console.log("React Context Middleware initialized");
+  async setup(kernel: any) {
+    // Setup logic
   }
 
   async apply(fynApp: FynApp, context: MiddlewareContext) {
-    const config = context.config as ThemeConfig;
-
-    // Create context for this FynApp
-    const AppContext = React.createContext({
-      theme: config.defaultTheme || "light",
-      setTheme: (theme: string) => console.log("Theme changed:", theme),
-    });
-
-    this.contexts.set(fynApp, AppContext);
-
-    // Wrap the FynApp's main component
-    if (fynApp.mainModule && fynApp.mainModule.App) {
-      const OriginalApp = fynApp.mainModule.App;
-
-      fynApp.mainModule.App = (props: any) =>
-        React.createElement(
-          AppContext.Provider,
-          { value: { theme: config.defaultTheme || "light" } },
-          React.createElement(OriginalApp, props),
-        );
-    }
-
-    // Expose context API
-    fynApp.middleware = fynApp.middleware || {};
-    fynApp.middleware["react-context"] = {
-      getContext: () => this.contexts.get(fynApp),
-      useTheme: () => React.useContext(AppContext),
-    };
+    // Apply logic
   }
 }
 
-// Export middleware for federation loading
 export const __middleware__ReactContext = new ReactContextMiddleware();
 ```
 
-### 2. FynApp Usage
-
 ```typescript
-// FynApp declares middleware requirements
-// File: src/config.ts
-
+// Rollup config exposes
 export default {
-  middlewareRequirements: [
-    {
-      name: 'react-context',
-      version: '^1.0.0',
-      required: true,
-      provider: 'fynapp-react-lib'
-    },
-    {
-      name: 'analytics',
-      required: false
-    }
-  ],
-
-  middlewareConfig: {
-    'react-context': {
-      defaultTheme: 'dark',
-      themes: {
-        dark: { primary: '#000' },
-        light: { primary: '#fff' }
-      }
-    }
-  }
-};
-
-// FynApp uses middleware APIs
-// File: src/App.tsx
-
-import React from 'react';
-
-export default function App({ appName, middleware }: any) {
-  // Access middleware API
-  const contextMiddleware = middleware?.get('react-context');
-  const useTheme = contextMiddleware?.useTheme;
-
-  const theme = useTheme ? useTheme() : { theme: 'light' };
-
-  return (
-    <div style={{ backgroundColor: theme.theme === 'dark' ? '#000' : '#fff' }}>
-      <h1>{appName} with theme: {theme.theme}</h1>
-    </div>
-  );
-}
-```
-
-### 3. Kernel Implementation Updates
-
-```typescript
-// Enhanced kernel middleware management
-// File: src/kernel-core.ts
-
-export abstract class FynMeshKernelCore implements FynMeshKernel {
-  // ... existing code
-
-  public readonly middleware = {
-    register: (middleware: FynAppMiddleware, provider = "unknown") => {
-      this.runTime.middlewares[middleware.name] = {
-        fynApp: { name: provider, version: "1.0.0" } as FynApp,
-        config: {},
-        moduleName: `__middleware__${middleware.name}`,
-        exportName: middleware.name,
-        implementation: middleware,
-      };
-    },
-
-    get: <T = any>(name: string): T | undefined => {
-      const middleware = this.runTime.middlewares[name];
-      return middleware?.implementation as T;
-    },
-
-    has: (name: string): boolean => {
-      return name in this.runTime.middlewares;
-    },
-
-    list: (): MiddlewareInfo[] => {
-      return Object.entries(this.runTime.middlewares).map(([name, meta]) => ({
-        name,
-        version: meta.implementation.version,
-        provider: meta.fynApp.name,
-        implementation: meta.implementation,
-      }));
-    },
-
-    createContext: (fynApp: FynApp): MiddlewareContext => {
-      return {
-        config: fynApp.middlewareConfig || {},
-        kernel: this,
-        middleware: {
-          get: this.middleware.get,
-          has: this.middleware.has,
-          list: () => this.middleware.list().map((info) => info.name),
-        },
-      };
-    },
-  };
-
-  /**
-   * Enhanced middleware application with configuration
-   */
-  async applyMiddlewares(fynApp: FynApp): Promise<void> {
-    const context = this.middleware.createContext(fynApp);
-
-    // Apply middleware based on FynApp requirements
-    const requirements = fynApp.middlewareRequirements || [];
-
-    for (const requirement of requirements) {
-      const middleware = this.runTime.middlewares[requirement.name];
-
-      if (!middleware) {
-        if (requirement.required) {
-          throw new Error(`Required middleware '${requirement.name}' not found`);
-        }
-        console.warn(`Optional middleware '${requirement.name}' not available`);
-        continue;
-      }
-
-      if (middleware.implementation.apply) {
-        const middlewareConfig = fynApp.middlewareConfig?.[requirement.name] || {};
-        const middlewareContext = {
-          ...context,
-          config: middlewareConfig,
-        };
-
-        await middleware.implementation.apply(fynApp, middlewareContext);
-      }
-    }
-  }
-}
-```
-
-## Federation Configuration
-
-### Rollup Configuration for Middleware Provider
-
-```javascript
-// rollup.config.js for middleware provider FynApp
-export default {
-  input: ["src/middleware/react-context.tsx", "src/middleware/analytics.ts", "fynapp-entry.js"],
-
-  plugins: [
-    federation({
-      name: "fynapp-react-lib",
-      exposes: {
-        "./middleware/react-context": "./src/middleware/react-context.tsx",
-        "./middleware/analytics": "./src/middleware/analytics.ts",
-      },
-      shared: {
-        "esm-react": { singleton: true },
-      },
-    }),
-  ],
+  // ... other config
+  exposes: {
+    "./middleware-react-context": "./src/middleware-react-context.ts",
+    "./middleware/analytics": "./src/middleware/analytics.ts",
+  },
 };
 ```
 
-### Enhanced Middleware Loading
+## Middleware Consumer Pattern
+
+### useMiddleware API
+
+The `useMiddleware` API provides a standardized way to consume middleware:
 
 ```typescript
-// Enhanced loadEntryMiddlewares in kernel-core.ts
-async loadEntryMiddlewares(fynAppEntry: FederationEntry): Promise<void> {
-  const container = fynAppEntry.container;
-  if (!container || !container.$E) return;
+// src/main.ts
+import { useMiddleware } from "@fynmesh/kernel";
 
-  // Look for middleware exports
-  for (const moduleName in container.$E) {
-    if (moduleName.startsWith('./middleware/') || moduleName.startsWith('__middleware')) {
-      try {
-        const factory = await fynAppEntry.get(moduleName);
-        const moduleExports = factory();
-
-        // Look for middleware exports in the module
-        for (const [exportName, middleware] of Object.entries(moduleExports)) {
-          if (exportName.startsWith('__middleware__') &&
-              middleware &&
-              typeof middleware === 'object' &&
-              'name' in middleware) {
-
-            const middlewareImpl = middleware as FynAppMiddleware;
-
-            if (middlewareImpl.setup) {
-              await middlewareImpl.setup(this);
-            }
-
-            this.middleware.register(middlewareImpl, this.extractAppName(fynAppEntry));
-            console.debug('Loaded middleware:', middlewareImpl.name);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load middleware module', moduleName, error);
-      }
-    }
-  }
-}
+export const main = useMiddleware(
+  { provider: "fynapp-react-lib", name: "react-context" },
+  {
+    // Middleware configuration
+    contexts: [
+      {
+        contextName: "theme",
+        initialState: { mode: "light" },
+      },
+    ],
+  },
+  async (kernel, fynApp) => {
+    // Your FynApp logic here
+    console.log("FynApp initialized with middleware");
+  },
+);
 ```
 
-## Implementation Summary
+### useMiddleware Parameters
 
-The concrete middleware architecture provides three key APIs that work together:
+- **Middleware Specification**: Object with `provider` and `name` fields
+- **Configuration**: Middleware-specific configuration object
+- **User Code**: The actual FynApp logic function
 
-### 1. **How FynApps Declare Middleware Requirements**
+## Middleware Lifecycle
 
-FynApps use a `config.ts` file to declare what middleware they need:
+### 1. **Auto-Detection Phase**
+
+- FynApp loads → Kernel scans exposed modules with names starting with `./middleware`
+- Kernel detects exports with `__middleware__` prefix
+- Automatic registration of discovered middleware
+
+### 2. **Configuration Phase**
+
+- After config loads → Kernel applies ALL registered middleware automatically
+- No manual middleware application required
+
+### 3. **Usage Detection Phase**
+
+- Kernel scans exposed module exports for `__middlewareInfo` fields
+- When found, kernel looks up middleware and invokes it on the usage object
+- Automatic middleware application to consumer FynApps
+
+### 4. **Ambient Availability**
+
+- Middleware remain available to all subsequent FynApps
+- No need for repeated loading or registration
+- Promotes consistent middleware usage patterns
+
+## API Contracts
+
+### 1. Middleware Registration (Automatic)
 
 ```typescript
-// demo/fynapp-1/src/config.ts
+// Auto-registration via export naming convention
+export const __middleware__ReactContext = new ReactContextMiddleware();
+
+// Manual registration (alternative approach)
+kernel.middleware.register(
+  middlewareImplementation,
+  providerFynAppName, // FynApp that provides the middleware
+  fynAppVersion, // Version of the providing FynApp
+);
+```
+
+### 2. Middleware Lookup
+
+```typescript
+// Get middleware with provider specification (recommended)
+const middleware = kernel.middleware.get("react-context", "fynapp-react-lib");
+
+// Check middleware availability with provider
+const hasMiddleware = kernel.middleware.has("react-context", "fynapp-react-lib");
+
+// Fallback: search across all providers (not recommended for production)
+const anyReactContext = kernel.middleware.get("react-context");
+```
+
+### 3. FynApp Configuration
+
+```typescript
+// FynApp config - middleware requirements are auto-detected from useMiddleware usage
 export default {
-  middlewareRequirements: [
-    {
-      name: "react-context",
-      version: "^1.0.0",
-      required: true,
-      provider: "fynapp-react-lib",
+  // middlewareRequirements: [] // Auto-generated by FynMesh dev tool
+  // All middleware configuration is handled directly in useMiddleware calls
+};
+```
+
+## Internal Registry Structure
+
+The middleware registry uses the following structure:
+
+```typescript
+// Registry key format: "provider::middleware-name"
+runTime.middlewares = {
+  "fynapp-react-lib::react-context": {
+    "2.1.0": {
+      fynApp: { name: "fynapp-react-lib", version: "2.1.0" },
+      implementation: ReactContextMiddleware,
+      // ... other metadata
     },
-  ],
-  middlewareConfig: {
-    "react-context": {
-      defaultTheme: "dark",
-      themes: {
-        /* theme config */
-      },
+    "2.0.0": {
+      fynApp: { name: "fynapp-react-lib", version: "2.0.0" },
+      implementation: ReactContextMiddleware_v2,
+      // ... other metadata
+    },
+  },
+  "fynapp-analytics-pro::analytics": {
+    "1.2.0": {
+      fynApp: { name: "fynapp-analytics-pro", version: "1.2.0" },
+      implementation: AnalyticsMiddleware,
+      // ... other metadata
+    },
+  },
+  "fynapp-ui-kit::react-context": {
+    "1.0.0": {
+      fynApp: { name: "fynapp-ui-kit", version: "1.0.0" },
+      implementation: DifferentReactContextMiddleware,
+      // ... other metadata
     },
   },
 };
 ```
 
-### 2. **How Kernel Loads and Registers Middleware**
+## Benefits
 
-The kernel automatically discovers and loads middleware during FynApp bootstrap:
+### 1. **Collision Avoidance**
+
+- Multiple FynApps can provide middleware with the same name
+- No conflicts between `fynapp-react-lib::react-context` and `fynapp-ui-kit::react-context`
+- Clear ownership and provider identification
+
+### 2. **Version Management**
+
+- Track middleware versions by hosting FynApp version
+- Support multiple versions of the same middleware from same provider
+- Enable gradual upgrades and compatibility testing
+
+### 3. **Explicit Dependencies**
+
+- Consumers explicitly specify which FynApp provides their middleware in `useMiddleware` calls
+- Reduces ambiguity and improves reliability
+- Better error messages when middleware not found
+
+### 4. **Debugging Support**
+
+- Registry keys clearly show provider and middleware name
+- Easier to track middleware sources in logs
+- Better visibility into middleware loading and registration
+
+### 5. **Auto-Detection and Convenience**
+
+- Automatic middleware discovery and registration
+- Standardized `useMiddleware` API reduces boilerplate
+- Convention-based approach improves developer experience
+
+### 6. **Ambient Availability**
+
+- Middleware remain available across all FynApps
+- Eliminates redundant loading and registration
+- Promotes consistent middleware usage patterns
+
+## Implementation Guide
+
+### For Middleware Providers
+
+1. Place middleware implementations in `src/` directory (or subdirectories)
+2. Expose middleware modules with names starting with `./middleware`, mirroring file structure
+3. Export middleware using `__middleware__<Name>` convention
+4. Manual registration is also supported for advanced use cases
+
+### For Middleware Consumers
+
+1. Use the `useMiddleware` API for standardized middleware consumption
+2. Specify the `provider` field in `useMiddleware` calls for precise middleware resolution
+3. FynMesh dev tool automatically detects and collects middleware requirements from code
+4. Configure middleware according to provider documentation
+
+### Implementation Examples
+
+**Using useMiddleware API:**
 
 ```typescript
-// In kernel-core.ts
-async loadEntryMiddlewares(fynAppEntry: FederationEntry) {
-    // 1. Look for ./middleware/* or __middleware* exports
-    // 2. Load the module and extract middleware implementations
-    // 3. Call middleware.setup() for initialization
-    // 4. Register with kernel.middleware.register()
+export const main = useMiddleware(
+  { provider: "fynapp-react-lib", name: "react-context" },
+  {
+    // Middleware configuration
+    contexts: [
+      {
+        contextName: "theme",
+        initialState: { mode: "light" },
+      },
+    ],
+  },
+  async (kernel, fynApp) => {
+    // Your FynApp logic
+  },
+);
+```
+
+**Using traditional main function approach:**
+
+```typescript
+// main.ts
+export function main(kernel, fynApp) {
+  // Traditional approach - middleware requirements auto-detected by dev tool
+  // when useMiddleware is used elsewhere in the codebase
 }
 ```
 
-### 3. **How Kernel Applies Middleware to FynApps**
+## Flexibility and Compatibility
 
-When a FynApp loads, the kernel applies middleware based on requirements:
+The middleware system provides multiple integration approaches:
 
-```typescript
-async applyMiddlewares(fynApp: FynApp) {
-    // 1. Create middleware context with config
-    // 2. Check FynApp's middlewareRequirements
-    // 3. For each required middleware:
-    //    - Validate it's available
-    //    - Call middleware.apply(fynApp, context)
-    //    - Pass FynApp-specific configuration
-}
-```
+- Middleware without provider specification works via fallback search
+- Fallback search across all providers when no provider specified
+- Manual middleware registration as an alternative to auto-detection
+- Middleware requirements automatically collected from `useMiddleware` usage
+- Provider field is optional for simpler use cases
 
-### 4. **How FynApps Use Middleware APIs**
+## Future Enhancements
 
-FynApps access middleware through the runtime API:
+### Dev Tools Integration
 
-```typescript
-// In FynApp component
-function App({ middleware }) {
-    const contextMiddleware = middleware?.get('react-context');
-    const useAppContext = contextMiddleware?.useAppContext;
-    const context = useAppContext();
+- **Auto-detection of `useMiddleware` calls** - FynMesh dev tool compiles and collects middleware requirements from code usage
+- **Automatic requirement generation** - Middleware requirements automatically added to entry files
+- Enhanced debugging and visualization tools
+- Automatic middleware dependency resolution
 
-    return (
-        <div>
-            <button onClick={context.toggleTheme}>
-                Switch Theme
-            </button>
-        </div>
-    );
-}
-```
+### Advanced Loading Patterns
 
-## Working Example Flow
+- Configuration-driven loading of additional exposed modules
+- Conditional middleware loading based on environment
+- Lazy loading of middleware for performance optimization
 
-1. **Middleware Provider** (`fynapp-react-lib`) exports `__middleware__ReactContext`
-2. **Kernel** discovers and registers the middleware during provider bootstrap
-3. **Consumer FynApp** (`fynapp-1`) declares requirement in `config.ts`
-4. **Kernel** applies middleware during consumer bootstrap:
-   - Creates context with FynApp's config
-   - Calls `middleware.apply(fynApp, context)`
-   - Middleware wraps App component with React Context Provider
-5. **FynApp** accesses middleware APIs through `fynApp.middleware['react-context']`
+### Enhanced Error Handling
 
-## Key Benefits
-
-- ✅ **Type Safe**: Full TypeScript interfaces and contracts
-- ✅ **Practical**: Works with existing federation system
-- ✅ **Incremental**: Can be added to existing FynApps gradually
-- ✅ **Isolated**: Each FynApp gets its own middleware instance
-- ✅ **Configurable**: Per-FynApp middleware configuration
-- ✅ **Discoverable**: Automatic middleware discovery and registration
-
-This implementation provides a solid foundation for FynMesh middleware while remaining practical and achievable with the current kernel architecture.
-
-## Next Steps
-
-### Phase 1: Basic Implementation
-
-1. ✅ Update type definitions
-2. ✅ Enhance kernel middleware registry
-3. ✅ Implement middleware context creation
-4. ✅ Add configuration passing
-
-### Phase 2: Enhanced Features
-
-1. Add version checking and compatibility
-2. Implement middleware dependency resolution
-3. Add error boundaries and graceful degradation
-4. Create middleware testing utilities
-
-### Phase 3: Advanced Capabilities
-
-1. Hot reloading for development
-2. Middleware performance monitoring
-3. Advanced composition patterns
-4. Cross-FynApp communication helpers
-
-This implementation provides a solid foundation for FynMesh middleware while remaining practical and achievable with the current kernel architecture.
+- Descriptive error messages with context and available options
+- Better debugging information for middleware resolution failures
+- Improved error recovery and fallback mechanisms

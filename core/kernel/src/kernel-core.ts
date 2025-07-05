@@ -8,16 +8,10 @@ import {
   FynApp,
   MiddlewareContext,
   MiddlewareInfo,
+  MiddlewareUsage,
 } from "./types";
 import type { FederationEntry } from "federation-js";
 import { urlJoin } from "./util";
-
-/**
- * Extended runtime data interface for internal use
- */
-export interface KernelRuntimeData extends FynMeshRuntimeData {
-  shareScope: Record<string, any>;
-}
 
 /**
  * Abstract base class for FynMesh kernel implementations
@@ -28,61 +22,60 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public readonly version: string = "1.0.0";
   public readonly shareScopeName: string = fynMeshShareScope;
 
-  protected runTime: KernelRuntimeData;
+  protected runTime: FynMeshRuntimeData;
 
   constructor() {
     this.events = new FynEventTarget();
     this.runTime = {
       appsLoaded: {},
       middlewares: {},
-      shareScope: Object.create(null),
     };
   }
 
   /**
-   * Middleware registry and API implementation
+   * Register a middleware implementation
    */
-  public readonly middleware = {
-    register: (middleware: FynAppMiddleware, provider = "unknown") => {
-      this.runTime.middlewares[middleware.name] = {
-        fynApp: { name: provider, version: "1.0.0" } as FynApp,
-        config: {},
-        moduleName: `__middleware__${middleware.name}`,
-        exportName: middleware.name,
-        implementation: middleware,
-      };
-    },
+  registerMiddleware(
+    middleware: FynAppMiddleware,
+    provider: string,
+    fynAppVersion = "default",
+  ): void {
+    // Create fynapp-prefixed key to avoid name collisions
+    const middlewareKey = `${provider}::${middleware.name}`;
 
-    get: <T = any>(name: string): T | undefined => {
-      const middleware = this.runTime.middlewares[name];
-      return middleware?.implementation as T;
-    },
+    const versionMap = this.runTime.middlewares[middlewareKey] || {};
+    versionMap[fynAppVersion] = {
+      fynApp: { name: provider, version: fynAppVersion } as FynApp,
+      config: {},
+      moduleName: `__middleware__${middleware.name}`,
+      exportName: middleware.name,
+      implementation: middleware,
+    };
+    this.runTime.middlewares[middlewareKey] = versionMap;
+  }
 
-    has: (name: string): boolean => {
-      return name in this.runTime.middlewares;
-    },
+  /**
+   * Get middleware by name and provider
+   */
+  getMiddleware<T = any>(name: string, provider: string): T | undefined {
+    const middlewareKey = `${provider}::${name}`;
+    const versionMap = this.runTime.middlewares[middlewareKey];
+    if (versionMap) {
+      // Get the latest version (or could implement version resolution logic)
+      const versions = Object.keys(versionMap).sort();
+      const latestVersion = versions[versions.length - 1];
+      return versionMap[latestVersion]?.implementation as T;
+    }
+    return undefined;
+  }
 
-    list: (): MiddlewareInfo[] => {
-      return Object.entries(this.runTime.middlewares).map(([name, meta]) => ({
-        name,
-        version: meta.implementation.version,
-        provider: meta.fynApp.name,
-        implementation: meta.implementation,
-      }));
-    },
-
-    createContext: (fynApp: FynApp): MiddlewareContext => {
-      return {
-        config: fynApp.middlewareConfig || {},
-        kernel: this,
-        middleware: {
-          get: this.middleware.get,
-          has: this.middleware.has,
-          list: () => this.middleware.list().map((info) => info.name),
-        },
-      };
-    },
-  };
+  /**
+   * Check if middleware is available
+   */
+  hasMiddleware(name: string, provider: string): boolean {
+    const middlewareKey = `${provider}::${name}`;
+    return middlewareKey in this.runTime.middlewares;
+  }
 
   /**
    * Initialize the kernel runtime data
@@ -90,7 +83,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   initRunTime(data: FynMeshRuntimeData): FynMeshRuntimeData {
     this.runTime = {
       ...data,
-      shareScope: this.runTime.shareScope, // Preserve existing shareScope
     };
     return this.runTime;
   }
@@ -137,6 +129,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     // Step 3: Load and register middlewares if present
     await this.loadEntryMiddlewares(fynAppEntry);
 
+    // Step 3.5: Scan expose modules for middleware usage and invoke middleware
+    await this.scanAndApplyMiddlewareUsage(fynAppEntry);
+
     // Step 4: Load and execute main module if present
     if (container && container.$E["./main"]) {
       console.debug("fynMeshKernel loading fynapp main", fynAppEntry);
@@ -156,7 +151,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           name: appName,
           version: "1.0.0", // Default version
           mainModule: mainModule,
-          middlewareRequirements: existingConfig?.middlewareRequirements,
           middlewareConfig: existingConfig?.middlewareConfig,
         };
 
@@ -180,12 +174,15 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     const container = fynAppEntry.container;
     if (!container || !container.$E) return;
 
-    console.log("fynmesh kernel: checking for middlewares in", this.extractAppName(fynAppEntry));
+    const appName = this.extractAppName(fynAppEntry);
+    const appVersion = container.version || "1.0.0"; // Get version from container
+
+    console.log("fynmesh kernel: checking for middlewares in", appName);
 
     // Look for middleware exports
     for (const moduleName in container.$E) {
       console.log("fynmesh kernel: checking module", moduleName);
-      if (moduleName.startsWith("./middleware/") || moduleName.startsWith("__middleware")) {
+      if (moduleName.startsWith("./middleware")) {
         try {
           console.log("fynmesh kernel: loading middleware module", moduleName);
           const factory = await fynAppEntry.get(moduleName);
@@ -205,12 +202,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
                 await middlewareImpl.setup(this);
               }
 
-              this.middleware.register(middlewareImpl, this.extractAppName(fynAppEntry));
+              // Pass the fynApp version when registering middleware
+              this.registerMiddleware(middlewareImpl, appName, appVersion);
               console.log(
                 "✅ REGISTERED MIDDLEWARE:",
-                middlewareImpl.name,
-                "from",
-                this.extractAppName(fynAppEntry),
+                `${appName}::${middlewareImpl.name}`,
+                "version:",
+                appVersion,
               );
               console.log("✅ CURRENT MIDDLEWARE REGISTRY:", Object.keys(this.runTime.middlewares));
             }
@@ -247,54 +245,39 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
-   * Enhanced middleware application with configuration and requirements
+   * Apply all registered middleware to a fynapp
    */
   async applyMiddlewares(fynApp: FynApp): Promise<void> {
-    const context = this.middleware.createContext(fynApp);
+    const context = this.createMiddlewareContext(fynApp);
 
     console.log("fynmesh kernel: applying middlewares to", fynApp.name);
 
-    // Apply middleware based on FynApp requirements
-    const requirements = fynApp.middlewareRequirements || [];
+    // Apply ALL registered middleware to this FynApp
+    console.log("fynmesh kernel: applying all registered middleware");
+    console.log("🔍 AVAILABLE MIDDLEWARE:", Object.keys(this.runTime.middlewares));
 
-    if (requirements.length > 0) {
-      console.log("fynmesh kernel: found", requirements.length, "middleware requirements");
-      console.log(
-        "🔍 LOOKING FOR MIDDLEWARE:",
-        requirements.map((r) => r.name),
-      );
-      console.log("🔍 AVAILABLE MIDDLEWARE:", Object.keys(this.runTime.middlewares));
-      // Apply specific middleware requirements
-      for (const requirement of requirements) {
-        const middleware = this.runTime.middlewares[requirement.name];
+    for (const middlewareKey in this.runTime.middlewares) {
+      const versionMap = this.runTime.middlewares[middlewareKey];
+      const versions = Object.keys(versionMap).sort();
+      const latestVersion = versions[versions.length - 1];
+      const middlewareMeta = versionMap[latestVersion];
 
-        if (!middleware) {
-          console.error(`❌ MIDDLEWARE NOT FOUND: '${requirement.name}'`);
-          console.error("❌ AVAILABLE:", Object.keys(this.runTime.middlewares));
-          if (requirement.required !== false) {
-            throw new Error(`Required middleware '${requirement.name}' not found`);
-          }
-          console.warn(`Optional middleware '${requirement.name}' not available`);
-          continue;
-        }
+      if (middlewareMeta.implementation?.apply) {
+        console.log("fynmesh kernel: applying middleware", middlewareKey);
 
-        if (middleware.implementation.apply) {
-          console.log("fynmesh kernel: applying middleware", requirement.name);
-          const middlewareConfig = fynApp.middlewareConfig?.[requirement.name] || {};
-          const middlewareContext = {
-            ...context,
-            config: middlewareConfig,
-          };
+        // Get middleware-specific config from FynApp if available
+        const [provider, middlewareName] = middlewareKey.split("::");
+        const middlewareConfig = fynApp.middlewareConfig?.[middlewareName] || {};
+        const middlewareContext = {
+          ...context,
+          config: middlewareConfig,
+        };
 
-          await middleware.implementation.apply(fynApp, middlewareContext);
-        }
-      }
-    } else {
-      // Fallback: apply all available middleware (legacy behavior)
-      for (const capId in this.runTime.middlewares) {
-        const middleware = this.runTime.middlewares[capId];
-        if (middleware.implementation?.apply) {
-          await middleware.implementation.apply(fynApp, context);
+        try {
+          await middlewareMeta.implementation.apply(fynApp, middlewareContext);
+        } catch (error) {
+          console.error(`Failed to apply middleware ${middlewareKey}:`, error);
+          // TODO: Add proper error handling - should we continue or fail?
         }
       }
     }
@@ -309,4 +292,121 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
   // Abstract methods that must be implemented by platform-specific classes
   abstract loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
+
+  /**
+   * List all available middleware
+   */
+  listMiddleware(): MiddlewareInfo[] {
+    const result: MiddlewareInfo[] = [];
+    for (const [middlewareKey, versionMap] of Object.entries(this.runTime.middlewares)) {
+      const [provider, name] = middlewareKey.split("::");
+      for (const [version, meta] of Object.entries(versionMap)) {
+        result.push({
+          name,
+          version,
+          provider,
+        });
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Create middleware context for FynApp
+   */
+  createMiddlewareContext(fynApp: FynApp): MiddlewareContext {
+    return {
+      config: fynApp.middlewareConfig || {},
+      kernel: this,
+    };
+  }
+
+  /**
+   * Scan expose module exports for __middlewareInfo markers and invoke middleware
+   * By default, only scans the ./main module
+   */
+  async scanAndApplyMiddlewareUsage(fynAppEntry: FederationEntry): Promise<void> {
+    const container = fynAppEntry.container;
+    if (!container || !container.$E) return;
+
+    const appName = this.extractAppName(fynAppEntry);
+    console.log("fynmesh kernel: scanning expose modules for middleware usage in", appName);
+
+    // By default, only scan the ./main module for middleware usage
+    // TODO: Future enhancement - allow config to specify additional modules to scan
+    const modulesToScan = ["./main"];
+
+    // Future: Load additional modules specified in config
+    // if (fynAppConfig?.additionalModulesForMiddleware) {
+    //   modulesToScan.push(...fynAppConfig.additionalModulesForMiddleware);
+    // }
+
+    for (const moduleName of modulesToScan) {
+      if (!container.$E[moduleName]) {
+        console.log("fynmesh kernel: module not available for scanning", moduleName);
+        continue;
+      }
+
+      try {
+        console.log("fynmesh kernel: scanning module for usage", moduleName);
+        const factory = await fynAppEntry.get(moduleName);
+        const moduleExports = factory();
+
+        // Look for exports with __middlewareInfo field
+        for (const [exportName, exportValue] of Object.entries(moduleExports)) {
+          if (exportValue && typeof exportValue === "object" && "__middlewareInfo" in exportValue) {
+            const usage = exportValue as MiddlewareUsage;
+            console.log(
+              "🔍 FOUND MIDDLEWARE USAGE:",
+              exportName,
+              "->",
+              `${usage.__middlewareInfo.provider}::${usage.__middlewareInfo.name}`,
+            );
+
+            // Look up the middleware
+            const middleware = this.getMiddleware(
+              usage.__middlewareInfo.name,
+              usage.__middlewareInfo.provider,
+            );
+
+            if (middleware && middleware.apply) {
+              console.log(
+                "✅ INVOKING MIDDLEWARE ON USAGE:",
+                `${usage.__middlewareInfo.provider}::${usage.__middlewareInfo.name}`,
+              );
+
+              // Create a temporary FynApp object for this usage
+              const usageFynApp: FynApp = {
+                name: appName,
+                version: "1.0.0",
+                mainModule: { [exportName]: usage.user },
+              };
+
+              // Create middleware context with usage-specific config
+              const middlewareContext: MiddlewareContext = {
+                config: usage.config || {},
+                kernel: this,
+              };
+
+              try {
+                await middleware.apply(usageFynApp, middlewareContext);
+              } catch (error) {
+                console.error(
+                  `Failed to apply middleware ${usage.__middlewareInfo.provider}::${usage.__middlewareInfo.name} on usage:`,
+                  error,
+                );
+              }
+            } else {
+              console.warn(
+                `❌ MIDDLEWARE NOT FOUND FOR USAGE: ${usage.__middlewareInfo.provider}::${usage.__middlewareInfo.name}`,
+              );
+              console.warn("🔍 AVAILABLE MIDDLEWARE:", Object.keys(this.runTime.middlewares));
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to scan module for middleware usage", moduleName, error);
+      }
+    }
+  }
 }

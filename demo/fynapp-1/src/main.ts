@@ -77,19 +77,10 @@ export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
   // Render the React component with pre-loaded components and middleware
   const root = ReactDomClient.createRoot(targetDiv);
 
-  // DEBUG: Log what's available
-  console.log("🔍 fynapp-1 main: kernel.middleware:", kernel.middleware);
-  console.log("🔍 fynapp-1 main: fynApp.middleware:", fynApp.middleware);
-  console.log(
-    "🔍 fynapp-1 main: fynApp.middleware react-context:",
-    fynApp.middleware?.["react-context"]
-  );
-
   root.render(
     React.createElement(App, {
       appName: fynApp.name,
       components: componentLibrary,
-      middleware: fynApp.middleware, // Pass fynApp.middleware directly
     })
   );
 }

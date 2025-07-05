@@ -3,7 +3,7 @@ $fyn:
  flattenTop: true
 $pkg:
  dep:
-  '@xarc/run': ^2.1.1
+  '@xarc/run': ../xarc-run
   fyn: ^1.1.46
   fynpo: ^1.1.49
 '@babel/code-frame':
@@ -53,13 +53,13 @@ $pkg:
   $: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==
   _: 'https://registry.npmjs.org/@types/normalize-package-data/-/normalize-package-data-2.4.4.tgz'
 '@xarc/run':
- _latest: 1.1.2
+ _latest: 2.1.2-fynlocal_h
  _:
-  ^2.1.1: 2.1.1
- 2.1.1:
+  ../xarc-run: 2.1.2-fynlocal_h
+ 2.1.2-fynlocal_h:
   top: 1
-  $: sha512-tTRejxbUwGNQzuVySOx23IWRy7/xdH4Aj2S2lIERpRtdy+bA6ha5nGWZdP9mfK+5K3xneaADeexoI1EwgcahkQ==
-  _: 'https://registry.npmjs.org/@xarc/run/-/run-2.1.1.tgz'
+  $: local
+  _: ../xarc-run
   dependencies:
    chalk: ^4.1.2
    chalker: ^1.2.0
@@ -67,12 +67,12 @@ $pkg:
    jaro-winkler: ^0.2.8
    lodash.foreach: ^4.5.0
    nix-clap: ^2.2.3
-   optional-require: ^2.0.1
+   optional-require: ^2.0.4
    path-is-inside: ^1.0.2
    read-pkg-up: ^7.0.1
    require-at: ^1.0.6
    string-array: ^1.0.1
-   unwrap-npm-cmd: ^1.1.1
+   unwrap-npm-cmd: ^1.1.2
    xsh: ^0.4.5
 ansi-regex:
  _latest: 6.1.0
@@ -443,12 +443,12 @@ normalize-package-data:
    semver: '2 || 3 || 4 || 5'
    validate-npm-package-license: ^3.0.1
 optional-require:
- _latest: 2.0.4
+ _latest: 2.0.4-fynlocal_h
  _:
-  ^2.0.1: 2.0.4
- 2.0.4:
-  $: sha512-H/+eKF3SCJHPyPcLSZF4cTCmilHdU0sEK53mA8Qj+YjpLqXotYSUMA+lUdttX4TvCujKYN5KsLRa5louqRVCQw==
-  _: 'https://registry.npmjs.org/optional-require/-/optional-require-2.0.4.tgz'
+  ../optional-require: 2.0.4-fynlocal_h
+ 2.0.4-fynlocal_h:
+  $: local
+  _: ../optional-require
   dependencies:
    require-at: ^1.0.6
 p-limit:
@@ -782,7 +782,7 @@ type-fest:
 unwrap-npm-cmd:
  _latest: 1.1.2
  _:
-  ^1.1.1: 1.1.2
+  ^1.1.2: 1.1.2
  1.1.2:
   $: sha512-tF85hmJ9080rr2abAxqDs/svbfSW/TPmiUSBwH6MjsXUnT7fS6vK3bNVki/6ayQqHdJdgsZ7p2cZBipXiNM+Eg==
   _: 'https://registry.npmjs.org/unwrap-npm-cmd/-/unwrap-npm-cmd-1.1.2.tgz'

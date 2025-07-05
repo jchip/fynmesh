@@ -96,8 +96,24 @@
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "rollup-wrap-plugin",
+          "version": "1.0.0",
+          "path": "dev-tools/rollup-wrap-plugin"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
       }
     ]
   },
-  "__timestamp": 1751326552498
+  "__timestamp": 1751662285860
 }
