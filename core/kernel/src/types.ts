@@ -41,7 +41,7 @@ export type KernelConfig = {
  * Context provided to middleware during application
  */
 export interface MiddlewareContext {
-  /** Middleware configuration from FynApp manifest */
+  /** Middleware configuration from useMiddleware call */
   config: any;
   /** Kernel instance */
   kernel: FynMeshKernel;
@@ -70,8 +70,6 @@ export type FynAppInfo = {
   exposes?: Record<string, string>;
   /** middlewares that the fynapp implemented */
   middlewares?: Record<string, FynAppMiddleware>;
-  /** Configuration for requested middleware */
-  middlewareConfig?: Record<string, Record<string, any>>;
   /** Federation entry module (for new bootstrap system) */
   entry?: FederationEntry;
 };
@@ -85,6 +83,9 @@ export interface MiddlewareInfo {
   version?: string;
 }
 
+/**
+ * Middleware usage object returned by useMiddleware
+ */
 export type MiddlewareUsage<ConfigT = any, UserT = unknown> = {
   __middlewareInfo: MiddlewareInfo;
   config: ConfigT;
@@ -126,10 +127,6 @@ export type FynAppMiddlewareMeta = {
    */
   fynApp: FynApp;
   /**
-   * config for the middleware
-   */
-  config: any;
-  /**
    * name of the module that implemented the middleware
    */
   moduleName: string;
@@ -143,7 +140,15 @@ export type FynAppMiddlewareMeta = {
   implementation: FynAppMiddleware;
 };
 
+/**
+ * Middleware version map for tracking different versions of the same middleware
+ */
 export type FynAppMiddlewareVersionMap = Record<string, FynAppMiddlewareMeta>;
+
+/**
+ * Middleware registry structure using provider::middleware-name format
+ */
+export type MiddlewareRegistry = Record<string, FynAppMiddlewareVersionMap>;
 
 /**
  * Run time data for FynMesh fynApp core loader
@@ -153,9 +158,20 @@ export type FynMeshRuntimeData = {
   appsLoaded: Record<string, FynApp>;
   /**
    * middlewares that the loaded fynapps registered
+   * Key format: "provider::middleware-name"
    */
-  middlewares: Record<string, FynAppMiddlewareVersionMap>;
+  middlewares: MiddlewareRegistry;
 };
+
+/**
+ * Middleware lookup options
+ */
+export interface MiddlewareLookupOptions {
+  /** Whether to perform fallback search across all providers */
+  fallbackSearch?: boolean;
+  /** Specific version to look for */
+  version?: string;
+}
 
 /**
  * FynMesh client side library types
@@ -184,8 +200,27 @@ export interface FynMeshKernel {
 
   /**
    * Get middleware by name and provider
+   * @param name - middleware name
+   * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
+   * @param options - additional lookup options
    */
-  getMiddleware<T = any>(name: string, provider: string): T | undefined;
+  getMiddleware<T = any>(
+    name: string,
+    provider?: string,
+    options?: MiddlewareLookupOptions,
+  ): T | undefined;
+
+  /**
+   * Check if middleware is available
+   * @param name - middleware name
+   * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
+   */
+  hasMiddleware(name: string, provider?: string): boolean;
+
+  /**
+   * List all available middleware
+   */
+  listMiddleware(): MiddlewareInfo[];
 
   /**
    * Clean up a container name to ensure it's a valid identifier

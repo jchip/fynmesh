@@ -9,6 +9,8 @@ import {
   MiddlewareContext,
   MiddlewareInfo,
   MiddlewareUsage,
+  MiddlewareLookupOptions,
+  FynAppMiddlewareMeta,
 } from "./types";
 import type { FederationEntry } from "federation-js";
 import { urlJoin } from "./util";
@@ -33,48 +35,157 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
-   * Register a middleware implementation
+   * Register a middleware implementation with enhanced error handling
    */
   registerMiddleware(
     middleware: FynAppMiddleware,
     provider: string,
     fynAppVersion = "default",
   ): void {
+    if (!middleware || !middleware.name) {
+      throw new Error(`Invalid middleware: middleware must have a name. Provider: ${provider}`);
+    }
+
+    if (!provider) {
+      throw new Error(
+        `Invalid provider: provider name is required for middleware ${middleware.name}`,
+      );
+    }
+
     // Create fynapp-prefixed key to avoid name collisions
     const middlewareKey = `${provider}::${middleware.name}`;
 
     const versionMap = this.runTime.middlewares[middlewareKey] || {};
     versionMap[fynAppVersion] = {
       fynApp: { name: provider, version: fynAppVersion } as FynApp,
-      config: {},
       moduleName: `__middleware__${middleware.name}`,
       exportName: middleware.name,
       implementation: middleware,
     };
     this.runTime.middlewares[middlewareKey] = versionMap;
+
+    console.log(`✅ Registered middleware: ${middlewareKey}@${fynAppVersion}`);
   }
 
   /**
-   * Get middleware by name and provider
+   * Get middleware by name and provider with fallback search support
    */
-  getMiddleware<T = any>(name: string, provider: string): T | undefined {
-    const middlewareKey = `${provider}::${name}`;
-    const versionMap = this.runTime.middlewares[middlewareKey];
-    if (versionMap) {
-      // Get the latest version (or could implement version resolution logic)
-      const versions = Object.keys(versionMap).sort();
-      const latestVersion = versions[versions.length - 1];
-      return versionMap[latestVersion]?.implementation as T;
+  getMiddleware<T = any>(
+    name: string,
+    provider?: string,
+    options?: MiddlewareLookupOptions,
+  ): T | undefined {
+    // If provider is specified, try exact match first
+    if (provider) {
+      const middlewareKey = `${provider}::${name}`;
+      const versionMap = this.runTime.middlewares[middlewareKey];
+      if (versionMap) {
+        const middleware = this.resolveMiddlewareVersion(versionMap, options?.version);
+        if (middleware) {
+          return middleware.implementation as T;
+        }
+      }
     }
+
+    // If no provider specified or exact match failed, perform fallback search
+    if (!provider || options?.fallbackSearch) {
+      console.log(`🔍 Performing fallback search for middleware: ${name}`);
+
+      const matchingMiddleware = this.searchMiddlewareByName(name, options?.version);
+      if (matchingMiddleware.length > 0) {
+        if (matchingMiddleware.length > 1) {
+          console.warn(
+            `⚠️  Multiple providers found for middleware "${name}":`,
+            matchingMiddleware.map((m) => m.provider).join(", "),
+          );
+          console.warn("Using first match. Consider specifying provider explicitly.");
+        }
+        return matchingMiddleware[0].implementation as T;
+      }
+    }
+
+    // Provide helpful error information
+    const availableMiddleware = this.listMiddleware();
+    const availableNames = [...new Set(availableMiddleware.map((m) => m.name))];
+
+    console.error(
+      `❌ Middleware not found: ${name}${provider ? ` from provider ${provider}` : ""}`,
+    );
+    console.error(`📋 Available middleware: ${availableNames.join(", ")}`);
+
     return undefined;
   }
 
   /**
-   * Check if middleware is available
+   * Check if middleware is available with fallback search support
    */
-  hasMiddleware(name: string, provider: string): boolean {
-    const middlewareKey = `${provider}::${name}`;
-    return middlewareKey in this.runTime.middlewares;
+  hasMiddleware(name: string, provider?: string): boolean {
+    if (provider) {
+      const middlewareKey = `${provider}::${name}`;
+      return middlewareKey in this.runTime.middlewares;
+    }
+
+    // Fallback search
+    return this.searchMiddlewareByName(name).length > 0;
+  }
+
+  /**
+   * List all available middleware
+   */
+  listMiddleware(): MiddlewareInfo[] {
+    const result: MiddlewareInfo[] = [];
+    for (const [middlewareKey, versionMap] of Object.entries(this.runTime.middlewares)) {
+      const [provider, name] = middlewareKey.split("::");
+      for (const [version, meta] of Object.entries(versionMap)) {
+        result.push({
+          name,
+          version,
+          provider,
+        });
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Search middleware by name across all providers
+   */
+  private searchMiddlewareByName(name: string, version?: string): any[] {
+    const results: any[] = [];
+
+    for (const [middlewareKey, versionMap] of Object.entries(this.runTime.middlewares)) {
+      const [provider, middlewareName] = middlewareKey.split("::");
+      if (middlewareName === name) {
+        const resolvedMiddleware = this.resolveMiddlewareVersion(versionMap, version);
+        if (resolvedMiddleware) {
+          results.push({
+            name: middlewareName,
+            provider,
+            version: resolvedMiddleware.fynApp.version,
+            implementation: resolvedMiddleware.implementation,
+          });
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Resolve middleware version from version map
+   */
+  private resolveMiddlewareVersion(
+    versionMap: Record<string, FynAppMiddlewareMeta>,
+    requestedVersion?: string,
+  ): FynAppMiddlewareMeta | undefined {
+    if (requestedVersion && versionMap[requestedVersion]) {
+      return versionMap[requestedVersion];
+    }
+
+    // Get latest version by default
+    const versions = Object.keys(versionMap).sort();
+    const latestVersion = versions[versions.length - 1];
+    return versionMap[latestVersion];
   }
 
   /**
@@ -151,7 +262,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           name: appName,
           version: "1.0.0", // Default version
           mainModule: mainModule,
-          middlewareConfig: existingConfig?.middlewareConfig,
         };
 
         // Apply middlewares to the fynapp
@@ -246,38 +356,40 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
   /**
    * Apply all registered middleware to a fynapp
+   * Note: In the new architecture, middleware should primarily be applied through
+   * useMiddleware usage patterns rather than globally to all FynApps
    */
   async applyMiddlewares(fynApp: FynApp): Promise<void> {
-    const context = this.createMiddlewareContext(fynApp);
+    if (fynApp.skipApplyMiddlewares) {
+      console.log("fynmesh kernel: skipping middleware application for", fynApp.name);
+      return;
+    }
 
-    console.log("fynmesh kernel: applying middlewares to", fynApp.name);
-
-    // Apply ALL registered middleware to this FynApp
-    console.log("fynmesh kernel: applying all registered middleware");
+    console.log("fynmesh kernel: applying ambient middlewares to", fynApp.name);
     console.log("🔍 AVAILABLE MIDDLEWARE:", Object.keys(this.runTime.middlewares));
 
+    // Apply ALL registered middleware to this FynApp with empty config
+    // This is for ambient middleware that should apply to all FynApps
     for (const middlewareKey in this.runTime.middlewares) {
       const versionMap = this.runTime.middlewares[middlewareKey];
       const versions = Object.keys(versionMap).sort();
-      const latestVersion = versions[versions.length - 1];
+      const latestVersion = versions[versions.length - 1]; // Get latest version
       const middlewareMeta = versionMap[latestVersion];
 
       if (middlewareMeta.implementation?.apply) {
-        console.log("fynmesh kernel: applying middleware", middlewareKey);
+        console.log("fynmesh kernel: applying ambient middleware", middlewareKey);
 
-        // Get middleware-specific config from FynApp if available
-        const [provider, middlewareName] = middlewareKey.split("::");
-        const middlewareConfig = fynApp.middlewareConfig?.[middlewareName] || {};
-        const middlewareContext = {
-          ...context,
-          config: middlewareConfig,
+        // Create context with empty config since this is ambient application
+        const middlewareContext: MiddlewareContext = {
+          config: {},
+          kernel: this,
         };
 
         try {
           await middlewareMeta.implementation.apply(fynApp, middlewareContext);
         } catch (error) {
-          console.error(`Failed to apply middleware ${middlewareKey}:`, error);
-          // TODO: Add proper error handling - should we continue or fail?
+          console.error(`❌ Failed to apply middleware ${middlewareKey}:`, error);
+          // Continue applying other middleware even if one fails
         }
       }
     }
@@ -292,34 +404,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
   // Abstract methods that must be implemented by platform-specific classes
   abstract loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
-
-  /**
-   * List all available middleware
-   */
-  listMiddleware(): MiddlewareInfo[] {
-    const result: MiddlewareInfo[] = [];
-    for (const [middlewareKey, versionMap] of Object.entries(this.runTime.middlewares)) {
-      const [provider, name] = middlewareKey.split("::");
-      for (const [version, meta] of Object.entries(versionMap)) {
-        result.push({
-          name,
-          version,
-          provider,
-        });
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Create middleware context for FynApp
-   */
-  createMiddlewareContext(fynApp: FynApp): MiddlewareContext {
-    return {
-      config: fynApp.middlewareConfig || {},
-      kernel: this,
-    };
-  }
 
   /**
    * Scan expose module exports for __middlewareInfo markers and invoke middleware
