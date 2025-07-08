@@ -3,6 +3,7 @@ import './styles.css';
 
 interface AppProps {
     appName: string;
+    useCounterContext?: () => any;
 }
 
 // Card Component
@@ -132,10 +133,22 @@ const SettingRow: React.FC<{
 };
 
 // Main App Component
-const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
+const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) => {
     const [count, setCount] = useState(0);
     const [darkMode, setDarkMode] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    // Use the context hook directly at component level if available
+    const counterContext = useCounterContext ? useCounterContext() : null;
+    const contextAvailable = !!counterContext;
+
+    // Extract state and actions from context
+    const sharedCounter = counterContext?.state || { count: 0 };
+    const sharedCounterActions = counterContext?.actions || {};
+
+    console.log('🔍 fynapp-6-react App: Context available:', contextAvailable);
+    console.log('🔍 fynapp-6-react App: Counter state:', sharedCounter);
+    console.log('🔍 fynapp-6-react App: Available actions:', Object.keys(sharedCounterActions));
 
     const [cards] = useState([
         { title: "Analytics", value: "85%", trend: "up" as const, desc: "User engagement" },
@@ -234,11 +247,72 @@ const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
                         </div>
                     </div>
 
-                    {/* Counter Example */}
+                    {/* Shared Counter Example */}
                     <div className="counter-section">
-                        <h3>Interactive Counter</h3>
-                        <p>You clicked the button <strong>{count}</strong> times</p>
-                        <button className="primary-button" onClick={increment}>Increment</button>
+                        <h3>🔗 Cross-App Shared Counter</h3>
+                        <div style={{ marginBottom: '16px' }}>
+                            <div style={{ 
+                                fontSize: '48px', 
+                                fontWeight: 'bold', 
+                                textAlign: 'center',
+                                margin: '20px 0',
+                                color: darkMode ? '#63b3ed' : '#3182ce'
+                            }}>
+                                {sharedCounter.count}
+                            </div>
+                            <p style={{ 
+                                color: darkMode ? '#a0aec0' : '#718096', 
+                                textAlign: 'center',
+                                marginBottom: '16px'
+                            }}>
+                                Shared with fynapp-1 & fynapp-1-b! Status: {' '}
+                                <span style={{ 
+                                    color: contextAvailable ? '#48bb78' : '#f56565',
+                                    fontWeight: 'bold'
+                                }}>
+                                    {contextAvailable ? '✅ Connected' : '❌ Not Connected'}
+                                </span>
+                                <br />
+                                <small>Updates instantly across all apps!</small>
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
+                            <button
+                                className="primary-button"
+                                onClick={() => {
+                                    console.log('🔍 fynapp-6-react: Incrementing shared counter...');
+                                    if (sharedCounterActions.increment) {
+                                        sharedCounterActions.increment();
+                                        console.log('✅ fynapp-6-react: Shared counter incremented');
+                                    } else {
+                                        console.error('❌ fynapp-6-react: increment action not available');
+                                    }
+                                }}
+                            >
+                                + Increment (Cross-App)
+                            </button>
+                            <button
+                                className="primary-button"
+                                onClick={() => {
+                                    console.log('🔍 fynapp-6-react: Resetting shared counter...');
+                                    if (sharedCounterActions.reset) {
+                                        sharedCounterActions.reset();
+                                        console.log('✅ fynapp-6-react: Shared counter reset');
+                                    } else {
+                                        console.error('❌ fynapp-6-react: reset action not available');
+                                    }
+                                }}
+                                style={{ backgroundColor: '#e53e3e' }}
+                            >
+                                Reset
+                            </button>
+                        </div>
+                        <hr style={{ margin: '20px 0', opacity: 0.3 }} />
+                        <div>
+                            <h4>Local Counter (fynapp-6 only)</h4>
+                            <p>You clicked the local button <strong>{count}</strong> times</p>
+                            <button className="primary-button" onClick={increment}>Increment Local</button>
+                        </div>
                     </div>
                 </>
             )}

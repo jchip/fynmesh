@@ -11,6 +11,7 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "rewriteRelativeImportExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "lib": ["ES2020", "DOM"]

@@ -1,30 +1,15 @@
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import federation from "rollup-plugin-federation";
-import alias from "@rollup/plugin-alias";
-import terser from "@rollup/plugin-terser";
-import virtual from "@rollup/plugin-virtual";
-import noEmit from "rollup-plugin-no-emit";
-import { newRollupPlugin } from "create-fynapp";
-
-const env = process.env.NODE_ENV || "development";
-const isProduction = env === "production";
-
-/**
- * Rollup needs at least one entry to get the build started.  We use a virtual entry
- * to satisfy this requirement.  The dummy entry is not used.
- */
-const fynappDummyEntryName = "fynapp-dummy-entry";
-/**
- * The filename of the entry point for the fynapp's module federation bundle.
- * This is the file that will be used by the fynmesh to load the fynapp.
- */
-const fynappEntryFilename = "fynapp-entry.js";
-/**
- * The module federation share scope for the fynmesh.  This is the scope that will be used to share
- * modules between the fynmesh and the fynapps.
- */
-const fynmeshShareScope = "fynmesh";
+import { newRollupPlugin } from "rollup-wrap-plugin";
+import {
+  env,
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  setupDummyEntryPlugins,
+  setupReactAliasPlugins,
+  setupMinifyPlugins,
+  setupReactFederationPlugins,
+} from "create-fynapp";
 
 export default [
   {
@@ -38,56 +23,38 @@ export default [
     ],
     external: ["esm-react", "esm-react-dom"],
     plugins: [
-      newRollupPlugin(virtual)({
-        [fynappDummyEntryName]: "// fynapp dummy entry\nconsole.log('fynapp dummy entry');",
-      }),
-      newRollupPlugin(noEmit)({
-        match: (fileName) => fileName.includes(fynappDummyEntryName),
-      }),
+      ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
       }),
       // commonjs({ transformMixedEsModules: true }),
-      newRollupPlugin(federation)({
+      ...setupReactFederationPlugins({
+        debugging: true,
         name: "fynapp-1",
-        shareScope: fynmeshShareScope,
-        // this filename must be in the input config array
-        filename: fynappEntryFilename,
         exposes: {
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
-          "./main": "./src/main.ts",
-          "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
         },
-        shared: {
-          "esm-react": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
-          },
-          "esm-react-dom": {
-            import: false,
-            singleton: false,
-            requiredVersion: "^19.0.0",
-          },
+        shared: {},
+        entry: {
+          header: `
+console.log('fynapp-1 entry header');
+import config from "./src/config.ts";
+export {config};
+`,
+          footer: `
+console.log('fynapp-1 entry footer');
+`,
         },
-        debugging: true,
       }),
-      newRollupPlugin(alias)({
-        entries: [
-          { find: "react", replacement: "esm-react" },
-          { find: "react-dom/client", replacement: "esm-react-dom" },
-          { find: "react-dom", replacement: "esm-react-dom" },
-        ],
-      }),
+      ...setupReactAliasPlugins(),
       newRollupPlugin(typescript)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
         inlineSources: true,
       }),
-      isProduction ? newRollupPlugin(terser)() : null,
+      ...setupMinifyPlugins(),
     ],
   },
 ];
-

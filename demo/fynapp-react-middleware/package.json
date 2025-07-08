@@ -1,0 +1,32 @@
+{
+  "name": "fynapp-react-middleware",
+  "version": "1.0.0",
+  "description": "React middleware provider for FynMesh",
+  "type": "module",
+  "main": "dist/fynapp-entry.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@fynmesh/kernel": "^1.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/node": "^24.0.10",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "create-fynapp": "^1.0.0",
+    "esm-react": "^19.1.0",
+    "esm-react-dom": "^19.1.0",
+    "rollup": "^4.9.1",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@fynmesh/kernel": "^1.0.0"
+  }
+}

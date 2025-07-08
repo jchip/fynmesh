@@ -6,7 +6,6 @@ $pkg:
   esm-react: ../../misc/esm-react-19
   esm-react-dom: ../../misc/esm-react-dom-19
   pkg-esm-react-18: ../pkg-esm-react-18
-  rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
  dev:
   '@rollup/plugin-alias': ^5.1.1
   '@rollup/plugin-commonjs': ^25.0.7
@@ -17,7 +16,7 @@ $pkg:
   '@rollup/plugin-typescript': ^11.1.6
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
-  rollup-plugin-federation: ^1.0.0
+  rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
 '@babel/code-frame':
  _latest: 7.27.1
  _:
@@ -36,6 +35,13 @@ $pkg:
  7.27.1:
   $: sha512-D2hP9eA+Sqx1kBZgzxZh0y1trbuU+JoDkiEwqhQ36nodYqJwyEIhPSdMNd7lOm/4io72luTPWH20Yda0xOuUow==
   _: 'https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.27.1.tgz'
+'@jchip/error':
+ _latest: 1.0.3
+ _:
+  ^1.0.3: 1.0.3
+ 1.0.3:
+  $: sha512-4mh+7ucOm55u7USv2mwumdp7r020J+bZ1PkkUi+Zn+AAzU1+QoXVmN/5W2thZ1kkpHjJXS7tY1SDkUjI2FZgvw==
+  _: 'https://registry.npmjs.org/@jchip/error/-/error-1.0.3.tgz'
 '@jridgewell/gen-mapping':
  _latest: 0.3.8
  _:
@@ -248,6 +254,16 @@ acorn:
  8.14.1:
   $: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==
   _: 'https://registry.npmjs.org/acorn/-/acorn-8.14.1.tgz'
+aveazul:
+ _latest: 1.0.2
+ _:
+  ^1.0.2: 1.0.2
+ 1.0.2:
+  $: sha512-AxNC1s5Nv++jqk9qpyD6RojhoUrr5anfYWKIlUXVreXT3bVBjtOiibTc8snQSVNHq+5BAAE5gyM+XkOUR9fbEQ==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.2.tgz'
+  dependencies:
+   '@jchip/error': ^1.0.3
+   xaa: ^1.8.0
 balanced-match:
  _latest: 3.0.1
  _:
@@ -696,17 +712,18 @@ rollup-plugin-dts:
 rollup-plugin-federation:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../../rollup-federation/rollup-plugin-federation,^1.0.0': 1.0.0-fynlocal_h
+  ../../rollup-federation/rollup-plugin-federation: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
   _: ../../rollup-federation/rollup-plugin-federation
   dependencies:
    '@rollup/plugin-node-resolve': ^15.2.0
+   aveazul: ^1.0.2
    lodash-es: ^4.17.21
    pkg-up: ^4.0.0
    read-pkg-up: ^10.0.0
-   xaa: ^1.7.3
+   xaa: ^1.8.0
 safe-buffer:
  _latest: 5.2.1
  _:
@@ -845,7 +862,7 @@ wrappy:
 xaa:
  _latest: 1.8.0
  _:
-  ^1.7.3: 1.8.0
+  ^1.8.0: 1.8.0
  1.8.0:
   $: sha512-XPNHZLhbO/KyboMyJaJnqma/KUSRAkMUHZpNRVbilvsloJErKsTaOcxxte79u3Hj4UixCHR+y+p+DFp7rZ7MWQ==
   _: 'https://registry.npmjs.org/xaa/-/xaa-1.8.0.tgz'

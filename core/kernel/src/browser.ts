@@ -1,19 +1,5 @@
-import { browserKernel } from "./browser-kernel";
-
-// Export the browser kernel instance
-export const fynMeshKernel = browserKernel;
-
-// Re-export types
-export type {
-    FynMeshKernel,
-    FynMeshRuntimeData,
-    FynApp,
-    FynAppMiddleware,
-} from "./types";
-
-export type { MiddlewareUsage } from "./use-middleware";
-export { useMiddleware } from "./use-middleware";
-
-// Re-export kernel classes and creators
-export { BrowserKernel, createBrowserKernel } from "./browser-kernel";
-export { FynMeshKernelCore } from "./kernel-core";
+import { createBrowserKernel } from "./browser-kernel.ts";
+/**
+ * Global browser kernel instance attached to globalThis
+ */
+(globalThis as any).fynMeshKernel = createBrowserKernel();

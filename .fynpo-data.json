@@ -12,7 +12,7 @@
           "version": "1.0.0",
           "path": "core/kernel"
         },
-        "depSection": "dev",
+        "depSection": "dep",
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
@@ -72,6 +72,22 @@
           "path": "demo/fynapp-1"
         },
         "onPkg": {
+          "name": "fynapp-react-middleware",
+          "version": "1.0.0",
+          "path": "demo/fynapp-react-middleware"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
           "name": "fynapp-x1",
           "version": "1.0.0",
           "path": "demo/fynapp-x1-v1"
@@ -80,8 +96,58 @@
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "rollup-plugin-federation",
+          "version": "1.0.0",
+          "path": "rollup-federation/rollup-plugin-federation"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "rollup-wrap-plugin",
+          "version": "1.0.0",
+          "path": "dev-tools/rollup-wrap-plugin"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      }
+    ],
+    "demo/demo-server": [
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "@fynmesh/kernel",
+          "version": "1.0.0",
+          "path": "core/kernel"
+        },
+        "depSection": "dep",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(dev)"
+        ]
       }
     ]
   },
-  "__timestamp": 1749651454488
+  "__timestamp": 1751831313083
 }

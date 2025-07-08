@@ -25,7 +25,16 @@
             gap: 2rem;
         }
 
-        /* Side-by-side container for fynapp-1 and fynapp-2 */
+        /* Two-column container for fynapp-1 and fynapp-1-b */
+        .fynapp-1-container {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            width: 100%;
+            margin: 2rem 0;
+        }
+
+        /* Side-by-side container for other apps */
         .side-by-side-container {
             display: flex;
             flex-direction: row;
@@ -35,7 +44,7 @@
         }
 
         /* Fynapp containers styling */
-        #fynapp-1, #fynapp-2-react18, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
+        #fynapp-1, #fynapp-1-b, #fynapp-2-react18, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
             position: relative;
             min-height: 200px;
             padding: 1.5rem;
@@ -46,21 +55,32 @@
             width: 100%;
         }
 
+        /* Special styling for fynapp-1 container */
+        .fynapp-1-container #fynapp-1,
+        .fynapp-1-container #fynapp-1-b {
+            margin: 0;
+            width: 50%;
+            flex: 1;
+        }
+
         /* Special styling for side-by-side containers */
-        .side-by-side-container #fynapp-1,
         .side-by-side-container #fynapp-2-react18 {
             margin: 0;
             width: 50%;
             flex: 1;
         }
 
-        /* Non-side-by-side containers should keep their margin */
-        #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
+        /* Non-container apps should keep their margin */
+        #fynapp-2-react18, #fynapp-6-react, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-7-solid {
             margin: 2rem 0;
         }
 
         #fynapp-1 {
             border-left: 5px solid #6366f1;
+        }
+
+        #fynapp-1-b {
+            border-left: 5px solid #10b981;
         }
 
         #fynapp-2-react18 {
@@ -88,7 +108,7 @@
         }
 
         /* Loading state styling */
-        #fynapp-1::before, #fynapp-2-react18::before {
+        #fynapp-1::before, #fynapp-1-b::before, #fynapp-2-react18::before {
             content: "";
             position: absolute;
             top: 50%;
@@ -100,6 +120,10 @@
             border-radius: 50%;
             border-top-color: #6366f1;
             animation: spinner 0.8s linear infinite;
+        }
+
+        #fynapp-1-b::before {
+            border-top-color: #10b981;
         }
 
         #fynapp-2-react18::before {
@@ -114,6 +138,7 @@
 
         /* Hide spinner once content is loaded */
         #fynapp-1:not(:empty)::before,
+        #fynapp-1-b:not(:empty)::before,
         #fynapp-2-react18:not(:empty)::before {
             display: none;
         }
@@ -209,8 +234,8 @@
         }
     </style>
     <script src="/system.min.js"></script>
-    <script src="/federation-js/dist/federation-js.js"></script>
-    <script src="/core/kernel/dist/fynmesh-kernel.min.js"></script>
+    <script src="/federation-js/dist/federation-js.dev.js"></script>
+    <script src="/core/kernel/dist/fynmesh-browser-kernel.dev.js"></script>
     <script>
         (async () => {
 
@@ -218,6 +243,7 @@
                 "react-18": true,
                 "react-19": true,
                 "fynapp-1": true,
+                "fynapp-1-b": true,
                 "fynapp-2-react18": true,
                 "fynapp-3-marko": true,
                 "fynapp-4-vue": true,
@@ -241,6 +267,10 @@
             await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
             await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
 
+            // HARDCODED: Load middleware first before any consumers
+            console.log("loading middleware provider fynapp /fynapp-react-middleware/dist");
+            await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
+
             // load fynapp 2 that uses react 18
             if (features["fynapp-2-react18"]) {
                 console.log("loading remote fynapp /fynapp-2-react18/dist");
@@ -251,6 +281,11 @@
             if (features["fynapp-1"]) {
                 console.log("loading remote fynapp /fynapp-1/dist");
                 fynMeshKernel.loadFynApp("/fynapp-1/dist");
+            }
+            // load fynapp 1-b that uses react 19
+            if (features["fynapp-1-b"]) {
+                console.log("loading remote fynapp /fynapp-1-b/dist");
+                fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
             }
             // load fynapp marko
             if (features["fynapp-3-marko"]) {
@@ -287,10 +322,11 @@
 <body>
     <h1>FynMesh Micro Frontend Demo</h1>
     <div class="app-container">
-        <div class="side-by-side-container">
+        <div class="fynapp-1-container">
             <div id="fynapp-1"></div>
-            <div id="fynapp-2-react18"></div>
+            <div id="fynapp-1-b"></div>
         </div>
+        <div id="fynapp-2-react18"></div>
         <div id="fynapp-6-react"></div>
         <div id="fynapp-5-preact"></div>
         <div id="fynapp-7-solid"></div>

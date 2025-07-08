@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
-    "outDir": "dist/types",
+    "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
     "sourceMap": true,
@@ -14,7 +14,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"]
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

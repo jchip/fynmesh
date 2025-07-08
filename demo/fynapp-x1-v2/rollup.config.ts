@@ -8,10 +8,16 @@ import postcss from "rollup-plugin-postcss";
 import postcssImport from "postcss-import";
 import tailwindcss from "@tailwindcss/postcss";
 import autoprefixer from "autoprefixer";
-import { newRollupPlugin } from "create-fynapp";
-
-const env = process.env.NODE_ENV || "development";
-const isProduction = env === "production";
+import { newRollupPlugin } from "rollup-wrap-plugin";
+import {
+  env,
+  isProduction,
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  setupDummyEntryPlugins,
+  setupMinifyPlugins,
+  fynmeshShareScope,
+} from "create-fynapp";
 
 export default [
   {
@@ -53,7 +59,6 @@ export default [
           },
         },
         debugging: true,
-        css: true,
       }),
       newRollupPlugin(typescript)({
         tsconfig: "./tsconfig.json",
@@ -67,7 +72,7 @@ export default [
           "react-dom/client": "esm-react-dom",
         },
       }),
-      isProduction ? newRollupPlugin(terser)() : null,
+      ...setupMinifyPlugins(),
     ],
   },
 ];

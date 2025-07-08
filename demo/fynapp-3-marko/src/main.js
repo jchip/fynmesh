@@ -1,7 +1,7 @@
 import App from "./App.marko";
 
-export async function main(kernel, fynApp) {
-  console.log(`Bootstrapping ${fynApp.name}...`);
+async function execute(runtime) {
+  console.log(`Bootstrapping ${runtime.fynApp.name}...`);
 
   try {
     // Find or create the div element to render into
@@ -17,24 +17,28 @@ export async function main(kernel, fynApp) {
 
     // Create a new instance and mount it
     const component = App.renderSync({
-      appName: fynApp.name,
+      appName: runtime.fynApp.name,
     });
 
     component.appendTo(targetDiv);
 
-    console.log(`${fynApp.name} bootstrapped successfully`);
+    console.log(`${runtime.fynApp.name} bootstrapped successfully`);
   } catch (error) {
-    console.error(`Error bootstrapping ${fynApp.name}:`, error);
+    console.error(`Error bootstrapping ${runtime.fynApp.name}:`, error);
 
     // Fallback rendering if component fails
     let targetDiv = document.getElementById("fynapp-3-marko");
     if (targetDiv) {
       targetDiv.innerHTML = `
         <div style="padding: 20px; color: #ff5733;">
-          <h2>${fynApp.name} (Fallback)</h2>
+          <h2>${runtime.fynApp.name} (Fallback)</h2>
           <p>Simple Marko component</p>
         </div>
       `;
     }
   }
 }
+
+export const main = {
+  execute,
+};

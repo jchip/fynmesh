@@ -1,112 +1,212 @@
-import React, { useState } from 'react';
-import type { ComponentLibrary } from './components';
+import React, { useState, useEffect } from "react";
+import type { ComponentLibrary } from "./components";
 
 interface AppProps {
-    appName: string;
-    components: ComponentLibrary;
+  appName: string;
+  components: ComponentLibrary;
+  middlewareConfig?: { count: number }; // Config from basic counter middleware
+  runtime?: any; // Runtime to access middleware context
 }
 
-const App: React.FC<AppProps> = ({ appName, components }) => {
-    const [showEffect, setShowEffect] = useState(false);
-    const [clickCount, setClickCount] = useState(0);
-    const [showModal, setShowModal] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [count, setCount] = useState(0);
+const App: React.FC<AppProps> = ({
+  appName,
+  components,
+  middlewareConfig,
+  runtime,
+}: AppProps) => {
+  // Use local state for reactivity, but sync with middleware context
+  const [counter, setCounter] = useState({
+    count: middlewareConfig?.count || 0,
+  });
 
-    // Destructure the components
-    const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
+  // Function to get the shared data object from middleware context
+  const getSharedDataObject = () => {
+    if (runtime?.middlewareContext) {
+      const basicCounterData = runtime.middlewareContext.get("basic-counter");
+      return basicCounterData; // Return the actual object, not a copy
+    }
+    return null;
+  };
 
-    const handleButtonClick = () => {
-        setShowEffect(true);
-        setClickCount(prev => prev + 1);
-        setCount(count + 1); // Update the counter immediately for simplicity
-        setTimeout(() => setShowEffect(false), 1000);
+  // Function to read current count from the shared data object
+  const readCountFromSharedData = () => {
+    const sharedData = getSharedDataObject();
+    return sharedData?.config?.count || middlewareConfig?.count || 0;
+  };
+
+  // Set up event listener for counter changes from other apps
+  useEffect(() => {
+    const syncWithSharedData = () => {
+      const sharedCount = readCountFromSharedData();
+      setCounter({ count: sharedCount });
     };
 
-    return (
-        <div className="p-5 max-w-3xl mx-auto">
-            <h2>{appName}: Using Components from fynapp-x1</h2>
+    // Initial sync
+    syncWithSharedData();
 
-            <Alert variant="info" className="mb-4">
-                Component counter: {count}
-            </Alert>
+    // Set up event listener for changes from other apps
+    const handleCounterChange = (event: CustomEvent) => {
+      const { count, source } = event.detail;
+      if (source !== runtime?.fynApp?.name) {
+        // Only update if the change came from a different app
+        setCounter({ count });
+        console.debug(
+          `🔄 fynapp-1: Received counter update from ${source}:`,
+          count
+        );
+      }
+    };
 
-            <Card
-                title="Example Card from fynapp-x1"
-                footer={
-                    <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setShowModal(true)}>
-                            Open Modal
-                        </Button>
-                        <Button variant="primary" onClick={handleButtonClick}>
-                            Click Me ({clickCount})
-                        </Button>
-                    </div>
-                }
-            >
-                <p>This is a card component from fynapp-x1!</p>
-                <p>Try out different components below:</p>
+    const sharedData = getSharedDataObject();
+    if (sharedData?.eventTarget) {
+      sharedData.eventTarget.addEventListener(
+        "counterChanged",
+        handleCounterChange
+      );
 
-                <div className="mb-5">
-                    <h4>Badges:</h4>
-                    <div className="flex gap-3 mt-3">
-                        <Badge variant="default">Default</Badge>
-                        <Badge variant="primary">Primary</Badge>
-                        <Badge variant="success">Success</Badge>
-                        <Badge variant="warning">Warning</Badge>
-                        <Badge variant="danger">Danger</Badge>
-                    </div>
-                </div>
+      return () => {
+        sharedData.eventTarget.removeEventListener(
+          "counterChanged",
+          handleCounterChange
+        );
+      };
+    }
+  }, [runtime, middlewareConfig]);
 
-                <div className="mt-5">
-                    <h4>Spinner examples:</h4>
-                    <div className="flex gap-5 items-center mt-3">
-                        <Spinner size="small" color="primary" />
-                        <Spinner size="medium" color="gray" />
-                        <Spinner size="large" color="primary" />
-                    </div>
-                </div>
-            </Card>
+  // Destructure the components
+  const { Button, Card, Input, Badge, Spinner } = components;
 
-            {showEffect && (
-                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-10">
-                    <div className="absolute w-[150%] h-[150%] rounded-full bg-gradient-to-r from-indigo-500/20 to-transparent animate-pulse" />
-                    <div className="text-4xl font-bold text-indigo-500 drop-shadow-lg animate-bounce">
-                        +1 Click!
-                    </div>
-                </div>
-            )}
+  const handleIncrement = () => {
+    const sharedData = getSharedDataObject();
+    if (sharedData?.increment) {
+      const newCount = sharedData.increment(runtime?.fynApp?.name);
+      // Update local state for immediate UI response
+      setCounter({ count: newCount });
+    }
+  };
 
-            {showModal && (
-                <Modal
-                    isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    title="Example Modal"
-                    overlayOpacity={0.3}
-                    overlayBlur="6px"
-                    footer={
-                        <div className="flex justify-end gap-3">
-                            <Button variant="outline" onClick={() => setShowModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button variant="primary" onClick={() => setShowModal(false)}>
-                                Confirm
-                            </Button>
-                        </div>
-                    }
-                >
-                    <p>This is a modal component from fynapp-x1!</p>
-                    <Input
-                        label="Example Input"
-                        value={inputValue}
-                        onChange={(e: any) => setInputValue(e.target.value)}
-                        placeholder="Type something..."
-                        helperText="This is a helper text"
-                    />
-                </Modal>
-            )}
+  const handleReset = () => {
+    const sharedData = getSharedDataObject();
+    if (sharedData?.reset) {
+      const newCount = sharedData.reset(runtime?.fynApp?.name);
+      // Update local state for immediate UI response
+      setCounter({ count: newCount });
+    }
+  };
+
+  // Demo state
+  const [inputValue, setInputValue] = useState("");
+  const [inputError, setInputError] = useState("");
+
+  const handleInputSubmit = () => {
+    if (!inputValue.trim()) {
+      setInputError("Please enter some text");
+      return;
+    }
+    setInputError("");
+    alert(`You entered: ${inputValue}`);
+    setInputValue("");
+  };
+
+  return (
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h2>
+        {appName}: React {React.version}
+      </h2>
+
+      {/* Demo UI Sections */}
+      <Card title="🎨 fynapp-x1 Components Demo" className="mb-6">
+        {/* Buttons Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Buttons</h3>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Button variant="primary" size="small">
+              Primary Small
+            </Button>
+            <Button variant="secondary" size="medium">
+              Secondary Medium
+            </Button>
+            <Button variant="outline" size="large">
+              Outline Large
+            </Button>
+            <Button variant="danger" size="medium">
+              Danger
+            </Button>
+            <Button variant="primary" size="medium" isLoading>
+              Loading...
+            </Button>
+          </div>
         </div>
-    );
+
+        {/* Badges Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Badges</h3>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <Badge variant="default">Default</Badge>
+            <Badge variant="primary">Primary</Badge>
+            <Badge variant="success">Success</Badge>
+            <Badge variant="warning">Warning</Badge>
+            <Badge variant="danger">Danger</Badge>
+          </div>
+        </div>
+
+        {/* Spinners Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Spinners</h3>
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-2">
+              <Spinner size="small" color="primary" />
+              <span>Small</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Spinner size="medium" color="gray" />
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Spinner size="large" color="primary" />
+              <span>Large</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Input Section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Input</h3>
+          <div className="max-w-md">
+            <Input
+              label="Demo Input"
+              placeholder="Type something..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              error={inputError}
+              helperText="This is a helper text"
+            />
+            <Button onClick={handleInputSubmit} variant="primary" size="medium">
+              Submit Input
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Counter Display and Controls - Moved to bottom */}
+      <Card className="mb-6">
+        <h2 className="text-xl font-bold mb-4 text-center">
+          Shared Counter (Provider)
+        </h2>
+        <div className="flex items-center justify-center gap-4">
+          <div className="text-3xl font-bold text-blue-600 min-w-16 text-center">
+            {counter.count}
+          </div>
+          <Button onClick={handleIncrement} variant="primary" size="medium">
+            Increment
+          </Button>
+          <Button onClick={handleReset} variant="danger" size="medium">
+            Reset
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
 };
 
 export default App;
