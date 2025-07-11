@@ -1,4 +1,4 @@
-import type { MiddlewareUsage, MiddlewareUseMeta, FynModule } from "./types.ts";
+import type { MiddlewareUseMeta, FynModule } from "./types.ts";
 
 /**
  * mark some user code for middleware usage
@@ -11,16 +11,14 @@ import type { MiddlewareUsage, MiddlewareUseMeta, FynModule } from "./types.ts";
 export const useMiddleware = <UserT extends FynModule = FynModule>(
   meta: MiddlewareUseMeta<unknown> | MiddlewareUseMeta<unknown>[],
   user: UserT,
-): MiddlewareUsage<UserT> => {
-  return {
-    __middlewareMeta: ([] as MiddlewareUseMeta<unknown>[]).concat(meta),
-    user,
-  };
+): UserT => {
+  user.__middlewareMeta = ([] as MiddlewareUseMeta<unknown>[]).concat(meta);
+  return user;
 };
 
 export const noOpMiddlewareUser: FynModule = {
-  initialize: () => {},
-  execute: () => {},
+  initialize: () => { },
+  execute: () => { },
 };
 
 // example usage of useMiddleware

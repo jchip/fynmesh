@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
 import './styles.css';
 
 // @ts-ignore
@@ -10,10 +11,6 @@ type ButtonHTMLAttributes<T> = React.ButtonHTMLAttributes<T>;
 type InputHTMLAttributes<T> = React.InputHTMLAttributes<T>;
 type FC<P = {}> = React.FC<P>;
 const forwardRef = React.forwardRef;
-
-export function main() {
-    //
-}
 
 // Button Component
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -36,40 +33,118 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     className = '',
     ...props
 }, ref) => {
-    const sizeClasses = {
-        small: 'py-1.5 px-3 text-sm',
-        medium: 'py-2.5 px-5 text-base',
-        large: 'py-3.5 px-7 text-lg',
-    }[size];
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-primary)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+            case 'secondary':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-secondary)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+            case 'outline':
+                return {
+                    backgroundColor: 'transparent',
+                    color: 'var(--fynmesh-color-dark)',
+                    border: 'var(--fynmesh-border-2) solid var(--fynmesh-color-secondary)',
+                };
+            case 'danger':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-danger)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+            case 'success':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-success)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+            case 'warning':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-warning)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+            default:
+                return {
+                    backgroundColor: 'var(--fynmesh-color-primary)',
+                    color: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
+                };
+        }
+    };
 
-    const variantClasses = {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm',
-        secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm',
-        outline: 'border-2 border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-sm',
-        success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm',
-        warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 shadow-sm',
-    }[variant];
+    const getSizeStyles = () => {
+        switch (size) {
+            case 'small':
+                return {
+                    padding: 'var(--fynmesh-spacing-xs) var(--fynmesh-spacing-md)',
+                    fontSize: 'var(--fynmesh-text-sm)',
+                };
+            case 'large':
+                return {
+                    padding: 'var(--fynmesh-spacing-md) var(--fynmesh-spacing-xl)',
+                    fontSize: 'var(--fynmesh-text-lg)',
+                };
+            default:
+                return {
+                    padding: 'var(--fynmesh-spacing-sm) var(--fynmesh-spacing-lg)',
+                    fontSize: 'var(--fynmesh-text-base)',
+                };
+        }
+    };
 
-    const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-95';
+    const buttonStyle = {
+        ...getVariantStyles(),
+        ...getSizeStyles(),
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 'var(--fynmesh-radius-lg)',
+        fontWeight: 'var(--fynmesh-font-weight-medium)',
+        fontFamily: 'var(--fynmesh-font-family-sans)',
+        transition: 'all 0.2s ease',
+        cursor: 'pointer',
+        border: variant === 'outline' ? undefined : 'none',
+        outline: 'none',
+        transform: 'scale(1)',
+        opacity: disabled || isLoading ? 0.5 : 1,
+    };
 
     return (
         <button
             ref={ref}
-            className={`${baseClasses} ${sizeClasses} ${variantClasses} ${className}`}
+            style={buttonStyle}
+            className={`button-v2 focus-ring ${className}`}
             disabled={disabled || isLoading}
             {...props}
         >
             {isLoading ? (
                 <>
-                    <span className="spinner spinner-small mr-2"></span>
+                    <span className="spinner-v2" style={{
+                        width: 'var(--fynmesh-spacing-lg)',
+                        height: 'var(--fynmesh-spacing-lg)',
+                        marginRight: 'var(--fynmesh-spacing-sm)',
+                        color: 'currentColor'
+                    }}>
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.25 }} />
+                            <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style={{ opacity: 0.75 }} />
+                        </svg>
+                    </span>
                     <span>Loading...</span>
                 </>
             ) : (
                 <>
-                    {icon && iconPosition === 'left' && <span className="mr-2">{icon}</span>}
+                    {icon && iconPosition === 'left' && <span style={{ marginRight: 'var(--fynmesh-spacing-sm)' }}>{icon}</span>}
                     {children}
-                    {icon && iconPosition === 'right' && <span className="ml-2">{icon}</span>}
+                    {icon && iconPosition === 'right' && <span style={{ marginLeft: 'var(--fynmesh-spacing-sm)' }}>{icon}</span>}
                 </>
             )}
         </button>
@@ -96,23 +171,50 @@ export const Card: FC<CardProps> = ({
     variant = 'default',
     headerAction,
 }) => {
-    const variantClasses = {
-        default: 'bg-white',
-        bordered: 'bg-white border border-gray-200',
-        elevated: 'bg-white shadow-lg',
-    }[variant];
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'bordered':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-light)',
+                    border: 'var(--fynmesh-border-1) solid var(--fynmesh-color-secondary)',
+                };
+            case 'elevated':
+                return {
+                    backgroundColor: 'var(--fynmesh-color-light)',
+                    boxShadow: 'var(--fynmesh-shadow-lg)',
+                };
+            default:
+                return {
+                    backgroundColor: 'var(--fynmesh-color-light)',
+                };
+        }
+    };
+
+    const cardStyle = {
+        ...getVariantStyles(),
+        borderRadius: 'var(--fynmesh-radius-xl)',
+        overflow: 'hidden',
+    };
 
     return (
-        <div className={`rounded-xl overflow-hidden ${variantClasses} ${className}`}>
+        <div style={cardStyle} className={className}>
             {title && (
-                <div className="card-header flex items-center justify-between p-4 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-900">{title} v2</h3>
+                <div className="card-header">
+                    <h3 style={{
+                        fontSize: 'var(--fynmesh-text-lg)',
+                        fontWeight: 'var(--fynmesh-font-weight-semibold)',
+                        color: 'var(--fynmesh-color-dark)',
+                        margin: 0,
+                        fontFamily: 'var(--fynmesh-font-family-sans)'
+                    }}>
+                        {title} v2
+                    </h3>
                     {headerAction && <div>{headerAction}</div>}
                 </div>
             )}
-            <div className="card-body p-4">{children}</div>
+            <div className="card-body">{children}</div>
             {footer && (
-                <div className="card-footer p-4 border-t border-gray-100 bg-gray-50">
+                <div className="card-footer">
                     {footer}
                 </div>
             )}
@@ -141,37 +243,87 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
 }, ref) => {
     const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
 
+    const inputClasses = [
+        'input-v2',
+        error ? 'input-v2-error' : '',
+        icon && iconPosition === 'left' ? 'input-v2-with-icon-left' : '',
+        icon && iconPosition === 'right' ? 'input-v2-with-icon-right' : '',
+        className
+    ].filter(Boolean).join(' ');
+
     return (
-        <div className="mb-4">
+        <div style={{ marginBottom: 'var(--fynmesh-spacing-lg)' }}>
             {label && (
-                <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-gray-700">
+                <label
+                    htmlFor={inputId}
+                    style={{
+                        display: 'block',
+                        marginBottom: 'var(--fynmesh-spacing-sm)',
+                        fontSize: 'var(--fynmesh-text-sm)',
+                        fontWeight: 'var(--fynmesh-font-weight-medium)',
+                        color: 'var(--fynmesh-color-dark)',
+                        fontFamily: 'var(--fynmesh-font-family-sans)'
+                    }}
+                >
                     {label}
                 </label>
             )}
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
                 {icon && iconPosition === 'left' && (
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        paddingLeft: 'var(--fynmesh-spacing-md)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                    }}>
                         {icon}
                     </div>
                 )}
                 <input
                     ref={ref}
                     id={inputId}
-                    className={`w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200
-                        ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
-                        ${icon && iconPosition === 'left' ? 'pl-10' : ''}
-                        ${icon && iconPosition === 'right' ? 'pr-10' : ''}
-                        ${className}`}
+                    className={inputClasses}
                     {...props}
                 />
                 {icon && iconPosition === 'right' && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        right: 0,
+                        paddingRight: 'var(--fynmesh-spacing-md)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        pointerEvents: 'none'
+                    }}>
                         {icon}
                     </div>
                 )}
             </div>
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-            {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+            {error && (
+                <p style={{
+                    marginTop: 'var(--fynmesh-spacing-xs)',
+                    fontSize: 'var(--fynmesh-text-sm)',
+                    color: 'var(--fynmesh-color-danger)',
+                    fontFamily: 'var(--fynmesh-font-family-sans)'
+                }}>
+                    {error}
+                </p>
+            )}
+            {helperText && !error && (
+                <p style={{
+                    marginTop: 'var(--fynmesh-spacing-xs)',
+                    fontSize: 'var(--fynmesh-text-sm)',
+                    color: 'var(--fynmesh-color-secondary)',
+                    fontFamily: 'var(--fynmesh-font-family-sans)'
+                }}>
+                    {helperText}
+                </p>
+            )}
         </div>
     );
 });
@@ -187,8 +339,8 @@ interface ModalProps {
     footer?: ReactNode;
     size?: 'small' | 'medium' | 'large';
     closeOnOverlayClick?: boolean;
-    overlayOpacity?: number; // 0 to 1, default 0.2
-    overlayBlur?: string; // CSS blur value like '2px', 'none', default 'none'
+    overlayOpacity?: number;
+    overlayBlur?: string;
 }
 
 export const Modal: FC<ModalProps> = ({
@@ -217,40 +369,72 @@ export const Modal: FC<ModalProps> = ({
 
     if (!isOpen) return null;
 
-    const sizeClasses = {
-        small: 'max-w-sm',
-        medium: 'max-w-md',
-        large: 'max-w-lg',
-    }[size];
+    const getMaxWidth = () => {
+        switch (size) {
+            case 'small': return '24rem';
+            case 'large': return '32rem';
+            default: return '28rem';
+        }
+    };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
             <div
-                className="fixed inset-0 transition-opacity"
+                className="modal-overlay-v2"
                 style={{
                     backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
                     backdropFilter: overlayBlur !== 'none' ? `blur(${overlayBlur})` : 'none',
                 }}
                 onClick={closeOnOverlayClick ? onClose : undefined}
-            ></div>
-            <div className={`relative z-50 w-full ${sizeClasses} rounded-xl bg-white shadow-2xl transform transition-all duration-300 ease-in-out sm:mx-auto`}>
+            />
+            <div
+                className="modal-content-v2"
+                style={{
+                    width: '100%',
+                    maxWidth: getMaxWidth(),
+                    margin: '0 auto',
+                    transform: 'scale(1)',
+                    transition: 'all 0.3s ease-in-out'
+                }}
+            >
                 {title && (
-                    <div className="card-header flex items-center justify-between p-4 border-b border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                    <div className="card-header">
+                        <h3 style={{
+                            fontSize: 'var(--fynmesh-text-lg)',
+                            fontWeight: 'var(--fynmesh-font-weight-semibold)',
+                            color: 'var(--fynmesh-color-dark)',
+                            margin: 0,
+                            fontFamily: 'var(--fynmesh-font-family-sans)'
+                        }}>
+                            {title}
+                        </h3>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--fynmesh-color-secondary)',
+                                cursor: 'pointer',
+                                outline: 'none'
+                            }}
                         >
-                            <span className="sr-only">Close</span>
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Close</span>
+                            <svg style={{ width: '1.5rem', height: '1.5rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
                 )}
-                <div className="card-body p-4">{children}</div>
+                <div className="card-body">{children}</div>
                 {footer && (
-                    <div className="card-footer p-4 border-t border-gray-100 bg-gray-50">
+                    <div className="card-footer">
                         {footer}
                     </div>
                 )}
@@ -286,36 +470,36 @@ export const Alert: FC<AlertProps> = ({
 
     if (!isVisible) return null;
 
-    const variantClasses = {
-        info: 'bg-blue-50 text-blue-800 border-blue-200',
-        success: 'bg-green-50 text-green-800 border-green-200',
-        warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-        error: 'bg-red-50 text-red-800 border-red-200',
-    }[variant];
+    const alertClass = `alert-v2 alert-v2-${variant} ${className}`;
 
     return (
-        <div className={`rounded-lg border p-4 ${variantClasses} ${className}`} role="alert">
-            <div className="flex items-start">
-                {icon && <div className="flex-shrink-0 mr-3">{icon}</div>}
-                <div className="flex-grow">{children}</div>
-                {dismissible && (
-                    <button
-                        type="button"
-                        className="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                        onClick={handleDismiss}
-                        aria-label="Dismiss"
-                    >
-                        <span className="sr-only">Dismiss</span>
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                fillRule="evenodd"
-                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </button>
-                )}
-            </div>
+        <div className={alertClass} role="alert">
+            {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
+            <div style={{ flexGrow: 1 }}>{children}</div>
+            {dismissible && (
+                <button
+                    type="button"
+                    onClick={handleDismiss}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'currentColor',
+                        cursor: 'pointer',
+                        opacity: 0.7,
+                        outline: 'none',
+                        flexShrink: 0
+                    }}
+                    aria-label="Dismiss"
+                >
+                    <svg style={{ width: '1.25rem', height: '1.25rem' }} viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+                </button>
+            )}
         </div>
     );
 };
@@ -336,29 +520,48 @@ export const Badge: FC<BadgeProps> = ({
     size = 'medium',
     dot = false,
 }) => {
-    const sizeClasses = {
-        small: 'px-2 py-0.5 text-xs',
-        medium: 'px-2.5 py-0.5 text-sm',
-        large: 'px-3 py-1 text-base',
-    }[size];
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    background: 'rgba(37, 99, 235, 0.1)',
+                    color: 'var(--fynmesh-color-primary)'
+                };
+            case 'success':
+                return {
+                    background: 'rgba(5, 150, 105, 0.1)',
+                    color: 'var(--fynmesh-color-success)'
+                };
+            case 'warning':
+                return {
+                    background: 'rgba(217, 119, 6, 0.1)',
+                    color: 'var(--fynmesh-color-warning)'
+                };
+            case 'danger':
+                return {
+                    background: 'rgba(220, 38, 38, 0.1)',
+                    color: 'var(--fynmesh-color-danger)'
+                };
+            default:
+                return {
+                    background: 'rgba(100, 116, 139, 0.1)',
+                    color: 'var(--fynmesh-color-secondary)'
+                };
+        }
+    };
 
-    const variantClasses = {
-        default: 'bg-gray-100 text-gray-800',
-        primary: 'bg-blue-100 text-blue-800',
-        success: 'bg-green-100 text-green-800',
-        warning: 'bg-yellow-100 text-yellow-800',
-        danger: 'bg-red-100 text-red-800',
-    }[variant];
+    const badgeClass = `badge-v2 badge-v2-${size} ${className}`;
+    const variantStyles = getVariantStyles();
 
     return (
-        <span className={`inline-flex items-center rounded-full font-medium ${sizeClasses} ${variantClasses} ${className}`}>
+        <span className={badgeClass} style={variantStyles}>
             {dot && (
-                <span className={`w-2 h-2 rounded-full mr-1.5 ${variant === 'default' ? 'bg-gray-500' :
-                    variant === 'primary' ? 'bg-blue-500' :
-                        variant === 'success' ? 'bg-green-500' :
-                            variant === 'warning' ? 'bg-yellow-500' :
-                                'bg-red-500'
-                    }`}></span>
+                <span style={{
+                    width: 'var(--fynmesh-spacing-xs)',
+                    height: 'var(--fynmesh-spacing-xs)',
+                    backgroundColor: 'currentColor',
+                    borderRadius: 'var(--fynmesh-radius-full)',
+                }} />
             )}
             {children}
         </span>
@@ -379,47 +582,84 @@ export const Spinner: FC<SpinnerProps> = ({
     className = '',
     variant = 'default',
 }) => {
-    const sizeClasses = {
-        small: 'w-4 h-4',
-        medium: 'w-6 h-6',
-        large: 'w-8 h-8',
-    }[size];
+    const getSizeStyles = () => {
+        switch (size) {
+            case 'small':
+                return { width: 'var(--fynmesh-spacing-lg)', height: 'var(--fynmesh-spacing-lg)' };
+            case 'large':
+                return { width: 'var(--fynmesh-spacing-2xl)', height: 'var(--fynmesh-spacing-2xl)' };
+            default:
+                return { width: 'var(--fynmesh-spacing-xl)', height: 'var(--fynmesh-spacing-xl)' };
+        }
+    };
 
-    const colorClasses = {
-        primary: 'text-blue-600',
-        gray: 'text-gray-500',
-        white: 'text-white',
-    }[color];
+    const getColorStyles = () => {
+        switch (color) {
+            case 'gray':
+                return { color: 'var(--fynmesh-color-secondary)' };
+            case 'white':
+                return { color: 'var(--fynmesh-color-light)' };
+            default:
+                return { color: 'var(--fynmesh-color-primary)' };
+        }
+    };
+
+    const spinnerClass = `spinner-v2${variant !== 'default' ? `-${variant}` : ''} ${className}`;
+    const styles = { ...getSizeStyles(), ...getColorStyles() };
 
     if (variant === 'dots') {
         return (
-            <div className={`flex space-x-1 ${className}`}>
-                {[0, 1, 2].map((i) => (
-                    <div
-                        key={i}
-                        className={`${sizeClasses} ${colorClasses} rounded-full animate-bounce`}
-                        style={{ animationDelay: `${i * 0.15}s` }}
-                    />
-                ))}
+            <div className={spinnerClass} style={styles}>
+                <div style={{ display: 'flex', gap: 'var(--fynmesh-spacing-xs)' }}>
+                    <div style={{
+                        width: 'var(--fynmesh-spacing-xs)',
+                        height: 'var(--fynmesh-spacing-xs)',
+                        backgroundColor: 'currentColor',
+                        borderRadius: 'var(--fynmesh-radius-full)',
+                        animationDelay: '0s'
+                    }} />
+                    <div style={{
+                        width: 'var(--fynmesh-spacing-xs)',
+                        height: 'var(--fynmesh-spacing-xs)',
+                        backgroundColor: 'currentColor',
+                        borderRadius: 'var(--fynmesh-radius-full)',
+                        animationDelay: '0.2s'
+                    }} />
+                    <div style={{
+                        width: 'var(--fynmesh-spacing-xs)',
+                        height: 'var(--fynmesh-spacing-xs)',
+                        backgroundColor: 'currentColor',
+                        borderRadius: 'var(--fynmesh-radius-full)',
+                        animationDelay: '0.4s'
+                    }} />
+                </div>
             </div>
         );
     }
 
     if (variant === 'pulse') {
         return (
-            <div className={`${sizeClasses} ${colorClasses} ${className} animate-pulse rounded-full bg-current`} />
+            <div className={spinnerClass} style={styles}>
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'currentColor',
+                    borderRadius: 'var(--fynmesh-radius-full)',
+                }} />
+            </div>
         );
     }
 
     return (
         <svg
-            className={`animate-spin ${sizeClasses} ${colorClasses} ${className}`}
+            className={spinnerClass}
+            style={styles}
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
         >
             <circle
-                className="opacity-25"
+                style={{ opacity: 0.25 }}
                 cx="12"
                 cy="12"
                 r="10"
@@ -427,10 +667,51 @@ export const Spinner: FC<SpinnerProps> = ({
                 strokeWidth="4"
             />
             <path
-                className="opacity-75"
+                style={{ opacity: 0.75 }}
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
         </svg>
     );
 };
+
+// FynApp User for middleware
+const fynappUser = {
+    async execute(runtime: FynModuleRuntime) {
+        // Get design tokens from middleware
+        const designTokensContext = runtime.middlewareContext.get("design-tokens");
+        const { api: designTokens } = designTokensContext || {};
+
+        if (designTokens) {
+            console.log("🎨 FynApp X1 v2 - Design tokens loaded");
+            console.log("🎨 Current theme:", designTokens.getTheme());
+            console.log("🎨 Available tokens:", designTokens.getTokens());
+
+            // Subscribe to theme changes
+            designTokens.subscribeToThemeChanges((theme: string, tokens: any) => {
+                console.log(`🎨 FynApp X1 v2 - Theme changed to ${theme}`);
+            });
+        } else {
+            console.warn("🚨 FynApp X1 v2 - Design tokens middleware not available");
+        }
+    },
+};
+
+// Export with middleware
+export const main = useMiddleware(
+    {
+        info: {
+            name: "design-tokens",
+            provider: "fynapp-design-tokens",
+            version: "^1.0.0",
+        },
+        config: {
+            theme: "fynmesh-default",
+            cssCustomProperties: true,
+            cssVariablePrefix: "fynmesh",
+            enableThemeSwitching: true,
+            persistTheme: true,
+        },
+    },
+    fynappUser,
+);

@@ -1,0 +1,102 @@
+{% if isProduction %}
+<script src="/system.min.js"></script>
+<script src="/federation-js/dist/federation-js.min.js"></script>
+<script src="/core/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+{% else %}
+<script src="/system.js"></script>
+<script src="/federation-js/dist/federation-js.dev.js"></script>
+<script src="/core/kernel/dist/fynmesh-browser-kernel.dev.js"></script>
+{% endif %}
+<script>
+    (async () => {
+
+        const features = {
+            "react-18": {{ features["react-18"] | dump | safe }},
+            "react-19": {{ features["react-19"] | dump | safe }},
+            "fynapp-1": {{ features["fynapp-1"] | dump | safe }},
+            "fynapp-1-b": {{ features["fynapp-1-b"] | dump | safe }},
+            "fynapp-2-react18": {{ features["fynapp-2-react18"] | dump | safe }},
+            "fynapp-3-marko": {{ features["fynapp-3-marko"] | dump | safe }},
+            "fynapp-4-vue": {{ features["fynapp-4-vue"] | dump | safe }},
+            "fynapp-5-preact": {{ features["fynapp-5-preact"] | dump | safe }},
+            "fynapp-6-react": {{ features["fynapp-6-react"] | dump | safe }},
+            "fynapp-7-solid": {{ features["fynapp-7-solid"] | dump | safe }},
+            "design-tokens": {{ features["design-tokens"] | dump | safe }}
+        };
+
+        // STEP 1: Load Design Tokens Middleware first before any consumers
+        if (features["design-tokens"]) {
+            console.log("🎨 Loading Design Tokens Middleware provider /fynapp-design-tokens/dist");
+            await fynMeshKernel.loadFynApp("/fynapp-design-tokens/dist");
+            console.log("✅ Design Tokens Middleware loaded and ready");
+        }
+
+        // globalThis.process = { env: { NODE_ENV: "production" } };
+        // STEP 2: Load react versions
+        if (features["react-18"]) {
+            fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
+            console.log("loading remote fynapp /fynapp-react-18/dist");
+        }
+        // load react 19
+        if (features["react-19"]) {
+            fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
+            console.log("loading remote fynapp /fynapp-react-19/dist");
+        }
+
+        // STEP 3: Load component libraries (these may use design tokens)
+        await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
+        console.log("🎨 Loading fynapp-x1-v1 with design tokens support");
+        await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
+
+        // STEP 4: Load React Context Middleware for consumer FynApps
+        console.log("🔧 Loading React Context Middleware provider /fynapp-react-middleware/dist");
+        await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
+
+        // STEP 5: Load consumer FynApps (all middleware is now available)
+        // load fynapp 2 that uses react 18
+        if (features["fynapp-2-react18"]) {
+            console.log("loading remote fynapp /fynapp-2-react18/dist");
+            fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
+        }
+
+        // load fynapp 1 that uses react 19
+        if (features["fynapp-1"]) {
+            console.log("loading remote fynapp /fynapp-1/dist");
+            fynMeshKernel.loadFynApp("/fynapp-1/dist");
+        }
+        // load fynapp 1-b that uses react 19
+        if (features["fynapp-1-b"]) {
+            console.log("loading remote fynapp /fynapp-1-b/dist");
+            fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
+        }
+        // load fynapp marko
+        if (features["fynapp-3-marko"]) {
+            console.log("loading remote fynapp /fynapp-3-marko/dist");
+            fynMeshKernel.loadFynApp("/fynapp-3-marko/dist")
+        }
+
+        // load fynapp vue
+        if (features["fynapp-4-vue"]) {
+            console.log("loading remote fynapp /fynapp-4-vue/dist");
+            fynMeshKernel.loadFynApp("/fynapp-4-vue/dist");
+        }
+
+        // load fynapp preact
+        if (features["fynapp-5-preact"]) {
+            console.log("loading remote fynapp /fynapp-5-preact/dist");
+            fynMeshKernel.loadFynApp("/fynapp-5-preact/dist")
+        }
+
+        // load fynapp react (dashboard)
+        if (features["fynapp-6-react"]) {
+            console.log("loading remote fynapp /fynapp-6-react/dist");
+            fynMeshKernel.loadFynApp("/fynapp-6-react/dist")
+        }
+
+        // load fynapp solid
+        if (features["fynapp-7-solid"]) {
+            console.log("loading remote fynapp /fynapp-7-solid/dist");
+            fynMeshKernel.loadFynApp("/fynapp-7-solid/dist")
+        }
+    })();
+</script>

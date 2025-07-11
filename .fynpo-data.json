@@ -12,7 +12,7 @@
           "version": "1.0.0",
           "path": "core/kernel"
         },
-        "depSection": "dep",
+        "depSection": "dev",
         "indirectSteps": [
           "fynapp-1@1.0.0(pkg)"
         ]
@@ -149,5 +149,5 @@
       }
     ]
   },
-  "__timestamp": 1751831313083
+  "__timestamp": 1752246333674
 }

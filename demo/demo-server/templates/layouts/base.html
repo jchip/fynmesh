@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FynMesh Micro Frontend Demo{% endblock %}</title>
+    {% if isProduction %}
+    <link href="/node_modules/spectre.css/dist/spectre.min.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-exp.min.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-icons.min.css" rel="stylesheet">
+    {% else %}
+    <link href="/node_modules/spectre.css/dist/spectre.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-exp.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-icons.css" rel="stylesheet">
+    {% endif %}
+    {% block styles %}{% endblock %}
+    {% block scripts_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}body-gradient{% endblock %}" style="min-height: 100vh;">
+    {% block content %}{% endblock %}
+    {% block scripts_body %}{% endblock %}
+</body>
+</html>

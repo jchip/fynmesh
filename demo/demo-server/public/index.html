@@ -1,337 +1,572 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FynMesh Micro Frontend Demo</title>
+    
+    <link href="/node_modules/spectre.css/dist/spectre.min.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-exp.min.css" rel="stylesheet">
+    <link href="/node_modules/spectre.css/dist/spectre-icons.min.css" rel="stylesheet">
+    
+    
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.5;
-            background-color: #f8f9fa;
+    /* Custom animations and effects */
+    .loading-spinner::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: currentColor;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .loading-spinner:not(:empty)::before {
+        display: none;
+    }
+
+    /* Enhanced button interactions */
+    .btn-interactive {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-interactive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-interactive:active {
+        transform: translateY(1px);
+    }
+
+    .btn-interactive::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+
+    .btn-interactive:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+    }
+
+    /* Toast notification styles */
+    .toast-notification {
+        position: fixed;
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 80%;
+    }
+
+    .toast-notification.show {
+        top: 20px;
+        opacity: 1;
+    }
+
+    /* Custom animations */
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes ripple {
+        0% { transform: scale(0); opacity: 0.5; }
+        100% { transform: scale(20); opacity: 0; }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .animate-slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    /* Gradient backgrounds */
+    .gradient-bg-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .gradient-bg-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .gradient-bg-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    /* Glass morphism effect */
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Floating animation */
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    /* Custom header gradient */
+    .header-gradient {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #6366f1 100%);
+    }
+
+    /* Custom body gradient */
+    .body-gradient {
+        background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #e0f2fe 100%);
+    }
+
+    /* FynApp colors */
+    :root {
+        --fynapp-1: #6366f1;
+        --fynapp-1-b: #10b981;
+        --fynapp-2: #8b5cf6;
+        --fynapp-3: #ff5733;
+        --fynapp-4: #42b883;
+        --fynapp-5: #673ab8;
+        --fynapp-6: #4f46e5;
+        --fynapp-7: #2D7FF9;
+    }
+
+    .text-fynapp-1 { color: var(--fynapp-1); }
+    .text-fynapp-1-b { color: var(--fynapp-1-b); }
+    .text-fynapp-2 { color: var(--fynapp-2); }
+    .text-fynapp-3 { color: var(--fynapp-3); }
+    .text-fynapp-4 { color: var(--fynapp-4); }
+    .text-fynapp-5 { color: var(--fynapp-5); }
+    .text-fynapp-6 { color: var(--fynapp-6); }
+    .text-fynapp-7 { color: var(--fynapp-7); }
+
+    .bg-fynapp-1 { background-color: var(--fynapp-1); }
+    .bg-fynapp-1-b { background-color: var(--fynapp-1-b); }
+    .bg-fynapp-2 { background-color: var(--fynapp-2); }
+    .bg-fynapp-3 { background-color: var(--fynapp-3); }
+    .bg-fynapp-4 { background-color: var(--fynapp-4); }
+    .bg-fynapp-5 { background-color: var(--fynapp-5); }
+    .bg-fynapp-6 { background-color: var(--fynapp-6); }
+    .bg-fynapp-7 { background-color: var(--fynapp-7); }
+
+    .border-fynapp-1 { border-color: var(--fynapp-1); }
+    .border-fynapp-1-b { border-color: var(--fynapp-1-b); }
+    .border-fynapp-2 { border-color: var(--fynapp-2); }
+    .border-fynapp-3 { border-color: var(--fynapp-3); }
+    .border-fynapp-4 { border-color: var(--fynapp-4); }
+    .border-fynapp-5 { border-color: var(--fynapp-5); }
+    .border-fynapp-6 { border-color: var(--fynapp-6); }
+    .border-fynapp-7 { border-color: var(--fynapp-7); }
+
+    /* Custom border left utilities */
+    .border-start-4 {
+        border-left: 4px solid;
+    }
+
+    /* Dynamic border colors for FynApp containers */
+    [data-border-color="fynapp-1"] { border-left-color: var(--fynapp-1) !important; }
+    [data-border-color="fynapp-1-b"] { border-left-color: var(--fynapp-1-b) !important; }
+    [data-border-color="fynapp-2"] { border-left-color: var(--fynapp-2) !important; }
+    [data-border-color="fynapp-3"] { border-left-color: var(--fynapp-3) !important; }
+    [data-border-color="fynapp-4"] { border-left-color: var(--fynapp-4) !important; }
+    [data-border-color="fynapp-5"] { border-left-color: var(--fynapp-5) !important; }
+    [data-border-color="fynapp-6"] { border-left-color: var(--fynapp-6) !important; }
+    [data-border-color="fynapp-7"] { border-left-color: var(--fynapp-7) !important; }
+
+    /* Custom responsive cards */
+    .fynapp-card {
+        transition: all 0.3s ease;
+    }
+
+    .fynapp-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Custom scale animation */
+    .scale-hover:hover {
+        transform: scale(1.02);
+    }
+
+    /* Custom transition utilities */
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .transition-transform {
+        transition: transform 0.3s ease;
+    }
+
+    .transition-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+
+    /* Custom pulse animation */
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>
+
+
+    
+    
+<script src="/system.min.js"></script>
+<script src="/federation-js/dist/federation-js.min.js"></script>
+<script src="/core/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+
+<script>
+    (async () => {
+
+        const features = {
+            "react-18": true,
+            "react-19": true,
+            "fynapp-1": true,
+            "fynapp-1-b": true,
+            "fynapp-2-react18": true,
+            "fynapp-3-marko": true,
+            "fynapp-4-vue": true,
+            "fynapp-5-preact": true,
+            "fynapp-6-react": true,
+            "fynapp-7-solid": true,
+            "design-tokens": true
+        };
+
+        // STEP 1: Load Design Tokens Middleware first before any consumers
+        if (features["design-tokens"]) {
+            console.log("🎨 Loading Design Tokens Middleware provider /fynapp-design-tokens/dist");
+            await fynMeshKernel.loadFynApp("/fynapp-design-tokens/dist");
+            console.log("✅ Design Tokens Middleware loaded and ready");
         }
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 1rem;
+
+        // globalThis.process = { env: { NODE_ENV: "production" } };
+        // STEP 2: Load react versions
+        if (features["react-18"]) {
+            fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
+            console.log("loading remote fynapp /fynapp-react-18/dist");
+        }
+        // load react 19
+        if (features["react-19"]) {
+            fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
+            console.log("loading remote fynapp /fynapp-react-19/dist");
         }
 
-        /* App container layout */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
+        // STEP 3: Load component libraries (these may use design tokens)
+        await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
+        console.log("🎨 Loading fynapp-x1-v1 with design tokens support");
+        await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
+
+        // STEP 4: Load React Context Middleware for consumer FynApps
+        console.log("🔧 Loading React Context Middleware provider /fynapp-react-middleware/dist");
+        await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
+
+        // STEP 5: Load consumer FynApps (all middleware is now available)
+        // load fynapp 2 that uses react 18
+        if (features["fynapp-2-react18"]) {
+            console.log("loading remote fynapp /fynapp-2-react18/dist");
+            fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
         }
 
-        /* Two-column container for fynapp-1 and fynapp-1-b */
-        .fynapp-1-container {
-            display: flex;
-            flex-direction: row;
-            gap: 1rem;
-            width: 100%;
-            margin: 2rem 0;
+        // load fynapp 1 that uses react 19
+        if (features["fynapp-1"]) {
+            console.log("loading remote fynapp /fynapp-1/dist");
+            fynMeshKernel.loadFynApp("/fynapp-1/dist");
+        }
+        // load fynapp 1-b that uses react 19
+        if (features["fynapp-1-b"]) {
+            console.log("loading remote fynapp /fynapp-1-b/dist");
+            fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
+        }
+        // load fynapp marko
+        if (features["fynapp-3-marko"]) {
+            console.log("loading remote fynapp /fynapp-3-marko/dist");
+            fynMeshKernel.loadFynApp("/fynapp-3-marko/dist")
         }
 
-        /* Side-by-side container for other apps */
-        .side-by-side-container {
-            display: flex;
-            flex-direction: row;
-            gap: 1rem;
-            width: 100%;
-            margin: 2rem 0;
+        // load fynapp vue
+        if (features["fynapp-4-vue"]) {
+            console.log("loading remote fynapp /fynapp-4-vue/dist");
+            fynMeshKernel.loadFynApp("/fynapp-4-vue/dist");
         }
 
-        /* Fynapp containers styling */
-        #fynapp-1, #fynapp-1-b, #fynapp-2-react18, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-6-react, #fynapp-7-solid {
-            position: relative;
-            min-height: 200px;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease;
-            background-color: white;
-            width: 100%;
+        // load fynapp preact
+        if (features["fynapp-5-preact"]) {
+            console.log("loading remote fynapp /fynapp-5-preact/dist");
+            fynMeshKernel.loadFynApp("/fynapp-5-preact/dist")
         }
 
-        /* Special styling for fynapp-1 container */
-        .fynapp-1-container #fynapp-1,
-        .fynapp-1-container #fynapp-1-b {
-            margin: 0;
-            width: 50%;
-            flex: 1;
+        // load fynapp react (dashboard)
+        if (features["fynapp-6-react"]) {
+            console.log("loading remote fynapp /fynapp-6-react/dist");
+            fynMeshKernel.loadFynApp("/fynapp-6-react/dist")
         }
 
-        /* Special styling for side-by-side containers */
-        .side-by-side-container #fynapp-2-react18 {
-            margin: 0;
-            width: 50%;
-            flex: 1;
+        // load fynapp solid
+        if (features["fynapp-7-solid"]) {
+            console.log("loading remote fynapp /fynapp-7-solid/dist");
+            fynMeshKernel.loadFynApp("/fynapp-7-solid/dist")
         }
+    })();
+</script>
 
-        /* Non-container apps should keep their margin */
-        #fynapp-2-react18, #fynapp-6-react, #fynapp-3-marko, #fynapp-4-vue, #fynapp-5-preact, #fynapp-7-solid {
-            margin: 2rem 0;
-        }
 
-        #fynapp-1 {
-            border-left: 5px solid #6366f1;
-        }
-
-        #fynapp-1-b {
-            border-left: 5px solid #10b981;
-        }
-
-        #fynapp-2-react18 {
-            border-left: 5px solid #8b5cf6;
-        }
-
-        #fynapp-3-marko {
-            border-left: 5px solid #ff5733;
-        }
-
-        #fynapp-4-vue {
-            border-left: 5px solid #42b883;
-        }
-
-        #fynapp-5-preact {
-            border-left: 5px solid #673ab8;
-        }
-
-        #fynapp-6-react {
-            border-left: 5px solid #4f46e5;
-        }
-
-        #fynapp-7-solid {
-            border-left: 5px solid #2D7FF9;
-        }
-
-        /* Loading state styling */
-        #fynapp-1::before, #fynapp-1-b::before, #fynapp-2-react18::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top-color: #6366f1;
-            animation: spinner 0.8s linear infinite;
-        }
-
-        #fynapp-1-b::before {
-            border-top-color: #10b981;
-        }
-
-        #fynapp-2-react18::before {
-            border-top-color: #8b5cf6;
-        }
-
-        @keyframes spinner {
-            to {
-                transform: translate(-50%, -50%) rotate(360deg);
-            }
-        }
-
-        /* Hide spinner once content is loaded */
-        #fynapp-1:not(:empty)::before,
-        #fynapp-1-b:not(:empty)::before,
-        #fynapp-2-react18:not(:empty)::before {
-            display: none;
-        }
-
-        /* Button animation styles */
-        button {
-            transition: all 0.3s ease !important;
-            position: relative;
-            overflow: hidden !important;
-            transform: translateZ(0);
-        }
-
-        button:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-        }
-
-        button:active {
-            transform: translateY(1px) !important;
-        }
-
-        button::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%, -50%);
-            transform-origin: 50% 50%;
-        }
-
-        button:focus:not(:active)::after {
-            animation: ripple 0.6s ease-out;
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0) translate(-50%, -50%);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20) translate(-50%, -50%);
-                opacity: 0;
-            }
-        }
-
-        /* Toast notification styles */
-        .toast-notification {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            max-width: 80%;
-        }
-
-        .toast-notification.fynapp-1 {
-            border-left: 4px solid #6366f1;
-        }
-
-        .toast-notification.fynapp-2 {
-            border-left: 4px solid #8b5cf6;
-        }
-
-        .toast-notification.show {
-            top: 20px;
-            opacity: 1;
-        }
-
-        .toast-notification::before {
-            content: "";
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            margin-right: 12px;
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z'/%3E%3C/svg%3E");
-        }
-    </style>
-    <script src="/system.min.js"></script>
-    <script src="/federation-js/dist/federation-js.dev.js"></script>
-    <script src="/core/kernel/dist/fynmesh-browser-kernel.dev.js"></script>
-    <script>
-        (async () => {
-
-            const features = {
-                "react-18": true,
-                "react-19": true,
-                "fynapp-1": true,
-                "fynapp-1-b": true,
-                "fynapp-2-react18": true,
-                "fynapp-3-marko": true,
-                "fynapp-4-vue": true,
-                "fynapp-5-preact": true,
-                "fynapp-6-react": true,
-                "fynapp-7-solid": true,
-            }
-
-            // globalThis.process = { env: { NODE_ENV: "production" } };
-            // load react 18
-            if (features["react-18"]) {
-                fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
-                console.log("loading remote fynapp /fynapp-react-18/dist");
-            }
-            // load react 19
-            if (features["react-19"]) {
-                fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
-                console.log("loading remote fynapp /fynapp-react-19/dist");
-            }
-
-            await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
-            await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
-
-            // HARDCODED: Load middleware first before any consumers
-            console.log("loading middleware provider fynapp /fynapp-react-middleware/dist");
-            await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
-
-            // load fynapp 2 that uses react 18
-            if (features["fynapp-2-react18"]) {
-                console.log("loading remote fynapp /fynapp-2-react18/dist");
-                fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
-            }
-
-            // load fynapp 1 that uses react 19
-            if (features["fynapp-1"]) {
-                console.log("loading remote fynapp /fynapp-1/dist");
-                fynMeshKernel.loadFynApp("/fynapp-1/dist");
-            }
-            // load fynapp 1-b that uses react 19
-            if (features["fynapp-1-b"]) {
-                console.log("loading remote fynapp /fynapp-1-b/dist");
-                fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
-            }
-            // load fynapp marko
-            if (features["fynapp-3-marko"]) {
-                console.log("loading remote fynapp /fynapp-3-marko/dist");
-                fynMeshKernel.loadFynApp("/fynapp-3-marko/dist")
-            }
-
-            // load fynapp vue
-            if (features["fynapp-4-vue"]) {
-                console.log("loading remote fynapp /fynapp-4-vue/dist");
-                fynMeshKernel.loadFynApp("/fynapp-4-vue/dist");
-            }
-
-            // load fynapp preact
-            if (features["fynapp-5-preact"]) {
-                console.log("loading remote fynapp /fynapp-5-preact/dist");
-                fynMeshKernel.loadFynApp("/fynapp-5-preact/dist")
-            }
-
-            // load fynapp react (dashboard)
-            if (features["fynapp-6-react"]) {
-                console.log("loading remote fynapp /fynapp-6-react/dist");
-                fynMeshKernel.loadFynApp("/fynapp-6-react/dist")
-            }
-
-            // load fynapp solid
-            if (features["fynapp-7-solid"]) {
-                console.log("loading remote fynapp /fynapp-7-solid/dist");
-                fynMeshKernel.loadFynApp("/fynapp-7-solid/dist")
-            }
-        })();
-    </script>
 </head>
-<body>
-    <h1>FynMesh Micro Frontend Demo</h1>
-    <div class="app-container">
-        <div class="fynapp-1-container">
-            <div id="fynapp-1"></div>
-            <div id="fynapp-1-b"></div>
+<body class="body-gradient" style="min-height: 100vh;">
+    
+    <!-- Header Section -->
+    <header style="position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.75;" class="header-gradient"></div>
+        <div style="position: relative; padding: 3rem 2rem;" class="container">
+            <div class="text-center">
+                <h1 class="text-bold animate-fade-in" style="font-size: 3rem; color: #fbbf24;">
+                    <span style="display: block;">FynMesh</span>
+                    <span style="display: block; font-size: 2rem; font-weight: normal; margin-top: 0.5rem; color: #38bdf8;">
+                        Micro Frontend Demo
+                    </span>
+                </h1>
+                <p style="margin-top: 2rem; font-size: 1.2rem; color: #f1f5f9; max-width: 600px; margin-left: auto; margin-right: auto;" class="animate-slide-up">
+                    Experience the power of independently deployable micro-frontends with module federation
+                </p>
+                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;" class="animate-slide-up">
+                    <span class="chip" style="background: #3b82f6; color: white;">
+                        <span class="bg-success pulse-animation" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.5rem; background: #10b981;"></span>
+                        Live Demo
+                    </span>
+                    <span class="chip" style="background: #6b7280; color: white;">
+                        Module Federation
+                    </span>
+                    <span class="chip" style="background: #06b6d4; color: white;">
+                        Multi-Framework
+                    </span>
+                </div>
+            </div>
         </div>
-        <div id="fynapp-2-react18"></div>
-        <div id="fynapp-6-react"></div>
-        <div id="fynapp-5-preact"></div>
-        <div id="fynapp-7-solid"></div>
-        <div id="fynapp-4-vue"></div>
-        <div id="fynapp-3-marko"></div>
-    </div>
+    </header>
+
+    <!-- Main Content -->
+    <main style="padding: 3rem 2rem;" class="container">
+        <!-- Info Cards -->
+        <div class="columns" style="margin-bottom: 3rem;">
+            
+            <div class="column col-4">
+                <div class="card fynapp-card" style="height: 100%; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: none;">
+                    <div class="card-body">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;" class="bg-primary">
+                            <i class="bi-boxes text-white" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="card-title" style="color: #1f2937;">Independent Deployment</h5>
+                        <p class="card-text text-gray" style="font-size: 0.875rem;">Each micro-frontend can be developed and deployed independently by different teams.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column col-4">
+                <div class="card fynapp-card" style="height: 100%; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: none;">
+                    <div class="card-body">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;" class="bg-secondary">
+                            <i class="bi-code-square text-white" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="card-title" style="color: #1f2937;">Module Federation</h5>
+                        <p class="card-text text-gray" style="font-size: 0.875rem;">Share code and dependencies between applications at runtime using Module Federation.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column col-4">
+                <div class="card fynapp-card" style="height: 100%; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: none;">
+                    <div class="card-body">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;" class="bg-success">
+                            <i class="bi-lightning-charge text-white" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h5 class="card-title" style="color: #1f2937;">Multi-Framework</h5>
+                        <p class="card-text text-gray" style="font-size: 0.875rem;">Support for React, Vue, Preact, Solid, and Marko frameworks running together.</p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- FynApp Containers -->
+        <div class="columns">
+            <!-- Primary FynApps Row -->
+            <div class="column col-6" style="display: flex;">
+                <div style="margin-bottom: 1rem; width: 100%; display: flex; flex-direction: column;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-1 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 1 (React 19)</h5>
+                        <span class="label bg-primary" style="margin-left: 0.5rem; color: white;">React 19</span>
+                    </div>
+                    <div id="fynapp-1" class="loading-spinner card fynapp-card text-fynapp-1" style="min-height: 200px; flex-grow: 1; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 1rem;" data-border-color="fynapp-1"></div>
+                </div>
+            </div>
+
+            <div class="column col-6" style="display: flex;">
+                <div style="margin-bottom: 1rem; width: 100%; display: flex; flex-direction: column;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-1-b pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 1-B (React 19)</h5>
+                        <span class="label bg-success" style="margin-left: 0.5rem; color: white;">React 19</span>
+                    </div>
+                    <div id="fynapp-1-b" class="loading-spinner card fynapp-card text-fynapp-1-b" style="min-height: 200px; flex-grow: 1; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 1rem;" data-border-color="fynapp-1-b"></div>
+                </div>
+            </div>
+
+            <!-- Secondary FynApps - Each on its own row -->
+            
+            
+            
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-2 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 2</h5>
+                        <span class="label bg-secondary" style="margin-left: 0.5rem; color: white;">React 18</span>
+                    </div>
+                    <div id="fynapp-2-react18" class="loading-spinner card fynapp-card text-fynapp-2" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-2"></div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-6 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 6</h5>
+                        <span class="label bg-info" style="margin-left: 0.5rem; color: white;">React</span>
+                    </div>
+                    <div id="fynapp-6-react" class="loading-spinner card fynapp-card text-fynapp-6" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-6"></div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-5 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 5</h5>
+                        <span class="label bg-warning" style="margin-left: 0.5rem; color: white;">Preact</span>
+                    </div>
+                    <div id="fynapp-5-preact" class="loading-spinner card fynapp-card text-fynapp-5" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-5"></div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-7 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 7</h5>
+                        <span class="label bg-primary" style="margin-left: 0.5rem; color: white;">Solid</span>
+                    </div>
+                    <div id="fynapp-7-solid" class="loading-spinner card fynapp-card text-fynapp-7" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-7"></div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-4 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 4</h5>
+                        <span class="label bg-success" style="margin-left: 0.5rem; color: white;">Vue</span>
+                    </div>
+                    <div id="fynapp-4-vue" class="loading-spinner card fynapp-card text-fynapp-4" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-4"></div>
+                </div>
+            </div>
+            
+            
+            
+            <div class="column col-12">
+                <div style="margin-bottom: 1rem; height: 100%;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <div class="bg-fynapp-3 pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
+                        <h5 style="margin: 0; color: #1f2937;">FynApp 3</h5>
+                        <span class="label bg-warning" style="margin-left: 0.5rem; color: white;">Marko</span>
+                    </div>
+                    <div id="fynapp-3-marko" class="loading-spinner card fynapp-card text-fynapp-3" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="fynapp-3"></div>
+                </div>
+            </div>
+            
+            
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: 3rem; background: #1f2937; color: white;">
+        <div class="container" style="padding: 3rem 2rem;">
+            <div class="columns">
+                <div class="column col-4">
+                    <h5 style="color: white; margin-bottom: 1rem;">FynMesh</h5>
+                    <p style="color: #d1d5db; font-size: 0.875rem;">
+                        Enterprise-scale web application framework with Module Federation & Micro Frontends.
+                    </p>
+                </div>
+                <div class="column col-4">
+                    <h6 style="color: white; margin-bottom: 1rem;">Features</h6>
+                    <ul style="list-style: none; padding: 0; color: #d1d5db; font-size: 0.875rem;">
+                        <li style="margin-bottom: 0.5rem;">• Independent Development</li>
+                        <li style="margin-bottom: 0.5rem;">• Shared Dependencies</li>
+                        <li style="margin-bottom: 0.5rem;">• Federation-First</li>
+                        <li style="margin-bottom: 0.5rem;">• Type Safety</li>
+                    </ul>
+                </div>
+                <div class="column col-4">
+                    <h6 style="color: white; margin-bottom: 1rem;">Frameworks</h6>
+                    <ul style="list-style: none; padding: 0; color: #d1d5db; font-size: 0.875rem;">
+                        <li style="margin-bottom: 0.5rem;">• React 18 & 19</li>
+                        <li style="margin-bottom: 0.5rem;">• Vue.js</li>
+                        <li style="margin-bottom: 0.5rem;">• Preact & Solid</li>
+                        <li style="margin-bottom: 0.5rem;">• Marko</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #374151; text-align: center;">
+                <p style="color: #9ca3af; font-size: 0.875rem; margin: 0;">&copy; 2025 FynMesh. Demonstrating the future of micro-frontend architecture.</p>
+            </div>
+        </div>
+    </footer>
+
+    
 </body>
 </html>

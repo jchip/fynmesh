@@ -1,4 +1,5 @@
 import React from 'react';
+import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
 import './styles.css';
 
 // @ts-ignore
@@ -10,10 +11,6 @@ type ButtonHTMLAttributes<T> = React.ButtonHTMLAttributes<T>;
 type InputHTMLAttributes<T> = React.InputHTMLAttributes<T>;
 type FC<P> = React.FC<P>;
 const forwardRef = React.forwardRef;
-
-export function main() {
-    //
-}
 
 // Button Component
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -47,10 +44,31 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
     const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
 
+    const buttonStyle = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 'var(--fynmesh-radius-md)',
+        fontWeight: 'var(--fynmesh-font-weight-medium)',
+        fontSize: size === 'small' ? 'var(--fynmesh-text-sm)' : size === 'large' ? 'var(--fynmesh-text-lg)' : 'var(--fynmesh-text-base)',
+        padding: size === 'small' ? 'var(--fynmesh-spacing-xs) var(--fynmesh-spacing-md)' : size === 'large' ? 'var(--fynmesh-spacing-md) var(--fynmesh-spacing-xl)' : 'var(--fynmesh-spacing-sm) var(--fynmesh-spacing-lg)',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        outline: 'none',
+        opacity: disabled || isLoading ? 0.5 : 1,
+        backgroundColor: variant === 'primary' ? 'var(--fynmesh-color-primary)' : variant === 'secondary' ? 'var(--fynmesh-color-secondary)' : variant === 'danger' ? 'var(--fynmesh-color-danger)' : 'transparent',
+        color: variant === 'outline' ? 'var(--fynmesh-color-dark)' : 'var(--fynmesh-color-light)',
+        borderWidth: variant === 'outline' ? 'var(--fynmesh-border-2)' : '0',
+        borderStyle: 'solid',
+        borderColor: variant === 'outline' ? 'var(--fynmesh-color-secondary)' : 'transparent',
+    };
+
     return (
         <button
             ref={ref}
-            className={`${baseClasses} ${sizeClasses} ${variantClasses} ${className}`}
+            style={buttonStyle}
+            className={className}
             disabled={disabled || isLoading}
             {...props}
         >
@@ -84,7 +102,15 @@ export const Card: FC<CardProps> = ({
         <div className={`card ${className}`}>
             {title && (
                 <div className="card-header">
-                    <h3 className="text-lg font-medium text-gray-900">{title} v1</h3>
+                    <h3 style={{
+                        fontSize: 'var(--fynmesh-text-lg)',
+                        fontWeight: 'var(--fynmesh-font-weight-medium)',
+                        color: 'var(--fynmesh-color-dark)',
+                        margin: 0,
+                        fontFamily: 'var(--fynmesh-font-family-sans)'
+                    }}>
+                        {title} v1
+                    </h3>
                 </div>
             )}
             <div className="card-body">{children}</div>
@@ -115,9 +141,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
 
     return (
-        <div className="mb-4">
+        <div style={{ marginBottom: 'var(--fynmesh-spacing-lg)' }}>
             {label && (
-                <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-gray-700">
+                <label
+                    htmlFor={inputId}
+                    style={{
+                        display: 'block',
+                        marginBottom: 'var(--fynmesh-spacing-sm)',
+                        fontSize: 'var(--fynmesh-text-sm)',
+                        fontWeight: 'var(--fynmesh-font-weight-medium)',
+                        color: 'var(--fynmesh-color-dark)',
+                        fontFamily: 'var(--fynmesh-font-family-sans)'
+                    }}
+                >
                     {label}
                 </label>
             )}
@@ -127,8 +163,26 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
                 className={`input ${error ? 'input-error' : ''} ${className}`}
                 {...props}
             />
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-            {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+            {error && (
+                <p style={{
+                    marginTop: 'var(--fynmesh-spacing-xs)',
+                    fontSize: 'var(--fynmesh-text-sm)',
+                    color: 'var(--fynmesh-color-danger)',
+                    fontFamily: 'var(--fynmesh-font-family-sans)'
+                }}>
+                    {error}
+                </p>
+            )}
+            {helperText && !error && (
+                <p style={{
+                    marginTop: 'var(--fynmesh-spacing-xs)',
+                    fontSize: 'var(--fynmesh-text-sm)',
+                    color: 'var(--fynmesh-color-secondary)',
+                    fontFamily: 'var(--fynmesh-font-family-sans)'
+                }}>
+                    {helperText}
+                </p>
+            )}
         </div>
     );
 });
@@ -168,21 +222,47 @@ export const Modal: FC<ModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
             {/* Overlay with transparent background */}
             <div
-                className="fixed inset-0 transition-opacity"
                 style={{
+                    position: 'fixed',
+                    inset: 0,
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'none' // Explicitly disable backdrop blur
+                    backdropFilter: 'none',
+                    transition: 'opacity 0.2s ease'
                 }}
                 onClick={onClose}
             ></div>
             {/* Modal content */}
-            <div className="relative z-50 w-full max-w-md rounded-lg bg-white shadow-xl sm:mx-auto">
+            <div style={{
+                position: 'relative',
+                zIndex: 50,
+                width: '100%',
+                maxWidth: '28rem',
+                borderRadius: 'var(--fynmesh-radius-lg)',
+                background: 'var(--fynmesh-color-light)',
+                boxShadow: 'var(--fynmesh-shadow-xl)',
+                margin: '0 auto'
+            }}>
                 {title && (
                     <div className="card-header">
-                        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+                        <h3 style={{
+                            fontSize: 'var(--fynmesh-text-lg)',
+                            fontWeight: 'var(--fynmesh-font-weight-medium)',
+                            color: 'var(--fynmesh-color-dark)',
+                            margin: 0,
+                            fontFamily: 'var(--fynmesh-font-family-sans)'
+                        }}>
+                            {title}
+                        </h3>
                     </div>
                 )}
                 <div className="card-body">{children}</div>
@@ -223,17 +303,25 @@ export const Alert: FC<AlertProps> = ({
 
     return (
         <div className={`alert alert-${variant} ${className}`} role="alert">
-            <div className="flex">
-                <div className="flex-grow">{children}</div>
+            <div style={{ display: 'flex' }}>
+                <div style={{ flexGrow: 1 }}>{children}</div>
                 {dismissible && (
                     <button
                         type="button"
-                        className="ml-auto inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
+                        style={{
+                            marginLeft: 'auto',
+                            display: 'inline-flex',
+                            color: 'var(--fynmesh-color-secondary)',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            outline: 'none'
+                        }}
                         onClick={handleDismiss}
                         aria-label="Dismiss"
                     >
                         <span className="sr-only">Dismiss</span>
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg style={{ width: '1.25rem', height: '1.25rem' }} viewBox="0 0 20 20" fill="currentColor">
                             <path
                                 fillRule="evenodd"
                                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -259,16 +347,52 @@ export const Badge: FC<BadgeProps> = ({
     variant = 'default',
     className = '',
 }) => {
-    const variantClasses = {
-        default: 'bg-gray-100 text-gray-800',
-        primary: 'bg-blue-100 text-blue-800',
-        success: 'bg-green-100 text-green-800',
-        warning: 'bg-yellow-100 text-yellow-800',
-        danger: 'bg-red-100 text-red-800',
-    }[variant];
+    const getVariantStyles = () => {
+        switch (variant) {
+            case 'primary':
+                return {
+                    background: 'rgba(37, 99, 235, 0.1)',
+                    color: 'var(--fynmesh-color-primary)'
+                };
+            case 'success':
+                return {
+                    background: 'rgba(5, 150, 105, 0.1)',
+                    color: 'var(--fynmesh-color-success)'
+                };
+            case 'warning':
+                return {
+                    background: 'rgba(217, 119, 6, 0.1)',
+                    color: 'var(--fynmesh-color-warning)'
+                };
+            case 'danger':
+                return {
+                    background: 'rgba(220, 38, 38, 0.1)',
+                    color: 'var(--fynmesh-color-danger)'
+                };
+            default:
+                return {
+                    background: 'rgba(100, 116, 139, 0.1)',
+                    color: 'var(--fynmesh-color-secondary)'
+                };
+        }
+    };
+
+    const variantStyles = getVariantStyles();
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses} ${className}`}>
+        <span
+            className={className}
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: 'var(--fynmesh-spacing-xs) var(--fynmesh-spacing-sm)',
+                borderRadius: 'var(--fynmesh-radius-full)',
+                fontSize: 'var(--fynmesh-text-xs)',
+                fontWeight: 'var(--fynmesh-font-weight-medium)',
+                fontFamily: 'var(--fynmesh-font-family-sans)',
+                ...variantStyles
+            }}
+        >
             {children}
         </span>
     );
@@ -286,27 +410,31 @@ export const Spinner: FC<SpinnerProps> = ({
     color = 'primary',
     className = '',
 }) => {
-    const sizeClasses = {
-        small: 'w-4 h-4',
-        medium: 'w-6 h-6',
-        large: 'w-8 h-8',
+    const sizeStyles = {
+        small: { width: 'var(--fynmesh-spacing-lg)', height: 'var(--fynmesh-spacing-lg)' },
+        medium: { width: 'var(--fynmesh-spacing-xl)', height: 'var(--fynmesh-spacing-xl)' },
+        large: { width: 'var(--fynmesh-spacing-2xl)', height: 'var(--fynmesh-spacing-2xl)' },
     }[size];
 
-    const colorClasses = {
-        primary: 'text-blue-600',
-        gray: 'text-gray-500',
-        white: 'text-white',
+    const colorStyles = {
+        primary: { color: 'var(--fynmesh-color-primary)' },
+        gray: { color: 'var(--fynmesh-color-secondary)' },
+        white: { color: 'var(--fynmesh-color-light)' },
     }[color];
 
     return (
         <svg
-            className={`animate-spin ${sizeClasses} ${colorClasses} ${className}`}
+            className={`spinner ${className}`}
+            style={{
+                ...sizeStyles,
+                ...colorStyles
+            }}
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
         >
             <circle
-                className="opacity-25"
+                style={{ opacity: 0.25 }}
                 cx="12"
                 cy="12"
                 r="10"
@@ -314,10 +442,51 @@ export const Spinner: FC<SpinnerProps> = ({
                 strokeWidth="4"
             />
             <path
-                className="opacity-75"
+                style={{ opacity: 0.75 }}
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
         </svg>
     );
 };
+
+// FynApp User for middleware
+const fynappUser = {
+    async execute(runtime: FynModuleRuntime) {
+        // Get design tokens from middleware
+        const designTokensContext = runtime.middlewareContext.get("design-tokens");
+        const { api: designTokens } = designTokensContext || {};
+
+        if (designTokens) {
+            console.log("🎨 FynApp X1 v1 - Design tokens loaded");
+            console.log("🎨 Current theme:", designTokens.getTheme());
+            console.log("🎨 Available tokens:", designTokens.getTokens());
+
+            // Subscribe to theme changes
+            designTokens.subscribeToThemeChanges((theme: string, tokens: any) => {
+                console.log(`🎨 FynApp X1 v1 - Theme changed to ${theme}`);
+            });
+        } else {
+            console.warn("🚨 FynApp X1 v1 - Design tokens middleware not available");
+        }
+    },
+};
+
+// Export with middleware
+export const main = useMiddleware(
+    {
+        info: {
+            name: "design-tokens",
+            provider: "fynapp-design-tokens",
+            version: "^1.0.0",
+        },
+        config: {
+            theme: "fynmesh-default",
+            cssCustomProperties: true,
+            cssVariablePrefix: "fynmesh",
+            enableThemeSwitching: true,
+            persistTheme: true,
+        },
+    },
+    fynappUser,
+);

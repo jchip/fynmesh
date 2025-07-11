@@ -1,5 +1,4 @@
 import { FynMeshKernelCore } from "./kernel-core";
-import type { FynAppInfo } from "./types";
 
 /**
  * Browser-specific implementation of FynMesh kernel

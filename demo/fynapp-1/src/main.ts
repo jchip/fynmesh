@@ -1,4 +1,5 @@
-import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
+import type { FynModuleRuntime } from "@fynmesh/kernel";
+import { useMiddleware } from "@fynmesh/kernel";
 import React from "react";
 import ReactDomClient from "react-dom/client";
 // Used by dynamic component imports

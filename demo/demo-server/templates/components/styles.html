@@ -1,0 +1,231 @@
+<style>
+    /* Custom animations and effects */
+    .loading-spinner::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: currentColor;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .loading-spinner:not(:empty)::before {
+        display: none;
+    }
+
+    /* Enhanced button interactions */
+    .btn-interactive {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-interactive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-interactive:active {
+        transform: translateY(1px);
+    }
+
+    .btn-interactive::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+    }
+
+    .btn-interactive:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+    }
+
+    /* Toast notification styles */
+    .toast-notification {
+        position: fixed;
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 80%;
+    }
+
+    .toast-notification.show {
+        top: 20px;
+        opacity: 1;
+    }
+
+    /* Custom animations */
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes ripple {
+        0% { transform: scale(0); opacity: 0.5; }
+        100% { transform: scale(20); opacity: 0; }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .animate-slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    /* Gradient backgrounds */
+    .gradient-bg-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .gradient-bg-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .gradient-bg-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    /* Glass morphism effect */
+    .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Floating animation */
+    .float-animation {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    /* Custom header gradient */
+    .header-gradient {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #6366f1 100%);
+    }
+
+    /* Custom body gradient */
+    .body-gradient {
+        background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #e0f2fe 100%);
+    }
+
+    /* FynApp colors */
+    :root {
+        --fynapp-1: #6366f1;
+        --fynapp-1-b: #10b981;
+        --fynapp-2: #8b5cf6;
+        --fynapp-3: #ff5733;
+        --fynapp-4: #42b883;
+        --fynapp-5: #673ab8;
+        --fynapp-6: #4f46e5;
+        --fynapp-7: #2D7FF9;
+    }
+
+    .text-fynapp-1 { color: var(--fynapp-1); }
+    .text-fynapp-1-b { color: var(--fynapp-1-b); }
+    .text-fynapp-2 { color: var(--fynapp-2); }
+    .text-fynapp-3 { color: var(--fynapp-3); }
+    .text-fynapp-4 { color: var(--fynapp-4); }
+    .text-fynapp-5 { color: var(--fynapp-5); }
+    .text-fynapp-6 { color: var(--fynapp-6); }
+    .text-fynapp-7 { color: var(--fynapp-7); }
+
+    .bg-fynapp-1 { background-color: var(--fynapp-1); }
+    .bg-fynapp-1-b { background-color: var(--fynapp-1-b); }
+    .bg-fynapp-2 { background-color: var(--fynapp-2); }
+    .bg-fynapp-3 { background-color: var(--fynapp-3); }
+    .bg-fynapp-4 { background-color: var(--fynapp-4); }
+    .bg-fynapp-5 { background-color: var(--fynapp-5); }
+    .bg-fynapp-6 { background-color: var(--fynapp-6); }
+    .bg-fynapp-7 { background-color: var(--fynapp-7); }
+
+    .border-fynapp-1 { border-color: var(--fynapp-1); }
+    .border-fynapp-1-b { border-color: var(--fynapp-1-b); }
+    .border-fynapp-2 { border-color: var(--fynapp-2); }
+    .border-fynapp-3 { border-color: var(--fynapp-3); }
+    .border-fynapp-4 { border-color: var(--fynapp-4); }
+    .border-fynapp-5 { border-color: var(--fynapp-5); }
+    .border-fynapp-6 { border-color: var(--fynapp-6); }
+    .border-fynapp-7 { border-color: var(--fynapp-7); }
+
+    /* Custom border left utilities */
+    .border-start-4 {
+        border-left: 4px solid;
+    }
+
+    /* Dynamic border colors for FynApp containers */
+    [data-border-color="fynapp-1"] { border-left-color: var(--fynapp-1) !important; }
+    [data-border-color="fynapp-1-b"] { border-left-color: var(--fynapp-1-b) !important; }
+    [data-border-color="fynapp-2"] { border-left-color: var(--fynapp-2) !important; }
+    [data-border-color="fynapp-3"] { border-left-color: var(--fynapp-3) !important; }
+    [data-border-color="fynapp-4"] { border-left-color: var(--fynapp-4) !important; }
+    [data-border-color="fynapp-5"] { border-left-color: var(--fynapp-5) !important; }
+    [data-border-color="fynapp-6"] { border-left-color: var(--fynapp-6) !important; }
+    [data-border-color="fynapp-7"] { border-left-color: var(--fynapp-7) !important; }
+
+    /* Custom responsive cards */
+    .fynapp-card {
+        transition: all 0.3s ease;
+    }
+
+    .fynapp-card:hover {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Custom scale animation */
+    .scale-hover:hover {
+        transform: scale(1.02);
+    }
+
+    /* Custom transition utilities */
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .transition-transform {
+        transition: transform 0.3s ease;
+    }
+
+    .transition-shadow {
+        transition: box-shadow 0.3s ease;
+    }
+
+    /* Custom pulse animation */
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>

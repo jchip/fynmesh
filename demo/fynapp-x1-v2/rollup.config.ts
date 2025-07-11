@@ -5,9 +5,6 @@ import federation from "rollup-plugin-federation";
 import alias from "@rollup/plugin-alias";
 import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
-import postcssImport from "postcss-import";
-import tailwindcss from "@tailwindcss/postcss";
-import autoprefixer from "autoprefixer";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -41,7 +38,8 @@ export default [
       // commonjs({ transformMixedEsModules: true }),
       newRollupPlugin(postcss)({
         minimize: isProduction,
-        plugins: [postcssImport(), tailwindcss(), autoprefixer()],
+        inject: true,
+        extract: false,
       }),
       newRollupPlugin(federation)({
         name: "fynapp-x1",

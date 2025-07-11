@@ -1,59 +1,106 @@
-@import "tailwindcss";
-
-/* Custom component styles for fynapp-x1 */
+/* Custom component styles for fynapp-x1 v1 */
 
 /* Card component styles */
 .card {
-  @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+  background: var(--fynmesh-color-light);
+  border: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  border-radius: var(--fynmesh-radius-lg);
+  box-shadow: var(--fynmesh-shadow-sm);
 }
 
 .card-header {
-  @apply px-4 py-3 border-b border-gray-200 bg-gray-50;
+  padding: var(--fynmesh-spacing-md) var(--fynmesh-spacing-lg);
+  border-bottom: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  background: var(--fynmesh-color-light);
+  border-radius: var(--fynmesh-radius-md) var(--fynmesh-radius-md) 0 0;
 }
 
 .card-body {
-  @apply p-4;
+  padding: var(--fynmesh-spacing-lg);
 }
 
 .card-footer {
-  @apply px-4 py-3 border-t border-gray-200 bg-gray-50;
+  padding: var(--fynmesh-spacing-md) var(--fynmesh-spacing-lg);
+  border-top: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  background: var(--fynmesh-color-light);
+  border-radius: 0 0 var(--fynmesh-radius-md) var(--fynmesh-radius-md);
 }
 
 /* Input component styles */
 .input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  width: 100%;
+  padding: var(--fynmesh-spacing-sm) var(--fynmesh-spacing-md);
+  border: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  border-radius: var(--fynmesh-radius-md);
+  box-shadow: var(--fynmesh-shadow-sm);
+  font-size: var(--fynmesh-text-base);
+  font-family: var(--fynmesh-font-family-sans);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--fynmesh-color-primary);
+  box-shadow: var(--fynmesh-shadow-md);
 }
 
 .input-error {
-  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+  border-color: var(--fynmesh-color-danger);
+}
+
+.input-error:focus {
+  border-color: var(--fynmesh-color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 /* Alert component styles */
 .alert {
-  @apply p-4 rounded-md border;
+  padding: var(--fynmesh-spacing-lg);
+  border-radius: var(--fynmesh-radius-md);
+  border: var(--fynmesh-border-1) solid;
+  font-size: var(--fynmesh-text-base);
+  font-family: var(--fynmesh-font-family-sans);
 }
 
 .alert-info {
-  @apply bg-blue-50 border-blue-200 text-blue-800;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--fynmesh-color-info);
+  color: var(--fynmesh-color-info);
 }
 
 .alert-success {
-  @apply bg-green-50 border-green-200 text-green-800;
+  background: rgba(5, 150, 105, 0.1);
+  border-color: var(--fynmesh-color-success);
+  color: var(--fynmesh-color-success);
 }
 
 .alert-warning {
-  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+  background: rgba(217, 119, 6, 0.1);
+  border-color: var(--fynmesh-color-warning);
+  color: var(--fynmesh-color-warning);
 }
 
 .alert-error {
-  @apply bg-red-50 border-red-200 text-red-800;
+  background: rgba(220, 38, 38, 0.1);
+  border-color: var(--fynmesh-color-danger);
+  color: var(--fynmesh-color-danger);
 }
 
 /* Spinner component styles */
 .spinner {
-  @apply animate-spin;
+  animation: spin 1s linear infinite;
 }
 
 .spinner-small {
-  @apply w-4 h-4;
+  width: var(--fynmesh-spacing-lg);
+  height: var(--fynmesh-spacing-lg);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

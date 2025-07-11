@@ -24,109 +24,112 @@
       </div>
     </div>
 
-    <!-- Dashboard Tab -->
-    <div v-if="activeTab === 'dashboard'">
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div v-for="(card, index) in cards" :key="index" class="stat-card">
-          <div class="stat-header">
-            <span class="stat-title">{{ card.title }}</span>
-            <span class="stat-trend" :class="card.trend">
-              {{ card.trend === 'up' ? '⬆' : '⬇' }}
-              {{ card.trend === 'up' ? '+' : '-' }}{{ Math.floor(Math.random() * 20) + 1 }}%
-            </span>
-          </div>
-          <div class="stat-value">{{ card.value }}</div>
-          <div class="stat-desc">{{ card.desc }}</div>
-        </div>
-      </div>
-
-      <!-- Chart Section -->
-      <div class="chart-section">
-        <h3>Performance Metrics</h3>
-        <div class="chart">
-          <div
-            v-for="(value, index) in chartData"
-            :key="index"
-            class="chart-bar"
-            :style="{
-              height: `${value}px`,
-              width: `${100 / chartData.length}%`
-            }"
-          ></div>
-        </div>
-        <div class="chart-labels">
-          <span v-for="month in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']" :key="month">
-            {{ month }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Counter Example -->
-      <div class="counter-section">
-        <h3>Interactive Counter</h3>
-        <p>You clicked the button <strong>{{ count }}</strong> times</p>
-        <button class="primary-button" @click="count++">Increment</button>
-      </div>
-    </div>
-
-    <!-- Projects Tab -->
-    <div v-if="activeTab === 'projects'" class="content-section">
-      <h3>Project Status</h3>
-
-      <div class="projects-table">
-        <div class="projects-header">
-          <div>Project Name</div>
-          <div>Status</div>
-          <div>Priority</div>
-          <div>Progress</div>
-        </div>
-
-        <div v-for="project in projects" :key="project.id" class="project-row">
-          <div>{{ project.name }}</div>
-          <div>
-            <span class="status-badge" :class="getStatusClass(project.status)">
-              {{ project.status }}
-            </span>
-          </div>
-          <div>
-            <span class="priority-badge" :class="getPriorityClass(project.priority)">
-              {{ project.priority }}
-            </span>
-          </div>
-          <div class="progress-cell">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{
-                  width: `${project.completion}%`,
-                  backgroundColor: getProgressColor(project.completion)
-                }"
-              ></div>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Dashboard Tab -->
+      <div v-if="activeTab === 'dashboard'">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div v-for="(card, index) in cards" :key="index" class="stat-card">
+            <div class="stat-header">
+              <span class="stat-title">{{ card.title }}</span>
+              <span class="stat-trend" :class="card.trend">
+                {{ card.trend === 'up' ? '⬆' : '⬇' }}
+                {{ card.trend === 'up' ? '+' : '-' }}{{ Math.floor(Math.random() * 20) + 1 }}%
+              </span>
             </div>
-            <span class="progress-text">{{ project.completion }}%</span>
+            <div class="stat-value">{{ card.value }}</div>
+            <div class="stat-desc">{{ card.desc }}</div>
+          </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-section">
+          <h3>Performance Metrics</h3>
+          <div class="chart">
+            <div
+              v-for="(value, index) in chartData"
+              :key="index"
+              class="chart-bar"
+              :style="{
+                height: `${value}px`,
+                width: `${100 / chartData.length}%`
+              }"
+            ></div>
+          </div>
+          <div class="chart-labels">
+            <span v-for="month in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']" :key="month">
+              {{ month }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Counter Example -->
+        <div class="counter-section">
+          <h3>Interactive Counter</h3>
+          <p>You clicked the button <strong>{{ count }}</strong> times</p>
+          <button class="primary-button" @click="count++">Increment</button>
+        </div>
+      </div>
+
+      <!-- Projects Tab -->
+      <div v-if="activeTab === 'projects'" class="content-section">
+        <h3>Project Status</h3>
+
+        <div class="projects-table">
+          <div class="projects-header">
+            <div>Project Name</div>
+            <div>Status</div>
+            <div>Priority</div>
+            <div>Progress</div>
+          </div>
+
+          <div v-for="project in projects" :key="project.id" class="project-row">
+            <div>{{ project.name }}</div>
+            <div>
+              <span class="status-badge" :class="getStatusClass(project.status)">
+                {{ project.status }}
+              </span>
+            </div>
+            <div>
+              <span class="priority-badge" :class="getPriorityClass(project.priority)">
+                {{ project.priority }}
+              </span>
+            </div>
+            <div class="progress-cell">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  :style="{
+                    width: `${project.completion}%`,
+                    backgroundColor: getProgressColor(project.completion)
+                  }"
+                ></div>
+              </div>
+              <span class="progress-text">{{ project.completion }}%</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Settings Tab -->
-    <div v-if="activeTab === 'settings'" class="content-section">
-      <h3>Application Settings</h3>
+      <!-- Settings Tab -->
+      <div v-if="activeTab === 'settings'" class="content-section">
+        <h3>Application Settings</h3>
 
-      <div v-for="(setting, index) in settings" :key="index" class="setting-row">
-        <div>
-          <div class="setting-name">{{ setting.name }}</div>
-          <div class="setting-desc">{{ setting.description }}</div>
-        </div>
-        <div>
-          <button
-            class="setting-toggle"
-            :class="{ enabled: setting.enabled }"
-            @click="toggleSetting(index)"
-          >
-            {{ setting.enabled ? 'Enabled' : 'Disabled' }}
-          </button>
+        <div v-for="(setting, index) in settings" :key="index" class="setting-row">
+          <div>
+            <div class="setting-name">{{ setting.name }}</div>
+            <div class="setting-desc">{{ setting.description }}</div>
+          </div>
+          <div>
+            <button
+              class="setting-toggle"
+              :class="{ enabled: setting.enabled }"
+              @click="toggleSetting(index)"
+            >
+              {{ setting.enabled ? 'Enabled' : 'Disabled' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -216,9 +219,14 @@ export default {
   background-color: #f7fafc;
   color: #2d3748;
   border-radius: 8px;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .vue-app.dark-mode {
@@ -232,6 +240,7 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .subtitle {
@@ -278,6 +287,7 @@ h3 {
   margin-bottom: 24px;
   border-bottom: 1px solid rgba(160, 174, 192, 0.3);
   display: flex;
+  flex-shrink: 0;
 }
 
 .tab {
@@ -366,6 +376,17 @@ h3 {
   border-radius: 8px;
   margin-bottom: 24px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Main content area - expands to fill space */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .dark-mode .content-section,
@@ -557,5 +578,6 @@ footer {
   opacity: 0.7;
   text-align: center;
   margin-top: 20px;
+  flex-shrink: 0;
 }
 </style>

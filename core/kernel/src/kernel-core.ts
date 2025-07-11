@@ -7,7 +7,6 @@ import {
   FynApp,
   FynAppEntry,
   FynModule,
-  MiddlewareUsage,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
   FynModuleRuntime,
@@ -156,14 +155,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   private async loadExposeModule(
-    fynAppEntry: FynAppEntry,
     fynApp: FynApp,
     exposeName: string,
     loadMiddlewares?: boolean,
   ): Promise<any> {
-    const container = fynAppEntry.container;
-    if (container && container.$E[exposeName]) {
-      const factory = await fynAppEntry.get(exposeName);
+    const container = fynApp.entry.container;
+    if (container?.$E[exposeName]) {
+      const factory = await fynApp.entry.get(exposeName);
       const exposedModule = factory();
 
       const mwExports = [];
@@ -193,6 +191,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           mwExports.length > 0 ? "middlewares registered:" : "",
           mwExports.join(", "),
         );
+        fynApp.exposes[exposeName] = exposedModule;
+        if (exposedModule.__name) {
+          fynApp.exposes[exposedModule.__name] = exposedModule;
+        }
+
         return exposedModule;
       } else {
         console.debug(`❌ No expose module '${exposeName}' found for`, fynApp.name, fynApp.version);
@@ -200,15 +203,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
   }
 
-  /**
-   * Load the basics of a fynapp entry
-   * - This only does loading, no execution of anything occurs here
-   * Basics are:
-   * - Initialize the entry
-   * - Load config
-   * - Load main module
-   *     - Load middlewares from main module
-   */
   async loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp> {
     const container = fynAppEntry.container;
 
@@ -225,8 +219,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       version: container.version || "1.0.0",
       packageName: container.name,
       entry: fynAppEntry,
-      mainExpose: Object.create(null), // Will be set when main module loads
       middlewareContext: new Map<string, any>(),
+      exposes: {},
     };
 
     // Step 3: Load config
@@ -242,10 +236,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
 
     // Step 5: Load main module
-    const mainExposeModule = await this.loadExposeModule(fynAppEntry, fynApp, "./main", true);
-    if (mainExposeModule) {
-      fynApp.mainExpose = mainExposeModule;
-    }
+    await this.loadExposeModule(fynApp, "./main", true);
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
@@ -341,13 +332,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return await this.callMiddlewares(ccs, tries + 1);
     }
 
-    const user = ccs[0].user;
+    const fynMod = ccs[0].fynMod;
     const fynApp = ccs[0].fynApp;
     const runtime = ccs[0].runtime;
 
-    if (user.initialize) {
+    if (fynMod.initialize) {
       console.debug("🚀 Invoking user.initialize for", fynApp.name, fynApp.version);
-      const result: any = await user.initialize(runtime);
+      const result: any = await fynMod.initialize(runtime);
       status = this.checkDeferCalls(result?.status, ccs);
       if (status === "defer") {
         return status;
@@ -373,22 +364,25 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       }
     }
 
-    if (user.execute) {
+    if (fynMod.execute) {
       console.debug("🚀 Invoking user.execute for", fynApp.name, fynApp.version);
-      await user.execute(runtime);
+      await fynMod.execute(runtime);
     }
 
     return "ready";
   }
 
   private async useMiddlewareOnFynModule(
-    mwUsage: MiddlewareUsage,
+    fynMod: FynModule,
     fynApp: FynApp,
   ): Promise<string> {
-    const runtime = this.createFynModuleRuntime(fynApp);
-    const user = mwUsage.user;
+    if (!fynMod.__middlewareMeta) {
+      return "";
+    }
 
-    const ccs: FynAppMiddlewareCallContext[] = mwUsage.__middlewareMeta
+    const runtime = this.createFynModuleRuntime(fynApp);
+
+    const ccs: FynAppMiddlewareCallContext[] = fynMod.__middlewareMeta
       .map((meta) => {
         const info = meta.info;
         const reg = this.getMiddleware(info.name, info.provider);
@@ -398,12 +392,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         }
         return {
           meta,
-          user,
+          fynMod,
           fynApp,
           reg,
           kernel: this,
           runtime,
-          usage: mwUsage,
           status: "",
         };
       })
@@ -417,22 +410,28 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * - call main as function or invoke it as a FynModule
    */
   async bootstrapFynApp(fynApp: FynApp): Promise<void> {
-    const mainFynModule = fynApp.mainExpose.main;
-
-    if (!mainFynModule) {
-      return;
+    if (fynApp.entry.config?.loadMiddlewares) {
+      for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
+        if (exposeName.startsWith("./middleware")) {
+          await this.loadExposeModule(fynApp, exposeName, true);
+        }
+      }
     }
 
-    console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+    const mainFynModule = fynApp.exposes["./main"]?.main;
 
-    if (typeof mainFynModule === "function") {
-      await (mainFynModule as any)(this.createFynModuleRuntime(fynApp));
-    } else if ((mainFynModule as MiddlewareUsage).__middlewareMeta) {
-      const usage = mainFynModule as MiddlewareUsage;
-      await this.useMiddlewareOnFynModule(usage, fynApp);
-    } else {
-      await this.invokeFynModule(mainFynModule as FynModule, fynApp);
+    if (mainFynModule) {
+      console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+
+      if (typeof mainFynModule === "function") {
+        await (mainFynModule as any)(this.createFynModuleRuntime(fynApp));
+      } else if (mainFynModule.__middlewareMeta) {
+        await this.useMiddlewareOnFynModule(mainFynModule, fynApp);
+      } else {
+        await this.invokeFynModule(mainFynModule as FynModule, fynApp);
+      }
     }
+
 
     console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
   }

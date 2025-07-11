@@ -125,8 +125,11 @@ const App: React.FC<AppProps> = ({
           <Alert variant="warning" className="mb-3">
             This is a warning alert. Please pay attention!
           </Alert>
-          <Alert variant="error">
+          <Alert variant="error" className="mb-3">
             This is an error alert. Something went wrong!
+          </Alert>
+          <Alert variant="success">
+            🚀 Another success alert!
           </Alert>
         </div>
 

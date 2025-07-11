@@ -38,6 +38,5 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@fynmesh/kernel": "^1.0.0"
   }
 }

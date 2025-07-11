@@ -177,7 +177,7 @@ const App: React.FC<AppProps> = ({
               label="Demo Input"
               placeholder="Type something..."
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e: any) => setInputValue(e.target.value)}
               error={inputError}
               helperText="This is a helper text"
             />

@@ -69,7 +69,6 @@ export interface MiddlewareInfo {
 export interface MiddlewareUseMeta<ConfigT> {
   info: MiddlewareInfo;
   config: ConfigT;
-  requireReady?: boolean; // 🆕 Tell kernel to wait for middleware to be ready
 }
 
 export type FynModuleRuntime = {
@@ -82,19 +81,27 @@ export type FynModuleRuntime = {
  * Standardized interface for FynMesh modules (formerly MiddlewareUserCode)
  */
 export interface FynModule {
+  __middlewareMeta?: MiddlewareUseMeta<unknown>[];
   /** Tell middleware what you need - called first to determine readiness */
   initialize?(runtime: FynModuleRuntime): any;
   /** Do your actual work - called when middleware is ready */
   execute(runtime: FynModuleRuntime): Promise<void> | void;
+  [key: string]: any;
 }
 
 /**
- * Middleware usage object returned by useMiddleware
- * UserT must extend FynModule - individual middleware can define extended interfaces
+ * Expose object for a fynapp that represents a module exposed by federation
  */
-export type MiddlewareUsage<UserT extends FynModule = FynModule> = {
-  __middlewareMeta: MiddlewareUseMeta<unknown>[];
-  user: UserT;
+export type FynAppExpose = {
+  /**
+   * optional name of the exposed module, if desire to use something else in addition to the name
+   * used for the federation expose config
+   */
+  __name?: string;
+  /** main export of the exposed module */
+  main?: FynModule;
+  /** other exports from the exposed module */
+  [key: string]: any;
 };
 
 /**
@@ -102,9 +109,7 @@ export type MiddlewareUsage<UserT extends FynModule = FynModule> = {
  */
 export type FynApp = FynAppInfo & {
   config?: any;
-  mainExpose: Record<string, any> & {
-    main: FynModule | MiddlewareUsage;
-  };
+  exposes: Record<string, FynAppExpose>;
   /** Set to true to tell the kernel to skip applying middlewares */
   skipApplyMiddlewares?: boolean;
   /** Middleware-specific data storage for this FynApp */
@@ -113,12 +118,11 @@ export type FynApp = FynAppInfo & {
 
 export type FynAppMiddlewareCallContext = {
   meta: MiddlewareUseMeta<unknown>;
-  user: FynModule;
+  fynMod: FynModule;
   fynApp: FynApp;
   reg: FynAppMiddlewareReg;
   runtime: FynModuleRuntime;
   kernel: FynMeshKernel;
-  usage: MiddlewareUsage;
   status: string;
 };
 
@@ -227,6 +231,18 @@ export interface FynMeshKernel {
    */
   cleanContainerName(name: string): string;
 
+  /**
+   * Load the basics of a fynapp federation entry into a FynApp object
+   * - This only does loading, no execution of anything occurs here
+   * Basics are:
+   * - Initialize the entry
+   * - Load config
+   * - Load main module
+   *     - Load middlewares from main module
+   *
+   * @param fynAppEntry - fynapp entry
+   * @returns fynapp object
+   */
   loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp>;
 
   /**
@@ -248,7 +264,7 @@ export interface FynMeshKernel {
    * Send an event to the kernel
    * @param event - event to send
    */
-  emitAsync(event: CustomEvent): void;
+  emitAsync(event: CustomEvent): Promise<boolean>;
 }
 
 export interface MiddlewareHandlerContext {

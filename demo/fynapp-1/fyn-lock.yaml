@@ -2,8 +2,6 @@ $fyn:
  layout: normal
  flattenTop: true
 $pkg:
- dep:
-  '@fynmesh/kernel': ../../core/kernel
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-alias': ^5.1.1
@@ -229,28 +227,17 @@ $pkg:
    picomatch: ^4.0.2
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
-'@rollup/rollup-linux-x64-gnu':
- _latest: 4.43.0
+'@rollup/rollup-darwin-arm64':
+ _latest: 4.44.2
  _:
   4.40.1: 4.40.1
  4.40.1:
-  $: sha512-XiK5z70PEFEFqcNj3/zRSz/qX4bp4QIraTy9QjwJAb/Z8GM7kVUsD0Uk8maIPeTyPCP03ChdI+VVmJriKYbRHQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.40.1.tgz'
+  $: sha512-VWXGISWFY18v/0JyNUy4A46KCFCb9NVsH+1100XP31lud+TzlezBbz24CYzbnA4x6w4hx+NYCXDfnvDVO6lcAA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.40.1.tgz'
   os:
-   - linux
+   - darwin
   cpu:
-   - x64
-'@rollup/rollup-linux-x64-musl':
- _latest: 4.43.0
- _:
-  4.40.1: 4.40.1
- 4.40.1:
-  $: sha512-2BRORitq5rQ4Da9blVovzNCMaUlyKrzMSvkVR0D4qPuOy/+pMCrh1d7o01RATwVy+6Fa1WBw+da7QPeLWU/1mQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.40.1.tgz'
-  os:
-   - linux
-  cpu:
-   - x64
+   - arm64
 '@types/estree':
  _latest: 1.0.7
  _:
@@ -607,6 +594,15 @@ fs.realpath:
  1.0.0:
   $: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
   _: 'https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz'
+fsevents:
+ _latest: 2.3.3
+ _:
+  ~2.3.2: 2.3.3
+ 2.3.3:
+  $: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
+  _: 'https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz'
+  os:
+   - darwin
 function-bind:
  _latest: 1.1.2
  _:
@@ -614,6 +610,17 @@ function-bind:
  1.1.2:
   $: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==
   _: 'https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz'
+fynapp-design-tokens:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../fynapp-design-tokens: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  $: local
+  _: ../fynapp-design-tokens
+  dependencies:
+   '@fynmesh/kernel': ^1.0.0
+   create-fynapp: ^1.0.0
+   rollup-wrap-plugin: ^1.0.0
 fynapp-react-middleware:
  _latest: 1.0.0-fynlocal_h
  _:
@@ -632,6 +639,8 @@ fynapp-x1:
   top: 1
   $: local
   _: ../fynapp-x1-v1
+  dependencies:
+   fynapp-design-tokens: ^1.0.0
 glob:
  _latest: 11.0.2
  _:
