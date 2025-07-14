@@ -462,6 +462,10 @@ const fynappUser = {
             console.log("🎨 Current theme:", designTokens.getTheme());
             console.log("🎨 Available tokens:", designTokens.getTokens());
 
+            // Enable global theme acceptance so this component library updates when other apps change themes
+            designTokens.setGlobalOptIn(true);
+            console.log("🎨 FynApp X1 v1 - Enabled global theme acceptance");
+
             // Subscribe to theme changes
             designTokens.subscribeToThemeChanges((theme: string, tokens: any) => {
                 console.log(`🎨 FynApp X1 v1 - Theme changed to ${theme}`);
@@ -486,6 +490,7 @@ export const main = useMiddleware(
             cssVariablePrefix: "fynmesh",
             enableThemeSwitching: true,
             persistTheme: true,
+            global: true, // Apply CSS globally so importing apps can use the variables
         },
     },
     fynappUser,

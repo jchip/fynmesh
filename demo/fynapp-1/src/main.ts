@@ -121,15 +121,31 @@ const middlewareUser = {
 
 // Export the middleware usage with standardized interface
 export const main = useMiddleware(
-  {
-    info: {
-      name: "basic-counter",
-      provider: "fynapp-react-middleware",
-      version: "^1.0.0",
+  [
+    {
+      info: {
+        name: "basic-counter",
+        provider: "fynapp-react-middleware",
+        version: "^1.0.0",
+      },
+      config: {
+        count: 10,
+      },
     },
-    config: {
-      count: 10,
+    {
+      info: {
+        name: "design-tokens",
+        provider: "fynapp-design-tokens",
+        version: "^1.0.0",
+      },
+      config: {
+        theme: "fynmesh-default",
+        cssCustomProperties: true,
+        cssVariablePrefix: "fynmesh",
+        enableThemeSwitching: true,
+        global: false, // Use scoped themes per fynapp
+      },
     },
-  },
+  ],
   middlewareUser
 );

@@ -207,7 +207,7 @@ export const Card: FC<CardProps> = ({
                         margin: 0,
                         fontFamily: 'var(--fynmesh-font-family-sans)'
                     }}>
-                        {title} v2
+                        {title}
                     </h3>
                     {headerAction && <div>{headerAction}</div>}
                 </div>
@@ -687,6 +687,10 @@ const fynappUser = {
             console.log("🎨 Current theme:", designTokens.getTheme());
             console.log("🎨 Available tokens:", designTokens.getTokens());
 
+            // Enable global theme acceptance so this component library updates when other apps change themes
+            designTokens.setGlobalOptIn(true);
+            console.log("🎨 FynApp X1 v2 - Enabled global theme acceptance");
+
             // Subscribe to theme changes
             designTokens.subscribeToThemeChanges((theme: string, tokens: any) => {
                 console.log(`🎨 FynApp X1 v2 - Theme changed to ${theme}`);
@@ -711,6 +715,7 @@ export const main = useMiddleware(
             cssVariablePrefix: "fynmesh",
             enableThemeSwitching: true,
             persistTheme: true,
+            global: true, // Apply CSS to this app's scope, not globally
         },
     },
     fynappUser,

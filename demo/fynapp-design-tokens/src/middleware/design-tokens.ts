@@ -5,7 +5,7 @@ import type {
     ThemeConfig,
     DesignTokensMiddlewareConfig,
     DesignTokensAPI
-} from "./types";
+} from "../types";
 
 // =============================================================================
 // Default Themes
@@ -120,8 +120,156 @@ const predefinedThemes: Record<string, ThemeConfig> = {
             colors: {
                 ...defaultTokens.colors,
                 primary: '#3b82f6',
+                secondary: '#6b7280',
+                success: '#10b981',
+                warning: '#f59e0b',
+                danger: '#ef4444',
+                info: '#06b6d4',
                 light: '#1e293b',
                 dark: '#f1f5f9',
+                fynapp1: '#7c3aed',
+                fynapp1b: '#059669',
+                fynapp2: '#a855f7',
+                fynapp3: '#e11d48',
+                fynapp4: '#059669',
+                fynapp5: '#8b5cf6',
+                fynapp6: '#6366f1',
+                fynapp7: '#0ea5e9',
+            },
+        },
+        cssCustomProperties: true,
+        cssVariablePrefix: 'fynmesh',
+    },
+    'fynmesh-blue': {
+        name: 'FynMesh Blue',
+        tokens: {
+            ...defaultTokens,
+            colors: {
+                ...defaultTokens.colors,
+                primary: '#1e40af',
+                secondary: '#3b82f6',
+                success: '#059669',
+                warning: '#d97706',
+                danger: '#dc2626',
+                info: '#0284c7',
+                light: '#eff6ff',
+                dark: '#1e3a8a',
+                fynapp1: '#1e40af',
+                fynapp1b: '#3b82f6',
+                fynapp2: '#6366f1',
+                fynapp3: '#0ea5e9',
+                fynapp4: '#06b6d4',
+                fynapp5: '#8b5cf6',
+                fynapp6: '#1e40af',
+                fynapp7: '#0284c7',
+            },
+        },
+        cssCustomProperties: true,
+        cssVariablePrefix: 'fynmesh',
+    },
+    'fynmesh-green': {
+        name: 'FynMesh Green',
+        tokens: {
+            ...defaultTokens,
+            colors: {
+                ...defaultTokens.colors,
+                primary: '#059669',
+                secondary: '#10b981',
+                success: '#22c55e',
+                warning: '#eab308',
+                danger: '#ef4444',
+                info: '#06b6d4',
+                light: '#f0fdf4',
+                dark: '#064e3b',
+                fynapp1: '#059669',
+                fynapp1b: '#10b981',
+                fynapp2: '#22c55e',
+                fynapp3: '#84cc16',
+                fynapp4: '#65a30d',
+                fynapp5: '#16a34a',
+                fynapp6: '#059669',
+                fynapp7: '#0d9488',
+            },
+        },
+        cssCustomProperties: true,
+        cssVariablePrefix: 'fynmesh',
+    },
+    'fynmesh-purple': {
+        name: 'FynMesh Purple',
+        tokens: {
+            ...defaultTokens,
+            colors: {
+                ...defaultTokens.colors,
+                primary: '#7c3aed',
+                secondary: '#8b5cf6',
+                success: '#10b981',
+                warning: '#f59e0b',
+                danger: '#ef4444',
+                info: '#06b6d4',
+                light: '#faf5ff',
+                dark: '#581c87',
+                fynapp1: '#7c3aed',
+                fynapp1b: '#8b5cf6',
+                fynapp2: '#a855f7',
+                fynapp3: '#c084fc',
+                fynapp4: '#d8b4fe',
+                fynapp5: '#9333ea',
+                fynapp6: '#7c3aed',
+                fynapp7: '#6d28d9',
+            },
+        },
+        cssCustomProperties: true,
+        cssVariablePrefix: 'fynmesh',
+    },
+    'fynmesh-sunset': {
+        name: 'FynMesh Sunset',
+        tokens: {
+            ...defaultTokens,
+            colors: {
+                ...defaultTokens.colors,
+                primary: '#ea580c',
+                secondary: '#f97316',
+                success: '#10b981',
+                warning: '#eab308',
+                danger: '#ef4444',
+                info: '#06b6d4',
+                light: '#fff7ed',
+                dark: '#7c2d12',
+                fynapp1: '#ea580c',
+                fynapp1b: '#f97316',
+                fynapp2: '#fb923c',
+                fynapp3: '#fed7aa',
+                fynapp4: '#fdba74',
+                fynapp5: '#dc2626',
+                fynapp6: '#ea580c',
+                fynapp7: '#c2410c',
+            },
+        },
+        cssCustomProperties: true,
+        cssVariablePrefix: 'fynmesh',
+    },
+    'fynmesh-cyberpunk': {
+        name: 'FynMesh Cyberpunk',
+        tokens: {
+            ...defaultTokens,
+            colors: {
+                ...defaultTokens.colors,
+                primary: '#00ff88',
+                secondary: '#ff0080',
+                success: '#00ff88',
+                warning: '#ffff00',
+                danger: '#ff0040',
+                info: '#00ddff',
+                light: '#0a0a0a',
+                dark: '#00ff88',
+                fynapp1: '#00ff88',
+                fynapp1b: '#ff0080',
+                fynapp2: '#8000ff',
+                fynapp3: '#ff0040',
+                fynapp4: '#00ddff',
+                fynapp5: '#ff8000',
+                fynapp6: '#00ff88',
+                fynapp7: '#4080ff',
             },
         },
         cssCustomProperties: true,
@@ -134,10 +282,13 @@ const predefinedThemes: Record<string, ThemeConfig> = {
 // =============================================================================
 
 export class DesignTokens {
-    private currentTheme: string = 'fynmesh-default';
+    private globalTheme: string = 'fynmesh-default';
+    private perFynAppThemes = new Map<string, string>(); // fynAppName -> theme
+    private globalOptIns = new Map<string, boolean>(); // fynAppName -> whether it opts into global changes
     private customThemes = new Map<string, ThemeConfig>();
-    private themeChangeSubscribers = new Set<(theme: string, tokens: DesignTokensData) => void>();
+    private themeChangeSubscribers = new Set<(theme: string, tokens: DesignTokensData, fynAppName?: string) => void>();
     private styleElements = new Map<string, HTMLStyleElement>();
+    private fynAppConfigs = new Map<string, { prefix: string; isGlobal: boolean }>();
 
     constructor() {
         // Initialize with predefined themes
@@ -149,45 +300,98 @@ export class DesignTokens {
         this.loadPersistedTheme();
     }
 
-    public getTokens(): DesignTokensData {
-        const theme = this.customThemes.get(this.currentTheme);
+    public getTokens(fynAppName?: string): DesignTokensData {
+        const themeToUse = fynAppName && this.perFynAppThemes.has(fynAppName)
+            ? this.perFynAppThemes.get(fynAppName)!
+            : this.globalTheme;
+        const theme = this.customThemes.get(themeToUse);
         return theme?.tokens || defaultTokens;
     }
 
-    public getTheme(): string {
-        return this.currentTheme;
+    public getTheme(fynAppName?: string): string {
+        if (fynAppName) {
+            // If app has a specific theme, use that
+            if (this.perFynAppThemes.has(fynAppName)) {
+                return this.perFynAppThemes.get(fynAppName)!;
+            }
+            // If app has opted into global and no specific theme, use global
+            if (this.globalOptIns.get(fynAppName)) {
+                return this.globalTheme;
+            }
+            // Otherwise, use the app's initial theme or default
+            return this.globalTheme; // fallback to global theme
+        }
+        return this.globalTheme;
     }
 
-    public setTheme(themeName: string): void {
+    public setTheme(themeName: string, fynAppName?: string, applyGlobally: boolean = true): void {
         if (!this.customThemes.has(themeName)) {
             console.warn(`🚨 Theme "${themeName}" not found. Available themes:`, Array.from(this.customThemes.keys()));
             return;
         }
 
-        this.currentTheme = themeName;
+        if (applyGlobally || !fynAppName) {
+            // Apply globally, but only to apps that have opted in
+            this.globalTheme = themeName;
 
-        // Update CSS custom properties for all registered style elements
-        this.updateAllCSSCustomProperties();
+            // Clear per-app themes only for apps that have opted into global changes
+            const appsToUpdate: string[] = [];
+            this.globalOptIns.forEach((optedIn, appName) => {
+                if (optedIn) {
+                    this.perFynAppThemes.delete(appName); // Remove specific theme, will use global
+                    appsToUpdate.push(appName);
+                }
+            });
 
-        // Notify subscribers
-        const tokens = this.getTokens();
-        this.themeChangeSubscribers.forEach(callback => {
-            try {
-                callback(themeName, tokens);
-            } catch (error) {
-                console.error('Error in theme change callback:', error);
-            }
-        });
+            // Update CSS for opted-in apps
+            appsToUpdate.forEach(appName => this.updateFynAppCSSCustomProperties(appName));
+
+            // Notify subscribers for opted-in apps
+            appsToUpdate.forEach(appName => {
+                const tokens = this.getTokens(appName);
+                this.themeChangeSubscribers.forEach(callback => {
+                    try {
+                        callback(themeName, tokens);
+                    } catch (error) {
+                        console.error('Error in theme change callback:', error);
+                    }
+                });
+            });
+        } else {
+            // Apply to specific fynapp only
+            this.perFynAppThemes.set(fynAppName, themeName);
+            this.updateFynAppCSSCustomProperties(fynAppName);
+
+            // Notify subscribers for this specific fynapp
+            const tokens = this.getTokens(fynAppName);
+            this.themeChangeSubscribers.forEach(callback => {
+                try {
+                    callback(themeName, tokens, fynAppName);
+                } catch (error) {
+                    console.error('Error in theme change callback:', error);
+                }
+            });
+        }
 
         // Persist theme
         this.persistTheme();
 
-        console.debug(`🎨 Theme changed to: ${themeName}`);
+        console.debug(`🎨 Theme changed to: ${themeName}${fynAppName && !applyGlobally ? ` for ${fynAppName}` : ' globally'}`);
     }
 
     public registerTheme(theme: ThemeConfig): void {
         this.customThemes.set(theme.name, theme);
         console.debug(`🎨 Registered theme: ${theme.name}`);
+    }
+
+    public setGlobalOptIn(fynAppName: string, optIn: boolean): void {
+        this.globalOptIns.set(fynAppName, optIn);
+        this.persistGlobalOptIns();
+        console.debug(`🎨 ${fynAppName} ${optIn ? 'opted into' : 'opted out of'} global theme changes`);
+    }
+
+    public getGlobalOptIn(fynAppName: string): boolean {
+        return this.globalOptIns.get(fynAppName) || false;
     }
 
     public getCSSVariable(tokenPath: string, prefix: string = 'fynmesh'): string {
@@ -211,9 +415,10 @@ export class DesignTokens {
         styleElement.textContent = css;
     }
 
-    public injectCSSCustomProperties(fynAppName: string, prefix: string = 'fynmesh'): void {
+    public injectCSSCustomProperties(fynAppName: string, prefix: string = 'fynmesh', isGlobal: boolean = false): void {
         const tokens = this.getTokens();
-        const css = this.generateCSSCustomProperties(tokens, prefix);
+        const scope = isGlobal ? ':root' : `#${fynAppName}`;
+        const css = this.generateCSSCustomProperties(tokens, prefix, scope);
 
         const styleId = `fynmesh-design-tokens-${fynAppName}`;
         let styleElement = document.getElementById(styleId) as HTMLStyleElement;
@@ -226,10 +431,13 @@ export class DesignTokens {
         }
 
         styleElement.textContent = css;
+
+        // Store the configuration for this fynapp
+        this.fynAppConfigs.set(fynAppName, { prefix, isGlobal });
     }
 
-    private generateCSSCustomProperties(tokens: DesignTokensData, prefix: string): string {
-        const lines: string[] = [':root {'];
+    private generateCSSCustomProperties(tokens: DesignTokensData, prefix: string, scope: string = ':root'): string {
+        const lines: string[] = [`${scope} {`];
 
         // Colors
         Object.entries(tokens.colors).forEach(([key, value]) => {
@@ -281,11 +489,28 @@ export class DesignTokens {
     private updateAllCSSCustomProperties(): void {
         this.styleElements.forEach((styleElement, styleId) => {
             const fynAppName = styleId.replace('fynmesh-design-tokens-', '');
-            const prefix = 'fynmesh'; // Default prefix
-            const tokens = this.getTokens();
-            const css = this.generateCSSCustomProperties(tokens, prefix);
-            styleElement.textContent = css;
+            const config = this.fynAppConfigs.get(fynAppName);
+
+            if (config) {
+                const tokens = this.getTokens(fynAppName);
+                const scope = config.isGlobal ? ':root' : `#${fynAppName}`;
+                const css = this.generateCSSCustomProperties(tokens, config.prefix, scope);
+                styleElement.textContent = css;
+            }
         });
+    }
+
+    private updateFynAppCSSCustomProperties(fynAppName: string): void {
+        const styleId = `fynmesh-design-tokens-${fynAppName}`;
+        const styleElement = this.styleElements.get(styleId);
+        const config = this.fynAppConfigs.get(fynAppName);
+
+        if (styleElement && config) {
+            const tokens = this.getTokens(fynAppName);
+            const scope = config.isGlobal ? ':root' : `#${fynAppName}`;
+            const css = this.generateCSSCustomProperties(tokens, config.prefix, scope);
+            styleElement.textContent = css;
+        }
     }
 
     private loadPersistedTheme(): void {
@@ -293,7 +518,29 @@ export class DesignTokens {
             if (typeof window !== 'undefined' && window.localStorage) {
                 const saved = localStorage.getItem('fynmesh-theme');
                 if (saved && this.customThemes.has(saved)) {
-                    this.currentTheme = saved;
+                    this.globalTheme = saved;
+                }
+
+                // Load per-fynapp themes
+                const perAppThemes = localStorage.getItem('fynmesh-per-app-themes');
+                if (perAppThemes) {
+                    const parsed = JSON.parse(perAppThemes);
+                    Object.entries(parsed).forEach(([fynAppName, theme]) => {
+                        if (typeof theme === 'string' && this.customThemes.has(theme)) {
+                            this.perFynAppThemes.set(fynAppName, theme);
+                        }
+                    });
+                }
+
+                // Load global opt-ins
+                const globalOptIns = localStorage.getItem('fynmesh-global-opt-ins');
+                if (globalOptIns) {
+                    const parsed = JSON.parse(globalOptIns);
+                    Object.entries(parsed).forEach(([fynAppName, optIn]) => {
+                        if (typeof optIn === 'boolean') {
+                            this.globalOptIns.set(fynAppName, optIn);
+                        }
+                    });
                 }
             }
         } catch (error) {
@@ -304,10 +551,25 @@ export class DesignTokens {
     private persistTheme(): void {
         try {
             if (typeof window !== 'undefined' && window.localStorage) {
-                localStorage.setItem('fynmesh-theme', this.currentTheme);
+                localStorage.setItem('fynmesh-theme', this.globalTheme);
+
+                // Persist per-fynapp themes
+                const perAppThemes = Object.fromEntries(this.perFynAppThemes.entries());
+                localStorage.setItem('fynmesh-per-app-themes', JSON.stringify(perAppThemes));
             }
         } catch (error) {
             console.warn('Failed to persist theme:', error);
+        }
+    }
+
+    private persistGlobalOptIns(): void {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const globalOptIns = Object.fromEntries(this.globalOptIns.entries());
+                localStorage.setItem('fynmesh-global-opt-ins', JSON.stringify(globalOptIns));
+            }
+        } catch (error) {
+            console.warn('Failed to persist global opt-ins:', error);
         }
     }
 
@@ -361,7 +623,11 @@ export class DesignTokensMiddleware implements FynAppMiddleware {
 
         // Inject CSS custom properties if enabled
         if (config.cssCustomProperties !== false) {
-            this.designTokens.injectCSSCustomProperties(fynApp.name, config.cssVariablePrefix || 'fynmesh');
+            this.designTokens.injectCSSCustomProperties(
+                fynApp.name,
+                config.cssVariablePrefix || 'fynmesh',
+                config.global || false
+            );
         }
 
         // Create API for this FynApp
@@ -390,25 +656,28 @@ export class DesignTokensMiddleware implements FynAppMiddleware {
             enableThemeSwitching: config?.enableThemeSwitching !== false,
             persistTheme: config?.persistTheme !== false,
             storageKey: config?.storageKey || 'fynmesh-theme',
+            global: config?.global || false,
         };
     }
 
     private createDesignTokensAPI(fynApp: FynApp, config: DesignTokensMiddlewareConfig): DesignTokensAPI {
         return {
-            getTokens: () => this.designTokens.getTokens(),
-            getTheme: () => this.designTokens.getTheme(),
-            setTheme: (theme: string) => this.designTokens.setTheme(theme),
+            getTokens: () => this.designTokens.getTokens(fynApp.name),
+            getTheme: () => this.designTokens.getTheme(fynApp.name),
+            setTheme: (theme: string, applyGlobally: boolean = true) => this.designTokens.setTheme(theme, fynApp.name, applyGlobally),
             getCSSVariable: (tokenPath: string) => {
                 const prefix = config.cssVariablePrefix || 'fynmesh';
                 return this.designTokens.getCSSVariable(tokenPath, prefix);
             },
-            subscribeToThemeChanges: (callback) => {
+            subscribeToThemeChanges: (callback: (theme: string, tokens: DesignTokensData, fynAppName?: string) => void) => {
                 return this.designTokens.subscribeToThemeChanges(callback);
             },
             injectCustomCSS: (css: string) => {
                 const styleId = `fynmesh-custom-css-${fynApp.name}`;
                 this.designTokens.injectCustomCSS(css, styleId);
             },
+            setGlobalOptIn: (optIn: boolean) => this.designTokens.setGlobalOptIn(fynApp.name, optIn),
+            getGlobalOptIn: () => this.designTokens.getGlobalOptIn(fynApp.name),
         };
     }
 

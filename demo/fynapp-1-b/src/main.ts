@@ -93,13 +93,29 @@ const middlewareUser = {
 // Export the middleware usage with standardized interface
 // This app is a consumer - it consumes the basic counter config from the provider
 export const main = useMiddleware(
-  {
-    info: {
-      name: "basic-counter",
-      provider: "fynapp-react-middleware",
-      version: "^1.0.0",
+  [
+    {
+      info: {
+        name: "basic-counter",
+        provider: "fynapp-react-middleware",
+        version: "^1.0.0",
+      },
+      config: "consume-only", // Consumer - uses config from provider
     },
-    config: "consume-only", // Consumer - uses config from provider
-  },
+    {
+      info: {
+        name: "design-tokens",
+        provider: "fynapp-design-tokens",
+        version: "^1.0.0",
+      },
+      config: {
+        theme: "fynmesh-green", // Start with a different theme
+        cssCustomProperties: true,
+        cssVariablePrefix: "fynmesh",
+        enableThemeSwitching: true,
+        global: false, // Use scoped themes per fynapp
+      },
+    },
+  ],
   middlewareUser
 );

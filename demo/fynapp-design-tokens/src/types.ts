@@ -123,13 +123,16 @@ export interface DesignTokensMiddlewareConfig {
     enableThemeSwitching?: boolean;
     persistTheme?: boolean;
     storageKey?: string;
+    global?: boolean; // If true, applies theme globally (:root), if false, scopes to fynapp container
 }
 
 export interface DesignTokensAPI {
     getTokens: () => DesignTokensData;
     getTheme: () => string;
-    setTheme: (theme: string) => void;
+    setTheme: (theme: string, applyGlobally?: boolean) => void;
     getCSSVariable: (tokenPath: string) => string;
-    subscribeToThemeChanges: (callback: (theme: string, tokens: DesignTokensData) => void) => () => void;
+    subscribeToThemeChanges: (callback: (theme: string, tokens: DesignTokensData, fynAppName?: string) => void) => () => void;
     injectCustomCSS: (css: string) => void;
+    setGlobalOptIn: (optIn: boolean) => void;
+    getGlobalOptIn: () => boolean;
 }

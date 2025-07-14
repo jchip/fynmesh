@@ -19,6 +19,23 @@ const App: React.FC<AppProps> = ({
     count: middlewareConfig?.count || 0,
   });
 
+  // Theme state management
+  const [currentTheme, setCurrentTheme] = useState("fynmesh-default");
+  const [availableThemes, setAvailableThemes] = useState<string[]>([]);
+  const [applyGlobally, setApplyGlobally] = useState(false);
+  const [acceptGlobally, setAcceptGlobally] = useState(false);
+
+  // Available themes
+  const themeOptions = [
+    { value: "fynmesh-default", label: "Default" },
+    { value: "fynmesh-dark", label: "Dark" },
+    { value: "fynmesh-blue", label: "Blue" },
+    { value: "fynmesh-green", label: "Green" },
+    { value: "fynmesh-purple", label: "Purple" },
+    { value: "fynmesh-sunset", label: "Sunset" },
+    { value: "fynmesh-cyberpunk", label: "Cyberpunk" },
+  ];
+
   // Function to get the shared data object from middleware context
   const getSharedDataObject = () => {
     if (runtime?.middlewareContext) {
@@ -73,6 +90,40 @@ const App: React.FC<AppProps> = ({
     }
   }, [runtime, middlewareConfig]);
 
+  // Set up design tokens and theme management
+  useEffect(() => {
+    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
+    if (designTokensData?.api) {
+      const api = designTokensData.api;
+
+      // Initialize current theme
+      const currentTheme = api.getTheme();
+      setCurrentTheme(currentTheme);
+
+      // Initialize accept globally from API (this is shared state)
+      const globalOptIn = api.getGlobalOptIn();
+      setAcceptGlobally(globalOptIn);
+
+      // Initialize apply globally from localStorage (this is local state)
+      const applyGloballyKey = `fynapp-${runtime?.fynApp?.name}-apply-globally`;
+      const savedApplyGlobally = localStorage.getItem(applyGloballyKey);
+      setApplyGlobally(savedApplyGlobally === 'true');
+
+      // Subscribe to theme changes
+      const unsubscribe = api.subscribeToThemeChanges((theme: string, tokens: any, fynAppName?: string) => {
+        // Only update if:
+        // 1. The change is specifically for this app, OR
+        // 2. The change is global AND this app accepts global changes
+        if (fynAppName === runtime?.fynApp?.name || (!fynAppName && api.getGlobalOptIn())) {
+          setCurrentTheme(theme);
+          console.debug(`🎨 fynapp-1: Theme changed to ${theme}${fynAppName ? ` for ${fynAppName}` : ' globally'}`);
+        }
+      });
+
+      return unsubscribe;
+    }
+  }, [runtime]);
+
   // Destructure the components
   const { Button, Card, Input, Badge, Spinner } = components;
 
@@ -91,6 +142,50 @@ const App: React.FC<AppProps> = ({
       const newCount = sharedData.reset(runtime?.fynApp?.name);
       // Update local state for immediate UI response
       setCounter({ count: newCount });
+    }
+  };
+
+  // Theme switching function
+  const handleThemeChange = (theme: string) => {
+    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
+    if (designTokensData?.api) {
+      const api = designTokensData.api;
+
+      if (applyGlobally) {
+        // Apply globally
+        api.setTheme(theme, true);
+        console.debug(`🎨 fynapp-1: Switching to theme ${theme} globally`);
+
+        // If we're applying globally but not accepting globally (G/L scenario),
+        // we need to apply the theme to ourselves locally as well
+        if (!acceptGlobally) {
+          api.setTheme(theme, false);
+          console.debug(`🎨 fynapp-1: Also applying theme ${theme} locally (G/L scenario)`);
+        }
+      } else {
+        // Apply locally only
+        api.setTheme(theme, false);
+        console.debug(`🎨 fynapp-1: Switching to theme ${theme} locally`);
+      }
+    }
+  };
+
+  // Handle apply globally toggle
+  const handleApplyGloballyChange = (apply: boolean) => {
+    setApplyGlobally(apply);
+    // Persist to localStorage (this is local state per app)
+    const applyGloballyKey = `fynapp-${runtime?.fynApp?.name}-apply-globally`;
+    localStorage.setItem(applyGloballyKey, apply.toString());
+    console.debug(`🎨 fynapp-1: ${apply ? 'Enabled' : 'Disabled'} apply globally`);
+  };
+
+  // Handle accept globally toggle
+  const handleAcceptGloballyChange = (accept: boolean) => {
+    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
+    if (designTokensData?.api) {
+      designTokensData.api.setGlobalOptIn(accept);
+      setAcceptGlobally(accept);
+      console.debug(`🎨 fynapp-1: ${accept ? 'Enabled' : 'Disabled'} accept global changes`);
     }
   };
 
@@ -113,6 +208,49 @@ const App: React.FC<AppProps> = ({
       <h2>
         {appName}: React {React.version}
       </h2>
+
+      {/* Theme Selection */}
+      <Card title="🎨 Design Tokens Theme Selection" className="mb-6">
+        <div className="mb-4 space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={applyGlobally}
+              onChange={(e) => handleApplyGloballyChange(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span>Apply globally (affects all fynapp instances)</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={acceptGlobally}
+              onChange={(e) => handleAcceptGloballyChange(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span>Accept changes globally (from other apps)</span>
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {themeOptions.map((theme) => (
+            <Button
+              key={theme.value}
+              variant={currentTheme === theme.value ? "primary" : "outline"}
+              size="small"
+              onClick={() => handleThemeChange(theme.value)}
+            >
+              {theme.label}
+            </Button>
+          ))}
+        </div>
+        <div className="text-sm text-gray-600">
+          Current theme: <strong>{currentTheme}</strong>
+          <br />
+          Apply scope: <strong>{applyGlobally ? "Global" : "Local"}</strong>
+          <br />
+          Accept scope: <strong>{acceptGlobally ? "Global" : "Local"}</strong>
+        </div>
+      </Card>
 
       {/* Demo UI Sections */}
       <Card title="🎨 fynapp-x1 Components Demo" className="mb-6">
