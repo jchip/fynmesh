@@ -14,14 +14,15 @@ import {
   setupDummyEntryPlugins,
   setupMinifyPlugins,
   fynmeshShareScope,
+  setupReactAliasPlugins,
 } from "create-fynapp";
 
 export default [
   {
     input: [
-      "src/index.ts",
+      fynappDummyEntryName,
       // this is the filename from federation plugin config.
-      "fynapp-entry.js",
+      fynappEntryFilename,
     ],
     output: [
       {
@@ -32,6 +33,7 @@ export default [
     ],
     external: ["esm-react", "esm-react-dom"],
     plugins: [
+      ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
       }),
@@ -43,14 +45,18 @@ export default [
       }),
       newRollupPlugin(federation)({
         name: "fynapp-x1",
-        shareScope: "fynmesh",
-        filename: "fynapp-entry.js",
+        shareScope: fynmeshShareScope,
+        filename: fynappEntryFilename,
         exposes: {
-          "./main": "./src/main.tsx",
-          "./styles.js": "./src/styles.css",
+          "./main": "./src/main.tsx"
         },
         shared: {
           "esm-react": {
+            import: false,
+            singleton: false,
+            requiredVersion: "^19.0.0",
+          },
+          "esm-react-dom": {
             import: false,
             singleton: false,
             requiredVersion: "^19.0.0",
@@ -63,13 +69,7 @@ export default [
         sourceMap: true,
         inlineSources: true,
       }),
-      newRollupPlugin(alias)({
-        entries: {
-          react: "esm-react",
-          "react-dom": "esm-react-dom",
-          "react-dom/client": "esm-react-dom",
-        },
-      }),
+      ...setupReactAliasPlugins(),
       ...setupMinifyPlugins(),
     ],
   },

@@ -4,6 +4,8 @@ import './styles.css';
 
 // @ts-ignore
 import { useState, useEffect } from 'react';
+// @ts-ignore
+import { createPortal } from 'react-dom';
 
 // Types/interfaces for components
 type ReactNode = React.ReactNode;
@@ -49,9 +51,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
                 };
             case 'outline':
                 return {
-                    backgroundColor: 'transparent',
+                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
                     color: 'var(--fynmesh-color-dark)',
-                    border: 'var(--fynmesh-border-2) solid var(--fynmesh-color-secondary)',
+                    border: '2px solid var(--fynmesh-color-dark)',
+                    boxShadow: 'var(--fynmesh-shadow-sm)',
                 };
             case 'danger':
                 return {
@@ -123,6 +126,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
             style={buttonStyle}
             className={`button-v2 focus-ring ${className}`}
             disabled={disabled || isLoading}
+            onMouseEnter={variant === 'outline' ? (e) => {
+                if (!disabled && !isLoading) {
+                    e.currentTarget.style.backgroundColor = 'var(--fynmesh-color-dark)';
+                    e.currentTarget.style.color = 'var(--fynmesh-color-light)';
+                    e.currentTarget.style.borderColor = 'var(--fynmesh-color-dark)';
+                }
+            } : undefined}
+            onMouseLeave={variant === 'outline' ? (e) => {
+                if (!disabled && !isLoading) {
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.08)';
+                    e.currentTarget.style.color = 'var(--fynmesh-color-dark)';
+                    e.currentTarget.style.borderColor = 'var(--fynmesh-color-dark)';
+                }
+            } : undefined}
             {...props}
         >
             {isLoading ? (
@@ -351,21 +368,43 @@ export const Modal: FC<ModalProps> = ({
     footer,
     size = 'medium',
     closeOnOverlayClick = true,
-    overlayOpacity = 0.2,
-    overlayBlur = 'none',
+    overlayOpacity = 0.5,
+    overlayBlur = 'blur(2px)',
 }) => {
     useEffect(() => {
         if (isOpen) {
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.paddingRight = `${scrollbarWidth}px`;
         } else {
+            // Restore body scroll when modal is closed
+            document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         }
 
         return () => {
+            // Cleanup on unmount
+            document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         };
     }, [isOpen]);
+
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
@@ -377,35 +416,56 @@ export const Modal: FC<ModalProps> = ({
         }
     };
 
-    return (
+    const modalContent = (
         <div style={{
             position: 'fixed',
-            inset: 0,
-            zIndex: 50,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: 'var(--fynmesh-spacing-lg)'
         }}>
+            {/* Full-screen overlay */}
             <div
                 className="modal-overlay-v2"
                 style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                     backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
-                    backdropFilter: overlayBlur !== 'none' ? `blur(${overlayBlur})` : 'none',
+                    backdropFilter: overlayBlur,
+                    transition: 'all 0.2s ease'
                 }}
                 onClick={closeOnOverlayClick ? onClose : undefined}
             />
+
+            {/* Modal content */}
             <div
                 className="modal-content-v2"
                 style={{
+                    position: 'relative',
+                    zIndex: 10000,
                     width: '100%',
                     maxWidth: getMaxWidth(),
                     margin: '0 auto',
                     transform: 'scale(1)',
-                    transition: 'all 0.3s ease-in-out'
+                    transition: 'all 0.3s ease-in-out',
+                    maxHeight: '90vh',
+                    overflow: 'auto'
                 }}
             >
                 {title && (
-                    <div className="card-header">
+                    <div className="card-header" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
                         <h3 style={{
                             fontSize: 'var(--fynmesh-text-lg)',
                             fontWeight: 'var(--fynmesh-font-weight-semibold)',
@@ -422,8 +482,23 @@ export const Modal: FC<ModalProps> = ({
                                 border: 'none',
                                 color: 'var(--fynmesh-color-secondary)',
                                 cursor: 'pointer',
-                                outline: 'none'
+                                padding: 'var(--fynmesh-spacing-xs)',
+                                borderRadius: 'var(--fynmesh-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                outline: 'none',
+                                transition: 'all 0.2s ease'
                             }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = 'var(--fynmesh-color-dark)';
+                                e.currentTarget.style.backgroundColor = 'var(--fynmesh-color-secondary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'var(--fynmesh-color-secondary)';
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                            aria-label="Close modal"
                         >
                             <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>Close</span>
                             <svg style={{ width: '1.5rem', height: '1.5rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -441,6 +516,9 @@ export const Modal: FC<ModalProps> = ({
             </div>
         </div>
     );
+
+    // Render modal content using Portal to document.body
+    return createPortal(modalContent, document.body);
 };
 
 // Alert Component

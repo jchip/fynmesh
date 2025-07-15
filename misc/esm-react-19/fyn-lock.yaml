@@ -3,11 +3,11 @@ $fyn:
  flattenTop: true
 $pkg:
  dev:
-  react: 19.1.0
+  react: ^19.1.0
 react:
  _latest: 19.1.0
  _:
-  19.1.0: 19.1.0
+  ^19.1.0: 19.1.0
  19.1.0:
   top: 1
   $: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==

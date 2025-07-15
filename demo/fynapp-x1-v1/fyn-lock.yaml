@@ -16,6 +16,7 @@ $pkg:
   '@types/react': ^18.3.0
   create-fynapp: ../../dev-tools/create-fynapp
   esm-react: ../../misc/esm-react-18
+  esm-react-dom: ../../misc/esm-react-dom-18
   postcss: ^8.5.6
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
@@ -772,11 +773,21 @@ escalade:
 esm-react:
  _latest: 18.3.1-fynlocal_h
  _:
-  ../../misc/esm-react-18: 18.3.1-fynlocal_h
+  '../../misc/esm-react-18,../esm-react-18': 18.3.1-fynlocal_h
  18.3.1-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-react-18
+esm-react-dom:
+ _latest: 18.3.1-fynlocal_h
+ _:
+  ../../misc/esm-react-dom-18: 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-dom-18
+  dependencies:
+   esm-react: ^18.3.1
 esprima:
  _latest: 4.0.1
  _:

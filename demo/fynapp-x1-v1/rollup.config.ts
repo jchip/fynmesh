@@ -5,8 +5,8 @@ import federation from "rollup-plugin-federation";
 // import alias from "@rollup/plugin-alias";
 // import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
-
 import { newRollupPlugin } from "rollup-wrap-plugin";
+
 import {
   env,
   isProduction,
@@ -14,12 +14,13 @@ import {
   setupMinifyPlugins,
   fynmeshShareScope,
   setupReactAliasPlugins,
+  setupDummyEntryPlugins,
 } from "create-fynapp";
 
 export default [
   {
     input: [
-      "src/index.ts",
+      fynappEntryFilename,
       // this is the filename from federation plugin config.
       fynappEntryFilename,
     ],
@@ -32,6 +33,7 @@ export default [
     ],
     external: ["esm-react", "esm-react-dom"],
     plugins: [
+      ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
       }),
@@ -47,10 +49,14 @@ export default [
         filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.tsx",
-          "./styles.js": "./src/styles.css",
         },
         shared: {
           "esm-react": {
+            import: false,
+            singleton: true,
+            requiredVersion: "^18.3.0",
+          },
+          "esm-react-dom": {
             import: false,
             singleton: true,
             requiredVersion: "^18.3.0",

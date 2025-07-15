@@ -25,6 +25,7 @@
     "aveazul": "^1.0.1",
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
+    "esm-react-dom": "^19.1.0",
     "postcss": "^8.5.3",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",

@@ -4,6 +4,8 @@ import './styles.css';
 
 // @ts-ignore
 import { useState, useEffect } from 'react';
+// @ts-ignore
+import { createPortal } from 'react-dom';
 
 // Types/interfaces for components
 type ReactNode = React.ReactNode;
@@ -57,11 +59,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         transition: 'all 0.2s ease',
         outline: 'none',
         opacity: disabled || isLoading ? 0.5 : 1,
-        backgroundColor: variant === 'primary' ? 'var(--fynmesh-color-primary)' : variant === 'secondary' ? 'var(--fynmesh-color-secondary)' : variant === 'danger' ? 'var(--fynmesh-color-danger)' : 'transparent',
+        backgroundColor: variant === 'primary' ? 'var(--fynmesh-color-primary)' : variant === 'secondary' ? 'var(--fynmesh-color-secondary)' : variant === 'danger' ? 'var(--fynmesh-color-danger)' : variant === 'outline' ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
         color: variant === 'outline' ? 'var(--fynmesh-color-dark)' : 'var(--fynmesh-color-light)',
-        borderWidth: variant === 'outline' ? 'var(--fynmesh-border-2)' : '0',
+        borderWidth: variant === 'outline' ? '2px' : '0',
         borderStyle: 'solid',
-        borderColor: variant === 'outline' ? 'var(--fynmesh-color-secondary)' : 'transparent',
+        borderColor: variant === 'outline' ? 'var(--fynmesh-color-dark)' : 'transparent',
+        boxShadow: variant === 'outline' ? 'var(--fynmesh-shadow-sm)' : 'none',
     };
 
     return (
@@ -70,6 +73,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
             style={buttonStyle}
             className={className}
             disabled={disabled || isLoading}
+            onMouseEnter={variant === 'outline' ? (e) => {
+                if (!disabled && !isLoading) {
+                    e.currentTarget.style.backgroundColor = 'var(--fynmesh-color-dark)';
+                    e.currentTarget.style.color = 'var(--fynmesh-color-light)';
+                    e.currentTarget.style.borderColor = 'var(--fynmesh-color-dark)';
+                }
+            } : undefined}
+            onMouseLeave={variant === 'outline' ? (e) => {
+                if (!disabled && !isLoading) {
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.08)';
+                    e.currentTarget.style.color = 'var(--fynmesh-color-dark)';
+                    e.currentTarget.style.borderColor = 'var(--fynmesh-color-dark)';
+                }
+            } : undefined}
             {...props}
         >
             {isLoading ? (
@@ -109,7 +126,7 @@ export const Card: FC<CardProps> = ({
                         margin: 0,
                         fontFamily: 'var(--fynmesh-font-family-sans)'
                     }}>
-                        {title} v1
+                        {title}
                     </h3>
                 </div>
             )}
@@ -207,53 +224,89 @@ export const Modal: FC<ModalProps> = ({
 }) => {
     useEffect(() => {
         if (isOpen) {
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
             // Only prevent scrollbar jump without hiding the background
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.paddingRight = `${scrollbarWidth}px`;
         } else {
+            // Restore body scroll when modal is closed
+            document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         }
 
         return () => {
+            // Cleanup on unmount
+            document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         };
     }, [isOpen]);
 
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
-    return (
+    const modalContent = (
         <div style={{
             position: 'fixed',
-            inset: 0,
-            zIndex: 50,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            padding: 'var(--fynmesh-spacing-lg)'
         }}>
-            {/* Overlay with transparent background */}
+            {/* Full-screen overlay */}
             <div
                 style={{
-                    position: 'fixed',
-                    inset: 0,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'none',
-                    transition: 'opacity 0.2s ease'
+                    backdropFilter: 'blur(2px)',
+                    transition: 'all 0.2s ease'
                 }}
                 onClick={onClose}
             ></div>
+
             {/* Modal content */}
             <div style={{
                 position: 'relative',
-                zIndex: 50,
+                zIndex: 10000,
                 width: '100%',
                 maxWidth: '28rem',
                 borderRadius: 'var(--fynmesh-radius-lg)',
                 background: 'var(--fynmesh-color-light)',
                 boxShadow: 'var(--fynmesh-shadow-xl)',
-                margin: '0 auto'
+                margin: '0 auto',
+                maxHeight: '90vh',
+                overflow: 'auto'
             }}>
                 {title && (
-                    <div className="card-header">
+                    <div className="card-header" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
                         <h3 style={{
                             fontSize: 'var(--fynmesh-text-lg)',
                             fontWeight: 'var(--fynmesh-font-weight-medium)',
@@ -263,6 +316,35 @@ export const Modal: FC<ModalProps> = ({
                         }}>
                             {title}
                         </h3>
+                        <button
+                            onClick={onClose}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--fynmesh-color-secondary)',
+                                cursor: 'pointer',
+                                padding: 'var(--fynmesh-spacing-xs)',
+                                borderRadius: 'var(--fynmesh-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.25rem',
+                                lineHeight: 1,
+                                outline: 'none',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.color = 'var(--fynmesh-color-dark)';
+                                e.currentTarget.style.backgroundColor = 'var(--fynmesh-color-secondary)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'var(--fynmesh-color-secondary)';
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                            aria-label="Close modal"
+                        >
+                            ×
+                        </button>
                     </div>
                 )}
                 <div className="card-body">{children}</div>
@@ -274,6 +356,9 @@ export const Modal: FC<ModalProps> = ({
             </div>
         </div>
     );
+
+    // Render modal content using Portal to document.body
+    return createPortal(modalContent, document.body);
 };
 
 // Alert Component
@@ -458,13 +543,13 @@ const fynappUser = {
         const { api: designTokens } = designTokensContext || {};
 
         if (designTokens) {
-            console.log("🎨 FynApp X1 v1 - Design tokens loaded");
-            console.log("🎨 Current theme:", designTokens.getTheme());
-            console.log("🎨 Available tokens:", designTokens.getTokens());
+            console.debug("🎨 FynApp X1 v1 - Design tokens loaded");
+            console.debug("🎨 Current theme:", designTokens.getTheme());
+            console.debug("🎨 Available tokens:", designTokens.getTokens());
 
             // Enable global theme acceptance so this component library updates when other apps change themes
             designTokens.setGlobalOptIn(true);
-            console.log("🎨 FynApp X1 v1 - Enabled global theme acceptance");
+            console.debug("🎨 FynApp X1 v1 - Enabled global theme acceptance");
 
             // Subscribe to theme changes
             designTokens.subscribeToThemeChanges((theme: string, tokens: any) => {

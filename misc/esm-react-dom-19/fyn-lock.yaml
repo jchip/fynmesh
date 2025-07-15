@@ -10,6 +10,7 @@ $pkg:
   '@rollup/plugin-node-resolve': ^16.0.1
   '@rollup/plugin-replace': ^6.0.2
   '@rollup/plugin-terser': ^0.4.4
+  react: ^19.1.0
   react-dom: 19.1.0
   rollup: ^4.40.2
 '@jridgewell/gen-mapping':
@@ -314,6 +315,14 @@ randombytes:
   _: 'https://registry.npmjs.org/randombytes/-/randombytes-2.1.0.tgz'
   dependencies:
    safe-buffer: ^5.1.0
+react:
+ _latest: 19.1.0
+ _:
+  ^19.1.0: 19.1.0
+ 19.1.0:
+  top: 1
+  $: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==
+  _: 'https://registry.npmjs.org/react/-/react-19.1.0.tgz'
 react-dom:
  _latest: 19.1.0
  _:
