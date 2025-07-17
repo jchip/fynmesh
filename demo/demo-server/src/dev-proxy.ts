@@ -10,14 +10,18 @@ const federationJsPath = isProduction
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
-  [{ path: "/node_modules" }, { protocol: "file", path: Path.join(__dirname, "../node_modules") }],
+  [{ path: "/fynmesh" }, { protocol: "file", path: Path.join(__dirname, "../../../docs") }],
   [{ path: "/federation-js/dist/federation-js.js" }, { protocol: "file", path: federationJsPath }],
   [
     { path: "/federation-js" },
     { protocol: "file", path: Path.join(__dirname, "../node_modules/federation-js") },
   ],
   [
-    { path: "/core/kernel" },
+    { path: "/spectre.css" },
+    { protocol: "file", path: Path.join(__dirname, "../node_modules/spectre.css") },
+  ],
+  [
+    { path: "/kernel" },
     { protocol: "file", path: Path.join(__dirname, "../../../core/kernel") },
   ],
   [{ path: "/fynapp-1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-1") }],

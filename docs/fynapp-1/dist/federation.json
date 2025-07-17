@@ -1,0 +1,53 @@
+{
+  "name": "fynapp-1",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-CQ8tsnT_.js"
+      ]
+    },
+    "./hello": {
+      "path": "./src/hello.ts",
+      "chunks": [
+        "hello-DqD-ezWy.js"
+      ]
+    },
+    "./getInfo": {
+      "path": "./src/getInfo.ts",
+      "chunks": [
+        "getInfo-BBlsI0x1.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-boHcTULx.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-07-17T19:32:39.680Z",
+  "version": "1.0.0"
+}

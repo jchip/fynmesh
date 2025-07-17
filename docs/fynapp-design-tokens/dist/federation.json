@@ -1,0 +1,16 @@
+{
+  "name": "fynapp-design-tokens",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./middleware/design-tokens": {
+      "path": "./src/middleware/design-tokens.ts",
+      "chunks": [
+        "design-tokens-BdRhX4lG.js"
+      ]
+    }
+  },
+  "shared": {},
+  "timestamp": "2025-07-17T19:32:33.774Z",
+  "version": "1.0.0"
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"hello-DqD-ezWy.js","sources":["../src/hello.ts"],"sourcesContent":["export function hello() {\n    return 'Hello from FynApp 1!';\n}"],"names":[],"mappings":"kMACI,MAAO,sBACX"}

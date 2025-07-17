@@ -1,0 +1,15 @@
+import type { FynModuleRuntime } from "@fynmesh/kernel";
+import "./components";
+export declare const main: {
+    /**
+     * Tell middleware what we need - called first to determine readiness
+     */
+    initialize(runtime: FynModuleRuntime): {
+        status: string;
+        mode: string;
+    };
+    /**
+     * Main function - called when middleware is ready
+     */
+    execute(runtime: FynModuleRuntime): Promise<void>;
+};

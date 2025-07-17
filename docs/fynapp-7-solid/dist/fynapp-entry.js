@@ -1,0 +1,2 @@
+!function(){var n=globalThis.Federation._mfContainer("fynapp-7-solid","fynmesh","1.0.0");n.register([],(function(i,t){"use strict";return{execute:function(){i({get:function(i,t,e){return n._mfGet(i,t,e)},init:function(i){var t=function(n){return{id:n,then:function(){return this}}},e=n._mfInit(i);return e?(n._S("solid-js",{singleton:!0,requiredVersion:"^1.8.15"},[[[t("./solid-X5s1FHit.js"),"1.9.6"]]]),n._E("./main",t("./main-v-8gRmvT.js")),e):n.$SS}});i("container",n)}}}))}();
+//# sourceMappingURL=__mf_container_fynapp-7-solid.js.map

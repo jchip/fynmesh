@@ -10,10 +10,13 @@ const env = nunjucks.configure("templates", {
   noCache: process.env.NODE_ENV !== "production",
 });
 
+const pathPrefix = process.env.PATH_PREFIX || "/";
+
 // Template data
 const templateData = {
   title: "FynMesh Micro Frontend Demo",
   isProduction: process.env.NODE_ENV === "production",
+  pathPrefix,
   features: {
     "react-18": true,
     "react-19": true,
