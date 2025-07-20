@@ -52,7 +52,10 @@ load({
             return serial([
                 // Build demo site directly to docs directory with GitHub Pages path prefix
                 "build-demo-site",
+                exec("mv ../../docs ../../docs-temp"),
                 exec("git checkout gh-pages"),
+                exec("rm -rf ../../docs"),
+                exec("mv ../../docs-temp ../../docs"),
                 exec("git add -f ../../docs"),
                 exec('git commit -m "update demo site to gh pages"')
             ])
