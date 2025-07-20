@@ -41,8 +41,12 @@ class ServiceWorkerManager {
   async registerServiceWorker() {
     this.log("Registering service worker...");
 
-    const swPath = `${this.basePath}/sw.js`;
+    // Properly construct the service worker path
+    const cleanBasePath = this.basePath.endsWith("/") ? this.basePath.slice(0, -1) : this.basePath;
+    const swPath = cleanBasePath ? `${cleanBasePath}/sw.js` : "/sw.js";
     const swScope = this.basePath || "/";
+
+    this.log(`Service worker path: ${swPath}, scope: ${swScope}`);
 
     const registration = await navigator.serviceWorker.register(swPath, {
       scope: swScope,
