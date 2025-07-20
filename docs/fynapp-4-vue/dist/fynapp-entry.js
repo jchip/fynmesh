@@ -1,0 +1,2 @@
+!function(){var n=globalThis.Federation._mfContainer("fynapp-4-vue","fynmesh","1.0.0");n.register([],(function(e,t){"use strict";return{execute:function(){e({get:function(e,t,i){return n._mfGet(e,t,i)},init:function(e){var t=function(n){return{id:n,then:function(){return this}}},i=n._mfInit(e);return i?(n._S("vue",{singleton:!0,requiredVersion:"^3.3.4"},[[[t("./vue.runtime.esm-bundler-BMrfm2qP.js"),"3.5.13"]]]),n._E("./main",t("./main-C9GvFQbX.js")),i):n.$SS}});e("container",n)}}}))}();
+//# sourceMappingURL=__mf_container_fynapp-4-vue.js.map
