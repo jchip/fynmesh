@@ -1,5 +1,10 @@
-const { startDevProxy } = require("./proxy");
-const Path = require("node:path");
+import { startDevProxy } from "./proxy.js";
+import * as Path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = Path.dirname(__filename);
 
 // Determine which federation-js file to serve based on NODE_ENV
 const isProduction = process.env.NODE_ENV === "production";
@@ -10,14 +15,18 @@ const federationJsPath = isProduction
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
-  [{ path: "/node_modules" }, { protocol: "file", path: Path.join(__dirname, "../node_modules") }],
+  [{ path: "/fynmesh" }, { protocol: "file", path: Path.join(__dirname, "../../../docs") }],
   [{ path: "/federation-js/dist/federation-js.js" }, { protocol: "file", path: federationJsPath }],
   [
     { path: "/federation-js" },
     { protocol: "file", path: Path.join(__dirname, "../node_modules/federation-js") },
   ],
   [
-    { path: "/core/kernel" },
+    { path: "/spectre.css" },
+    { protocol: "file", path: Path.join(__dirname, "../node_modules/spectre.css") },
+  ],
+  [
+    { path: "/kernel" },
     { protocol: "file", path: Path.join(__dirname, "../../../core/kernel") },
   ],
   [{ path: "/fynapp-1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-1") }],

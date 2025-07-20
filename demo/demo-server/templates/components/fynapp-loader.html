@@ -1,11 +1,11 @@
 {% if isProduction %}
-<script src="/system.min.js"></script>
-<script src="/federation-js/dist/federation-js.min.js"></script>
-<script src="/core/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+<script src="{{pathPrefix}}system.min.js"></script>
+<script src="{{pathPrefix}}federation-js/dist/federation-js.min.js"></script>
+<script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.min.js"></script>
 {% else %}
-<script src="/system.js"></script>
-<script src="/federation-js/dist/federation-js.dev.js"></script>
-<script src="/core/kernel/dist/fynmesh-browser-kernel.dev.js"></script>
+<script src="{{pathPrefix}}system.js"></script>
+<script src="{{pathPrefix}}federation-js/dist/federation-js.dev.js"></script>
+<script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
 {% endif %}
 <script>
     (async () => {
@@ -26,77 +26,77 @@
 
         // STEP 1: Load Design Tokens Middleware first before any consumers
         if (features["design-tokens"]) {
-            console.log("🎨 Loading Design Tokens Middleware provider /fynapp-design-tokens/dist");
-            await fynMeshKernel.loadFynApp("/fynapp-design-tokens/dist");
+            console.log("🎨 Loading Design Tokens Middleware provider {{pathPrefix}}fynapp-design-tokens/dist");
+            await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-design-tokens/dist");
             console.log("✅ Design Tokens Middleware loaded and ready");
         }
 
         // globalThis.process = { env: { NODE_ENV: "production" } };
         // STEP 2: Load react versions
         if (features["react-18"]) {
-            fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
-            console.log("loading remote fynapp /fynapp-react-18/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-18/dist");
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-react-18/dist");
         }
         // load react 19
         if (features["react-19"]) {
-            fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
-            console.log("loading remote fynapp /fynapp-react-19/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-19/dist");
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-react-19/dist");
         }
 
         // STEP 3: Load component libraries (these may use design tokens)
-        await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
+        await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-x1-v2/dist");
         console.log("🎨 Loading fynapp-x1-v1 with design tokens support");
-        await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
+        await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-x1-v1/dist");
 
         // STEP 4: Load React Context Middleware for consumer FynApps
-        console.log("🔧 Loading React Context Middleware provider /fynapp-react-middleware/dist");
-        await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
+        console.log("🔧 Loading React Context Middleware provider {{pathPrefix}}fynapp-react-middleware/dist");
+        await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-middleware/dist");
 
         // STEP 5: Load consumer FynApps (all middleware is now available)
         // load fynapp 2 that uses react 18
         if (features["fynapp-2-react18"]) {
-            console.log("loading remote fynapp /fynapp-2-react18/dist");
-            fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-2-react18/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-2-react18/dist")
         }
 
         // load fynapp 1 that uses react 19
         if (features["fynapp-1"]) {
-            console.log("loading remote fynapp /fynapp-1/dist");
-            fynMeshKernel.loadFynApp("/fynapp-1/dist");
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-1/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-1/dist");
         }
         // load fynapp 1-b that uses react 19
         if (features["fynapp-1-b"]) {
-            console.log("loading remote fynapp /fynapp-1-b/dist");
-            fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-1-b/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-1-b/dist");
         }
         // load fynapp marko
         if (features["fynapp-3-marko"]) {
-            console.log("loading remote fynapp /fynapp-3-marko/dist");
-            fynMeshKernel.loadFynApp("/fynapp-3-marko/dist")
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-3-marko/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-3-marko/dist")
         }
 
         // load fynapp vue
         if (features["fynapp-4-vue"]) {
-            console.log("loading remote fynapp /fynapp-4-vue/dist");
-            fynMeshKernel.loadFynApp("/fynapp-4-vue/dist");
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-4-vue/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-4-vue/dist");
         }
 
         // load fynapp preact
         if (features["fynapp-5-preact"]) {
-            console.log("loading remote fynapp /fynapp-5-preact/dist");
-            fynMeshKernel.loadFynApp("/fynapp-5-preact/dist")
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-5-preact/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-5-preact/dist")
         }
 
         // load fynapp react (dashboard)
         if (features["fynapp-6-react"]) {
-            console.log("loading remote fynapp /fynapp-6-react/dist");
-            fynMeshKernel.loadFynApp("/fynapp-6-react/dist")
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-6-react/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-6-react/dist")
         }
 
         // load fynapp solid
         if (features["fynapp-7-solid"]) {
-            console.log("loading remote fynapp /fynapp-7-solid/dist");
-            fynMeshKernel.loadFynApp("/fynapp-7-solid/dist")
+            console.log("loading remote fynapp {{pathPrefix}}fynapp-7-solid/dist");
+            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-7-solid/dist")
         }
     })();
 </script>
