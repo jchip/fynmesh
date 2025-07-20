@@ -161,10 +161,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Copy all required static assets for GitHub Pages (skip index.html since we build it directly)
         log("📁 Copying static assets...");
 
-        // Copy system.js files from public directory
-        const systemFiles = ["system.js", "system.min.js", "system.min.js.map"];
+        // Copy static files from public directory
+        const staticFiles = [
+            "system.js",
+            "system.min.js",
+            "system.min.js.map",
+            "sw.js",           // Service Worker
+            "sw-utils.js"      // Service Worker Utilities
+        ];
         const publicDir = path.join(__dirname, "../public");
-        systemFiles.forEach(file => {
+        staticFiles.forEach(file => {
             const src = path.join(publicDir, file);
             const dest = path.join(outputDir, file);
             if (existsSync(src)) {

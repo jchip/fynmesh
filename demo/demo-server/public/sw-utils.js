@@ -245,6 +245,51 @@ class ServiceWorkerManager {
   }
 
   /**
+   * Clear service worker caches (development only)
+   */
+  async clearCache() {
+    if (!this.registration || !this.registration.active) {
+      this.log("No active service worker to clear cache", "warn");
+      return false;
+    }
+
+    // Check if we're in development
+    if (location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+      this.log("Cache clearing only available in development", "warn");
+      return false;
+    }
+
+    try {
+      this.log("Requesting cache clear from service worker...");
+
+      const messageChannel = new MessageChannel();
+      const promise = new Promise((resolve, reject) => {
+        messageChannel.port1.onmessage = (event) => {
+          if (event.data.type === "CACHE_CLEARED") {
+            if (event.data.success) {
+              resolve(true);
+            } else {
+              reject(new Error(event.data.error || "Failed to clear cache"));
+            }
+          }
+        };
+
+        // Timeout after 5 seconds
+        setTimeout(() => reject(new Error("Cache clear timeout")), 5000);
+      });
+
+      this.registration.active.postMessage({ type: "CLEAR_CACHE" }, [messageChannel.port2]);
+
+      const result = await promise;
+      this.log("Cache cleared successfully!", "info");
+      return result;
+    } catch (error) {
+      this.log("Failed to clear cache:", "error", error);
+      return false;
+    }
+  }
+
+  /**
    * Get service worker status information
    */
   getStatus() {
@@ -283,4 +328,5 @@ window.swDebug = {
   forceUpdate: () => window.swManager?.forceUpdate(),
   unregister: () => window.swManager?.unregister(),
   getVersion: () => window.swManager?.getServiceWorkerVersion(),
+  clearCache: () => window.swManager?.clearCache(),
 };
