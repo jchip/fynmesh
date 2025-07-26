@@ -132,6 +132,10 @@ export type FynAppMiddlewareCallContext = {
 export type FynAppMiddleware = {
   /** name of the middleware */
   name: string;
+  /** Controls automatic application. Explicit useMiddleware() calls always work regardless of autoApplyScope */
+  autoApplyScope?: ("all" | "fynapp" | "middleware")[];
+  /** Optional filter function to determine if this middleware should apply to a specific FynApp */
+  shouldApply?(fynApp: FynApp): boolean;
   /** one time setup for the middleware */
   setup?(context: FynAppMiddlewareCallContext): Promise<{ status: string }>;
   /** apply the middleware to a fynapp with context */
@@ -178,6 +182,11 @@ export type FynMeshRuntimeData = {
    * Key format: "provider::middleware-name"
    */
   middlewares: MiddlewareRegistry;
+  /** Auto-applying middleware categorized by scope */
+  autoApplyMiddlewares?: {
+    fynapp: FynAppMiddlewareReg[];
+    middleware: FynAppMiddlewareReg[];
+  };
 };
 
 /**

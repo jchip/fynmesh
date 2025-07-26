@@ -115,7 +115,25 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
     this.runTime.middlewares[regKey] = versionMap;
 
-    console.debug(`✅ Registered middleware: ${regKey}@${hostFynApp.version}`);
+    const autoApplyScope = mwReg.middleware.autoApplyScope || [];
+
+    if (autoApplyScope.length > 0) {
+      if (!this.runTime.autoApplyMiddlewares) {
+        this.runTime.autoApplyMiddlewares = { fynapp: [], middleware: [] };
+      }
+
+      if (autoApplyScope.includes("all") || autoApplyScope.includes("fynapp")) {
+        this.runTime.autoApplyMiddlewares.fynapp.push(mwReg);
+      }
+
+      if (autoApplyScope.includes("all") || autoApplyScope.includes("middleware")) {
+        this.runTime.autoApplyMiddlewares.middleware.push(mwReg);
+      }
+
+      console.debug(`🎯 Registered auto-apply middleware for [${autoApplyScope.join(', ')}]: ${regKey}@${hostFynApp.version}`);
+    } else {
+      console.debug(`✅ Registered explicit-use middleware: ${regKey}@${hostFynApp.version}`);
+    }
   }
 
   /**
@@ -405,6 +423,69 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     return this.callMiddlewares(ccs);
   }
 
+  private async applyAutoScopeMiddlewares(fynApp: FynApp, fynModule?: FynModule): Promise<void> {
+    const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
+    if (!autoApplyMiddlewares) return;
+
+    // Determine if this is a middleware provider FynApp
+    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
+      key.startsWith('./middleware')
+    );
+
+    // Apply middleware based on FynApp type
+    const targetMiddlewares = isMiddlewareProvider
+      ? autoApplyMiddlewares.middleware
+      : autoApplyMiddlewares.fynapp;
+
+    for (const mwReg of targetMiddlewares) {
+      // Check if middleware has a filter function and call it
+      if (mwReg.middleware.shouldApply) {
+        try {
+          const shouldApply = mwReg.middleware.shouldApply(fynApp);
+          if (!shouldApply) {
+            console.debug(`⏭️ Skipping middleware ${mwReg.regKey} for ${fynApp.name} (filtered out)`);
+            continue;
+          }
+        } catch (error) {
+          console.error(`❌ Error in shouldApply for ${mwReg.regKey}:`, error);
+          continue;
+        }
+      }
+
+      console.debug(
+        `🔄 Auto-applying ${mwReg.middleware.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`
+      );
+
+      const context: FynAppMiddlewareCallContext = {
+        meta: {
+          info: {
+            name: mwReg.middleware.name,
+            provider: mwReg.hostFynApp.name,
+            version: mwReg.hostFynApp.version,
+          },
+          config: {},
+        },
+        fynMod: fynModule || { async execute() { } },
+        fynApp,
+        reg: mwReg,
+        runtime: this.createFynModuleRuntime(fynApp),
+        kernel: this,
+        status: "ready",
+      };
+
+      try {
+        if (mwReg.middleware.setup) {
+          await mwReg.middleware.setup(context);
+        }
+        if (mwReg.middleware.apply) {
+          await mwReg.middleware.apply(context);
+        }
+      } catch (error) {
+        console.error(`❌ Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}:`, error);
+      }
+    }
+  }
+
   /**
    * Bootstrap a fynapp by:
    * - call main as function or invoke it as a FynModule
@@ -423,6 +504,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     if (mainFynModule) {
       console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
 
+      await this.applyAutoScopeMiddlewares(fynApp, mainFynModule);
+
       if (typeof mainFynModule === "function") {
         await (mainFynModule as any)(this.createFynModuleRuntime(fynApp));
       } else if (mainFynModule.__middlewareMeta) {
@@ -431,7 +514,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         await this.invokeFynModule(mainFynModule as FynModule, fynApp);
       }
     }
-
 
     console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
   }
