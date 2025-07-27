@@ -36,6 +36,8 @@ export default [
         filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.ts",
+          "./App": "./src/App.tsx",
+          "./component": "./src/component.ts",
         },
         shared: {
           "esm-react": {

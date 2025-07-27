@@ -1,7 +1,6 @@
 import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
-import React from "react";
-import { version as ReactDomVersion } from "react-dom";
-import ReactDomClient from "react-dom/client";
+import React from "esm-react";
+import ReactDOMClient from "esm-react-dom";
 import App from "./App";
 import { preloadComponents, ComponentLibrary } from "./components";
 
@@ -75,7 +74,7 @@ const middlewareUser = {
     console.debug("🔍 fynapp-2-react18: Middleware config:", middlewareConfig);
 
     // Render the React component with middleware config
-    const root = ReactDomClient.createRoot(targetDiv);
+    const root = ReactDOMClient.createRoot ? ReactDOMClient.createRoot(targetDiv) : ReactDOMClient.default.createRoot(targetDiv);
 
     root.render(
       React.createElement(App, {

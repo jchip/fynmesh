@@ -2,7 +2,7 @@
 * This file handles dynamic imports of the reusable components from fynapp-x1
 * These imports are managed by the fynmesh kernel's module federation system
 */
-import React from 'react';
+import React from 'esm-react';
 
 // Type definition for the component library
 export type ComponentLibrary = {

@@ -97,6 +97,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   registerMiddleware(mwReg: FynAppMiddlewareReg): void {
     const { regKey, hostFynApp } = mwReg;
+    console.log(`🔧 Registering middleware: ${regKey}, autoApplyScope:`, mwReg.middleware.autoApplyScope);
 
     const versionMap = this.runTime.middlewares[regKey] || Object.create(null);
 
@@ -424,8 +425,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   private async applyAutoScopeMiddlewares(fynApp: FynApp, fynModule?: FynModule): Promise<void> {
+    console.log(`🎯 Auto-apply check for ${fynApp.name}: autoApplyMiddlewares exists?`, !!this.runTime.autoApplyMiddlewares);
     const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
-    if (!autoApplyMiddlewares) return;
+    if (!autoApplyMiddlewares) {
+      console.log(`⏭️ No auto-apply middlewares registered yet for ${fynApp.name}`);
+      return;
+    }
 
     // Determine if this is a middleware provider FynApp
     const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
@@ -491,11 +496,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * - call main as function or invoke it as a FynModule
    */
   async bootstrapFynApp(fynApp: FynApp): Promise<void> {
-    if (fynApp.entry.config?.loadMiddlewares) {
-      for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
-        if (exposeName.startsWith("./middleware")) {
-          await this.loadExposeModule(fynApp, exposeName, true);
-        }
+    // Always load middleware modules for all FynApps
+    for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
+      if (exposeName.startsWith("./middleware")) {
+        await this.loadExposeModule(fynApp, exposeName, true);
       }
     }
 

@@ -79,4 +79,8 @@ startDevProxy([
     { path: "/fynapp-design-tokens" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-design-tokens") },
   ],
+  [
+    { path: "/fynapp-shell-mw" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-shell-mw") },
+  ],
 ]);

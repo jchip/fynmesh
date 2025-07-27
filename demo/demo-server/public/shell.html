@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Shell Demo - Dynamic Loading</title>
+
+    <link href="/spectre.css/dist/spectre.css" rel="stylesheet">
+    <link href="/spectre.css/dist/spectre-exp.css" rel="stylesheet">
+    <link href="/spectre.css/dist/spectre-icons.css" rel="stylesheet">
+
+    <style>
+        /* Shell layout styles */
+        .shell-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shell-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #6366f1 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .shell-nav {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .shell-main {
+            flex: 1;
+            background: #ffffff;
+            overflow: auto;
+        }
+
+        .shell-sidebar {
+            width: 250px;
+            background: #f1f5f9;
+            border-right: 1px solid #e2e8f0;
+            padding: 1rem;
+        }
+
+        .shell-content {
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .shell-footer {
+            background: #1f2937;
+            color: white;
+            padding: 0.75rem 2rem;
+            font-size: 0.875rem;
+        }
+
+        .fynapp-placeholder {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            color: #64748b;
+            background: #f8fafc;
+        }
+
+        .loaded-fynapp {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .btn-load {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-load:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script src="/system.js"></script>
+    <script src="/federation-js/dist/federation-js.dev.js"></script>
+    <script src="/kernel/dist/fynmesh-browser-kernel.dev.js"></script>
+
+    <!-- Service Worker Setup -->
+    <script>
+      window.SW_BASE_PATH = "/";
+    </script>
+    <script src="/sw-utils.js"></script>
+
+    <script>
+        (async () => {
+            console.log("🏠 Starting FynMesh Shell Demo");
+
+                        try {
+                // Preload React dependencies first so they're available for dynamic FynApps
+                console.log("📦 Preloading React dependencies...");
+                await fynMeshKernel.loadFynApp("/fynapp-react-18/dist");
+                console.log("✅ React 18 preloaded");
+
+                                                await fynMeshKernel.loadFynApp("/fynapp-react-19/dist");
+                console.log("✅ React 19 preloaded");
+
+                // Preload middleware providers that FynApps depend on
+                console.log("📦 Preloading middleware providers...");
+                await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
+                console.log("✅ React middleware preloaded");
+
+                await fynMeshKernel.loadFynApp("/fynapp-design-tokens/dist");
+                console.log("✅ Design tokens middleware preloaded");
+
+                // Preload component libraries that FynApps depend on
+                console.log("📦 Preloading component libraries...");
+                await fynMeshKernel.loadFynApp("/fynapp-x1-v1/dist");
+                console.log("✅ FynApp X1 v1 preloaded");
+
+                                await fynMeshKernel.loadFynApp("/fynapp-x1-v2/dist");
+                console.log("✅ FynApp X1 v2 preloaded");
+
+                // Now load the shell middleware FynApp - it will handle everything else
+                console.log("🏠 Loading Shell Middleware /fynapp-shell-mw/dist");
+                await fynMeshKernel.loadFynApp("/fynapp-shell-mw/dist");
+                console.log("✅ Shell loaded and ready for dynamic FynApp loading");
+            } catch (error) {
+                console.error("❌ Failed to load shell:", error);
+                document.body.innerHTML = `
+                    <div style="padding: 2rem; text-align: center;">
+                        <h2 style="color: #dc2626;">Shell Loading Failed</h2>
+                        <p>Unable to load the shell middleware. Please check the console for details.</p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Shell will be rendered here by the shell middleware -->
+    <div id="shell-root">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;">
+            <div class="loading-indicator" style="width: 32px; height: 32px; border-width: 3px; margin-bottom: 1rem;"></div>
+            <p style="color: #6b7280;">Loading FynMesh Shell...</p>
+        </div>
+    </div>
+</body>
+</html>

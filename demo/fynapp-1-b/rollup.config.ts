@@ -34,8 +34,17 @@ export default [
         exposes: {
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
-          "./config": "./src/config.ts",
           "./App": "./src/App.tsx",
+          "./component": "./src/component.ts",
+        },
+        shared: {},
+        entry: {
+          header: `
+console.log('fynapp-1-b entry header');
+`,
+          footer: `
+console.log('fynapp-1-b entry footer');
+`,
         },
       }),
       ...setupReactAliasPlugins(),

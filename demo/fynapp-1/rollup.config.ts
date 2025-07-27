@@ -35,13 +35,12 @@ export default [
           "./hello": "./src/hello.ts",
           "./getInfo": "./src/getInfo.ts",
           "./App": "./src/App.tsx",
+          "./component": "./src/component.ts",
         },
         shared: {},
         entry: {
           header: `
 console.log('fynapp-1 entry header');
-import config from "./src/config.ts";
-export {config};
 `,
           footer: `
 console.log('fynapp-1 entry footer');

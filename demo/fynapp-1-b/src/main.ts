@@ -1,10 +1,6 @@
 import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
-import React from "react";
-import ReactDomClient from "react-dom/client";
 // Used by dynamic component imports
 import "./components";
-import App from "./App";
-import { preloadComponents, ComponentLibrary } from "./components";
 
 /**
  * Standardized middleware user interface
@@ -30,40 +26,10 @@ const middlewareUser = {
   },
 
   /**
-   * Main function - called when middleware is ready
+   * Main function - called when middleware is ready (setup only, no DOM manipulation)
    */
   async execute(runtime: FynModuleRuntime) {
-    console.debug("MiddlewareUser.main called", {
-      fynApp: runtime.fynApp.name,
-    });
-    console.debug(
-      `Bootstrapping ${runtime.fynApp.name} with React ${React.version}`
-    );
-
-    // Find or create the div element to render into
-    let targetDiv = document.getElementById("fynapp-1-b");
-    if (!targetDiv) {
-      targetDiv = document.createElement("div");
-      targetDiv.id = "fynapp-1-b";
-      document.body.appendChild(targetDiv);
-    }
-
-    // Load components from fynapp-x1
-    let componentLibrary: ComponentLibrary;
-    try {
-      componentLibrary = await preloadComponents();
-      console.debug("Successfully loaded component library from fynapp-x1");
-    } catch (error) {
-      console.error("Failed to load components from fynapp-x1:", error);
-      targetDiv.innerHTML = `
-        <div style="padding: 20px; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
-          <h3>Error Loading Components</h3>
-          <p>Failed to load component library from fynapp-x1. Check console for details.</p>
-          <button onclick="location.reload()">Retry</button>
-        </div>
-      `;
-      return;
-    }
+    console.debug("🚀 FynApp 1B initializing with middleware support");
 
     // Get the basic counter middleware data to access config
     const basicCounterData = runtime.middlewareContext.get("basic-counter");
@@ -75,18 +41,7 @@ const middlewareUser = {
     );
     console.debug("🔍 fynapp-1-b: Middleware config:", middlewareConfig);
 
-    // Render the React component with middleware config
-    const root = ReactDomClient.createRoot(targetDiv);
-    root.render(
-      React.createElement(App, {
-        appName: runtime.fynApp.name,
-        components: componentLibrary,
-        middlewareConfig,
-        runtime, // Pass runtime for middleware context access
-      })
-    );
-
-    console.debug(`${runtime.fynApp.name} bootstrapped successfully`);
+    console.debug("✅ FynApp 1B initialization complete - ready for component rendering");
   },
 };
 
