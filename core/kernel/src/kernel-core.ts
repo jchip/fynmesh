@@ -272,15 +272,84 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   private async invokeFynModule(fynMod: FynModule, fynApp: FynApp): Promise<void> {
     const runtime = this.createFynModuleRuntime(fynApp);
 
+    // NEW: Check for middleware execution overrides
+    const executionOverride = this.findExecutionOverride(fynApp, fynMod);
+    
+    if (executionOverride) {
+      console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+      
+      const context: FynAppMiddlewareCallContext = {
+        meta: { 
+          info: { 
+            name: executionOverride.middleware.name, 
+            provider: executionOverride.hostFynApp.name, 
+            version: executionOverride.hostFynApp.version 
+          }, 
+          config: {} 
+        },
+        fynMod,
+        fynApp,
+        reg: executionOverride,
+        runtime,
+        kernel: this,
+        status: "ready",
+      };
+
+      // Let middleware handle initialize
+      if (executionOverride.middleware.overrideInitialize && fynMod.initialize) {
+        console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
+        const initResult = await executionOverride.middleware.overrideInitialize(context);
+        console.debug(`🎭 Initialize result:`, initResult);
+      }
+
+      // Let middleware handle execute
+      if (executionOverride.middleware.overrideExecute && typeof fynMod.execute === 'function') {
+        console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
+        await executionOverride.middleware.overrideExecute(context);
+      }
+      
+      return;
+    }
+
+    // Original execution flow for non-overridden modules
     if (fynMod.initialize) {
       console.debug("🚀 Invoking module.initialize for", fynApp.name, fynApp.version);
-      await fynMod.initialize(runtime);
+      const initResult = await fynMod.initialize(runtime);
+      console.debug("🚀 Initialize result:", initResult);
     }
 
     if (fynMod.execute) {
       console.debug("🚀 Invoking module.execute for", fynApp.name, fynApp.version);
-      await fynMod.execute(runtime);
+      const executeResult = await fynMod.execute(runtime);
+      
+      // Handle typed execution result
+      if (executeResult) {
+        console.debug(`📦 FynModule returned typed result:`, executeResult.type, executeResult.metadata);
+      }
     }
+  }
+
+  private findExecutionOverride(fynApp: FynApp, fynModule: FynModule): FynAppMiddlewareReg | null {
+    const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
+    if (!autoApplyMiddlewares) return null;
+
+    // Check middleware that auto-applies to this FynApp type
+    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key => 
+      key.startsWith('./middleware')
+    );
+    
+    const targetMiddlewares = isMiddlewareProvider
+      ? autoApplyMiddlewares.middleware
+      : autoApplyMiddlewares.fynapp;
+
+    // Find first middleware that can override execution
+    for (const mwReg of targetMiddlewares) {
+      if (mwReg.middleware.canOverrideExecution?.(fynApp, fynModule)) {
+        return mwReg;
+      }
+    }
+
+    return null;
   }
 
   private checkSingleMiddlewareReady(cc: FynAppMiddlewareCallContext): boolean {
