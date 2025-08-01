@@ -19,8 +19,8 @@ class MiddlewareUser implements FynModule {
 
     // Return requirements that middleware will check
     return {
-      contextId: "counter", // Need counter context
-      isolationLevel: "primary", // We are the primary provider
+      status: "ready",
+      mode: "primary", // We are the primary provider
     };
   }
 
@@ -102,7 +102,6 @@ export const main = useMiddleware(
       version: "^1.0.0",
     },
     config: "primary", // Primary provider - creates and shares contexts
-    requireReady: true, // Wait for middleware to be ready before invoking
   },
   new MiddlewareUser()
 );

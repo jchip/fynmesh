@@ -202,17 +202,28 @@ $pkg:
    picomatch: ^4.0.2
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
-'@rollup/rollup-darwin-arm64':
- _latest: 4.45.3
+'@rollup/rollup-linux-x64-gnu':
+ _latest: 4.46.2
  _:
   4.45.3: 4.45.3
  4.45.3:
-  $: sha512-6CfLF3eqKhCdhK0GUnR5ZS99OFz+dtOeB/uePznLKxjCsk5QjT/V0eSEBb4vj+o/ri3i35MseSEQHCLLAgClVw==
-  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.45.3.tgz'
+  $: sha512-SUDXU5YabLAMl86FpupSQQEWzVG8X0HM+Q/famnJusbPiUgQnTGuSxtxg4UAYgv1ZmRV1nioYYXsgtSokU/7+Q==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.45.3.tgz'
   os:
-   - darwin
+   - linux
   cpu:
-   - arm64
+   - x64
+'@rollup/rollup-linux-x64-musl':
+ _latest: 4.46.2
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  $: sha512-ezmqknOUFgZMN6wW+Avlo4sXF3Frswd+ncrwMz4duyZ5Eqd+dAYgJ+A1MY+12LNZ7XDhCiijJceueYvtnzdviw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - x64
 '@types/estree':
  _latest: 1.0.8
  _:
@@ -514,15 +525,6 @@ fs.realpath:
  1.0.0:
   $: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
   _: 'https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz'
-fsevents:
- _latest: 2.3.3
- _:
-  ~2.3.2: 2.3.3
- 2.3.3:
-  $: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==
-  _: 'https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz'
-  os:
-   - darwin
 function-bind:
  _latest: 1.1.2
  _:
