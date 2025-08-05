@@ -117,6 +117,7 @@ class FynMeshKernelCore {
      */
     registerMiddleware(mwReg) {
         const { regKey, hostFynApp } = mwReg;
+        console.log(`🔧 Registering middleware: ${regKey}, autoApplyScope:`, mwReg.middleware.autoApplyScope);
         const versionMap = this.runTime.middlewares[regKey] || Object.create(null);
         // Check if this exact middleware version is already registered
         if (versionMap[hostFynApp.version]) {
@@ -129,7 +130,22 @@ class FynMeshKernelCore {
             versionMap.default = mwReg;
         }
         this.runTime.middlewares[regKey] = versionMap;
-        console.debug(`✅ Registered middleware: ${regKey}@${hostFynApp.version}`);
+        const autoApplyScope = mwReg.middleware.autoApplyScope || [];
+        if (autoApplyScope.length > 0) {
+            if (!this.runTime.autoApplyMiddlewares) {
+                this.runTime.autoApplyMiddlewares = { fynapp: [], middleware: [] };
+            }
+            if (autoApplyScope.includes("all") || autoApplyScope.includes("fynapp")) {
+                this.runTime.autoApplyMiddlewares.fynapp.push(mwReg);
+            }
+            if (autoApplyScope.includes("all") || autoApplyScope.includes("middleware")) {
+                this.runTime.autoApplyMiddlewares.middleware.push(mwReg);
+            }
+            console.debug(`🎯 Registered auto-apply middleware for [${autoApplyScope.join(', ')}]: ${regKey}@${hostFynApp.version}`);
+        }
+        else {
+            console.debug(`✅ Registered explicit-use middleware: ${regKey}@${hostFynApp.version}`);
+        }
     }
     /**
      * Get middleware by name and provider
@@ -236,14 +252,70 @@ class FynMeshKernelCore {
     }
     async invokeFynModule(fynMod, fynApp) {
         const runtime = this.createFynModuleRuntime(fynApp);
+        // NEW: Check for middleware execution overrides
+        const executionOverride = this.findExecutionOverride(fynApp, fynMod);
+        if (executionOverride) {
+            console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+            const context = {
+                meta: {
+                    info: {
+                        name: executionOverride.middleware.name,
+                        provider: executionOverride.hostFynApp.name,
+                        version: executionOverride.hostFynApp.version
+                    },
+                    config: {}
+                },
+                fynMod,
+                fynApp,
+                reg: executionOverride,
+                runtime,
+                kernel: this,
+                status: "ready",
+            };
+            // Let middleware handle initialize
+            if (executionOverride.middleware.overrideInitialize && fynMod.initialize) {
+                console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
+                const initResult = await executionOverride.middleware.overrideInitialize(context);
+                console.debug(`🎭 Initialize result:`, initResult);
+            }
+            // Let middleware handle execute
+            if (executionOverride.middleware.overrideExecute && typeof fynMod.execute === 'function') {
+                console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
+                await executionOverride.middleware.overrideExecute(context);
+            }
+            return;
+        }
+        // Original execution flow for non-overridden modules
         if (fynMod.initialize) {
             console.debug("🚀 Invoking module.initialize for", fynApp.name, fynApp.version);
-            await fynMod.initialize(runtime);
+            const initResult = await fynMod.initialize(runtime);
+            console.debug("🚀 Initialize result:", initResult);
         }
         if (fynMod.execute) {
             console.debug("🚀 Invoking module.execute for", fynApp.name, fynApp.version);
-            await fynMod.execute(runtime);
+            const executeResult = await fynMod.execute(runtime);
+            // Handle typed execution result
+            if (executeResult) {
+                console.debug(`📦 FynModule returned typed result:`, executeResult.type, executeResult.metadata);
+            }
         }
+    }
+    findExecutionOverride(fynApp, fynModule) {
+        const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
+        if (!autoApplyMiddlewares)
+            return null;
+        // Check middleware that auto-applies to this FynApp type
+        const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key => key.startsWith('./middleware'));
+        const targetMiddlewares = isMiddlewareProvider
+            ? autoApplyMiddlewares.middleware
+            : autoApplyMiddlewares.fynapp;
+        // Find first middleware that can override execution
+        for (const mwReg of targetMiddlewares) {
+            if (mwReg.middleware.canOverrideExecution?.(fynApp, fynModule)) {
+                return mwReg;
+            }
+        }
+        return null;
     }
     checkSingleMiddlewareReady(cc) {
         if (this.middlewareReady.has(cc.reg.fullKey)) {
@@ -354,21 +426,79 @@ class FynMeshKernelCore {
             .filter((cc) => cc.meta !== undefined);
         return this.callMiddlewares(ccs);
     }
+    async applyAutoScopeMiddlewares(fynApp, fynModule) {
+        console.log(`🎯 Auto-apply check for ${fynApp.name}: autoApplyMiddlewares exists?`, !!this.runTime.autoApplyMiddlewares);
+        const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
+        if (!autoApplyMiddlewares) {
+            console.log(`⏭️ No auto-apply middlewares registered yet for ${fynApp.name}`);
+            return;
+        }
+        // Determine if this is a middleware provider FynApp
+        const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key => key.startsWith('./middleware'));
+        // Apply middleware based on FynApp type
+        const targetMiddlewares = isMiddlewareProvider
+            ? autoApplyMiddlewares.middleware
+            : autoApplyMiddlewares.fynapp;
+        for (const mwReg of targetMiddlewares) {
+            // Check if middleware has a filter function and call it
+            if (mwReg.middleware.shouldApply) {
+                try {
+                    const shouldApply = mwReg.middleware.shouldApply(fynApp);
+                    if (!shouldApply) {
+                        console.debug(`⏭️ Skipping middleware ${mwReg.regKey} for ${fynApp.name} (filtered out)`);
+                        continue;
+                    }
+                }
+                catch (error) {
+                    console.error(`❌ Error in shouldApply for ${mwReg.regKey}:`, error);
+                    continue;
+                }
+            }
+            console.debug(`🔄 Auto-applying ${mwReg.middleware.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`);
+            const context = {
+                meta: {
+                    info: {
+                        name: mwReg.middleware.name,
+                        provider: mwReg.hostFynApp.name,
+                        version: mwReg.hostFynApp.version,
+                    },
+                    config: {},
+                },
+                fynMod: fynModule || { async execute() { } },
+                fynApp,
+                reg: mwReg,
+                runtime: this.createFynModuleRuntime(fynApp),
+                kernel: this,
+                status: "ready",
+            };
+            try {
+                if (mwReg.middleware.setup) {
+                    await mwReg.middleware.setup(context);
+                }
+                if (mwReg.middleware.apply) {
+                    await mwReg.middleware.apply(context);
+                }
+            }
+            catch (error) {
+                console.error(`❌ Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}:`, error);
+            }
+        }
+    }
     /**
      * Bootstrap a fynapp by:
      * - call main as function or invoke it as a FynModule
      */
     async bootstrapFynApp(fynApp) {
-        if (fynApp.entry.config?.loadMiddlewares) {
-            for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
-                if (exposeName.startsWith("./middleware")) {
-                    await this.loadExposeModule(fynApp, exposeName, true);
-                }
+        // Always load middleware modules for all FynApps
+        for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
+            if (exposeName.startsWith("./middleware")) {
+                await this.loadExposeModule(fynApp, exposeName, true);
             }
         }
         const mainFynModule = fynApp.exposes["./main"]?.main;
         if (mainFynModule) {
             console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+            await this.applyAutoScopeMiddlewares(fynApp, mainFynModule);
             if (typeof mainFynModule === "function") {
                 await mainFynModule(this.createFynModuleRuntime(fynApp));
             }

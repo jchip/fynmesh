@@ -6,34 +6,42 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-COGvL4BT.js"
+        "/home/joel1/dev/fynmesh/demo/fynapp-1/src/components.ts",
+        "/home/joel1/dev/fynmesh/demo/fynapp-1/src/App.tsx",
+        "esm-react",
+        "esm-react-dom",
+        "main-BqksXXYQ.js"
       ]
     },
     "./hello": {
       "path": "./src/hello.ts",
       "chunks": [
-        "hello-CvCGD_S0.js"
+        "hello-DqD-ezWy.js"
       ]
     },
     "./getInfo": {
       "path": "./src/getInfo.ts",
       "chunks": [
-        "getInfo-2LmwbDQd.js"
+        "getInfo-BBlsI0x1.js"
       ]
     },
     "./App": {
       "path": "./src/App.tsx",
       "chunks": [
-        "App-D_vs7PXJ.js"
+        "App-boHcTULx.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-DX8UEf8V.js"
       ]
     }
   },
   "shared": {
     "esm-react": {
       "moduleIds": [],
-      "chunks": [
-        "esm-react"
-      ],
+      "chunks": [],
       "config": {
         "import": false,
         "singleton": false,
@@ -42,9 +50,7 @@
     },
     "esm-react-dom": {
       "moduleIds": [],
-      "chunks": [
-        "esm-react-dom"
-      ],
+      "chunks": [],
       "config": {
         "import": false,
         "singleton": false,
@@ -52,6 +58,6 @@
       }
     }
   },
-  "timestamp": "2025-07-20T18:52:28.824Z",
+  "timestamp": "2025-08-05T04:24:51.165Z",
   "version": "1.0.0"
 }

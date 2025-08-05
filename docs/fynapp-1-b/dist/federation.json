@@ -6,7 +6,11 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-_jps_KNR.js"
+        "/home/joel1/dev/fynmesh/demo/fynapp-1-b/src/components.ts",
+        "/home/joel1/dev/fynmesh/demo/fynapp-1-b/src/App.tsx",
+        "esm-react",
+        "esm-react-dom",
+        "main-BwHgsi-2.js"
       ]
     },
     "./hello": {
@@ -21,16 +25,16 @@
         "getInfo-CtSirF8z.js"
       ]
     },
-    "./config": {
-      "path": "./src/config.ts",
-      "chunks": [
-        "config-BaH5wfO1.js"
-      ]
-    },
     "./App": {
       "path": "./src/App.tsx",
       "chunks": [
         "App-CnJ7GSFo.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-DnsDZIta.js"
       ]
     }
   },
@@ -54,6 +58,6 @@
       }
     }
   },
-  "timestamp": "2025-07-17T19:32:39.682Z",
+  "timestamp": "2025-08-05T04:24:51.173Z",
   "version": "1.0.0"
 }

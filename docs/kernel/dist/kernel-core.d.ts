@@ -40,11 +40,13 @@ export declare abstract class FynMeshKernelCore implements FynMeshKernel {
     loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp>;
     private createFynModuleRuntime;
     private invokeFynModule;
+    private findExecutionOverride;
     private checkSingleMiddlewareReady;
     private checkMiddlewareReady;
     private checkDeferCalls;
     private callMiddlewares;
     private useMiddlewareOnFynModule;
+    private applyAutoScopeMiddlewares;
     /**
      * Bootstrap a fynapp by:
      * - call main as function or invoke it as a FynModule

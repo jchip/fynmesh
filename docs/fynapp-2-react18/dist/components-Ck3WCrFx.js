@@ -1,0 +1,2 @@
+!function(n){n._mfBind({n:"components",f:"components-Ck3WCrFx.js",c:"fynapp-2-react18",s:"fynmesh",e:!1,v:"1.0.0"},["src"]).register(["esm-react"],(function(e,t){"use strict";return{setters:[null],execute:function(){e("p",(async()=>{try{return await n._importExpose("-MF_EXPOSE fynapp-x1/main ^1.0.0")}catch(n){throw console.error("Failed to load components from fynapp-x1:",n),n}}))}}}))}(globalThis.Federation);
+//# sourceMappingURL=components-Ck3WCrFx.js.map

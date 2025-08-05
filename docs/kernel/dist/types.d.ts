@@ -58,14 +58,57 @@ export type FynModuleRuntime = {
     [key: string]: any;
 };
 /**
+ * Execution result type definitions for strongly typed FynModule results
+ */
+export interface FynModuleExecutionResult {
+    type: 'component-factory' | 'rendered-content' | 'self-managed' | 'no-render';
+    metadata?: {
+        framework: string;
+        version: string;
+        capabilities: string[];
+    };
+}
+export interface ComponentFactoryResult extends FynModuleExecutionResult {
+    type: 'component-factory';
+    componentFactory: (React: any) => {
+        component: any;
+        props?: Record<string, any>;
+    };
+}
+export interface RenderedContentResult extends FynModuleExecutionResult {
+    type: 'rendered-content';
+    content: HTMLElement | string;
+}
+export interface SelfManagedResult extends FynModuleExecutionResult {
+    type: 'self-managed';
+    target: HTMLElement;
+    cleanup?: () => void;
+}
+export interface NoRenderResult extends FynModuleExecutionResult {
+    type: 'no-render';
+    message?: string;
+}
+export type FynModuleResult = ComponentFactoryResult | RenderedContentResult | SelfManagedResult | NoRenderResult;
+export interface ComponentProps {
+    fynAppName: string;
+    runtime: FynModuleRuntime;
+    [key: string]: any;
+}
+/**
  * Standardized interface for FynMesh modules (formerly MiddlewareUserCode)
  */
 export interface FynModule {
     __middlewareMeta?: MiddlewareUseMeta<unknown>[];
     /** Tell middleware what you need - called first to determine readiness */
-    initialize?(runtime: FynModuleRuntime): any;
+    initialize?(runtime: FynModuleRuntime): Promise<{
+        status: string;
+        mode?: string;
+    }> | {
+        status: string;
+        mode?: string;
+    };
     /** Do your actual work - called when middleware is ready */
-    execute(runtime: FynModuleRuntime): Promise<void> | void;
+    execute(runtime: FynModuleRuntime): Promise<FynModuleResult | void> | FynModuleResult | void;
     [key: string]: any;
 }
 /**
@@ -108,12 +151,23 @@ export type FynAppMiddlewareCallContext = {
 export type FynAppMiddleware = {
     /** name of the middleware */
     name: string;
+    /** Controls automatic application. Explicit useMiddleware() calls always work regardless of autoApplyScope */
+    autoApplyScope?: ("all" | "fynapp" | "middleware")[];
+    /** Optional filter function to determine if this middleware should apply to a specific FynApp */
+    shouldApply?(fynApp: FynApp): boolean;
     /** one time setup for the middleware */
     setup?(context: FynAppMiddlewareCallContext): Promise<{
         status: string;
     }>;
     /** apply the middleware to a fynapp with context */
     apply?(context: FynAppMiddlewareCallContext): Promise<void> | void;
+    /** NEW: Execution override capabilities */
+    canOverrideExecution?(fynApp: FynApp, fynModule: FynModule): boolean;
+    overrideInitialize?(context: FynAppMiddlewareCallContext): Promise<{
+        status: string;
+        mode?: string;
+    }>;
+    overrideExecute?(context: FynAppMiddlewareCallContext): Promise<void>;
 };
 export type FynAppMiddlewareReg = {
     /** key used to register the middleware with the kernel */
@@ -151,6 +205,11 @@ export type FynMeshRuntimeData = {
      * Key format: "provider::middleware-name"
      */
     middlewares: MiddlewareRegistry;
+    /** Auto-applying middleware categorized by scope */
+    autoApplyMiddlewares?: {
+        fynapp: FynAppMiddlewareReg[];
+        middleware: FynAppMiddlewareReg[];
+    };
 };
 /**
  * Middleware lookup options

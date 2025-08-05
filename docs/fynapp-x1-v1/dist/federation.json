@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.tsx",
       "chunks": [
-        "main-DUACGLfb.js"
+        "main-CT3Z6i_p.js"
       ]
     }
   },
@@ -30,6 +30,6 @@
       }
     }
   },
-  "timestamp": "2025-07-17T19:32:37.896Z",
+  "timestamp": "2025-08-05T04:24:48.106Z",
   "version": "1.0.0"
 }

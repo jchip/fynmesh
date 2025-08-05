@@ -6,22 +6,20 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-c47p0ikH.js"
+        "main-DRuD8T3-.js"
       ]
     },
     "./middleware/react-context": {
       "path": "./src/middleware/react-context.tsx",
       "chunks": [
-        "react-context-CVNge9KK.js"
+        "react-context-vqKz4Z2O.js"
       ]
     }
   },
   "shared": {
     "esm-react": {
       "moduleIds": [],
-      "chunks": [
-        "esm-react"
-      ],
+      "chunks": [],
       "config": {
         "import": false,
         "singleton": false,
@@ -30,9 +28,7 @@
     },
     "esm-react-dom": {
       "moduleIds": [],
-      "chunks": [
-        "esm-react-dom"
-      ],
+      "chunks": [],
       "config": {
         "import": false,
         "singleton": false,
@@ -40,6 +36,6 @@
       }
     }
   },
-  "timestamp": "2025-07-20T18:52:26.953Z",
+  "timestamp": "2025-08-05T04:24:43.315Z",
   "version": "1.0.0"
 }

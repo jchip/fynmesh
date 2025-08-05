@@ -6,7 +6,19 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-rUgfumEV.js"
+        "main-BemYNZXn.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-Vb4hJqlr.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-BiOW-RGS.js"
       ]
     }
   },
@@ -28,6 +40,6 @@
       }
     }
   },
-  "timestamp": "2025-07-17T19:32:36.382Z",
+  "timestamp": "2025-08-05T04:24:46.352Z",
   "version": "1.0.0"
 }

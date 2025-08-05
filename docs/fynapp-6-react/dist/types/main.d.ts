@@ -7,8 +7,8 @@ declare class MiddlewareUser implements FynModule {
      * Tell middleware what we need - called first to determine readiness
      */
     initialize(runtime: FynModuleRuntime): {
-        contextId: string;
-        isolationLevel: string;
+        status: string;
+        mode: string;
     };
     /**
      * Do our actual work - called when middleware is ready

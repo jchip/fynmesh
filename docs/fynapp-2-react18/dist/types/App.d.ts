@@ -1,4 +1,4 @@
-import React from "react";
+import React from "esm-react";
 import type { ComponentLibrary } from "./components";
 import type { FynModuleRuntime } from "@fynmesh/kernel";
 interface AppProps {

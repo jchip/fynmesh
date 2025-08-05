@@ -6,10 +6,10 @@
   "shared": {
     "esm-react": {
       "moduleIds": [
-        "node_modules/esm-react/src/react-esm-18.development.js"
+        "node_modules/esm-react/src/react-esm-18.production.js"
       ],
       "chunks": [
-        "react-esm-18.development-BZXtcs1e.js"
+        "react-esm-18.production-kDNkDYSX.js"
       ],
       "config": {
         "singleton": true,
@@ -17,32 +17,30 @@
       },
       "importers": [
         {
-          "dir": "/Users/jchen26/dev/fynmesh/demo/fynapp-react-18/src",
-          "path": "node_modules/esm-react/src/react-esm-18.development.js"
+          "dir": "/home/joel1/dev/fynmesh/demo/fynapp-react-18/src",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
         },
         {
-          "dir": "/Users/jchen26/dev/fynmesh/demo/fynapp-react-18/node_modules/esm-react-dom/dist",
-          "path": "node_modules/esm-react/src/react-esm-18.development.js"
+          "dir": "/home/joel1/dev/fynmesh/demo/fynapp-react-18/node_modules/esm-react-dom/dist",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
         }
       ],
       "versions": [
         {
           "version": "18.3.1",
-          "path": "node_modules/esm-react/src/react-esm-18.development.js"
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
         }
       ]
     },
     "esm-react-dom": {
       "moduleIds": [],
-      "chunks": [
-        "./react-dom-esm-18-client.development-C25NYoBg.js"
-      ],
+      "chunks": [],
       "config": {
         "singleton": true,
         "requiredVersion": "^18.0.0"
       }
     }
   },
-  "timestamp": "2025-07-20T18:52:26.385Z",
+  "timestamp": "2025-08-05T04:24:15.693Z",
   "version": "18.3.0"
 }

@@ -1,5 +1,4 @@
-import type { FynModuleRuntime } from "@fynmesh/kernel";
-import "./components";
+import type { FynModuleRuntime, ComponentFactoryResult, SelfManagedResult, NoRenderResult } from "@fynmesh/kernel";
 export declare const main: {
     /**
      * Tell middleware what we need - called first to determine readiness
@@ -11,5 +10,5 @@ export declare const main: {
     /**
      * Main function - called when middleware is ready
      */
-    execute(runtime: FynModuleRuntime): Promise<void>;
+    execute(runtime: FynModuleRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void>;
 };
