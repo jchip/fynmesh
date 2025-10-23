@@ -1,6 +1,5 @@
 coverage
 dist
-.parcel-cache
 .fynpo
 node_modules
 rollup-federation
@@ -11,3 +10,5 @@ systemjs
 .vscode
 docs
 docs-temp
+.temp
+.playwright-mcp

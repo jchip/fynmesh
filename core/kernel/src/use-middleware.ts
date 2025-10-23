@@ -17,7 +17,7 @@ export const useMiddleware = <UserT extends FynModule = FynModule>(
 };
 
 export const noOpMiddlewareUser: FynModule = {
-  initialize: () => { },
+  initialize: () => ({ status: "ready" }),
   execute: () => { },
 };
 

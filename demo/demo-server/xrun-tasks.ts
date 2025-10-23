@@ -25,16 +25,16 @@ load({
     },
 
     "build-demo-site": {
-        desc: "Build demo site for GitHub Pages with /fynmesh/ base path",
+        desc: "Build demo site for GitHub Pages with / base path",
         task: async () => {
             // Dynamic import of the TypeScript build function
             const { buildDemoSite } = await import("./scripts/build-demo-site.mts");
 
-            console.log("🚀 Building demo site for GitHub Pages (/fynmesh/)...");
+            console.log("🚀 Building demo site for GitHub Pages (/)...");
 
             const success = await buildDemoSite({
                 verbose: true,
-                pathPrefix: "/fynmesh/",
+                pathPrefix: "/",
                 outputDir: "../../docs"
             });
 

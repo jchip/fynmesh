@@ -1,4 +1,14 @@
-import type { FynAppMiddleware, FynAppMiddlewareCallContext, FynApp } from "@fynmesh/kernel";
+import type { 
+  FynAppMiddleware, 
+  FynAppMiddlewareCallContext, 
+  FynApp, 
+  FynModule,
+  FynModuleResult,
+  ComponentFactoryResult,
+  RenderedContentResult,
+  SelfManagedResult,
+  NoRenderResult
+} from "@fynmesh/kernel";
 
 export class ShellLayoutMiddleware implements FynAppMiddleware {
   public readonly name = "shell-layout";
@@ -11,6 +21,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   private shellRuntime: any = null;
   private kernel: any = null; // Store kernel reference for dynamic loading
   private fynappContainers = new Map<string, HTMLElement>(); // Store container elements for each FynApp
+  private selfManagedApps = new Map<string, SelfManagedResult>(); // Track self-managed FynApps
 
   async setup(context: FynAppMiddlewareCallContext): Promise<{ status: string }> {
     console.log("🏠 Shell Layout middleware setup started");
@@ -444,6 +455,190 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       console.error(`❌ Failed to render component for ${fynApp.name}:`, error);
       this.fallbackRender(container, fynApp.name);
     }
+  }
+
+  // NEW: Execution override methods
+  canOverrideExecution(fynApp: FynApp, fynModule: FynModule): boolean {
+    // Override execution only if shell is available and FynApp is not the shell itself
+    return !!this.shellContentContainer && fynApp.name !== 'fynapp-shell-mw';
+  }
+
+  async overrideInitialize(context: FynAppMiddlewareCallContext): Promise<{ status: string; mode?: string }> {
+    const { fynMod, fynApp, runtime } = context;
+    
+    console.debug(`🎭 Shell middleware overriding initialize for ${fynApp.name}`);
+    
+    // Enhance runtime with shell-specific context
+    runtime.middlewareContext.set(this.name, {
+      ...runtime.middlewareContext.get(this.name),
+      isShellManaged: true,
+      renderTarget: this.getOrCreateRenderTarget(fynApp.name),
+      shellMode: 'component',
+    });
+
+    // Call original initialize if it exists, with enhanced context
+    if (fynMod.initialize) {
+      const result = await fynMod.initialize(runtime);
+      console.debug(`🎭 Original initialize returned:`, result);
+      return { ...result, mode: 'shell-managed' };
+    }
+    
+    return { status: 'ready', mode: 'shell-managed' };
+  }
+
+  async overrideExecute(context: FynAppMiddlewareCallContext): Promise<void> {
+    const { fynMod, fynApp, runtime } = context;
+    
+    console.debug(`🎭 Shell middleware overriding execute for ${fynApp.name}`);
+
+    // Execute with proper type handling
+    const result = await this.executeWithShellContext(fynMod, runtime);
+    
+    // Type-safe result handling
+    if (result) {
+      await this.handleTypedExecutionResult(fynApp.name, result);
+    } else {
+      await this.tryDetectAndRenderComponent(fynApp);
+    }
+  }
+
+  private async executeWithShellContext(fynMod: FynModule, runtime: any): Promise<FynModuleResult | null> {
+    if (!fynMod.execute) return null;
+
+    try {
+      const result = await fynMod.execute(runtime);
+      
+      // Type guard to ensure we have a proper result
+      if (result && this.isValidExecutionResult(result)) {
+        return result;
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.error(`❌ Error in shell-aware execute:`, error);
+      throw error;
+    }
+  }
+
+  // Type guard function
+  private isValidExecutionResult(result: any): result is FynModuleResult {
+    return result && 
+           typeof result === 'object' && 
+           typeof result.type === 'string' &&
+           ['component-factory', 'rendered-content', 'self-managed', 'no-render'].includes(result.type);
+  }
+
+  private async handleTypedExecutionResult(fynAppName: string, result: FynModuleResult): Promise<void> {
+    console.debug(`🎨 Handling typed execution result for ${fynAppName}:`, result.type);
+
+    switch (result.type) {
+      case 'component-factory':
+        await this.renderComponentFactory(fynAppName, result.componentFactory);
+        break;
+        
+      case 'rendered-content':
+        this.renderContent(fynAppName, result.content);
+        break;
+        
+      case 'self-managed':
+        this.handleSelfManaged(fynAppName, result);
+        break;
+        
+      case 'no-render':
+        console.debug(`📝 ${fynAppName} chose not to render: ${result.message || 'No reason provided'}`);
+        this.renderNoContent(fynAppName, result.message);
+        break;
+        
+      default:
+        // TypeScript will catch this as unreachable if all cases are handled
+        const exhaustiveCheck: never = result;
+        console.warn(`🤷 Unknown result type for ${fynAppName}:`, exhaustiveCheck);
+        this.fallbackRender(this.getAppContainer(fynAppName), fynAppName);
+    }
+  }
+
+  private async renderComponentFactory(fynAppName: string, componentFactory: ComponentFactoryResult['componentFactory']): Promise<void> {
+    const container = this.getAppContainer(fynAppName);
+    
+    const React = await this.getShellReact();
+    const ReactDOM = await this.getShellReactDOM();
+    
+    try {
+      const { component: Component, props = {} } = componentFactory(React);
+      const element = React.createElement(Component, {
+        fynAppName,
+        runtime: this.shellRuntime,
+        ...props
+      });
+      
+      const root = ReactDOM.createRoot(container);
+      root.render(element);
+      
+      console.log(`✅ Component factory rendered for ${fynAppName}`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to render component factory for ${fynAppName}:`, error);
+      this.fallbackRender(container, fynAppName);
+    }
+  }
+
+  private renderContent(fynAppName: string, content: HTMLElement | string): void {
+    const container = this.getAppContainer(fynAppName);
+    
+    if (typeof content === 'string') {
+      container.innerHTML = content;
+    } else {
+      container.innerHTML = '';
+      container.appendChild(content);
+    }
+    
+    console.debug(`🎨 Content rendered for ${fynAppName}`);
+  }
+
+  private handleSelfManaged(fynAppName: string, result: SelfManagedResult): void {
+    console.debug(`🔧 ${fynAppName} is self-managing DOM in target:`, result.target);
+    this.selfManagedApps.set(fynAppName, result);
+  }
+
+  private renderNoContent(fynAppName: string, message?: string): void {
+    const container = this.getAppContainer(fynAppName);
+    container.innerHTML = `
+      <div style="padding: 1rem; text-align: center; color: #6b7280;">
+        <p>📦 ${fynAppName}</p>
+        <p><small>${message || 'No content to render'}</small></p>
+      </div>
+    `;
+  }
+
+  private getOrCreateRenderTarget(fynAppName: string): HTMLElement {
+    const container = this.getAppContainer(fynAppName);
+    return container;
+  }
+
+  private getAppContainer(fynAppName: string): HTMLElement {
+    const existing = this.fynappContainers.get(fynAppName);
+    if (existing) return existing;
+
+    // Create a new container if it doesn't exist
+    const container = document.createElement('div');
+    container.className = 'fynapp-render-target';
+    this.fynappContainers.set(fynAppName, container);
+    return container;
+  }
+
+  private async getShellReact(): Promise<any> {
+    // For now, let's import React dynamically
+    // In a real implementation, the shell would have its own React version
+    const React = await import('react');
+    return React.default;
+  }
+
+  private async getShellReactDOM(): Promise<any> {
+    // For now, let's import ReactDOM dynamically
+    // In a real implementation, the shell would have its own ReactDOM version
+    const ReactDOM = await import('react-dom/client');
+    return ReactDOM.default;
   }
 
   private fallbackRender(container: HTMLElement, fynAppName: string): void {

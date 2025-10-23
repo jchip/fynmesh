@@ -30,7 +30,15 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
   protected runTime: FynMeshRuntimeData;
 
-  protected middlewareReady: Map<string, boolean> = new Map();
+  protected middlewareReady: Map<string, any> = new Map();
+
+  // Bootstrap coordination state
+  protected bootstrappingApp: string | null = null;
+  protected deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void }> = [];
+
+  // Track FynApp bootstrap status and provider/consumer relationships
+  protected fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
+  protected fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
 
   constructor() {
     this.events = new FynEventTarget();
@@ -42,6 +50,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     this.events.on("MIDDLEWARE_READY", (event: Event) => {
       this.handleMiddlewareReady(event as CustomEvent);
     });
+
+    this.events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
+      this.handleFynAppBootstrapped(event as CustomEvent);
+    });
   }
 
   /**
@@ -50,6 +62,25 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   async emitAsync(event: CustomEvent): Promise<boolean> {
     return this.events.dispatchEvent(event);
+  }
+
+  /**
+   * Programmatic API for middlewares to signal readiness.
+   * This mirrors MIDDLEWARE_READY event handling but avoids requiring a DOM CustomEvent.
+   */
+  async signalMiddlewareReady(
+    cc: FynAppMiddlewareCallContext,
+    detail: { name?: string; status?: string; share?: any } = {},
+  ): Promise<void> {
+    const event = new CustomEvent("MIDDLEWARE_READY", {
+      detail: {
+        name: detail.name || cc.reg.middleware.name,
+        status: detail.status || "ready",
+        share: detail.share,
+        cc,
+      },
+    });
+    await this.emitAsync(event);
   }
 
   private async handleMiddlewareReady(event: CustomEvent): Promise<void> {
@@ -90,6 +121,89 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     console.debug(
       `✅ Middleware ${name} status: ${status} regKey: ${cc.reg.regKey} now: ${Date.now()}`,
     );
+  }
+
+  /**
+   * Handle FynApp bootstrap completion event
+   * Resume any deferred bootstraps that have their dependencies satisfied
+   */
+  private async handleFynAppBootstrapped(event: CustomEvent): Promise<void> {
+    const { name } = event.detail;
+
+    console.debug(`✅ FynApp ${name} bootstrap complete, checking deferred bootstraps`);
+
+    // Mark this FynApp as bootstrapped
+    this.fynAppBootstrapStatus.set(name, "bootstrapped");
+
+    // Clear the currently bootstrapping app
+    this.bootstrappingApp = null;
+
+    // Find the FIRST deferred bootstrap whose dependencies are now satisfied
+    let nextIndex = -1;
+    for (let i = 0; i < this.deferredBootstraps.length; i++) {
+      const deferred = this.deferredBootstraps[i];
+      if (this.areBootstrapDependenciesSatisfied(deferred.fynApp)) {
+        nextIndex = i;
+        break;
+      }
+    }
+
+    // Resume the ready FynApp and remove from queue
+    if (nextIndex >= 0) {
+      const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
+      console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
+      next.resolve();
+    } else if (this.deferredBootstraps.length > 0) {
+      console.debug(
+        `⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`
+      );
+    }
+  }
+
+  /**
+   * Check if a FynApp's bootstrap dependencies are satisfied
+   */
+  private areBootstrapDependenciesSatisfied(fynApp: FynApp): boolean {
+    // Get this FynApp's provider/consumer modes for each middleware
+    const modes = this.fynAppProviderModes.get(fynApp.name);
+    if (!modes) {
+      // No provider/consumer info, dependencies are satisfied
+      return true;
+    }
+
+    // Check each middleware this FynApp uses
+    for (const [middlewareName, mode] of modes.entries()) {
+      if (mode === "consumer") {
+        // This FynApp is a consumer - find the provider
+        const providerName = this.findProviderForMiddleware(middlewareName, fynApp.name);
+
+        if (providerName && !this.fynAppBootstrapStatus.has(providerName)) {
+          // Provider exists but hasn't bootstrapped yet
+          console.debug(
+            `⏳ ${fynApp.name} waiting for provider ${providerName} to bootstrap (middleware: ${middlewareName})`
+          );
+          return false;
+        }
+      }
+    }
+
+    // All dependencies satisfied
+    return true;
+  }
+
+  /**
+   * Find which FynApp is the provider for a given middleware
+   */
+  private findProviderForMiddleware(middlewareName: string, excludeFynApp: string): string | null {
+    for (const [fynAppName, modes] of this.fynAppProviderModes.entries()) {
+      if (fynAppName === excludeFynApp) continue;
+
+      const mode = modes.get(middlewareName);
+      if (mode === "provider") {
+        return fynAppName;
+      }
+    }
+    return null;
   }
 
   /**
@@ -152,7 +266,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         }
       }
     }
-
+    // Fallback: scan all providers for first available default match
+    for (const [key, versionMap] of Object.entries(this.runTime.middlewares)) {
+      if (key.endsWith(`::${name}`)) {
+        const mwReg = (versionMap as any)["default"];
+        if (mwReg) return mwReg;
+      }
+    }
     return DummyMiddlewareReg;
   }
 
@@ -179,6 +299,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     loadMiddlewares?: boolean,
   ): Promise<any> {
     const container = fynApp.entry.container;
+    if (!container?.$E[exposeName]) {
+      console.debug(`❌ No expose module '${exposeName}' found for`, fynApp.name, fynApp.version);
+      return;
+    }
     if (container?.$E[exposeName]) {
       const factory = await fynApp.entry.get(exposeName);
       const exposedModule = factory();
@@ -216,8 +340,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         }
 
         return exposedModule;
-      } else {
-        console.debug(`❌ No expose module '${exposeName}' found for`, fynApp.name, fynApp.version);
       }
     }
   }
@@ -259,6 +381,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
+    // Record app in runtime registry for observability
+    this.runTime.appsLoaded[fynApp.name] = fynApp;
+
     return fynApp;
   }
 
@@ -272,15 +397,84 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   private async invokeFynModule(fynMod: FynModule, fynApp: FynApp): Promise<void> {
     const runtime = this.createFynModuleRuntime(fynApp);
 
+    // NEW: Check for middleware execution overrides
+    const executionOverride = this.findExecutionOverride(fynApp, fynMod);
+    
+    if (executionOverride) {
+      console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+      
+      const context: FynAppMiddlewareCallContext = {
+        meta: { 
+          info: { 
+            name: executionOverride.middleware.name, 
+            provider: executionOverride.hostFynApp.name, 
+            version: executionOverride.hostFynApp.version 
+          }, 
+          config: {} 
+        },
+        fynMod,
+        fynApp,
+        reg: executionOverride,
+        runtime,
+        kernel: this,
+        status: "ready",
+      };
+
+      // Let middleware handle initialize
+      if (executionOverride.middleware.overrideInitialize && fynMod.initialize) {
+        console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
+        const initResult = await executionOverride.middleware.overrideInitialize(context);
+        console.debug(`🎭 Initialize result:`, initResult);
+      }
+
+      // Let middleware handle execute
+      if (executionOverride.middleware.overrideExecute && typeof fynMod.execute === 'function') {
+        console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
+        await executionOverride.middleware.overrideExecute(context);
+      }
+      
+      return;
+    }
+
+    // Original execution flow for non-overridden modules
     if (fynMod.initialize) {
       console.debug("🚀 Invoking module.initialize for", fynApp.name, fynApp.version);
-      await fynMod.initialize(runtime);
+      const initResult = await fynMod.initialize(runtime);
+      console.debug("🚀 Initialize result:", initResult);
     }
 
     if (fynMod.execute) {
       console.debug("🚀 Invoking module.execute for", fynApp.name, fynApp.version);
-      await fynMod.execute(runtime);
+      const executeResult = await fynMod.execute(runtime);
+      
+      // Handle typed execution result
+      if (executeResult) {
+        console.debug(`📦 FynModule returned typed result:`, executeResult.type, executeResult.metadata);
+      }
     }
+  }
+
+  private findExecutionOverride(fynApp: FynApp, fynModule: FynModule): FynAppMiddlewareReg | null {
+    const autoApplyMiddlewares = this.runTime.autoApplyMiddlewares;
+    if (!autoApplyMiddlewares) return null;
+
+    // Check middleware that auto-applies to this FynApp type
+    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key => 
+      key.startsWith('./middleware')
+    );
+    
+    const targetMiddlewares = isMiddlewareProvider
+      ? autoApplyMiddlewares.middleware
+      : autoApplyMiddlewares.fynapp;
+
+    // Find first middleware that can override execution
+    for (const mwReg of targetMiddlewares) {
+      if (mwReg.middleware.canOverrideExecution?.(fynApp, fynModule)) {
+        return mwReg;
+      }
+    }
+
+    return null;
   }
 
   private checkSingleMiddlewareReady(cc: FynAppMiddlewareCallContext): boolean {
@@ -307,9 +501,17 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       if (this.checkMiddlewareReady(ccs) === "ready") {
         return "retry";
       }
-      this.deferInvoke.push({
-        callContexts: ccs,
+      // Dedupe: avoid pushing identical pending groups
+      const incomingKeys = ccs.map((c) => c.reg.fullKey).sort().join("|");
+      const exists = this.deferInvoke.some((d) => {
+        const keys = d.callContexts.map((c) => c.reg.fullKey).sort().join("|");
+        return keys === incomingKeys;
       });
+      if (!exists) {
+        this.deferInvoke.push({
+          callContexts: ccs,
+        });
+      }
       return "defer";
     }
     return "ready";
@@ -337,6 +539,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           fynApp.version,
         );
         const result = await mw.setup(cc);
+        // Auto-signal if middleware reports ready and didn't already signal via event
+        if (result?.status === "ready" && !this.middlewareReady.has(cc.reg.fullKey)) {
+          await this.signalMiddlewareReady(cc, { share: result?.share });
+        }
         if (result?.status === "defer") {
           status = "defer";
         }
@@ -358,6 +564,23 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     if (fynMod.initialize) {
       console.debug("🚀 Invoking user.initialize for", fynApp.name, fynApp.version);
       const result: any = await fynMod.initialize(runtime);
+
+      // Capture provider/consumer mode for dependency tracking
+      if (result?.mode) {
+        // Track this FynApp's mode for each middleware it uses
+        if (!this.fynAppProviderModes.has(fynApp.name)) {
+          this.fynAppProviderModes.set(fynApp.name, new Map());
+        }
+        const modes = this.fynAppProviderModes.get(fynApp.name)!;
+
+        // Store mode for each middleware this FynApp uses
+        for (const cc of ccs) {
+          modes.set(cc.reg.middleware.name, result.mode);
+        }
+
+        console.debug(`📝 ${fynApp.name} registered as ${result.mode} for middleware(s)`);
+      }
+
       status = this.checkDeferCalls(result?.status, ccs);
       if (status === "defer") {
         return status;
@@ -480,7 +703,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       try {
         if (mwReg.middleware.setup) {
-          await mwReg.middleware.setup(context);
+          const result = await mwReg.middleware.setup(context);
+          if (result?.status === "ready") {
+            await this.signalMiddlewareReady(context, { share: result.share });
+          }
         }
         if (mwReg.middleware.apply) {
           await mwReg.middleware.apply(context);
@@ -494,32 +720,72 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   /**
    * Bootstrap a fynapp by:
    * - call main as function or invoke it as a FynModule
+   * Uses event-based coordination to prevent concurrent bootstrap issues
    */
   async bootstrapFynApp(fynApp: FynApp): Promise<void> {
-    // Always load middleware modules for all FynApps
-    for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
-      if (exposeName.startsWith("./middleware")) {
-        await this.loadExposeModule(fynApp, exposeName, true);
-      }
+    // Check if another app is currently bootstrapping OR dependencies not satisfied
+    if (this.bootstrappingApp !== null || !this.areBootstrapDependenciesSatisfied(fynApp)) {
+      const reason = this.bootstrappingApp !== null
+        ? `${this.bootstrappingApp} is currently bootstrapping`
+        : `waiting for provider dependencies`;
+
+      console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
+
+      // Defer this bootstrap - wait for dependencies to be ready
+      await new Promise<void>((resolve) => {
+        this.deferredBootstraps.push({ fynApp, resolve });
+      });
+
+      // After being resumed, mark as bootstrapping
+      console.debug(`▶️ Resuming bootstrap of ${fynApp.name}`);
     }
 
-    const mainFynModule = fynApp.exposes["./main"]?.main;
+    // Mark this app as currently bootstrapping
+    this.bootstrappingApp = fynApp.name;
+    console.debug(`🔒 ${fynApp.name} acquired bootstrap lock`);
 
-    if (mainFynModule) {
-      console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
-
-      await this.applyAutoScopeMiddlewares(fynApp, mainFynModule);
-
-      if (typeof mainFynModule === "function") {
-        await (mainFynModule as any)(this.createFynModuleRuntime(fynApp));
-      } else if (mainFynModule.__middlewareMeta) {
-        await this.useMiddlewareOnFynModule(mainFynModule, fynApp);
-      } else {
-        await this.invokeFynModule(mainFynModule as FynModule, fynApp);
+    try {
+      // Always load middleware modules for all FynApps
+      for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
+        if (exposeName.startsWith("./middleware")) {
+          await this.loadExposeModule(fynApp, exposeName, true);
+        }
       }
-    }
 
-    console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
+      const mainFynModule = fynApp.exposes["./main"]?.main;
+
+      if (mainFynModule) {
+        console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+
+        await this.applyAutoScopeMiddlewares(fynApp, mainFynModule);
+
+        if (typeof mainFynModule === "function") {
+          await (mainFynModule as any)(this.createFynModuleRuntime(fynApp));
+        } else if (mainFynModule.__middlewareMeta) {
+          await this.useMiddlewareOnFynModule(mainFynModule, fynApp);
+        } else {
+          await this.invokeFynModule(mainFynModule as FynModule, fynApp);
+        }
+      }
+
+      console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
+
+      // Emit bootstrap complete event
+      await this.emitAsync(
+        new CustomEvent("FYNAPP_BOOTSTRAPPED", {
+          detail: { name: fynApp.name, version: fynApp.version },
+        })
+      );
+    } catch (error) {
+      console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
+      // Clear bootstrap lock and resume next
+      this.bootstrappingApp = null;
+      if (this.deferredBootstraps.length > 0) {
+        const next = this.deferredBootstraps.shift();
+        if (next) next.resolve();
+      }
+      throw error;
+    }
   }
 
   /**

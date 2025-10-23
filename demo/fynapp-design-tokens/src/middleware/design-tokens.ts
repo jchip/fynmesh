@@ -604,6 +604,20 @@ export class DesignTokensMiddleware implements FynAppMiddleware {
         this.fynAppConfigs.set(fynApp, config);
 
         console.debug(`🎨 Design Tokens Middleware setup for ${fynApp.name}`);
+        
+        // ✅ Prefer kernel API to signal readiness, fallback to event for older kernels
+        const kernelAny: any = context.kernel as any;
+        if (typeof kernelAny.signalMiddlewareReady === "function") {
+            await kernelAny.signalMiddlewareReady(context, { name: this.name, status: "ready" });
+            console.debug(`🎨 Design Tokens Middleware signaled ready for ${fynApp.name}`);
+        } else {
+            const event = new CustomEvent("MIDDLEWARE_READY", {
+                detail: { name: this.name, status: "ready", cc: context },
+            });
+            context.kernel.emitAsync(event);
+            console.debug(`🎨 Design Tokens Middleware dispatched ready event for ${fynApp.name}`);
+        }
+        
         return { status: "ready" };
     }
 

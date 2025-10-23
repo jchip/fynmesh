@@ -78,10 +78,15 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
       mwContext.set(this.name, data);
       cc.reg.hostFynApp.middlewareContext.set(shareKey, data);
       status = "ready";
-      const event = new CustomEvent("MIDDLEWARE_READY", {
-        detail: { name: this.name, share: { shareKey }, status, cc },
-      });
-      cc.kernel.emitAsync(event);
+      const kernelAny: any = cc.kernel as any;
+      if (typeof kernelAny.signalMiddlewareReady === "function") {
+        await kernelAny.signalMiddlewareReady(cc, { name: this.name, status, share: { shareKey } });
+      } else {
+        const event = new CustomEvent("MIDDLEWARE_READY", {
+          detail: { name: this.name, share: { shareKey }, status, cc },
+        });
+        cc.kernel.emitAsync(event);
+      }
       console.debug(
         `🔍 fynapp-react-middleware: Basic counter ready event dispatched now:`,
         Date.now()
@@ -97,6 +102,21 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
       if (data) {
         mwContext.set(this.name, data);
         status = "ready";
+        
+        // ✅ FIX: Emit MIDDLEWARE_READY event for consumers when they become ready
+        const kernelAny: any = cc.kernel as any;
+        if (typeof kernelAny.signalMiddlewareReady === "function") {
+          await kernelAny.signalMiddlewareReady(cc, { name: this.name, status, share: { shareKey } });
+        } else {
+          const event = new CustomEvent("MIDDLEWARE_READY", {
+            detail: { name: this.name, share: { shareKey }, status, cc },
+          });
+          cc.kernel.emitAsync(event);
+        }
+        console.debug(
+          `🔍 fynapp-react-middleware: Basic counter ready event dispatched for consumer now:`,
+          Date.now()
+        );
       }
       console.debug(
         `🔍 fynapp-react-middleware: status: ${status} Basic counter setup for`,

@@ -302,21 +302,35 @@
         await fynMeshKernel.loadFynApp("/fynapp-react-middleware/dist");
 
         // STEP 5: Load consumer FynApps (all middleware is now available)
+        console.log("DEBUG: STEP 5 - Starting consumer FynApps loading");
+
         // load fynapp 2 that uses react 18
         if (features["fynapp-2-react18"]) {
             console.log("loading remote fynapp /fynapp-2-react18/dist");
             fynMeshKernel.loadFynApp("/fynapp-2-react18/dist")
         }
+        console.log("DEBUG: After fynapp-2-react18 load call");
 
         // load fynapp 1 that uses react 19
+        // Add delay to consistently reproduce race condition with fynapp-1-b
+        console.log("DEBUG: Before fynapp-1 setTimeout setup");
         if (features["fynapp-1"]) {
-            console.log("loading remote fynapp /fynapp-1/dist");
-            fynMeshKernel.loadFynApp("/fynapp-1/dist");
+            console.log("DEBUG: Setting up setTimeout for fynapp-1");
+            setTimeout(() => {
+                console.log("loading remote fynapp /fynapp-1/dist (delayed to test race condition)");
+                fynMeshKernel.loadFynApp("/fynapp-1/dist");
+            }, 100); // 100ms delay to ensure fynapp-1-b starts first
+            console.log("DEBUG: setTimeout for fynapp-1 has been set up");
         }
+        console.log("DEBUG: After fynapp-1 setTimeout block");
+
         // load fynapp 1-b that uses react 19
+        console.log("DEBUG: About to check fynapp-1-b. features obj:", features, "fynapp-1-b value:", features["fynapp-1-b"]);
         if (features["fynapp-1-b"]) {
             console.log("loading remote fynapp /fynapp-1-b/dist");
             fynMeshKernel.loadFynApp("/fynapp-1-b/dist");
+        } else {
+            console.log("DEBUG: Skipping fynapp-1-b because features['fynapp-1-b'] is", features["fynapp-1-b"]);
         }
         // load fynapp marko
         if (features["fynapp-3-marko"]) {
