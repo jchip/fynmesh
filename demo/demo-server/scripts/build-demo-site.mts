@@ -1,6 +1,6 @@
 
 import nunjucks from "nunjucks";
-import { existsSync, mkdirSync, writeFileSync, cpSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,30 @@ interface BuildDemoSiteOptions {
 }
 
 /**
+ * Recursively copy directory with file filtering
+ */
+function copyDirFiltered(src: string, dest: string, filter: (file: string) => boolean) {
+    if (!existsSync(src)) return;
+    
+    if (!existsSync(dest)) {
+        mkdirSync(dest, { recursive: true });
+    }
+    
+    const entries = readdirSync(src, { withFileTypes: true });
+    
+    for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+        
+        if (entry.isDirectory()) {
+            copyDirFiltered(srcPath, destPath, filter);
+        } else if (filter(entry.name)) {
+            writeFileSync(destPath, readFileSync(srcPath));
+        }
+    }
+}
+
+/**
  * Build the demo site with configurable path prefix
  */
 async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolean> {
@@ -32,6 +56,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         outputDir = path.join(__dirname, "../public"),
         templateDir = path.join(__dirname, "../templates")
     } = options;
+
+    const isProduction = process.env.NODE_ENV === "production";
 
     const log = (message: string) => {
         if (verbose) {
@@ -51,7 +77,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Template data
         const templateData = {
             title: "FynMesh Micro Frontend Demo",
-            isProduction: process.env.NODE_ENV === "production",
+            isProduction,
             pathPrefix,
             features: {
                 "react-18": true,
@@ -162,13 +188,20 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         log("📁 Copying static assets...");
 
         // Copy static files from public directory
-        const staticFiles = [
+        let staticFiles = [
             "system.js",
             "system.min.js",
             "system.min.js.map",
             "sw.js",           // Service Worker
-            "sw-utils.js"      // Service Worker Utilities
+            "sw-utils.js",     // Service Worker Utilities
+            "favicon.ico"      // Favicon
         ];
+        
+        // In production, exclude .map files
+        if (isProduction) {
+            staticFiles = staticFiles.filter(f => !f.endsWith('.map'));
+        }
+        
         const publicDir = path.join(__dirname, "../public");
         staticFiles.forEach(file => {
             const src = path.join(publicDir, file);
@@ -178,6 +211,14 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 log(`📄 Copied: ${file}`);
             }
         });
+
+        // Copy CNAME file for custom domain (GitHub Pages)
+        const cnameSource = path.join(__dirname, "../CNAME");
+        if (existsSync(cnameSource)) {
+            const cnameDest = path.join(outputDir, "CNAME");
+            writeFileSync(cnameDest, readFileSync(cnameSource));
+            log(`📄 Copied: CNAME (custom domain: ${readFileSync(cnameSource, 'utf-8').trim()})`);
+        }
 
         // Copy dist directories from various packages
         const packages = [
@@ -203,11 +244,39 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-design-tokens", basePath: path.join(__dirname, "../..") }
         ];
 
+        // Define file filter based on production mode
+        const fileFilter = (fileName: string) => {
+            // In production, exclude .d.ts and .map files
+            if (isProduction) {
+                if (fileName.endsWith('.d.ts') || fileName.endsWith('.map')) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        // Special filter for federation-js: only .min.js in production
+        const federationFilter = (fileName: string) => {
+            if (isProduction) {
+                // Only include .min.js files in production
+                if (fileName.endsWith('.js') && !fileName.endsWith('.min.js')) {
+                    return false;
+                }
+                // Exclude .d.ts and .map files
+                if (fileName.endsWith('.d.ts') || fileName.endsWith('.map')) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
         packages.forEach(pkg => {
             const srcDist = path.join(pkg.basePath, pkg.name, "dist");
             const dest = path.join(outputDir, pkg.name, "dist");
             if (existsSync(srcDist)) {
-                cpSync(srcDist, dest, { recursive: true });
+                // Use special filter for federation-js
+                const filter = pkg.name === "federation-js" ? federationFilter : fileFilter;
+                copyDirFiltered(srcDist, dest, filter);
                 log(`📁 Copied: ${pkg.name}/dist/`);
             }
         });

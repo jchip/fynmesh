@@ -1,3 +1,4 @@
+<!-- Load core scripts -->
 {% if isProduction %}
 <script src="{{pathPrefix}}system.min.js"></script>
 <script src="{{pathPrefix}}federation-js/dist/federation-js.min.js"></script>
@@ -8,15 +9,32 @@
 <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
 {% endif %}
 
-<!-- Service Worker Setup -->
 <script>
-  // Configure service worker base path for GitHub Pages deployment
-  window.SW_BASE_PATH = "{{pathPrefix}}";
+  (function() {
+    // Configure service worker base path
+    window.SW_BASE_PATH = '{{pathPrefix}}';
+    
+    // Load service worker utils
+    const script = document.createElement('script');
+    script.src = '{{pathPrefix}}sw-utils.js';
+    script.onload = () => {
+      // Signal that core scripts are loaded
+      window.FYNMESH_CORE_LOADED = true;
+      window.dispatchEvent(new Event('fynmesh-core-loaded'));
+    };
+    document.head.appendChild(script);
+  })();
 </script>
-<script src="{{pathPrefix}}sw-utils.js"></script>
 <script>
+    // Wait for core scripts to load before initializing FynApps
     (async () => {
-
+        // Wait for core scripts if not already loaded
+        if (!window.FYNMESH_CORE_LOADED) {
+            await new Promise(resolve => {
+                window.addEventListener('fynmesh-core-loaded', resolve, { once: true });
+            });
+        }
+        
         const features = {
             "react-18": {{ features["react-18"] | dump | safe }},
             "react-19": {{ features["react-19"] | dump | safe }},

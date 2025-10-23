@@ -7,13 +7,19 @@ const SW_VERSION = "1.0.0";
 // Check if we're in development mode
 const isDevelopment = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 
-// Cache important assets
+// Get the base path from the service worker's own URL
+// e.g., if SW is at /fynmesh/sw.js, basePath is /fynmesh/
+const swUrl = new URL(self.location.href);
+const basePath = swUrl.pathname.substring(0, swUrl.pathname.lastIndexOf('/') + 1);
+console.log(`[Service Worker] Base path detected: ${basePath}`);
+
+// Cache important assets (paths relative to basePath)
 const STATIC_ASSETS = [
-  "/",
-  "/index.html",
-  "/system.min.js",
-  "/federation-js/dist/federation-js.min.js",
-  "/core/kernel/dist/fynmesh-browser-kernel.min.js",
+  `${basePath}`,
+  `${basePath}index.html`,
+  `${basePath}system.min.js`,
+  `${basePath}federation-js/dist/federation-js.min.js`,
+  `${basePath}kernel/dist/fynmesh-browser-kernel.min.js`,
 ];
 
 // Install event - cache static assets

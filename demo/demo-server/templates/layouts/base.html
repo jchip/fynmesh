@@ -4,14 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FynMesh Micro Frontend Demo{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">
+    
     {% if isProduction %}
-    <link href="{{pathPrefix}}spectre.css/dist/spectre.min.css" rel="stylesheet">
-    <link href="{{pathPrefix}}spectre.css/dist/spectre-exp.min.css" rel="stylesheet">
-    <link href="{{pathPrefix}}spectre.css/dist/spectre-icons.min.css" rel="stylesheet">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynMesh - Enterprise-scale micro frontend framework with Module Federation. Build independently deployable web applications using React, Vue, Preact, Solid, and Marko.">
+    <meta name="keywords" content="micro frontend, module federation, webpack, react, vue, preact, solid, marko, javascript, typescript, web framework, independent deployment, shared dependencies">
+    <meta name="author" content="FynMesh">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynetiq.com/">
+    <meta property="og:title" content="FynMesh - Micro Frontend Framework">
+    <meta property="og:description" content="Enterprise-scale micro frontend framework with Module Federation. Support for React, Vue, Preact, Solid, and Marko frameworks.">
+    <meta property="og:image" content="https://www.fynetiq.com/favicon.ico">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.fynetiq.com/">
+    <meta property="twitter:title" content="FynMesh - Micro Frontend Framework">
+    <meta property="twitter:description" content="Enterprise-scale micro frontend framework with Module Federation. Support for React, Vue, Preact, Solid, and Marko frameworks.">
+    <meta property="twitter:image" content="https://www.fynetiq.com/favicon.ico">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.fynetiq.com/">
+    {% endif %}
+    
+    <!-- CSS Stylesheets -->
+    {% if isProduction %}
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.min.css">
     {% else %}
-    <link href="{{pathPrefix}}spectre.css/dist/spectre.css" rel="stylesheet">
-    <link href="{{pathPrefix}}spectre.css/dist/spectre-exp.css" rel="stylesheet">
-    <link href="{{pathPrefix}}spectre.css/dist/spectre-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.css">
     {% endif %}
     {% block styles %}{% endblock %}
     {% block scripts_head %}{% endblock %}

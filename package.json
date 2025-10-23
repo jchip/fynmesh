@@ -9,6 +9,9 @@
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "fynpo",
     "build-prod": "NODE_ENV=production fynpo",
+    "clean:demo": "rm -rf demo/*/dist",
+    "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
+    "_gh-publish": "cd demo/demo-server && xrun gh-publish",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
     "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git"

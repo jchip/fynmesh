@@ -25,17 +25,26 @@ load({
     },
 
     "build-demo-site": {
-        desc: "Build demo site for GitHub Pages with / base path",
+        desc: "Build demo site for custom domain (www.fynetiq.com) with root path",
         task: async () => {
+            const fs = await import("node:fs");
+            const path = await import("node:path");
+            
+            // Ensure .temp directory exists
+            const tempDir = path.resolve("../../.temp");
+            if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true });
+            }
+            
             // Dynamic import of the TypeScript build function
             const { buildDemoSite } = await import("./scripts/build-demo-site.mts");
 
-            console.log("🚀 Building demo site for GitHub Pages (/)...");
+            console.log("🚀 Building demo site for custom domain (www.fynetiq.com)...");
 
             const success = await buildDemoSite({
                 verbose: true,
                 pathPrefix: "/",
-                outputDir: "../../docs"
+                outputDir: "../../.temp/docs"
             });
 
             if (!success) {
@@ -49,15 +58,30 @@ load({
     "gh-publish": {
         desc: "Publish demo site to gh-pages branch",
         task: () => {
+            // Generate timestamp in MM/DD/YYYY HH:MM format
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const timestamp = `${month}/${day}/${year} ${hours}:${minutes}`;
+            
             return serial([
-                // Build demo site directly to docs directory with GitHub Pages path prefix
+                // Step 1: Build demo site in main branch to .temp/docs directory
                 "build-demo-site",
-                exec("mv ../../docs ../../docs-temp"),
+                // Step 2: Switch to gh-pages branch
+                //         (.temp/docs persists because .temp is in .gitignore)
                 exec("git checkout gh-pages"),
+                // Step 3: Delete old docs directory from gh-pages
                 exec("rm -rf ../../docs"),
-                exec("mv ../../docs-temp ../../docs"),
+                // Step 4: Move the freshly built docs from .temp/docs to docs
+                exec("mv ../../.temp/docs ../../docs"),
+                // Step 5: Force add docs directory (it's in .gitignore on main)
                 exec("git add -f ../../docs"),
-                exec('git commit -m "update demo site to gh pages"')
+                // Step 6: Commit the changes with timestamp
+                exec(`git commit -m "update demo site to gh pages ${timestamp}"`)
+                // Note: User must manually run 'git push' after this
             ])
         }
     }
