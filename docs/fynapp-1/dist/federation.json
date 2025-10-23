@@ -1,0 +1,63 @@
+{
+  "name": "fynapp-1",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "/Users/jc/dev/fynmesh/demo/fynapp-1/src/components.ts",
+        "/Users/jc/dev/fynmesh/demo/fynapp-1/src/App.tsx",
+        "esm-react",
+        "esm-react-dom",
+        "main-BqksXXYQ.js"
+      ]
+    },
+    "./hello": {
+      "path": "./src/hello.ts",
+      "chunks": [
+        "hello-DqD-ezWy.js"
+      ]
+    },
+    "./getInfo": {
+      "path": "./src/getInfo.ts",
+      "chunks": [
+        "getInfo-BBlsI0x1.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-boHcTULx.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-DX8UEf8V.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-10-23T07:23:59.698Z",
+  "version": "1.0.0"
+}

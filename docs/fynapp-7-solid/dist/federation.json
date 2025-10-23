@@ -1,0 +1,45 @@
+{
+  "name": "fynapp-7-solid",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-v-8gRmvT.js"
+      ]
+    }
+  },
+  "shared": {
+    "solid-js": {
+      "moduleIds": [
+        "node_modules/solid-js/dist/solid.js"
+      ],
+      "chunks": [
+        "solid-X5s1FHit.js"
+      ],
+      "config": {
+        "singleton": true,
+        "requiredVersion": "^1.8.15"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-7-solid/src",
+          "path": "node_modules/solid-js/dist/solid.js"
+        },
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-7-solid/node_modules/solid-js/web/dist",
+          "path": "node_modules/solid-js/dist/solid.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.9.6",
+          "path": "node_modules/solid-js/dist/solid.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2025-10-23T07:23:55.022Z",
+  "version": "1.0.0"
+}

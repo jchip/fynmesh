@@ -1,0 +1,46 @@
+{
+  "name": "fynapp-react-lib",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "node_modules/esm-react/src/react-esm-18.production.js"
+      ],
+      "chunks": [
+        "react-esm-18.production-kDNkDYSX.js"
+      ],
+      "config": {
+        "singleton": true,
+        "requiredVersion": "^18.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-react-18/src",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-react-18/node_modules/esm-react-dom/dist",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "singleton": true,
+        "requiredVersion": "^18.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-10-23T07:23:53.851Z",
+  "version": "18.3.0"
+}

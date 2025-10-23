@@ -1,0 +1,45 @@
+{
+  "name": "fynapp-2-react18",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-BemYNZXn.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-Vb4hJqlr.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-BiOW-RGS.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "singleton": true,
+        "requiredVersion": "^18.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "singleton": true,
+        "requiredVersion": "^18.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-10-23T07:23:56.412Z",
+  "version": "1.0.0"
+}

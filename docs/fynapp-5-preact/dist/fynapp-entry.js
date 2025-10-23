@@ -1,0 +1,2 @@
+!function(){var n=globalThis.Federation._mfContainer("fynapp-5-preact","fynmesh","1.0.0");n.register([],(function(t,e){"use strict";return{execute:function(){t({get:function(t,e,r){return n._mfGet(t,e,r)},init:function(t){var e=function(n){return{id:n,then:function(){return this}}},r=n._mfInit(t);return r?(n._S("preact",{singleton:!0,requiredVersion:"^10.18.1"},[[[e("./preact.module-DclUVp8h.js").then((function(n){return n.p})),"10.26.6"]]]),n._E("./main",e("./main-DFGOF7hU.js")),r):n.$SS}});t("container",n)}}}))}();
+//# sourceMappingURL=__mf_container_fynapp-5-preact.js.map

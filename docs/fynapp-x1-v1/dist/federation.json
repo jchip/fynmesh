@@ -1,0 +1,35 @@
+{
+  "name": "fynapp-x1",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.tsx",
+      "chunks": [
+        "main-CT3Z6i_p.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "requiredVersion": "^18.3.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "requiredVersion": "^18.3.0"
+      }
+    }
+  },
+  "timestamp": "2025-10-23T07:23:57.701Z",
+  "version": "1.0.0"
+}

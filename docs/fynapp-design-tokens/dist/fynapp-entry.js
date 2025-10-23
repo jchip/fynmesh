@@ -1,0 +1,2 @@
+!function(){var n=globalThis.Federation._mfContainer("fynapp-design-tokens","fynmesh","1.0.0");n.register([],function(e,t){"use strict";return{execute:function(){e({get:function(e,t,i){return n._mfGet(e,t,i)},init:function(e){var t=n._mfInit(e);return t?(n._E("./middleware/design-tokens",function(n){return{id:n,then:function(){return this}}}("./design-tokens-Beyzkwgu.js")),t):n.$SS}});e("config",{loadMiddlewares:!0});console.log("fynapp-design-tokens entry header");e("container",n)}}})}();
+//# sourceMappingURL=__mf_container_fynapp-design-tokens.js.map

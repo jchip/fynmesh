@@ -1,0 +1,41 @@
+{
+  "name": "fynapp-react-middleware",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-Bysg-Gy3.js"
+      ]
+    },
+    "./middleware/react-context": {
+      "path": "./src/middleware/react-context.tsx",
+      "chunks": [
+        "react-context-vqKz4Z2O.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "requiredVersion": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-10-23T07:23:54.113Z",
+  "version": "1.0.0"
+}
