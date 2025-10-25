@@ -3,7 +3,7 @@ import './styles.css';
 
 interface AppProps {
     appName: string;
-    useCounterContext?: () => any;
+    counterAPI?: any; // Basic counter middleware API
 }
 
 // Card Component
@@ -133,22 +133,39 @@ const SettingRow: React.FC<{
 };
 
 // Main App Component
-const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) => {
+const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
     const [count, setCount] = useState(0);
+    const [sharedCount, setSharedCount] = useState(0);
     const [darkMode, setDarkMode] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
 
-    // Use the context hook directly at component level if available
-    const counterContext = useCounterContext ? useCounterContext() : null;
-    const contextAvailable = !!counterContext;
+    // Set up event listener for shared counter changes
+    React.useEffect(() => {
+        if (counterAPI?.eventTarget) {
+            console.log('🔍 fynapp-6-react: Setting up shared counter event listener');
+            setConnectionStatus('connected');
 
-    // Extract state and actions from context
-    const sharedCounter = counterContext?.state || { count: 0 };
-    const sharedCounterActions = counterContext?.actions || {};
+            const handleCounterChange = (event: any) => {
+                console.log('🔍 fynapp-6-react: Counter changed event received:', event.detail);
+                setSharedCount(event.detail.count);
+            };
 
-    console.log('🔍 fynapp-6-react App: Context available:', contextAvailable);
-    console.log('🔍 fynapp-6-react App: Counter state:', sharedCounter);
-    console.log('🔍 fynapp-6-react App: Available actions:', Object.keys(sharedCounterActions));
+            counterAPI.eventTarget.addEventListener('counterChanged', handleCounterChange);
+
+            // Clean up on unmount
+            return () => {
+                counterAPI.eventTarget.removeEventListener('counterChanged', handleCounterChange);
+                setConnectionStatus('disconnected');
+            };
+        } else {
+            console.warn('⚠️ fynapp-6-react: No counter API available');
+            setConnectionStatus('disconnected');
+        }
+    }, [counterAPI]);
+
+    console.log('🔍 fynapp-6-react: Counter API available:', !!counterAPI);
+    console.log('🔍 fynapp-6-react: Connection status:', connectionStatus);
 
     const [cards] = useState([
         { title: "Analytics", value: "85%", trend: "up" as const, desc: "User engagement" },
@@ -260,7 +277,7 @@ const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) =
                                     margin: '20px 0',
                                     color: darkMode ? '#63b3ed' : '#3182ce'
                                 }}>
-                                    {sharedCounter.count}
+                                    {sharedCount}
                                 </div>
                                 <p style={{
                                     color: darkMode ? '#a0aec0' : '#718096',
@@ -269,10 +286,10 @@ const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) =
                                 }}>
                                     Shared with fynapp-1 & fynapp-1-b! Status: {' '}
                                     <span style={{
-                                        color: contextAvailable ? '#48bb78' : '#f56565',
+                                        color: connectionStatus === 'connected' ? '#48bb78' : '#f56565',
                                         fontWeight: 'bold'
                                     }}>
-                                        {contextAvailable ? '✅ Connected' : '❌ Not Connected'}
+                                        {connectionStatus === 'connected' ? '✅ Connected' : '❌ Not Connected'}
                                     </span>
                                     <br />
                                     <small>Updates instantly across all apps!</small>
@@ -283,8 +300,8 @@ const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) =
                                     className="primary-button"
                                     onClick={() => {
                                         console.log('🔍 fynapp-6-react: Incrementing shared counter...');
-                                        if (sharedCounterActions.increment) {
-                                            sharedCounterActions.increment();
+                                        if (counterAPI?.increment) {
+                                            counterAPI.increment('fynapp-6-react');
                                             console.log('✅ fynapp-6-react: Shared counter incremented');
                                         } else {
                                             console.error('❌ fynapp-6-react: increment action not available');
@@ -297,8 +314,8 @@ const App: React.FC<AppProps> = ({ appName = 'React App', useCounterContext }) =
                                     className="primary-button"
                                     onClick={() => {
                                         console.log('🔍 fynapp-6-react: Resetting shared counter...');
-                                        if (sharedCounterActions.reset) {
-                                            sharedCounterActions.reset();
+                                        if (counterAPI?.reset) {
+                                            counterAPI.reset('fynapp-6-react');
                                             console.log('✅ fynapp-6-react: Shared counter reset');
                                         } else {
                                             console.error('❌ fynapp-6-react: reset action not available');

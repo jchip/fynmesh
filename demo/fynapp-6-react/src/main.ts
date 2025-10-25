@@ -20,7 +20,7 @@ class MiddlewareUser implements FynModule {
     // Return requirements that middleware will check
     return {
       status: "ready",
-      mode: "primary", // We are the primary provider
+      mode: "consumer", // We are a consumer of shared counter
     };
   }
 
@@ -46,46 +46,16 @@ class MiddlewareUser implements FynModule {
       document.body.appendChild(targetDiv);
     }
 
-    // Get middleware APIs if available
-    const reactContextAPI = runtime.middlewareContext.get("react-context");
-    const sharedSymbols = runtime.middlewareContext.get(
-      "react-context:shared-symbols"
-    );
+    // Get basic-counter middleware API
+    const counterAPI = runtime.middlewareContext.get("basic-counter");
+    console.log('🔍 fynapp-6-react: Counter API from middleware:', !!counterAPI);
 
-    const counterSymbol = sharedSymbols?.counter;
-    const counterSharedProvider = counterSymbol
-      ? reactContextAPI?.getSharedProvider(counterSymbol)
-      : undefined;
-    const useCounterContext = reactContextAPI?.counter?.useContext;
-
-    // Create wrapper component that uses shared provider if available
-    const AppWithContext = () => {
-      if (counterSharedProvider && useCounterContext) {
-        console.log(
-          "✅ fynapp-6-react: Using shared Provider via symbol for counter context"
-        );
-        return React.createElement(
-          counterSharedProvider,
-          {},
-          React.createElement(App, {
-            appName: runtime.fynApp.name,
-            useCounterContext,
-          })
-        );
-      } else {
-        console.warn(
-          "⚠️ fynapp-6-react: Shared Provider not available, using standalone mode"
-        );
-        return React.createElement(App, {
-          appName: runtime.fynApp.name,
-          useCounterContext: undefined,
-        });
-      }
-    };
-
-    // Render the React component with context
+    // Render the React component with counter API
     ReactDomClient.createRoot(targetDiv).render(
-      React.createElement(AppWithContext)
+      React.createElement(App, {
+        appName: runtime.fynApp.name,
+        counterAPI,
+      })
     );
 
     console.log(`${runtime.fynApp.name} bootstrapped successfully`);
@@ -93,15 +63,15 @@ class MiddlewareUser implements FynModule {
 }
 
 // Export the middleware usage with standardized interface
-// This app is a primary provider - it creates and shares contexts
+// This app is a consumer of the shared counter
 export const main = useMiddleware(
   {
     info: {
-      name: "react-context",
+      name: "basic-counter",
       provider: "fynapp-react-middleware",
       version: "^1.0.0",
     },
-    config: "primary", // Primary provider - creates and shares contexts
+    config: "consume-only", // Consumer only - uses shared counter from provider
   },
   new MiddlewareUser()
 );

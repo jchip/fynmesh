@@ -255,6 +255,39 @@ export interface MiddlewareLookupOptions {
 }
 
 /**
+ * Minimal per-app manifest used at runtime
+ */
+export interface FynAppRequireEdge {
+  name: string;
+  range?: string;
+  optional?: boolean;
+}
+
+export interface FynAppManifest {
+  app: { name: string; version: string };
+  requires?: FynAppRequireEdge[];
+  middlewares?: {
+    uses?: Array<{ provider: string; name: string; range?: string; role?: string }>;
+    provides?: Array<{ name: string }>;
+  };
+}
+
+/**
+ * Resolver and resolver result for turning {name, range} into a concrete manifest URL
+ */
+export interface RegistryResolverResult {
+  name: string;
+  version: string;
+  manifestUrl: string;
+  distBase?: string;
+}
+
+export type RegistryResolver = (
+  name: string,
+  range?: string,
+) => Promise<RegistryResolverResult>;
+
+/**
  * FynMesh client side library types
  */
 export interface FynMeshKernel {
@@ -337,6 +370,19 @@ export interface FynMeshKernel {
   signalMiddlewareReady(
     cc: FynAppMiddlewareCallContext,
     detail?: { name?: string; status?: string; share?: any }
+  ): Promise<void>;
+
+  /**
+   * Set a resolver that maps {name, range} to a concrete manifest URL (and optional dist base)
+   */
+  setRegistryResolver(resolver: RegistryResolver): void;
+
+  /**
+   * Load one or more FynApps by name/range using manifests and a dependency graph
+   */
+  loadFynAppsByName(
+    requests: Array<{ name: string; range?: string }>,
+    options?: { concurrency?: number }
   ): Promise<void>;
 }
 

@@ -41,5 +41,15 @@ export function createBrowserKernel(): BrowserKernel {
     middlewares: {},
   });
 
+  // Demo-server resolver: manifest at /<name>/dist/fynapp.manifest.json and base at /<name>/dist/
+  kernel.setRegistryResolver(async (name: string, range?: string) => {
+    return {
+      name,
+      version: "0.0.0", // version not critical for demo resolver; keying by name is fine
+      manifestUrl: `/${name}/dist/fynapp.manifest.json`,
+      distBase: `/${name}/dist/`,
+    };
+  });
+
   return kernel;
 }

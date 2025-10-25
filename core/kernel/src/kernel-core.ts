@@ -10,6 +10,9 @@ import {
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
   FynModuleRuntime,
+  FynAppManifest,
+  RegistryResolver,
+  RegistryResolverResult,
 } from "./types";
 import { urlJoin } from "./util";
 
@@ -31,6 +34,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   protected runTime: FynMeshRuntimeData;
 
   protected middlewareReady: Map<string, any> = new Map();
+
+  // Manifest/registry resolution (browser-first)
+  private registryResolver?: RegistryResolver;
+  private manifestCache: Map<string, FynAppManifest> = new Map();
+  private nodeMeta: Map<string, { name: string; version: string; manifestUrl: string; distBase: string } > = new Map();
 
   // Bootstrap coordination state
   protected bootstrappingApp: string | null = null;
@@ -62,6 +70,49 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   async emitAsync(event: CustomEvent): Promise<boolean> {
     return this.events.dispatchEvent(event);
+  }
+
+  /**
+   * Install a registry resolver (browser: demo server paths)
+   */
+  setRegistryResolver(resolver: RegistryResolver): void {
+    this.registryResolver = resolver;
+  }
+
+  private async fetchJson(url: string): Promise<any> {
+    const res = await fetch(url, { credentials: "same-origin" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+    return res.json();
+  }
+
+  private async resolveAndFetch(name: string, range?: string): Promise<{ key: string; res: RegistryResolverResult; manifest: FynAppManifest }>{
+    if (!this.registryResolver) throw new Error("No registry resolver configured");
+    const res = await this.registryResolver(name, range);
+    const key = `${res.name}@${res.version}`;
+    if (this.manifestCache.has(key)) {
+      const manifest = this.manifestCache.get(key)!;
+      // Store meta for base URL derivation
+      const distBase = res.distBase || (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
+      this.nodeMeta.set(key, { name: res.name, version: res.version, manifestUrl: res.manifestUrl, distBase });
+      return { key, res, manifest };
+    }
+    let manifest: FynAppManifest;
+    try {
+      manifest = await this.fetchJson(res.manifestUrl);
+    } catch (err1) {
+      try {
+        // fallback to federation.json in same dist
+        const fallback = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "federation.json");
+        manifest = await this.fetchJson(fallback);
+      } catch (err2) {
+        // demo fallback: synthesize an empty manifest (no requires) and proceed
+        manifest = { app: { name, version: res.version }, requires: [] };
+      }
+    }
+    this.manifestCache.set(key, manifest);
+    const distBase = res.distBase || (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
+    this.nodeMeta.set(key, { name: res.name, version: res.version, manifestUrl: res.manifestUrl, distBase });
+    return { key, res, manifest };
   }
 
   /**
@@ -157,6 +208,107 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       console.debug(
         `⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`
       );
+    }
+  }
+
+  /**
+   * Build dependency graph by resolving manifests recursively (browser-only resolver)
+   */
+  private async buildGraph(requests: Array<{ name: string; range?: string }>): Promise<{
+    nodes: Set<string>;
+    adj: Map<string, Set<string>>;
+    indegree: Map<string, number>;
+  }> {
+    const adj = new Map<string, Set<string>>();
+    const indegree = new Map<string, number>();
+    const nodes = new Set<string>();
+
+    const visit = async (name: string, range?: string, parentKey?: string) => {
+      const { key, manifest } = await this.resolveAndFetch(name, range);
+      if (!nodes.has(key)) {
+        nodes.add(key);
+        indegree.set(key, indegree.get(key) ?? 0);
+      }
+      if (parentKey) {
+        // Edge: dep (key) -> parent (parentKey)
+        const set = adj.get(key) || new Set<string>();
+        if (!set.has(parentKey)) set.add(parentKey);
+        adj.set(key, set);
+        indegree.set(parentKey, (indegree.get(parentKey) ?? 0) + 1);
+      }
+      const requires = manifest.requires || [];
+      for (const req of requires) {
+        await visit(req.name, req.range, key);
+      }
+      return key;
+    };
+
+    for (const r of requests) {
+      await visit(r.name, r.range);
+    }
+
+    return { nodes, adj, indegree };
+  }
+
+  private topoBatches(graph: { nodes: Set<string>; adj: Map<string, Set<string>>; indegree: Map<string, number> }): string[][] {
+    const { nodes, adj } = graph;
+    const indegree = new Map(graph.indegree);
+    const q: string[] = [];
+    for (const n of nodes) {
+      if ((indegree.get(n) ?? 0) === 0) q.push(n);
+    }
+    const order: string[] = [];
+    const batches: string[][] = [];
+
+    while (q.length) {
+      // process a batch (all current zero indegree)
+      const batch = q.splice(0, q.length);
+      batches.push(batch);
+      for (const u of batch) {
+        order.push(u);
+        for (const v of adj.get(u) ?? []) {
+          indegree.set(v, (indegree.get(v) ?? 0) - 1);
+          if ((indegree.get(v) ?? 0) === 0) q.push(v);
+        }
+      }
+    }
+
+    if (order.length < nodes.size) {
+      const cyclic = [...nodes].filter((k) => (graph.indegree.get(k) ?? 0) > 0);
+      throw new Error(`Dependency cycle detected among: ${cyclic.join(", ")}`);
+    }
+
+    return batches;
+  }
+
+  async loadFynAppsByName(
+    requests: Array<{ name: string; range?: string }>,
+    options?: { concurrency?: number }
+  ): Promise<void> {
+    const graph = await this.buildGraph(requests);
+    const batches = this.topoBatches(graph);
+    const concurrency = Math.max(1, Math.min(options?.concurrency ?? 4, 8));
+
+    for (const batch of batches) {
+      // Derive baseUrl from nodeMeta (resolver provided distBase or manifest dir)
+      const tasks = batch.map((key) => {
+        const meta = this.nodeMeta.get(key)!;
+        const baseUrl = meta.distBase || meta.manifestUrl.replace(/\/[^/]*$/, "/");
+        return async () => {
+          console.debug(`📦 Loading ${meta.name}@${meta.version} from ${baseUrl}`);
+          await this.loadFynApp(baseUrl);
+        };
+      });
+
+      // simple concurrency limiting
+      let i = 0;
+      const runners = new Array(Math.min(concurrency, tasks.length)).fill(0).map(async () => {
+        while (i < tasks.length) {
+          const t = tasks[i++];
+          await t();
+        }
+      });
+      await Promise.all(runners);
     }
   }
 
@@ -305,11 +457,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
     if (container?.$E[exposeName]) {
       const factory = await fynApp.entry.get(exposeName);
-      const exposedModule = factory();
+      const exposedModule = typeof factory === "function" ? factory() : undefined;
 
       const mwExports = [];
 
-      if (loadMiddlewares) {
+      if (loadMiddlewares && exposedModule && typeof exposedModule === "object") {
         for (const [exportName, exportValue] of Object.entries(exposedModule)) {
           if (exportName.startsWith("__middleware__")) {
             const middleware = exportValue as FynAppMiddleware;
@@ -335,12 +487,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           mwExports.join(", "),
         );
         fynApp.exposes[exposeName] = exposedModule;
-        if (exposedModule.__name) {
-          fynApp.exposes[exposedModule.__name] = exposedModule;
+        if ((exposedModule as any).__name) {
+          fynApp.exposes[(exposedModule as any).__name] = exposedModule;
         }
 
         return exposedModule;
       }
+      return;
     }
   }
 
@@ -583,10 +736,14 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       status = this.checkDeferCalls(result?.status, ccs);
       if (status === "defer") {
-        return status;
+        // User initialize requested defer and middleware not all ready: respect defer
+        return "defer";
       }
 
       if (status === "retry") {
+        if (result?.status === "defer") {
+          return await this.callMiddlewares(ccs, tries + 1);
+        }
         return await this.callMiddlewares(ccs, tries + 1);
       }
     }
