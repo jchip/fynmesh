@@ -236,10 +236,33 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         adj.set(key, set);
         indegree.set(parentKey, (indegree.get(parentKey) ?? 0) + 1);
       }
+
+      // Process explicit requires field
       const requires = manifest.requires || [];
       for (const req of requires) {
         await visit(req.name, req.range, key);
       }
+
+      // Process import-exposed dependencies (middleware providers, component libraries, etc.)
+      const importExposed = manifest["import-exposed"];
+      if (importExposed && typeof importExposed === "object") {
+        for (const [packageName, modules] of Object.entries(importExposed)) {
+          // Extract requireVersion from any module in this package
+          let requireVersion: string | undefined;
+          if (modules && typeof modules === "object") {
+            // Find the first module with a requireVersion
+            for (const moduleInfo of Object.values(modules)) {
+              if (moduleInfo && typeof moduleInfo === "object" && "requireVersion" in moduleInfo) {
+                requireVersion = moduleInfo.requireVersion as string;
+                break;
+              }
+            }
+          }
+          // Visit this package as a dependency
+          await visit(packageName, requireVersion, key);
+        }
+      }
+
       return key;
     };
 

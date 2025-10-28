@@ -270,6 +270,11 @@ export interface FynAppManifest {
     uses?: Array<{ provider: string; name: string; range?: string; role?: string }>;
     provides?: Array<{ name: string }>;
   };
+  "import-exposed"?: Record<string, Record<string, {
+    requireVersion?: string;
+    sites?: string[];
+    type?: string;
+  }>>;
 }
 
 /**

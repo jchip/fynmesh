@@ -55,12 +55,43 @@
         // Configure kernel manifest resolver with path prefix (demo only)
         if (typeof fynMeshKernel?.setRegistryResolver === "function") {
             const prefix = "{{pathPrefix}}";
-            fynMeshKernel.setRegistryResolver(async (name) => ({
-                name,
-                version: "0.0.0",
-                manifestUrl: `${prefix}${name}/dist/fynapp.manifest.json`,
-                distBase: `${prefix}${name}/dist/`,
-            }));
+
+            // Version-aware package mapping: package@range -> directory
+            const versionMapping = {
+                "fynapp-x1": {
+                    "^1.0.0": "fynapp-x1-v1",
+                    "^2.0.0": "fynapp-x1-v2",
+                    "default": "fynapp-x1-v2"  // Default to v2 if no version specified
+                },
+                "fynapp-react-lib": {
+                    "^18.0.0": "fynapp-react-18",
+                    "^19.0.0": "fynapp-react-19",
+                    "default": "fynapp-react-19"  // Default to React 19
+                }
+            };
+
+            fynMeshKernel.setRegistryResolver(async (name, range) => {
+                let dirName = name;  // Default to the package name
+
+                // Check if we have version-specific mappings for this package
+                const mappings = versionMapping[name];
+                if (mappings) {
+                    if (range && mappings[range]) {
+                        // Use version-specific mapping if available
+                        dirName = mappings[range];
+                    } else if (mappings.default) {
+                        // Use default mapping if no version specified or no match
+                        dirName = mappings.default;
+                    }
+                }
+
+                return {
+                    name,
+                    version: "0.0.0",
+                    manifestUrl: `${prefix}${dirName}/dist/fynapp.manifest.json`,
+                    distBase: `${prefix}${dirName}/dist/`,
+                };
+            });
         }
 
         // STEP 1: Load react versions (shared dependencies)
@@ -74,19 +105,15 @@
             console.log("loading remote fynapp {{pathPrefix}}fynapp-react-19/dist");
         }
 
-        // STEP 2: Load consumer FynApps with full dependency resolution (includes middleware providers automatically)
-        console.log("DEBUG: STEP 2 - Starting full dependency-planned loading with middleware providers");
+        // STEP 2: Load consumer FynApps - kernel will automatically resolve all dependencies
+        // including middleware providers, component libraries, etc. from manifests
+        console.log("DEBUG: STEP 2 - Starting automatic dependency resolution");
 
         const requested = [];
-        // Add middleware providers first
-        if (features["design-tokens"]) requested.push({ name: "fynapp-design-tokens" });
-        if (features["fynapp-react-middleware"]) requested.push({ name: "fynapp-react-middleware" });
-
-        // Add component libraries that use middleware
+        // Add all consumer FynApps - kernel will analyze their import-exposed dependencies
+        // and automatically load any required middleware providers or component libraries
         if (features["fynapp-x1-v2"]) requested.push({ name: "fynapp-x1-v2" });
         if (features["fynapp-x1-v1"]) requested.push({ name: "fynapp-x1-v1" });
-
-        // Add consumer FynApps (will automatically resolve their dependencies)
         if (features["fynapp-2-react18"]) requested.push({ name: "fynapp-2-react18" });
         if (features["fynapp-1"]) requested.push({ name: "fynapp-1" });
         if (features["fynapp-1-b"]) requested.push({ name: "fynapp-1-b" });
