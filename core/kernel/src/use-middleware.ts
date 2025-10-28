@@ -22,6 +22,7 @@ export const noOpMiddlewareUser: FynModule = {
 };
 
 // example usage of useMiddleware
+/*
 export const main = useMiddleware(
   {
     info: {
@@ -33,3 +34,4 @@ export const main = useMiddleware(
   },
   noOpMiddlewareUser,
 );
+*/

@@ -37,21 +37,34 @@
 
 - Each FynApp builds itself and emits a manifest in its own dist; no monorepo scanning.
 - Detect FynApp if `@fynmesh/kernel` or `create-fynapp` present in `dependencies|devDependencies`.
-- A Rollup plugin extracts `useMiddleware` calls and detects `__middleware__*` provider exports, then writes `dist/fynapp.manifest.json`.
-- Manifest (minimal, stable path):
+- A Rollup plugin detects `__middleware__*` provider exports and dynamic imports with `mf-expose` metadata, then writes `dist/fynapp.manifest.json`.
+- Manifest (current implementation):
 ```json
 {
-  "app": { "name": "fynapp-1-b", "version": "1.0.0" },
-  "requires": [{ "name": "fynapp-1", "range": "^1.0.0" }],
-  "middlewares": {
-    "uses": [
-      { "provider": "fynapp-react-middleware", "name": "basic-counter", "range": "^1.0.0", "role": "consumer" },
-      { "provider": "fynapp-design-tokens", "name": "design-tokens", "range": "^1.0.0", "role": "consumer" }
-    ],
-    "provides": []
+  "name": "fynapp-1",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunk": "main-CUk1HXXo.js"
+    },
+    "./hello": {
+      "path": "./src/hello.ts",
+      "chunk": "hello-KYEh3J-h.js"
+    }
+  },
+  "consume-shared": {
+    "esm-react": {
+      "requireVersion": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "requireVersion": "^19.0.0"
+    }
   }
 }
 ```
+
+**Note**: The `import-exposed` section is currently missing from generated manifests despite dynamic imports with `mf-expose` metadata being present in code. This is a known issue requiring debugging of the `resolveDynamicImport` hook.
 
 - The manifest is just another file in the package tarball; no package.json custom keys.
 
@@ -261,6 +274,33 @@ if (order.length < nodes.size) {
 - Build fails on cyclical app deps or incompatible semver among in-repo apps
 - Warn on missing optional deps or missing providers listed in peerDependencies
 - Compare code-inferred roles vs declared ranges and warn on drift
+- Validate that dynamic imports with `mf-expose` reference declared dependencies in package.json
+- Ensure middleware exports (`__middleware__*`) are properly detected and typed in manifests
+- Check that shared module consumption (`import: false`) has corresponding package.json dependencies
+
+## Debugging Manifest Generation
+
+### Common Issues
+
+1. **Missing import-exposed section**: Dynamic imports with `mf-expose` not detected
+   - Verify imports use correct syntax: `import('fynapp-name/module', { with: { type: "mf-expose", requireVersion: "^x.x.x" } })`
+   - Check that the rollup plugin's `resolveDynamicImport` hook is firing during build
+   - Ensure the dynamic import config in rollup config includes `"mf-expose"` type
+
+2. **Missing middleware exports**: `__middleware__*` exports not detected
+   - Ensure exports are named exactly `__middleware__Name` (with double underscores)
+   - Verify that exposed modules containing middleware are being scanned
+   - Check that the federation plugin is processing exposed modules for middleware patterns
+
+3. **Incorrect dependency versions**: Version requirements not matching package.json
+   - Verify package.json dependencies are correctly declared
+   - Check that the dependency analyzer is reading the right package.json section (dependencies/devDependencies/peerDependencies)
+   - Ensure version resolution logic handles scoped packages correctly
+
+4. **Missing consume-shared**: Shared modules with `import: false` not appearing
+   - Confirm shared config uses `import: false` for consume-only modules
+   - Verify the dependency analyzer's `analyzeSharedConsumption` method is called during build
+   - Check that the manifest generation includes the `consume-shared` section
 
 ## Environment/URLs (No new per-app config by default)
 
@@ -282,6 +322,11 @@ if (order.length < nodes.size) {
 
 ### To-dos
 
+- [x] Fix federation manifest bugs (duplicates, structure)
+- [x] Implement basic federation manifest generation
+- [x] Enhance rollup plugin to detect `import: false` shared modules
+- [x] Detect middleware exports (__middleware__*) and mark as type: "middleware" in exposes
+- [x] Detect middleware imports and mark as type: "middleware" in import-exposed
 - [ ] Create dep graph builder CLI to scan package.json and code, emit manifests
 - [ ] Hook builder into monorepo build to write per-app and aggregated registry
 - [ ] Expose /fynmesh/registry.json and per-app manifests in demo server
@@ -325,22 +370,29 @@ federation({
 FynApps can dynamically import exposed modules from other FynApps:
 
 ```javascript
-// Dynamic import with FynMesh metadata
+// Dynamic import with FynMesh metadata (updated attribute names)
 const components = await import('fynapp-x1/main', {
   with: {
-    type: "mf-expose",
+    importType: "mf-expose",
+    type: "module",
     requireVersion: "^2.0.0"
   }
 });
 
-const Button = await import('ui-library/Button', {
-  with: { type: "mf-expose" }
+const middleware = await import('fynapp-react-middleware/middleware/react-context', {
+  with: {
+    importType: "mf-expose",
+    type: "middleware",
+    requireVersion: "^1.0.0"
+  }
 });
 ```
 
 **Key detection points:**
 - Creates runtime dependency on the exposing FynApp
 - Version requirements can be specified via `requireVersion`
+- `importType: "mf-expose"` identifies federation imports
+- `type: "middleware"` marks middleware imports (detected automatically)
 - Must ensure providing app is loaded before import execution
 - Rollup's `resolveDynamicImport` hook intercepts these imports
 
@@ -349,15 +401,21 @@ const Button = await import('ui-library/Button', {
 The rollup plugin analyzes code and configuration to detect dependencies:
 
 1. **Shared Module Analysis**
-   - Identify `import: false` modules (consume-only)
+   - Identify `import: false` modules (consume-only) in federation config
    - Map to providing FynApps via package.json dependencies
+   - Generate `consume-shared` section in manifest
 
 2. **Dynamic Import Analysis**
    - Use Rollup's `resolveDynamicImport` hook to intercept dynamic imports
-   - Filter for imports with `with: { type: "mf-expose" }` metadata
+   - Filter for imports with `with: { importType: "mf-expose" }` metadata
    - Extract target FynApp names and version requirements from import specifiers
+   - Generate `import-exposed` section with `type: "middleware"` for middleware imports
 
-3. **Dependency Mapping**
+3. **Middleware Export Detection**
+   - Scan exposed modules for `__middleware__*` patterns
+   - Mark as `type: "middleware"` in exposes section
+
+4. **Dependency Mapping**
    - Cross-reference with package.json dependencies
    - Generate comprehensive dependency information in manifest
 
@@ -595,22 +653,25 @@ federation({
 ## Implementation Phases
 
 ### Phase 1: Build-Time Detection (Rollup Plugin)
-- [x] Detect `__middleware__*` provider exports
-- [ ] Enhance plugin to detect `import: false` shared modules
-- [ ] Add transform hook to detect dynamic imports with `mf-expose` metadata
-- [ ] Read package.json to map FynApp dependencies
-- [ ] Generate comprehensive dependency information in manifest
+- [x] Detect `__middleware__*` provider exports (framework exists, detection not working in manifests)
+- [x] Enhance plugin to detect `import: false` shared modules
+- [x] Detect dynamic imports with `mf-expose` metadata (resolveDynamicImport hook implemented, not appearing in manifests)
+- [x] Generate middleware metadata as string format: `-FYNAPP_MIDDLEWARE package-name middleware-path semver`
+- [x] Read package.json to map FynApp dependencies
+- [x] Generate comprehensive dependency information in manifest
 
 ### Phase 2: Runtime Resolution (Kernel)
 - [x] Add manifest parsing to kernel
 - [x] Implement dependency graph construction and topological sort (Kahn's algorithm)
 - [x] Add dependency validation during bootstrap
-- [ ] Enhance with full `dependencies` array parsing
+- [x] Parse `consume-shared` and `import-exposed` sections from manifests
+- [ ] Enhance with full `dependencies` array parsing (requires `import-exposed` to work)
 
 ### Phase 3: Loading Strategy
 - [x] Implement recursive dependency loading via manifests
 - [x] Update bootstrap process for dependency-ordered loading
 - [x] Add comprehensive error handling for missing deps
+- [x] Parse and use `consume-shared` and `import-exposed` sections for dependency resolution
 - [ ] Improve cycle detection and reporting
 
 ### Phase 4: Advanced Scenarios (Future)

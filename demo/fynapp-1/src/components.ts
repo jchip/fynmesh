@@ -15,22 +15,23 @@ export type ComponentLibrary = {
     Spinner: React.ComponentType<any>;
 };
 
+
 /**
  * Preloads all components from fynapp-x1 and returns them as a library
  * This should be called before rendering the App component
  */
 export const preloadComponents = async (): Promise<ComponentLibrary> => {
-    try {
-        // dynamic import exposed modules from module federation remote container
-        // @ts-ignore - TS can't understand module federation remote containers
-        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^2.0.0" } }) as ComponentLibrary;
+  try {
+    // dynamic import exposed modules from module federation remote container
+    // @ts-ignore - TS can't understand module federation remote containers
+    const components = await import<ComponentLibrary>('fynapp-x1/main', {with: {type: "mf-expose", requireVersion: "^2.0.0"}});
 
-        // Return the components library
-        return components;
-    } catch (error) {
-        console.error('Failed to load components from fynapp-x1:', error);
-        throw error;
-    }
+    // Return the components library
+    return components;
+  } catch (error) {
+    console.error('Failed to load components from fynapp-x1:', error);
+    throw error;
+  }
 };
 
 // Get a specific component by name

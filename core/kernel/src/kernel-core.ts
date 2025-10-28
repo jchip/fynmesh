@@ -781,15 +781,63 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     const runtime = this.createFynModuleRuntime(fynApp);
 
-    const ccs: FynAppMiddlewareCallContext[] = fynMod.__middlewareMeta
-      .map((meta) => {
+    console.debug("🔍 Processing middleware metadata:", fynMod.__middlewareMeta);
+
+    const ccs: FynAppMiddlewareCallContext[] = [];
+
+    for (const meta of fynMod.__middlewareMeta) {
+      console.debug("🔍 Processing meta item:", meta);
+
+      let cc: FynAppMiddlewareCallContext | null = null;
+
+      // Handle new string format: "-FYNAPP_MIDDLEWARE package-name middleware-path semver"
+      if (typeof meta === 'string') {
+        const parts = (meta as string).trim().split(' ');
+        if (parts.length >= 4 && parts[0] === '-FYNAPP_MIDDLEWARE') {
+          const [, packageName, middlewarePath, semver] = parts;
+          const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
+          console.debug("🔍 String format - package:", packageName, "middleware:", middlewareName, "semver:", semver);
+
+          const reg = this.getMiddleware(middlewareName, packageName);
+          if (reg.regKey === "") {
+            console.debug("❌ No middleware found for", middlewareName, packageName);
+            continue;
+          }
+          cc = {
+            meta: {
+              info: {
+                name: middlewareName,
+                provider: packageName,
+                version: semver
+              },
+              config: {}
+            },
+            fynMod,
+            fynApp,
+            reg,
+            kernel: this,
+            runtime,
+            status: "",
+          };
+        }
+      } else if (meta && typeof meta === 'object') {
+        // Handle legacy object format
+        console.debug("🔍 Object format meta:", meta);
+
+        if (!meta.info) {
+          console.debug("❌ Legacy object format missing info property:", meta);
+          continue;
+        }
+
         const info = meta.info;
+        console.debug("🔍 Legacy format - name:", info.name, "provider:", info.provider);
+
         const reg = this.getMiddleware(info.name, info.provider);
         if (reg.regKey === "") {
           console.debug("❌ No middleware found for", info.name, info.provider);
-          return {} as FynAppMiddlewareCallContext;
+          continue;
         }
-        return {
+        cc = {
           meta,
           fynMod,
           fynApp,
@@ -798,8 +846,16 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           runtime,
           status: "",
         };
-      })
-      .filter((cc) => cc.meta !== undefined);
+      }
+
+      if (cc) {
+        ccs.push(cc);
+      } else {
+        console.debug("❌ Unrecognized middleware meta format:", meta);
+      }
+    }
+
+    console.debug("✅ Created", ccs.length, "middleware call contexts");
 
     return this.callMiddlewares(ccs);
   }

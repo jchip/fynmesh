@@ -2,6 +2,9 @@ $fyn:
  layout: normal
  flattenTop: true
 $pkg:
+ dep:
+  fynapp-design-tokens: ../fynapp-design-tokens
+  fynapp-x1: ../fynapp-x1-v2
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-alias': ^5.1.1
@@ -615,6 +618,7 @@ fynapp-design-tokens:
  _:
   ../fynapp-design-tokens: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
+  top: 1
   $: local
   _: ../fynapp-design-tokens
   dependencies:
@@ -632,9 +636,16 @@ fynapp-react-middleware:
   dependencies:
    '@fynmesh/kernel': ^1.0.0
 fynapp-x1:
- _latest: 1.0.0-fynlocal_h
+ _latest: 2.0.0-fynlocal_h
  _:
   ../fynapp-x1-v1: 1.0.0-fynlocal_h
+  ../fynapp-x1-v2: 2.0.0-fynlocal_h
+ 2.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-x1-v2
+  dependencies:
+   fynapp-design-tokens: ^1.0.0
  1.0.0-fynlocal_h:
   top: 1
   $: local

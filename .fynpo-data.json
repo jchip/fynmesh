@@ -8,6 +8,38 @@
           "path": "demo/fynapp-1"
         },
         "onPkg": {
+          "name": "fynapp-design-tokens",
+          "version": "1.0.0",
+          "path": "demo/fynapp-design-tokens"
+        },
+        "depSection": "dep",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "fynapp-x1",
+          "version": "2.0.0",
+          "path": "demo/fynapp-x1-v2"
+        },
+        "depSection": "dep",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
           "name": "@fynmesh/kernel",
           "version": "1.0.0",
           "path": "core/kernel"
@@ -138,9 +170,25 @@
           "path": "demo/fynapp-1"
         },
         "onPkg": {
-          "name": "@fynmesh/kernel",
+          "name": "fynapp-design-tokens",
           "version": "1.0.0",
-          "path": "core/kernel"
+          "path": "demo/fynapp-design-tokens"
+        },
+        "depSection": "dep",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(dev)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
+          "name": "fynapp-x1",
+          "version": "2.0.0",
+          "path": "demo/fynapp-x1-v2"
         },
         "depSection": "dep",
         "indirectSteps": [
@@ -149,5 +197,5 @@
       }
     ]
   },
-  "__timestamp": 1752246333674
+  "__timestamp": 1761520822406
 }

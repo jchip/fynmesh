@@ -173,21 +173,17 @@ const middlewareUser = {
 export const main = useMiddleware(
   [
     {
-      info: {
-        name: "basic-counter",
-        provider: "fynapp-react-middleware",
-        version: "^1.0.0",
-      },
+        // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import('fynapp-react-middleware/middleware/react-context', 
+        { with: { type: "fynapp-middleware" } }),
       config: {
         count: 10,
       },
     },
     {
-      info: {
-        name: "design-tokens",
-        provider: "fynapp-design-tokens",
-        version: "^1.0.0",
-      },
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import('fynapp-design-tokens/middleware/design-tokens',
+        { with: { type: "fynapp-middleware" } }),
       config: {
         theme: "fynmesh-default",
         cssCustomProperties: true,
