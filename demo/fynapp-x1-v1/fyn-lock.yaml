@@ -4,6 +4,7 @@ $fyn:
 $pkg:
  dep:
   fynapp-design-tokens: ../fynapp-design-tokens
+  fynapp-react-lib: ../fynapp-react-18
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-alias': ^5.1.1
@@ -869,6 +870,14 @@ fynapp-design-tokens:
    '@fynmesh/kernel': ^1.0.0
    create-fynapp: ^1.0.0
    rollup-wrap-plugin: ^1.0.0
+fynapp-react-lib:
+ _latest: 18.3.0-fynlocal_h
+ _:
+  ../fynapp-react-18: 18.3.0-fynlocal_h
+ 18.3.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-react-18
 generic-names:
  _latest: 4.0.0
  _:

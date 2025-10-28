@@ -20,6 +20,7 @@ import federation from "rollup-plugin-federation";
 import type { FederationPluginOptions, GenDynamicImportIdInfo, FederationRuntime, SharedConfig, FederationInfo } from "rollup-plugin-federation";
 import { DependencyAnalyzer } from "rollup-plugin-federation";
 import { resolve } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
 
 /**
  * Enhanced FynApp manifest with comprehensive dependency information
@@ -42,6 +43,8 @@ export type FynAppManifest = {
   'consume-shared'?: Record<string, { requireVersion?: string }>;
   /** Dependencies for importing exposed modules */
   'import-exposed'?: Record<string, Record<string, { requireVersion?: string; sites?: string[] }>>;
+  /** FynApps that provide shared modules consumed by this FynApp */
+  'shared-providers'?: Record<string, { requireVersion?: string; provides?: string[] }>;
 };
 
 export const env = process.env.NODE_ENV || "development";
@@ -249,6 +252,91 @@ export function createEmitFederationMeta() {
 }
 
 /**
+ * Detects which FynApps provide the shared modules consumed by this FynApp
+ *
+ * @param consumeShared - Map of consumed shared modules
+ * @param cwd - Current working directory
+ * @returns Map of provider FynApps to their provided modules and versions
+ */
+function detectSharedProviders(
+  consumeShared: Record<string, { requireVersion?: string }>,
+  cwd: string
+): Record<string, { requireVersion?: string; provides?: string[] }> {
+  const sharedProviders: Record<string, { requireVersion?: string; provides?: string[] }> = {};
+
+  // Step 1: Already have consumed shared modules from consumeShared parameter
+  if (Object.keys(consumeShared).length === 0) {
+    return sharedProviders;
+  }
+
+  // Step 2: Read package.json dependencies
+  const packageJsonPath = resolve(cwd, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    return sharedProviders;
+  }
+
+  let packageJson: any;
+  try {
+    packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+  } catch (e) {
+    return sharedProviders;
+  }
+
+  const allDependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
+  };
+
+  // Step 3: For each dependency, check if it has fynapp.manifest.json with provide-shared
+  for (const [depName, depVersion] of Object.entries(allDependencies)) {
+    // Try to find the dependency's manifest
+    // First try in node_modules
+    const nodeModulesManifestPath = resolve(cwd, 'node_modules', depName, 'dist', 'fynapp.manifest.json');
+    // Also try relative path for monorepo (peer FynApps in demo/)
+    const relativeManifestPath = resolve(cwd, '..', depName, 'dist', 'fynapp.manifest.json');
+
+    let manifestPath: string | null = null;
+    if (existsSync(nodeModulesManifestPath)) {
+      manifestPath = nodeModulesManifestPath;
+    } else if (existsSync(relativeManifestPath)) {
+      manifestPath = relativeManifestPath;
+    }
+
+    if (!manifestPath) {
+      continue;
+    }
+
+    let depManifest: any;
+    try {
+      depManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    } catch (e) {
+      continue;
+    }
+
+    // Step 4: Check if this dependency provides any of the consumed shared modules
+    if (!depManifest['provide-shared']) {
+      continue;
+    }
+
+    const providedModules: string[] = [];
+    for (const sharedModule of Object.keys(consumeShared)) {
+      if (depManifest['provide-shared'][sharedModule]) {
+        providedModules.push(sharedModule);
+      }
+    }
+
+    if (providedModules.length > 0) {
+      sharedProviders[depName] = {
+        requireVersion: typeof depVersion === 'string' ? depVersion : undefined,
+        provides: providedModules
+      };
+    }
+  }
+
+  return sharedProviders;
+}
+
+/**
  * Generates FynApp manifest with comprehensive dependency information
  *
  * @param runtime - Federation runtime with collected dependencies
@@ -368,13 +456,17 @@ async function generateFynAppManifest(
     }
   }
 
+  // Detect which FynApps provide the consumed shared modules
+  const sharedProviders = detectSharedProviders(consumeShared, cwd);
+
   const manifest: FynAppManifest = {
     name: runtime.options.name,
     version: runtime.options.version || '1.0.0',
     exposes: exposes,
     'provide-shared': Object.keys(provideShared).length > 0 ? provideShared : undefined,
     'consume-shared': Object.keys(consumeShared).length > 0 ? consumeShared : undefined,
-    'import-exposed': Object.keys(importExposed).length > 0 ? importExposed : undefined
+    'import-exposed': Object.keys(importExposed).length > 0 ? importExposed : undefined,
+    'shared-providers': Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined
   };
 
   return manifest;

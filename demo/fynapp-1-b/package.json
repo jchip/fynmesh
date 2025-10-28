@@ -37,6 +37,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@fynmesh/kernel": "^1.0.0"
+    "@fynmesh/kernel": "^1.0.0",
+    "fynapp-react-lib": "^19.0.0"
   }
 }

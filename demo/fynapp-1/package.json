@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "fynapp-design-tokens": "^1.0.0",
+    "fynapp-react-lib": "^19.0.0",
     "fynapp-x1": "^2.0.0"
   }
 }

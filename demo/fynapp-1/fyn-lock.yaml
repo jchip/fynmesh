@@ -4,6 +4,7 @@ $fyn:
 $pkg:
  dep:
   fynapp-design-tokens: ../fynapp-design-tokens
+  fynapp-react-lib: ../fynapp-react-19
   fynapp-x1: ../fynapp-x1-v2
  dev:
   '@fynmesh/kernel': ../../core/kernel
@@ -625,6 +626,18 @@ fynapp-design-tokens:
    '@fynmesh/kernel': ^1.0.0
    create-fynapp: ^1.0.0
    rollup-wrap-plugin: ^1.0.0
+fynapp-react-lib:
+ _latest: 19.1.0-fynlocal_h
+ _:
+  ../fynapp-react-18: 18.3.0-fynlocal_h
+  ../fynapp-react-19: 19.1.0-fynlocal_h
+ 19.1.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-react-19
+ 18.3.0-fynlocal_h:
+  $: local
+  _: ../fynapp-react-18
 fynapp-react-middleware:
  _latest: 1.0.0-fynlocal_h
  _:
@@ -635,6 +648,7 @@ fynapp-react-middleware:
   _: ../fynapp-react-middleware
   dependencies:
    '@fynmesh/kernel': ^1.0.0
+   fynapp-react-lib: ^19.0.0
 fynapp-x1:
  _latest: 2.0.0-fynlocal_h
  _:
@@ -646,12 +660,14 @@ fynapp-x1:
   _: ../fynapp-x1-v2
   dependencies:
    fynapp-design-tokens: ^1.0.0
+   fynapp-react-lib: ^19.0.0
  1.0.0-fynlocal_h:
   top: 1
   $: local
   _: ../fynapp-x1-v1
   dependencies:
    fynapp-design-tokens: ^1.0.0
+   fynapp-react-lib: ^18.0.0
 glob:
  _latest: 11.0.2
  _:
