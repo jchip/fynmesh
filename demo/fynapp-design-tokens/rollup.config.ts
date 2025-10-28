@@ -1,14 +1,13 @@
 import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
 import { newRollupPlugin } from "rollup-wrap-plugin";
-import federation from "rollup-plugin-federation";
 import {
     env,
     fynappDummyEntryName,
     fynappEntryFilename,
-    fynmeshShareScope,
     setupDummyEntryPlugins,
     setupMinifyPlugins,
+    setupReactFederationPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -26,10 +25,8 @@ export default defineConfig({
         newRollupPlugin(resolve)({
             exportConditions: [env],
         }),
-        newRollupPlugin(federation)({
+        ...setupReactFederationPlugins({
             name: "fynapp-design-tokens",
-            filename: fynappEntryFilename,
-            shareScope: fynmeshShareScope,
             exposes: {
                 "./middleware/design-tokens": "./src/middleware/design-tokens.ts",
             },

@@ -146,7 +146,7 @@ export function setupReactFederationPlugins(config: Partial<FederationPluginOpti
         const manifest = await generateFynAppManifest(federationInfo, runtime, context, bundle);
         context.emitFile({
           type: "asset",
-          fileName: "fynapp-manifest.json",
+          fileName: "fynapp.manifest.json",
           source: JSON.stringify(manifest, null, 2),
         });
       }
