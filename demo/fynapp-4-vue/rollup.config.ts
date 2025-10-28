@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import federation from "rollup-plugin-federation";
 // import alias from "@rollup/plugin-alias";
 import replace from "@rollup/plugin-replace";
 import vue from "rollup-plugin-vue";
@@ -14,7 +13,7 @@ import {
   fynappEntryFilename,
   setupDummyEntryPlugins,
   setupMinifyPlugins,
-  fynmeshShareScope,
+  setupFederationPlugins,
 } from "create-fynapp";
 
 export default [
@@ -51,11 +50,8 @@ export default [
       }),
       newRollupPlugin(commonjs)({ transformMixedEsModules: true }),
       newRollupPlugin(json)(),
-      newRollupPlugin(federation)({
+      ...setupFederationPlugins({
         name: "fynapp-4-vue",
-        shareScope: fynmeshShareScope,
-        // this filename must be in the input config array
-        filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.js",
         },

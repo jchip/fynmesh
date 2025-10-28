@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import federation from "rollup-plugin-federation";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -9,7 +8,7 @@ import {
   setupDummyEntryPlugins,
   setupReactAliasPlugins,
   setupMinifyPlugins,
-  fynmeshShareScope,
+  setupFederationPlugins,
 } from "create-fynapp";
 
 export default [
@@ -29,11 +28,8 @@ export default [
         exportConditions: [env],
       }),
       // commonjs({ transformMixedEsModules: true }),
-      newRollupPlugin(federation)({
+      ...setupFederationPlugins({
         name: "fynapp-2-react18",
-        shareScope: fynmeshShareScope,
-        // this filename must be in the input config array
-        filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.ts",
           "./App": "./src/App.tsx",

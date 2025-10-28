@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import federation from "rollup-plugin-federation";
 // import alias from "@rollup/plugin-alias";
 import markoPlugin from "@marko/rollup";
 import json from "@rollup/plugin-json";
@@ -11,7 +10,7 @@ import {
   fynappEntryFilename,
   setupDummyEntryPlugins,
   setupMinifyPlugins,
-  fynmeshShareScope,
+  setupFederationPlugins,
 } from "create-fynapp";
 
 export default [
@@ -37,11 +36,8 @@ export default [
         extensions: [".js", ".marko"],
       }),
       newRollupPlugin(json)(),
-      newRollupPlugin(federation)({
+      ...setupFederationPlugins({
         name: "fynapp-3-marko",
-        shareScope: fynmeshShareScope,
-        // this filename must be in the input config array
-        filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.js",
         },

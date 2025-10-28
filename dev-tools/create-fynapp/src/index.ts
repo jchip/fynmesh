@@ -155,6 +155,100 @@ export function setupReactFederationPlugins(config: Partial<FederationPluginOpti
 }
 
 /**
+ * FynApp middleware dynamic import configuration for rollup-plugin-federation
+ * Use this to enable middleware loading when not using setupFederationPlugins
+ *
+ * @example
+ * ```ts
+ * import { fynappMiddlewareDynamicImport } from 'create-fynapp';
+ *
+ * newRollupPlugin(federation)({
+ *   name: "my-app",
+ *   renderDynamicImport: {
+ *     ...fynappMiddlewareDynamicImport
+ *   }
+ * })
+ * ```
+ */
+export const fynappMiddlewareDynamicImport = {
+  "fynapp-middleware": {
+    idPrefix: "-FYNAPP_MIDDLEWARE",
+    left: "",
+    right: "",
+    genId(info: any): string {
+      return `${this.idPrefix} ${info.packageName} ${info.request} ${info.requireVersion}`;
+    }
+  }
+};
+
+/**
+ * Sets up federation plugin with FynMesh-specific configurations
+ * Framework-agnostic version that includes middleware support and manifest generation
+ *
+ * @example
+ * ```ts
+ * import { setupFederationPlugins } from 'create-fynapp';
+ *
+ * plugins: [
+ *   ...setupFederationPlugins({
+ *     name: "my-app",
+ *     exposes: {
+ *       "./main": "./src/main.js"
+ *     },
+ *     shared: {
+ *       "my-lib": {
+ *         singleton: true,
+ *         requiredVersion: "^1.0.0"
+ *       }
+ *     }
+ *   })
+ * ]
+ * ```
+ */
+export function setupFederationPlugins(config: Partial<FederationPluginOptions> & { name: string }) {
+  return [
+    newRollupPlugin(federation)({
+      shareScope: fynmeshShareScope,
+      filename: fynappEntryFilename,
+      ...config,
+      renderDynamicImport: {
+        ...fynappMiddlewareDynamicImport,
+        ...config.renderDynamicImport
+      },
+      emitFederationMeta: createEmitFederationMeta(),
+    }),
+  ];
+}
+
+/**
+ * Creates an emitFederationMeta callback that generates fynapp.manifest.json
+ * Use this with rollup-plugin-federation when you need custom configuration
+ *
+ * @example
+ * ```ts
+ * import { createEmitFederationMeta, fynappMiddlewareDynamicImport } from 'create-fynapp';
+ *
+ * newRollupPlugin(federation)({
+ *   name: "my-app",
+ *   renderDynamicImport: {
+ *     ...fynappMiddlewareDynamicImport
+ *   },
+ *   emitFederationMeta: createEmitFederationMeta()
+ * })
+ * ```
+ */
+export function createEmitFederationMeta() {
+  return async (federationInfo: FederationInfo, runtime: FederationRuntime, context: any, bundle: any) => {
+    const manifest = await generateFynAppManifest(federationInfo, runtime, context, bundle);
+    context.emitFile({
+      type: "asset",
+      fileName: "fynapp.manifest.json",
+      source: JSON.stringify(manifest, null, 2),
+    });
+  };
+}
+
+/**
  * Generates FynApp manifest with comprehensive dependency information
  *
  * @param runtime - Federation runtime with collected dependencies

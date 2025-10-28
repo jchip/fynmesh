@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import federation from "rollup-plugin-federation";
 // import alias from "@rollup/plugin-alias";
 import babel from "@rollup/plugin-babel";
 import postcss from "rollup-plugin-postcss";
@@ -13,7 +12,7 @@ import {
   fynappEntryFilename,
   setupDummyEntryPlugins,
   setupMinifyPlugins,
-  fynmeshShareScope,
+  setupFederationPlugins,
 } from "create-fynapp";
 
 export default [
@@ -44,11 +43,8 @@ export default [
       }),
       newRollupPlugin(commonjs)({ transformMixedEsModules: true }),
       newRollupPlugin(json)(),
-      newRollupPlugin(federation)({
+      ...setupFederationPlugins({
         name: "fynapp-7-solid",
-        shareScope: fynmeshShareScope,
-        // this filename must be in the input config array
-        filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.js",
         },

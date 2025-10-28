@@ -1,7 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 // import commonjs from "@rollup/plugin-commonjs";
 import typescript from "@rollup/plugin-typescript";
-import federation from "rollup-plugin-federation";
 // import alias from "@rollup/plugin-alias";
 // import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
@@ -12,9 +11,9 @@ import {
   isProduction,
   fynappEntryFilename,
   setupMinifyPlugins,
-  fynmeshShareScope,
   setupReactAliasPlugins,
   setupDummyEntryPlugins,
+  setupFederationPlugins,
 } from "create-fynapp";
 
 export default [
@@ -43,10 +42,8 @@ export default [
         inject: true,
         extract: false,
       }),
-      newRollupPlugin(federation)({
+      ...setupFederationPlugins({
         name: "fynapp-x1",
-        shareScope: fynmeshShareScope,
-        filename: fynappEntryFilename,
         exposes: {
           "./main": "./src/main.tsx",
         },
