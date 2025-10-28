@@ -22,19 +22,6 @@
 </script>
 <script>
     (async () => {
-        const features = {
-            "react-18": {{ features["react-18"] | default(true) | dump | safe }},
-            "react-19": {{ features["react-19"] | default(true) | dump | safe }},
-            "fynapp-1": {{ features["fynapp-1"] | default(true) | dump | safe }},
-            "fynapp-1-b": {{ features["fynapp-1-b"] | default(true) | dump | safe }},
-            "fynapp-2-react18": {{ features["fynapp-2-react18"] | default(true) | dump | safe }},
-            "fynapp-3-marko": {{ features["fynapp-3-marko"] | default(true) | dump | safe }},
-            "fynapp-4-vue": {{ features["fynapp-4-vue"] | default(true) | dump | safe }},
-            "fynapp-5-preact": {{ features["fynapp-5-preact"] | default(true) | dump | safe }},
-            "fynapp-6-react": {{ features["fynapp-6-react"] | default(true) | dump | safe }},
-            "fynapp-7-solid": {{ features["fynapp-7-solid"] | default(true) | dump | safe }}
-        };
-
         // Configure kernel manifest resolver with path prefix (demo only)
         if (typeof fynMeshKernel?.setRegistryResolver === "function") {
             const prefix = "{{pathPrefix}}";
@@ -91,24 +78,29 @@
             });
         }
 
-        // STEP 1: Explicitly pre-load React versions (base framework dependencies)
-        // React must be loaded before consumer FynApps that depend on it
-        if (features["react-18"]) {
-            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-18/dist");
-            console.log("loading remote fynapp {{pathPrefix}}fynapp-react-18/dist");
-        }
-        if (features["react-19"]) {
-            fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-19/dist");
-            console.log("loading remote fynapp {{pathPrefix}}fynapp-react-19/dist");
-        }
+        // STEP 1: All React providers now automatically loaded via shared-providers
+        // No explicit pre-loading needed - kernel automatically detects and loads providers
+        // based on consumer manifests' shared-providers declarations
 
         // STEP 2: Load consumer FynApps - kernel will automatically resolve dependencies
         // including middleware providers and component libraries from manifests
         console.log("DEBUG: Starting automatic dependency resolution");
 
-        const requested = [];
+        // Feature flags to control which FynApps to load
+        const features = {
+            "fynapp-2-react18": true,
+            "fynapp-1": true,
+            "fynapp-1-b": true,
+            "fynapp-3-marko": true,
+            "fynapp-4-vue": true,
+            "fynapp-5-preact": true,
+            "fynapp-6-react": true,
+            "fynapp-7-solid": true
+        };
+
         // Add all consumer FynApps - kernel will analyze their import-exposed dependencies
         // and automatically load any required middleware providers or component libraries
+        const requested = [];
         if (features["fynapp-2-react18"]) requested.push({ name: "fynapp-2-react18" });
         if (features["fynapp-1"]) requested.push({ name: "fynapp-1" });
         if (features["fynapp-1-b"]) requested.push({ name: "fynapp-1-b" });

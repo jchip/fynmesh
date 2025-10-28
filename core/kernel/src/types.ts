@@ -275,6 +275,10 @@ export interface FynAppManifest {
     sites?: string[];
     type?: string;
   }>>;
+  "shared-providers"?: Record<string, {
+    requireVersion: string;
+    provides: string[];
+  }>;
 }
 
 /**

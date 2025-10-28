@@ -225,16 +225,26 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     const visit = async (name: string, range?: string, parentKey?: string) => {
       const { key, manifest } = await this.resolveAndFetch(name, range);
-      if (!nodes.has(key)) {
+      const isNewNode = !nodes.has(key);
+
+      if (isNewNode) {
         nodes.add(key);
         indegree.set(key, indegree.get(key) ?? 0);
       }
+
       if (parentKey) {
         // Edge: dep (key) -> parent (parentKey)
         const set = adj.get(key) || new Set<string>();
-        if (!set.has(parentKey)) set.add(parentKey);
-        adj.set(key, set);
-        indegree.set(parentKey, (indegree.get(parentKey) ?? 0) + 1);
+        if (!set.has(parentKey)) {
+          set.add(parentKey);
+          adj.set(key, set);
+          indegree.set(parentKey, (indegree.get(parentKey) ?? 0) + 1);
+        }
+      }
+
+      // Only process dependencies if this is the first time visiting this node
+      if (!isNewNode) {
+        return key;
       }
 
       // Process explicit requires field
@@ -257,6 +267,20 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
                 break;
               }
             }
+          }
+          // Visit this package as a dependency
+          await visit(packageName, requireVersion, key);
+        }
+      }
+
+      // Process shared-providers dependencies (shared module providers like React)
+      const sharedProviders = manifest["shared-providers"];
+      if (sharedProviders && typeof sharedProviders === "object") {
+        for (const [packageName, providerInfo] of Object.entries(sharedProviders)) {
+          // Extract requireVersion from the provider info
+          let requireVersion: string | undefined;
+          if (providerInfo && typeof providerInfo === "object" && "requireVersion" in providerInfo) {
+            requireVersion = providerInfo.requireVersion as string;
           }
           // Visit this package as a dependency
           await visit(packageName, requireVersion, key);
@@ -297,7 +321,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
 
     if (order.length < nodes.size) {
-      const cyclic = [...nodes].filter((k) => (graph.indegree.get(k) ?? 0) > 0);
+      const cyclic = [...nodes].filter((k) => (indegree.get(k) ?? 0) > 0);
       throw new Error(`Dependency cycle detected among: ${cyclic.join(", ")}`);
     }
 
