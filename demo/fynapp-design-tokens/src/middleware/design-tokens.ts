@@ -710,6 +710,7 @@ export class DesignTokensMiddleware implements FynAppMiddleware {
 export const __middleware__DesignTokens = new DesignTokensMiddleware();
 
 // Simple main that just loads the middleware
+/*
 export const main = useMiddleware(
     {
         info: {
@@ -725,3 +726,4 @@ export const main = useMiddleware(
     },
     noOpMiddlewareUser,
 );
+*/

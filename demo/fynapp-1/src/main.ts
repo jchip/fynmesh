@@ -9,12 +9,8 @@ const middlewareUser = {
    * Tell middleware what we need - called first to determine readiness
    */
   initialize(runtime: FynModuleRuntime) {
-    const basicCounterData = runtime.middlewareContext.get("basic-counter");
-    const config = basicCounterData?.config;
-
     console.debug(
-      `📋 ${runtime.fynApp.name} initialize called with config:`,
-      config
+      `📋 ${runtime.fynApp.name} initialize called`
     );
 
     // We're a primary provider
@@ -36,15 +32,10 @@ const middlewareUser = {
     
     console.debug(`🔍 ${runtime.fynApp.name} execute - Shell managed: ${isShellManaged}`);
 
-    // Get the basic counter middleware data to access config
-    const basicCounterData = runtime.middlewareContext.get("basic-counter");
-    const middlewareConfig = basicCounterData?.config || { count: 0 };
-
     console.debug(
       "🔍 fynapp-1: Available middleware APIs:",
       Array.from(runtime.middlewareContext.keys())
     );
-    console.debug("🔍 fynapp-1: Middleware config:", middlewareConfig);
 
     // Load components from fynapp-x1
     let components;
@@ -78,7 +69,6 @@ const middlewareUser = {
           React.createElement(App, {
             appName: runtime.fynApp.name,
             components,
-            middlewareConfig,
             runtime,
             ...props
           })
@@ -174,7 +164,7 @@ export const main = useMiddleware(
   [
     {
       // @ts-ignore - TS can't understand module federation remote containers
-      middleware: import('fynapp-react-middleware/middleware/react-context',
+      middleware: import('fynapp-react-middleware/main/basic-counter',
         { with: { type: "fynapp-middleware" } }),
       config: {
         // react-context config
@@ -182,15 +172,7 @@ export const main = useMiddleware(
     },
     {
       // @ts-ignore - TS can't understand module federation remote containers
-      middleware: import('fynapp-react-middleware/middleware/basic-counter',
-        { with: { type: "fynapp-middleware" } }),
-      config: {
-        count: 10, // Provide initial counter value
-      },
-    },
-    {
-      // @ts-ignore - TS can't understand module federation remote containers
-      middleware: import('fynapp-design-tokens/middleware/design-tokens',
+      middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
         { with: { type: "fynapp-middleware" } }),
       config: {
         theme: "fynmesh-default",

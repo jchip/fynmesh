@@ -169,8 +169,99 @@ function detectSharedProviders(packageJson, consumeShared) {
 
 4. **Version Flexibility**: The system supports multiple versions of the same provider (React 18 and 19) loaded simultaneously
 
+## Middleware Path Resolution (Updated 2025-10-29)
+
+### Issue: Middleware Path Duplication
+
+Previously, middleware paths were reconstructed from `exposeModule` and `middlewareName` fields:
+
+```typescript
+// Old approach (caused duplication):
+const exposeModule = moduleInfo.exposeModule || modulePath.substring(0, modulePath.lastIndexOf('/'));
+const middlewareName = moduleInfo.middlewareName || modulePath.substring(modulePath.lastIndexOf('/') + 1);
+const middlewarePath = `${exposeModule}/${middlewareName}`;
+// Result: "middleware/design-tokens/design-tokens" (duplicated!)
+```
+
+### Solution: Use modulePath Directly
+
+The `modulePath` key in `import-exposed` already contains the correct path:
+
+```typescript
+// New approach (correct):
+for (const [modulePath, moduleInfo] of Object.entries(modules)) {
+  if (moduleInfo && typeof moduleInfo === "object" && moduleInfo.type === "middleware") {
+    console.debug(`📦 Proactively loading middleware: ${packageName}/${modulePath}`);
+    await this.loadMiddlewareFromDependency(packageName, modulePath);
+  }
+}
+```
+
+**Example manifest entry:**
+```json
+{
+  "import-exposed": {
+    "fynapp-design-tokens": {
+      "middleware/design-tokens/design-tokens": {
+        "sites": ["src/main.ts"],
+        "type": "middleware",
+        "exposeModule": "middleware/design-tokens",
+        "middlewareName": "design-tokens"
+      }
+    }
+  }
+}
+```
+
+The key `"middleware/design-tokens/design-tokens"` is the correct full path to use.
+
+## Optional Version in Middleware Format (Updated 2025-10-29)
+
+### String Format with Optional Version
+
+Middleware can be specified in string format without a version:
+
+**With Version (4 parts):**
+```
+-FYNAPP_MIDDLEWARE fynapp-react-middleware main/basic-counter ^1.0.0
+```
+
+**Without Version (3 parts) - Now Supported:**
+```
+-FYNAPP_MIDDLEWARE fynapp-design-tokens middleware/design-tokens
+```
+
+### Implementation
+
+The kernel parser now supports both formats:
+
+```typescript
+// Parse middleware string format
+const parts = middlewareStr.trim().split(/\s+/);
+
+if (parts.length >= 3) {  // Changed from >= 4 to support optional version
+  const [marker, packageName, modulePath, semver] = parts;
+
+  return {
+    name: modulePath.split('/').pop() || modulePath,
+    provider: packageName,
+    path: modulePath,
+    version: semver || "*",  // Default to "*" if not provided
+  };
+}
+```
+
+### Why Optional Version?
+
+1. **Build-time generation**: Rollup plugin may not always know the version
+2. **Simplified format**: Less verbose for internal middleware references
+3. **Flexibility**: Kernel uses default version resolution when not specified
+4. **Backwards compatibility**: Supports both old (4-part) and new (3-part) formats
+
 ## Future Considerations
 
 - Could extend to other shared module types beyond React
 - Provider resolution follows semantic versioning from `package.json`
 - Manifest format is extensible for additional metadata
+- Middleware path resolution now uses direct keys, eliminating path reconstruction bugs
+- Optional version support provides more flexibility in middleware declaration

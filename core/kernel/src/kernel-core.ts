@@ -88,15 +88,40 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   private async resolveAndFetch(name: string, range?: string): Promise<{ key: string; res: RegistryResolverResult; manifest: FynAppManifest }>{
     if (!this.registryResolver) throw new Error("No registry resolver configured");
     const res = await this.registryResolver(name, range);
-    const key = `${res.name}@${res.version}`;
-    if (this.manifestCache.has(key)) {
-      const manifest = this.manifestCache.get(key)!;
+    const tempKey = `${res.name}@${res.version}`;
+    if (this.manifestCache.has(tempKey)) {
+      const manifest = this.manifestCache.get(tempKey)!;
       // Store meta for base URL derivation
       const distBase = res.distBase || (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-      this.nodeMeta.set(key, { name: res.name, version: res.version, manifestUrl: res.manifestUrl, distBase });
+      const version = manifest.version || res.version;
+      const key = `${res.name}@${version}`;
+      this.nodeMeta.set(key, { name: res.name, version, manifestUrl: res.manifestUrl, distBase });
       return { key, res, manifest };
     }
     let manifest: FynAppManifest;
+
+    // Try to extract embedded manifest from entry file first (zero HTTP overhead)
+    // Use Federation.import() to load the SystemJS module and extract the manifest export
+    try {
+      const Federation = (globalThis as any).Federation;
+      if (Federation) {
+        const entryUrl = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
+        const entryModule = await Federation.import(entryUrl);
+        if (entryModule && entryModule.__FYNAPP_MANIFEST__) {
+          manifest = entryModule.__FYNAPP_MANIFEST__;
+          const distBase = res.distBase || (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
+          // Use version from manifest if available, fallback to resolver version
+          const version = manifest.version || res.version;
+          const key = `${res.name}@${version}`;
+          this.manifestCache.set(key, manifest);
+          this.nodeMeta.set(key, { name: res.name, version, manifestUrl: res.manifestUrl, distBase });
+          return { key, res, manifest };
+        }
+      }
+    } catch (embeddedErr) {
+      // Entry module doesn't exist or doesn't have embedded manifest, fall back to fetching
+    }
+
     try {
       manifest = await this.fetchJson(res.manifestUrl);
     } catch (err1) {
@@ -106,12 +131,15 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         manifest = await this.fetchJson(fallback);
       } catch (err2) {
         // demo fallback: synthesize an empty manifest (no requires) and proceed
-        manifest = { app: { name, version: res.version }, requires: [] };
+        manifest = { name, version: res.version, requires: [] };
       }
     }
-    this.manifestCache.set(key, manifest);
     const distBase = res.distBase || (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-    this.nodeMeta.set(key, { name: res.name, version: res.version, manifestUrl: res.manifestUrl, distBase });
+    // Use version from manifest if available, fallback to resolver version
+    const version = manifest.version || res.version;
+    const key = `${res.name}@${version}`;
+    this.manifestCache.set(key, manifest);
+    this.nodeMeta.set(key, { name: res.name, version, manifestUrl: res.manifestUrl, distBase });
     return { key, res, manifest };
   }
 
@@ -294,6 +322,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       await visit(r.name, r.range);
     }
 
+    console.debug('buildGraph completed, nodes:', Array.from(nodes));
     return { nodes, adj, indegree };
   }
 
@@ -544,6 +573,33 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     }
   }
 
+  /**
+   * Load middleware from a dependency package
+   * @param packageName The package name (e.g., "fynapp-react-middleware")
+   * @param middlewarePath The middleware path (e.g., "middleware/design-tokens/design-tokens" or "main/react-context")
+   */
+  private async loadMiddlewareFromDependency(packageName: string, middlewarePath: string): Promise<void> {
+    console.debug(`📦 Loading middleware from dependency: ${packageName}/${middlewarePath}`);
+
+    // Find the dependency fynapp
+    const dependencyApp = this.runTime.appsLoaded[packageName];
+
+    if (!dependencyApp) {
+      console.debug(`❌ Dependency package ${packageName} not found in runtime`);
+      return;
+    }
+
+    // Extract the expose module from the middleware path
+    // The path format is: exposeModule/middlewareName
+    // Example: "middleware/design-tokens/design-tokens" -> exposeModule = "middleware/design-tokens"
+    const lastSlashIndex = middlewarePath.lastIndexOf('/');
+    const exposeModule = lastSlashIndex > 0 ? middlewarePath.substring(0, lastSlashIndex) : middlewarePath;
+    const exposeName = `./${exposeModule}`;
+
+    console.debug(`📦 Loading middleware module ${exposeName} from ${packageName} (full path: ${middlewarePath})`);
+    await this.loadExposeModule(dependencyApp, exposeName, true);
+  }
+
   async loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp> {
     const container = fynAppEntry.container;
 
@@ -578,6 +634,30 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     // Step 5: Load main module
     await this.loadExposeModule(fynApp, "./main", true);
+
+    // Step 6: Proactively load middleware from dependencies
+    // Get the embedded manifest from the container
+    // The manifest is exported directly on the container, not as an expose module
+    const manifest = (container as any).__FYNAPP_MANIFEST__ || null;
+
+    const importExposed = manifest?.["import-exposed"];
+    if (importExposed && typeof importExposed === "object") {
+      console.debug("📦 Loading middleware dependencies for", fynApp.name);
+
+      for (const [packageName, modules] of Object.entries(importExposed)) {
+        if (modules && typeof modules === "object") {
+          for (const [modulePath, moduleInfo] of Object.entries(modules)) {
+            // Only load middleware type dependencies
+            if (moduleInfo && typeof moduleInfo === "object" && moduleInfo.type === "middleware") {
+              // The modulePath key is already the correct exposed module path (e.g., "middleware/design-tokens")
+              // which corresponds to the "./middleware/design-tokens" expose
+              console.debug(`📦 Proactively loading middleware: ${packageName}/${modulePath}`);
+              await this.loadMiddlewareFromDependency(packageName, modulePath);
+            }
+          }
+        }
+      }
+    }
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
@@ -843,13 +923,17 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       let cc: FynAppMiddlewareCallContext | null = null;
 
-      // Handle new string format: "-FYNAPP_MIDDLEWARE package-name middleware-path semver"
+      // Handle new string format: "-FYNAPP_MIDDLEWARE package-name middleware-path [semver]"
+      // Note: semver is optional
       if (typeof meta === 'string') {
         const parts = (meta as string).trim().split(' ');
-        if (parts.length >= 4 && parts[0] === '-FYNAPP_MIDDLEWARE') {
+        if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
           const [, packageName, middlewarePath, semver] = parts;
           const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
-          console.debug("🔍 String format - package:", packageName, "middleware:", middlewareName, "semver:", semver);
+          console.debug("🔍 String format - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
+
+          // Try to load middleware from dependency package first
+          await this.loadMiddlewareFromDependency(packageName, middlewarePath);
 
           const reg = this.getMiddleware(middlewareName, packageName);
           if (reg.regKey === "") {
@@ -861,7 +945,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
               info: {
                 name: middlewareName,
                 provider: packageName,
-                version: semver
+                version: semver || "*"
               },
               config: {}
             },
@@ -881,10 +965,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           const middlewareStr = (meta as any).middleware as string;
           const parts = middlewareStr.trim().split(' ');
 
-          if (parts.length >= 4 && parts[0] === '-FYNAPP_MIDDLEWARE') {
+          if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
             const [, packageName, middlewarePath, semver] = parts;
             const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
-            console.debug("🔍 Object wrapper format - package:", packageName, "middleware:", middlewareName, "semver:", semver);
+            console.debug("🔍 Object wrapper format - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
+
+            // Try to load middleware from dependency package first
+            await this.loadMiddlewareFromDependency(packageName, middlewarePath);
 
             const reg = this.getMiddleware(middlewareName, packageName);
             if (reg.regKey === "") {
@@ -896,7 +983,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
                 info: {
                   name: middlewareName,
                   provider: packageName,
-                  version: semver
+                  version: semver || "*"
                 },
                 config: (meta as any).config || {}
               },

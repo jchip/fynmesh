@@ -21,7 +21,6 @@ export default [
         sourcemap: true,
       },
     ],
-    external: ["esm-react", "esm-react-dom"],
     plugins: [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({

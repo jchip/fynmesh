@@ -10,12 +10,8 @@ const middlewareUser = {
    * Tell middleware what we need - called first to determine readiness
    */
   initialize(runtime: FynModuleRuntime) {
-    const basicCounterData = runtime.middlewareContext.get("basic-counter");
-    const config = basicCounterData?.config;
-
     console.debug(
-      `📋 ${runtime.fynApp.name} initialize called with config:`,
-      config
+      `📋 ${runtime.fynApp.name} initialize called`
     );
 
     // We're a consumer
@@ -37,15 +33,10 @@ const middlewareUser = {
     
     console.debug(`🔍 ${runtime.fynApp.name} execute - Shell managed: ${isShellManaged}`);
 
-    // Get the basic counter middleware data to access config
-    const basicCounterData = runtime.middlewareContext.get("basic-counter");
-    const middlewareConfig = basicCounterData?.config || { count: 0 };
-
     console.debug(
       "🔍 fynapp-1-b: Available middleware APIs:",
       Array.from(runtime.middlewareContext.keys())
     );
-    console.debug("🔍 fynapp-1-b: Middleware config:", middlewareConfig);
 
     // Load components from fynapp-x1
     let components;
@@ -79,7 +70,6 @@ const middlewareUser = {
           React.createElement(App, {
             appName: runtime.fynApp.name,
             components,
-            middlewareConfig,
             runtime,
             ...props
           })
@@ -171,23 +161,20 @@ const middlewareUser = {
 };
 
 // Export the middleware usage with standardized interface
-// This app is a consumer - it consumes the basic counter config from the provider
 export const main = useMiddleware(
   [
     {
-      info: {
-        name: "basic-counter",
-        provider: "fynapp-react-middleware",
-        version: "^1.0.0",
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import('fynapp-react-middleware/main/basic-counter',
+        { with: { type: "fynapp-middleware" } }),
+      config: {
+        share: true, // Share counter state with other fynapps
       },
-      config: "consume-only", // Consumer - uses config from provider
     },
     {
-      info: {
-        name: "design-tokens",
-        provider: "fynapp-design-tokens",
-        version: "^1.0.0",
-      },
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
+        { with: { type: "fynapp-middleware" } }),
       config: {
         theme: "fynmesh-green", // Start with a different theme
         cssCustomProperties: true,

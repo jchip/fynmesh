@@ -264,7 +264,16 @@ export interface FynAppRequireEdge {
 }
 
 export interface FynAppManifest {
-  app: { name: string; version: string };
+  name: string;
+  version: string;
+  exposes?: Record<string, {
+    path: string;
+    chunk: string;
+  }>;
+  "provide-shared"?: Record<string, {
+    singleton?: boolean;
+    requiredVersion?: string;
+  }>;
   requires?: FynAppRequireEdge[];
   middlewares?: {
     uses?: Array<{ provider: string; name: string; range?: string; role?: string }>;
@@ -274,6 +283,8 @@ export interface FynAppManifest {
     requireVersion?: string;
     sites?: string[];
     type?: string;
+    exposeModule?: string;
+    middlewareName?: string;
   }>>;
   "shared-providers"?: Record<string, {
     requireVersion: string;
