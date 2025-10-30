@@ -48,6 +48,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   protected fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
   protected fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
 
+  // Cache to track which modules have been scanned for middleware exports
+  private scannedModules: Set<string> = new Set();
+
   constructor() {
     this.events = new FynEventTarget();
     this.runTime = {
@@ -439,7 +442,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   registerMiddleware(mwReg: FynAppMiddlewareReg): void {
     const { regKey, hostFynApp } = mwReg;
-    console.log(`🔧 Registering middleware: ${regKey}, autoApplyScope:`, mwReg.middleware.autoApplyScope);
 
     const versionMap = this.runTime.middlewares[regKey] || Object.create(null);
 
@@ -450,6 +452,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       );
       return;
     }
+
+    console.log(`🔧 Registering middleware: ${regKey}, autoApplyScope:`, mwReg.middleware.autoApplyScope);
 
     versionMap[hostFynApp.version] = mwReg;
     // set default version to the first version
@@ -537,31 +541,47 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       const mwExports = [];
 
+      // Create cache key to track if we've already scanned this module for middleware
+      const scanCacheKey = `${fynApp.name}@${fynApp.version}::${exposeName}`;
+
       if (loadMiddlewares && exposedModule && typeof exposedModule === "object") {
-        for (const [exportName, exportValue] of Object.entries(exposedModule)) {
-          if (exportName.startsWith("__middleware__")) {
-            const middleware = exportValue as FynAppMiddleware;
-            const mwName = middleware.name;
-            const mwReg: FynAppMiddlewareReg = {
-              regKey: `${fynApp.name}::${mwName}`,
-              fullKey: `${fynApp.name}@${fynApp.version}::${mwName}`,
-              hostFynApp: fynApp,
-              exposeName: exposeName,
-              exportName,
-              middleware,
-            };
-            this.registerMiddleware(mwReg);
-            mwExports.push(exportName);
+        // Check if we've already scanned this module
+        if (!this.scannedModules.has(scanCacheKey)) {
+          // Mark as scanned before processing to prevent duplicate scans
+          this.scannedModules.add(scanCacheKey);
+
+          for (const [exportName, exportValue] of Object.entries(exposedModule)) {
+            if (exportName.startsWith("__middleware__")) {
+              const middleware = exportValue as FynAppMiddleware;
+              const mwName = middleware.name;
+              const mwReg: FynAppMiddlewareReg = {
+                regKey: `${fynApp.name}::${mwName}`,
+                fullKey: `${fynApp.name}@${fynApp.version}::${mwName}`,
+                hostFynApp: fynApp,
+                exposeName: exposeName,
+                exportName,
+                middleware,
+              };
+              this.registerMiddleware(mwReg);
+              mwExports.push(exportName);
+            }
           }
+
+          console.debug(
+            `✅ Expose module '${exposeName}' loaded for`,
+            fynApp.name,
+            fynApp.version,
+            mwExports.length > 0 ? "middlewares registered:" : "",
+            mwExports.join(", "),
+          );
+        } else {
+          console.debug(
+            `⏭️  Skipping middleware scan for '${exposeName}' - already scanned for`,
+            fynApp.name,
+            fynApp.version,
+          );
         }
 
-        console.debug(
-          `✅ Expose module '${exposeName}' loaded for`,
-          fynApp.name,
-          fynApp.version,
-          mwExports.length > 0 ? "middlewares registered:" : "",
-          mwExports.join(", "),
-        );
         fynApp.exposes[exposeName] = exposedModule;
         if ((exposedModule as any).__name) {
           fynApp.exposes[(exposedModule as any).__name] = exposedModule;

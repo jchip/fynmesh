@@ -56,6 +56,7 @@ export const useMiddleware = <UserT extends FynModule = FynModule>(
 ```
 
 **Parameters:**
+
 1. **Middleware metadata**: Object(s) with `info` and `config` fields
 2. **User module**: Object implementing the `FynModule` interface
 
@@ -136,14 +137,14 @@ export const __middleware__MyMiddleware: FynAppMiddleware = {
     this.performFinalSetup(fynApp, middlewareData);
   },
 
-  private validateConfig(config: any): boolean {
+  validateConfig(config: any): boolean {
     // Configuration validation logic
     return true;
   },
 
-  private performFinalSetup(fynApp: FynApp, data: any): void {
+  performFinalSetup(fynApp: FynApp, data: any): void {
     // Final setup implementation
-  }
+  },
 };
 ```
 
@@ -156,10 +157,10 @@ export default {
     setupReactFederationPlugins({
       exposes: {
         "./middleware/my-middleware": "./src/middleware/my-middleware.ts",
-        "./main": "./src/main.ts"
-      }
-    })
-  ]
+        "./main": "./src/main.ts",
+      },
+    }),
+  ],
 };
 ```
 
@@ -174,7 +175,7 @@ export const config = {
 
 ## FynApp Consumer Implementation
 
-### Basic Usage Pattern
+### Dynamic Import Usage Pattern
 
 ```typescript
 import { useMiddleware, FynModule, FynModuleRuntime } from "@fynmesh/kernel";
@@ -198,20 +199,61 @@ const middlewareUser: FynModule = {
 
 export const main = useMiddleware(
   {
-    info: {
-      name: "my-middleware",
-      provider: "provider-fynapp",
-      version: "^1.0.0",
-    },
+    // @ts-ignore - TS can't understand module federation remote containers
+    middleware: import("provider-fynapp/path/to/middleware", {
+      with: { type: "fynapp-middleware" },
+    }),
     config: {
       // Middleware-specific configuration
       theme: "dark",
-      features: ["feature1", "feature2"]
+      features: ["feature1", "feature2"],
     },
   },
   middlewareUser,
 );
 ```
+
+### Dynamic Import Usage Pattern (Current Implementation)
+
+The current implementation uses dynamic imports with federation metadata:
+
+```typescript
+export const main = useMiddleware(
+  [
+    {
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import("fynapp-react-middleware/main/basic-counter", {
+        with: { type: "fynapp-middleware" },
+      }),
+      config: {
+        share: true, // Share counter state with other fynapps
+        count: 10,
+      },
+    },
+    {
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import("fynapp-design-tokens/middleware/design-tokens/design-tokens", {
+        with: { type: "fynapp-middleware" },
+      }),
+      config: {
+        theme: "fynmesh-default",
+        cssCustomProperties: true,
+        cssVariablePrefix: "fynmesh",
+        enableThemeSwitching: true,
+        global: false, // Use scoped themes per fynapp
+      },
+    },
+  ],
+  middlewareUser,
+);
+```
+
+**Key Changes from Legacy Pattern:**
+
+- Uses `middleware: import(...)` instead of `info: { name, provider, version }`
+- Dynamic import specifies the exact exposed module path
+- Federation metadata `{ type: "fynapp-middleware" }` identifies middleware imports
+- Configuration is passed separately in `config` field
 
 ### Multiple Middleware Usage
 
@@ -219,23 +261,22 @@ export const main = useMiddleware(
 export const main = useMiddleware(
   [
     {
-      info: {
-        name: "design-tokens",
-        provider: "fynapp-design-tokens",
-        version: "^1.0.0",
-      },
+      middleware: import("fynapp-design-tokens/middleware/design-tokens/design-tokens", {
+        with: { type: "fynapp-middleware" },
+      }),
       config: {
         theme: "fynmesh-default",
         cssCustomProperties: true,
       },
     },
     {
-      info: {
-        name: "react-context",
-        provider: "fynapp-react-middleware",
-        version: "^1.0.0",
+      middleware: import("fynapp-react-middleware/main/basic-counter", {
+        with: { type: "fynapp-middleware" },
+      }),
+      config: {
+        share: true,
+        count: 10,
       },
-      config: "primary",
     },
   ],
   middlewareUser,
@@ -316,11 +357,37 @@ const middleware = kernel.getMiddleware("design-tokens", "fynapp-design-tokens")
 const middleware = kernel.getMiddleware("design-tokens");
 ```
 
+### Dynamic Import Processing
+
+The kernel processes dynamic imports with `type: "fynapp-middleware"` metadata:
+
+```typescript
+// From fynapp-1/src/main.ts
+middleware: import("fynapp-react-middleware/main/basic-counter", {
+  with: { type: "fynapp-middleware" },
+});
+
+// Kernel extracts:
+// - packageName: "fynapp-react-middleware"
+// - middlewarePath: "main/basic-counter"
+// - middlewareName: "basic-counter" (last segment)
+// - config: { share: true, count: 10 }
+```
+
+**Processing Logic:**
+
+1. Parse import specifier to extract package and middleware path
+2. Load the provider FynApp proactively
+3. Load the specific exposed module containing the middleware
+4. Register middleware in kernel registry
+5. Match with consumer usage during bootstrap
+
 ## Complete Lifecycle Flow
 
 ### 1. **Auto-Detection Phase**
 
 When a FynApp loads:
+
 - Kernel scans all exposed modules with names starting with `./middleware`
 - Scans the `./main` exposed module for middleware exports
 - Any exports with `__middleware__` prefix are detected and registered
@@ -328,6 +395,7 @@ When a FynApp loads:
 ### 2. **Registration Phase**
 
 For each detected middleware:
+
 - Creates `FynAppMiddlewareReg` with registry key `provider::middleware-name`
 - Stores in kernel registry with version tracking
 - Logs successful registration
@@ -335,6 +403,7 @@ For each detected middleware:
 ### 3. **Bootstrap Phase**
 
 When bootstrapping a FynApp:
+
 - Loads the main module
 - Detects `useMiddleware` usage objects with `__middlewareMeta` field
 - Creates `FynAppMiddlewareCallContext` for each middleware usage
@@ -343,6 +412,7 @@ When bootstrapping a FynApp:
 ### 4. **Setup Phase**
 
 For each middleware usage:
+
 - Calls middleware `setup()` method with call context
 - Middleware can prepare resources or configurations specific to this FynApp
 - Middleware can return status information (e.g., "ready", "defer")
@@ -414,20 +484,23 @@ export class DesignTokensMiddleware implements FynAppMiddleware {
 
   private validateConfig(config: any): DesignTokensMiddlewareConfig {
     return {
-      theme: config?.theme || 'fynmesh-default',
+      theme: config?.theme || "fynmesh-default",
       cssCustomProperties: config?.cssCustomProperties !== false,
-      cssVariablePrefix: config?.cssVariablePrefix || 'fynmesh',
+      cssVariablePrefix: config?.cssVariablePrefix || "fynmesh",
       // ... other config options
     };
   }
 
-  private createDesignTokensAPI(fynApp: FynApp, config: DesignTokensMiddlewareConfig): DesignTokensAPI {
+  private createDesignTokensAPI(
+    fynApp: FynApp,
+    config: DesignTokensMiddlewareConfig,
+  ): DesignTokensAPI {
     return {
       getTokens: () => this.designTokens.getTokens(),
       getTheme: () => this.designTokens.getTheme(),
       setTheme: (theme: string) => this.designTokens.setTheme(theme),
       getCSSVariable: (tokenPath: string) => {
-        const prefix = config.cssVariablePrefix || 'fynmesh';
+        const prefix = config.cssVariablePrefix || "fynmesh";
         return this.designTokens.getCSSVariable(tokenPath, prefix);
       },
       subscribeToThemeChanges: (callback) => {
@@ -478,18 +551,31 @@ const middlewareUser: FynModule = {
 };
 
 export const main = useMiddleware(
-  {
-    info: {
-      name: "design-tokens",
-      provider: "fynapp-design-tokens",
-      version: "^1.0.0",
+  [
+    {
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import("fynapp-react-middleware/main/basic-counter", {
+        with: { type: "fynapp-middleware" },
+      }),
+      config: {
+        share: true, // Share counter state with other fynapps
+        count: 10,
+      },
     },
-    config: {
-      theme: "fynmesh-default",
-      cssCustomProperties: true,
-      cssVariablePrefix: "fynmesh",
+    {
+      // @ts-ignore - TS can't understand module federation remote containers
+      middleware: import("fynapp-design-tokens/middleware/design-tokens/design-tokens", {
+        with: { type: "fynapp-middleware" },
+      }),
+      config: {
+        theme: "fynmesh-default",
+        cssCustomProperties: true,
+        cssVariablePrefix: "fynmesh",
+        enableThemeSwitching: true,
+        global: false, // Use scoped themes per fynapp
+      },
     },
-  },
+  ],
   middlewareUser,
 );
 ```
@@ -574,9 +660,9 @@ export const __middleware__MiddlewareA: FynAppMiddleware = {
   async apply(context: FynAppMiddlewareCallContext): Promise<void> {
     // Emit events for other middleware
     context.kernel.events.emit("MIDDLEWARE_A_READY", {
-      detail: { fynApp: context.fynApp, data: "some data" }
+      detail: { fynApp: context.fynApp, data: "some data" },
     });
-  }
+  },
 };
 ```
 
@@ -680,51 +766,6 @@ describe("Middleware Integration", () => {
   });
 });
 ```
-
-## Migration Guide
-
-### From Legacy Patterns
-
-If you have existing FynApps using legacy patterns:
-
-1. **Update Main Module**:
-   ```typescript
-   // Old pattern
-   export function main(kernel: FynMeshKernel, fynApp: FynApp) {
-     // ... logic
-   }
-
-   // New pattern
-   const middlewareUser: FynModule = {
-     async execute(runtime: FynModuleRuntime) {
-       // ... logic
-     }
-   };
-
-   export const main = useMiddleware(/* config */, middlewareUser);
-   ```
-
-2. **Update Dependency Access**:
-   ```typescript
-   // Old pattern
-   const sharedData = fynApp.someSharedData;
-
-   // New pattern
-   const sharedData = runtime.middlewareContext.get("middleware-name");
-   ```
-
-3. **Update Configuration**:
-   ```typescript
-   // Old pattern
-   export const config = {
-     middlewareConfig: { /* ... */ }
-   };
-
-   // New pattern
-   export const config = {
-     loadMiddlewares: true
-   };
-   ```
 
 ## Conclusion
 

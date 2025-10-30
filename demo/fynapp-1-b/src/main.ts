@@ -167,9 +167,7 @@ export const main = useMiddleware(
       // @ts-ignore - TS can't understand module federation remote containers
       middleware: import('fynapp-react-middleware/main/basic-counter',
         { with: { type: "fynapp-middleware" } }),
-      config: {
-        share: true, // Share counter state with other fynapps
-      },
+      config: "consume-only", // Consumer - uses config from provider
     },
     {
       // @ts-ignore - TS can't understand module federation remote containers

@@ -66,11 +66,9 @@ class MiddlewareUser implements FynModule {
 // This app is a consumer of the shared counter
 export const main = useMiddleware(
   {
-    info: {
-      name: "basic-counter",
-      provider: "fynapp-react-middleware",
-      version: "^1.0.0",
-    },
+    // @ts-ignore - TS can't understand module federation remote containers
+    middleware: import('fynapp-react-middleware/main/basic-counter',
+        { with: { type: "fynapp-middleware" } }),
     config: "consume-only", // Consumer only - uses shared counter from provider
   },
   new MiddlewareUser()

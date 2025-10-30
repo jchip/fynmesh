@@ -168,6 +168,8 @@ export const main = useMiddleware(
         { with: { type: "fynapp-middleware" } }),
       config: {
         // react-context config
+        share: true, // Share counter state with other fynapps
+        count: 10
       },
     },
     {
