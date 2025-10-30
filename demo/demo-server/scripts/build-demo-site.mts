@@ -90,6 +90,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 "fynapp-5-preact": true,
                 "fynapp-6-react": true,
                 "fynapp-7-solid": true,
+                "fynapp-8-svelte": true,
                 "design-tokens": true,
             },
             fynApps: [
@@ -135,6 +136,13 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                     color: "fynapp-7",
                     badge: "primary",
                 },
+                {
+                    id: "fynapp-8-svelte",
+                    name: "FynApp 8",
+                    framework: "Svelte",
+                    color: "fynapp-8",
+                    badge: "error",
+                },
                 { id: "fynapp-4-vue", name: "FynApp 4", framework: "Vue", color: "fynapp-4", badge: "success" },
                 {
                     id: "fynapp-3-marko",
@@ -162,7 +170,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 {
                     icon: "bi-lightning-charge",
                     title: "Multi-Framework",
-                    description: "Support for React, Vue, Preact, Solid, and Marko frameworks running together.",
+                    description: "Support for React, Vue, Preact, Solid, Svelte, and Marko frameworks running together.",
                     color: "success",
                 },
             ],
@@ -236,6 +244,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-5-preact", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-6-react", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-7-solid", basePath: path.join(__dirname, "../..") },
+            { name: "fynapp-8-svelte", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-x1-v1", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-x1-v2", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-react-18", basePath: path.join(__dirname, "../..") },

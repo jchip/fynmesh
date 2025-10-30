@@ -66,6 +66,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
                 "fynapp-5-preact": true,
                 "fynapp-6-react": true,
                 "fynapp-7-solid": true,
+                "fynapp-8-svelte": true,
                 "design-tokens": true,
             },
             fynApps: [
@@ -111,6 +112,13 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
                     color: "fynapp-7",
                     badge: "primary",
                 },
+                {
+                    id: "fynapp-8-svelte",
+                    name: "FynApp 8",
+                    framework: "Svelte",
+                    color: "fynapp-8",
+                    badge: "error",
+                },
                 { id: "fynapp-4-vue", name: "FynApp 4", framework: "Vue", color: "fynapp-4", badge: "success" },
                 {
                     id: "fynapp-3-marko",
@@ -138,7 +146,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
                 {
                     icon: "bi-lightning-charge",
                     title: "Multi-Framework",
-                    description: "Support for React, Vue, Preact, Solid, and Marko frameworks running together.",
+                    description: "Support for React, Vue, Preact, Solid, Svelte, and Marko frameworks running together.",
                     color: "success",
                 },
             ],

@@ -44,6 +44,7 @@
     "fynapp-5-preact": "^1.0.0",
     "fynapp-6-react": "^1.0.0",
     "fynapp-7-solid": "^1.0.0",
+    "fynapp-8-svelte": "^1.0.0",
     "fynapp-react-lib": "^18.3.0",
     "fynapp-x1": "^2.0.0",
     "nunjucks": "^3.2.4",

@@ -95,7 +95,8 @@
             "fynapp-4-vue": true,
             "fynapp-5-preact": true,
             "fynapp-6-react": true,
-            "fynapp-7-solid": true
+            "fynapp-7-solid": true,
+            "fynapp-8-svelte": true
         };
 
         // Add all consumer FynApps - kernel will analyze their import-exposed dependencies
@@ -109,6 +110,7 @@
         if (features["fynapp-5-preact"]) requested.push({ name: "fynapp-5-preact" });
         if (features["fynapp-6-react"]) requested.push({ name: "fynapp-6-react" });
         if (features["fynapp-7-solid"]) requested.push({ name: "fynapp-7-solid" });
+        if (features["fynapp-8-svelte"]) requested.push({ name: "fynapp-8-svelte" });
 
         if (requested.length > 0) {
             await fynMeshKernel.loadFynAppsByName(requested, { concurrency: 4 });

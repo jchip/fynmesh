@@ -1,0 +1,371 @@
+/* Main app container */
+.svelte-app {
+  font-family: sans-serif;
+  padding: 20px;
+  background-color: #f7fafc;
+  color: #2d3748;
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.svelte-app.dark-mode {
+  background-color: #1a202c;
+  color: #f7fafc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.subtitle {
+  color: #4a5568;
+  margin: 0;
+  font-size: 16px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.dark-mode .subtitle {
+  color: #ffb38a;
+}
+
+h1 {
+  color: #ff3e00;
+  margin: 0;
+}
+
+.dark-mode h1 {
+  color: #ff6b35;
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+.theme-toggle {
+  background-color: #e2e8f0;
+  color: #2d3748;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dark-mode .theme-toggle {
+  background-color: #4a5568;
+  color: white;
+}
+
+.primary-button {
+  background-color: #ff3e00;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.dark-mode .primary-button {
+  background-color: #ff6b35;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(160, 174, 192, 0.3);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #718096;
+}
+
+.dark-mode .tab {
+  color: #A0AEC0;
+}
+
+.tab.active {
+  color: #ff3e00;
+  border-bottom: 2px solid #ff3e00;
+}
+
+.dark-mode .tab.active {
+  color: #ff6b35;
+  border-bottom: 2px solid #ff6b35;
+}
+
+/* Statistics Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background-color: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.dark-mode .stat-card {
+  background-color: #2d3748;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stat-title {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.stat-trend {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
+.stat-trend.up {
+  color: #48bb78;
+  background: rgba(72, 187, 120, 0.1);
+}
+
+.stat-trend.down {
+  color: #f56565;
+  background: rgba(245, 101, 101, 0.1);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.stat-desc {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Content Sections */
+.content-section,
+.chart-section,
+.counter-section {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  flex: 1;
+  min-height: 0;
+}
+
+.dark-mode .content-section,
+.dark-mode .chart-section,
+.dark-mode .counter-section {
+  background-color: #2d3748;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Chart */
+.chart {
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.chart-bar {
+  background: linear-gradient(to top, #ff3e00, #ff8844);
+  border-radius: 4px 4px 0 0;
+}
+
+.dark-mode .chart-bar {
+  background: linear-gradient(to top, #cc3200, #ff6b35);
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Projects Table */
+.projects-table {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.projects-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  background-color: #e2e8f0;
+  padding: 12px 16px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.dark-mode .projects-header {
+  background-color: #4a5568;
+}
+
+.project-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode .project-row {
+  border-bottom: 1px solid #4a5568;
+}
+
+/* Status Badges */
+.status-badge,
+.priority-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.status-badge.completed {
+  background-color: #48bb78;
+  color: white;
+}
+
+.status-badge.in-progress {
+  background-color: #ff3e00;
+  color: white;
+}
+
+.status-badge.on-hold {
+  background-color: #ecc94b;
+  color: #744210;
+}
+
+.status-badge.planning {
+  background-color: #a0aec0;
+  color: white;
+}
+
+.priority-badge.critical {
+  background-color: #f56565;
+  color: white;
+}
+
+.priority-badge.high {
+  background-color: #ed8936;
+  color: white;
+}
+
+.priority-badge.medium {
+  background-color: #ecc94b;
+  color: #744210;
+}
+
+.priority-badge.low {
+  background-color: #a0aec0;
+  color: white;
+}
+
+/* Progress Bar */
+.progress-cell {
+  display: flex;
+  align-items: center;
+}
+
+.progress-bar {
+  flex-grow: 1;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+}
+
+.progress-text {
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+/* Settings */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(160, 174, 192, 0.3);
+}
+
+.setting-name {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.setting-desc {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.setting-toggle {
+  background-color: #e2e8f0;
+  color: #718096;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dark-mode .setting-toggle {
+  background-color: #4a5568;
+  color: #a0aec0;
+}
+
+.setting-toggle.enabled {
+  background-color: #ff3e00;
+  color: white;
+}
+
+.dark-mode .setting-toggle.enabled {
+  background-color: #ff6b35;
+}
+
+/* Footer */
+footer {
+  font-size: 12px;
+  opacity: 0.7;
+  text-align: center;
+  margin-top: 20px;
+  flex-shrink: 0;
+}
