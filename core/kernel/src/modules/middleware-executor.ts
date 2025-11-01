@@ -459,14 +459,14 @@ export class MiddlewareExecutor {
   }
 
   /**
-   * Get deferred invokes (for testing)
+   * Get deferred invokes
    */
   getDeferredInvokes(): { callContexts: FynAppMiddlewareCallContext[] }[] {
     return [...this.deferInvoke];
   }
 
   /**
-   * Get ready middleware (for testing)
+   * Get ready middleware
    */
   getReadyMiddleware(): Map<string, any> {
     return new Map(this.middlewareReady);

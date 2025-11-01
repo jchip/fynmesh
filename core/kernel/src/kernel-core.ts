@@ -39,11 +39,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   protected runTime: FynMeshRuntimeData;
 
   // Extracted modules
-  private manifestResolver: ManifestResolver;
-  private bootstrapCoordinator: BootstrapCoordinator;
-  private middlewareManager: MiddlewareManager;
-  private moduleLoader: ModuleLoader;
-  private middlewareExecutor: MiddlewareExecutor;
+  public manifestResolver: ManifestResolver;
+  public bootstrapCoordinator: BootstrapCoordinator;
+  public middlewareManager: MiddlewareManager;
+  public moduleLoader: ModuleLoader;
+  public middlewareExecutor: MiddlewareExecutor;
 
   constructor() {
     this.events = new FynEventTarget();

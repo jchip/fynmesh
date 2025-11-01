@@ -14,11 +14,11 @@ export interface BootstrapDependencies {
 }
 
 export class BootstrapCoordinator {
-  private bootstrappingApp: string | null = null;
-  private deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void }> = [];
-  private fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
-  private fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
-  private events: FynEventTarget;
+  public bootstrappingApp: string | null = null;
+  public deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void }> = [];
+  public fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
+  public fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
+  public events: FynEventTarget;
 
   constructor(events: FynEventTarget) {
     this.events = events;
@@ -146,7 +146,7 @@ export class BootstrapCoordinator {
   /**
    * Check if a FynApp's bootstrap dependencies are satisfied
    */
-  private areBootstrapDependenciesSatisfied(fynApp: FynApp): boolean {
+  protected areBootstrapDependenciesSatisfied(fynApp: FynApp): boolean {
     // Get this FynApp's provider/consumer modes for each middleware
     const modes = this.fynAppProviderModes.get(fynApp.name);
     if (!modes) {
@@ -177,7 +177,7 @@ export class BootstrapCoordinator {
   /**
    * Find which FynApp is the provider for a given middleware
    */
-  private findProviderForMiddleware(middlewareName: string, excludeFynApp: string): string | null {
+  protected findProviderForMiddleware(middlewareName: string, excludeFynApp: string): string | null {
     for (const [fynAppName, modes] of this.fynAppProviderModes.entries()) {
       if (fynAppName === excludeFynApp) continue;
 

@@ -1,9 +1,11 @@
 import { vi } from "vitest";
 import { FynMeshKernelCore } from "../../src/kernel-core";
-import type { 
-  RegistryResolver, 
-  FynAppManifest, 
-  RegistryResolverResult 
+import { TestBootstrapCoordinator } from "./test-bootstrap-coordinator";
+import { TestMiddlewareExecutor } from "./test-middleware-executor";
+import type {
+  RegistryResolver,
+  FynAppManifest,
+  RegistryResolverResult
 } from "../../src/types";
 
 /**
@@ -16,6 +18,13 @@ export class TestKernel extends FynMeshKernelCore {
   // Control test behavior
   public shouldFailLoad = false;
   public loadDelay = 0;
+  
+  constructor() {
+    super();
+    // Replace with test fixtures that expose protected methods
+    this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events);
+    this.middlewareExecutor = new TestMiddlewareExecutor();
+  }
   
   async loadFynApp(baseUrl: string, loadId?: string): Promise<void> {
     this.loadFynAppCalls.push({ baseUrl, loadId });
@@ -32,7 +41,8 @@ export class TestKernel extends FynMeshKernelCore {
     // Tests can manually call loadFynAppBasics and bootstrapFynApp
   }
   
-  // Expose protected methods for testing
+  // Expose protected/private methods for testing
+  // Call methods directly on kernel which may delegate to modules internally
   testResolveAndFetch(name: string, range?: string) {
     return (this as any).resolveAndFetch(name, range);
   }
@@ -46,47 +56,61 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testLoadExposeModule(fynApp: any, exposeName: string, loadMiddlewares?: boolean) {
-    return (this as any).loadExposeModule(fynApp, exposeName, loadMiddlewares);
+    return (this.moduleLoader as any).loadExposeModule(fynApp, exposeName, loadMiddlewares);
   }
 
   testBootstrapFynApp(fynApp: any) {
-    return (this as any).bootstrapFynApp(fynApp);
+    return this.bootstrapFynApp(fynApp);
   }
 
   testAreBootstrapDependenciesSatisfied(fynApp: any) {
-    return (this as any).areBootstrapDependenciesSatisfied(fynApp);
+    // Cast to test fixture to access protected methods
+    return (this.bootstrapCoordinator as TestBootstrapCoordinator).areBootstrapDependenciesSatisfied(fynApp);
   }
 
   testFindProviderForMiddleware(middlewareName: string, excludeFynApp: string) {
-    return (this as any).findProviderForMiddleware(middlewareName, excludeFynApp);
+    // Cast to test fixture to access protected methods
+    return (this.bootstrapCoordinator as TestBootstrapCoordinator).findProviderForMiddleware(middlewareName, excludeFynApp);
   }
 
   testCheckSingleMiddlewareReady(cc: any) {
-    return (this as any).checkSingleMiddlewareReady(cc);
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testCheckSingleMiddlewareReady(cc);
   }
 
   testCheckMiddlewareReady(ccs: any[]) {
-    return (this as any).checkMiddlewareReady(ccs);
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testCheckMiddlewareReady(ccs);
   }
 
   testCheckDeferCalls(status: string, ccs: any[]) {
-    return (this as any).checkDeferCalls(status, ccs);
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testCheckDeferCalls(status, ccs);
   }
 
   testCallMiddlewares(ccs: any[]) {
-    return (this as any).callMiddlewares(ccs);
+    return this.middlewareExecutor.callMiddlewares(ccs);
   }
 
   testLoadFynAppBasics(entry: any) {
-    return (this as any).loadFynAppBasics(entry);
+    return (this.moduleLoader as any).loadFynAppBasics(entry);
   }
 
   testUseMiddlewareOnFynModule(fynModule: any, fynApp: any) {
-    return (this as any).useMiddlewareOnFynModule(fynModule, fynApp);
+    return (this.middlewareExecutor as any).useMiddlewareOnFynModule(fynModule, fynApp);
+  }
+
+  async testApplyAutoScopeMiddlewares(fynApp: any, fynModule?: any) {
+    const autoApplyMiddlewares = this.middlewareManager.getAutoApplyMiddlewares();
+    return this.middlewareExecutor.applyAutoScopeMiddlewares(
+      fynApp,
+      fynModule,
+      this,
+      autoApplyMiddlewares,
+      () => this.moduleLoader.createFynModuleRuntime(fynApp),
+      async (cc, share) => this.signalMiddlewareReady(cc, { share })
+    );
   }
 
   testLoadMiddlewareFromDependency(packageName: string, middlewarePath: string) {
-    return (this as any).loadMiddlewareFromDependency(packageName, middlewarePath);
+    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath);
   }
 
   testCleanContainerName(name: string) {
@@ -98,36 +122,40 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testCreateFynModuleRuntime(fynApp: any) {
-    return (this as any).createFynModuleRuntime(fynApp);
+    return this.moduleLoader.createFynModuleRuntime(fynApp);
   }
-  
-  // Getters for protected properties
+
+  // Direct access to module properties (modules are now public)
   public get testDeferInvoke() {
-    return this.deferInvoke;
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testDeferInvoke;
   }
-  
+
   public get testMiddlewareReady() {
-    return this.middlewareReady;
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testMiddlewareReady;
+  }
+
+  public getMiddlewareReady() {
+    return (this.middlewareExecutor as TestMiddlewareExecutor).testMiddlewareReady;
   }
   
   public get testBootstrappingApp() {
-    return this.bootstrappingApp;
+    return this.bootstrapCoordinator.bootstrappingApp;
   }
   
   public set testBootstrappingApp(value: string | null) {
-    this.bootstrappingApp = value;
+    this.bootstrapCoordinator.bootstrappingApp = value;
   }
   
   public get testDeferredBootstraps() {
-    return this.deferredBootstraps;
+    return this.bootstrapCoordinator.deferredBootstraps;
   }
   
   public get testFynAppBootstrapStatus() {
-    return this.fynAppBootstrapStatus;
+    return this.bootstrapCoordinator.fynAppBootstrapStatus;
   }
   
   public get testFynAppProviderModes() {
-    return this.fynAppProviderModes;
+    return this.bootstrapCoordinator.fynAppProviderModes;
   }
 }
 
