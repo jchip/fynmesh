@@ -12,3 +12,4 @@ docs
 docs-temp
 .temp
 .playwright-mcp
+*.bak
