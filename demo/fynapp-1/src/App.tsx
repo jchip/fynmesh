@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { ComponentLibrary } from "./components";
+import "./app-layout.css";
 
 interface AppProps {
   appName: string;
@@ -20,7 +21,7 @@ const App: React.FC<AppProps> = ({
   });
 
   // Theme state management
-  const [currentTheme, setCurrentTheme] = useState("fynmesh-default");
+  const [currentTheme, setCurrentTheme] = useState("fynmesh-dark");
   const [availableThemes, setAvailableThemes] = useState<string[]>([]);
   const [applyGlobally, setApplyGlobally] = useState(false);
   const [acceptGlobally, setAcceptGlobally] = useState(false);
@@ -204,14 +205,17 @@ const App: React.FC<AppProps> = ({
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h2>
+    <div className="app-container">
+      <h1 className="app-title">
         {appName}: React {React.version}
-      </h2>
+      </h1>
 
       {/* Theme Selection */}
-      <Card title="🎨 Design Tokens Theme Selection" className="mb-6">
-        <div className="mb-4 space-y-2">
+      <Card
+        title="🎨 Design Tokens Theme Selection"
+        className="card-spacious section"
+      >
+        <div className="space-y-2 mb-6">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -231,7 +235,7 @@ const App: React.FC<AppProps> = ({
             <span>Accept changes globally (from other apps)</span>
           </label>
         </div>
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
           {themeOptions.map((theme) => (
             <Button
               key={theme.value}
@@ -253,11 +257,14 @@ const App: React.FC<AppProps> = ({
       </Card>
 
       {/* Demo UI Sections */}
-      <Card title="🎨 fynapp-x1 Components Demo" className="mb-6">
+      <Card
+        title="🎨 fynapp-x1 Components Demo"
+        className="card-spacious section"
+      >
         {/* Buttons Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Buttons</h3>
-          <div className="flex flex-wrap gap-2 mb-3">
+        <div className="component-group">
+          <h3 className="section-title">Buttons</h3>
+          <div className="flex-wrap gap-3">
             <Button variant="primary" size="small">
               Primary Small
             </Button>
@@ -277,9 +284,9 @@ const App: React.FC<AppProps> = ({
         </div>
 
         {/* Badges Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Badges</h3>
-          <div className="flex flex-wrap gap-2 mb-3">
+        <div className="component-group">
+          <h3 className="section-title">Badges</h3>
+          <div className="flex-wrap gap-3">
             <Badge variant="default">Default</Badge>
             <Badge variant="primary">Primary</Badge>
             <Badge variant="success">Success</Badge>
@@ -289,9 +296,9 @@ const App: React.FC<AppProps> = ({
         </div>
 
         {/* Spinners Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Spinners</h3>
-          <div className="flex items-center gap-4 mb-3">
+        <div className="component-group">
+          <h3 className="section-title">Spinners</h3>
+          <div className="items-center flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <Spinner size="small" color="primary" />
               <span>Small</span>
@@ -308,8 +315,8 @@ const App: React.FC<AppProps> = ({
         </div>
 
         {/* Input Section */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Input</h3>
+        <div>
+          <h3 className="section-title">Input</h3>
           <div className="max-w-md">
             <Input
               label="Demo Input"
@@ -327,8 +334,8 @@ const App: React.FC<AppProps> = ({
       </Card>
 
       {/* Counter Display and Controls - Moved to bottom */}
-      <Card className="mb-6">
-        <h2 className="text-xl font-bold mb-4 text-center">
+      <Card className="card-spacious">
+        <h2 className="card-title">
           Shared Counter (Provider)
         </h2>
         <div className="flex items-center justify-center gap-4">

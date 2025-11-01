@@ -1,5 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
+import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -26,6 +27,10 @@ export default [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
+      }),
+      postcss({
+        inject: true,
+        extract: false,
       }),
       // commonjs({ transformMixedEsModules: true }),
       ...setupReactFederationPlugins({
