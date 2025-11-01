@@ -125,6 +125,7 @@ describe('KernelCore Precision Coverage for 90%', () => {
             testMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(testMiddleware);
 
+            let initCallCount = 0;
             const mockEntry: FynAppEntry = {
                 container: {
                     name: 'init-defer-app',
@@ -140,7 +141,11 @@ describe('KernelCore Precision Coverage for 90%', () => {
                                     info: { name: 'init-defer', provider: 'provider' },
                                     config: {}
                                 }],
-                                initialize: vi.fn().mockResolvedValue({ status: 'defer' }),
+                                initialize: vi.fn().mockImplementation(() => {
+                                    initCallCount++;
+                                    // Return defer first time, then ready on retry
+                                    return Promise.resolve({ status: initCallCount === 1 ? 'defer' : 'ready' });
+                                }),
                                 execute: vi.fn().mockResolvedValue(undefined),
                             }
                         }));
@@ -153,9 +158,10 @@ describe('KernelCore Precision Coverage for 90%', () => {
             const fynApp = await kernel.testLoadFynAppBasics(mockEntry);
             await kernel.testBootstrapFynApp(fynApp);
 
-            // Lines 344-345: initialize returned defer status
+            // Lines 344-345: initialize returned defer status first, then ready on retry
             const mainModule = fynApp.exposes['./main']?.main;
-            expect(mainModule!.initialize).toHaveBeenCalled();
+            expect(mainModule!.initialize).toHaveBeenCalledTimes(2);
+            expect(mainModule!.execute).toHaveBeenCalled();
         });
 
         it('should hit lines 348-349: initialize with retry through checkDeferCalls', async () => {
