@@ -216,12 +216,14 @@ export class ManifestResolver {
       // Process shared-providers dependencies (shared module providers like React)
       const sharedProviders = manifest["shared-providers"];
       if (sharedProviders && typeof sharedProviders === "object") {
+        console.debug(`📦 Processing shared-providers for ${name}@${range}:`, Object.keys(sharedProviders));
         for (const [packageName, providerInfo] of Object.entries(sharedProviders)) {
           // Extract requireVersion from the provider info
           let requireVersion: string | undefined;
           if (providerInfo && typeof providerInfo === "object" && "requireVersion" in providerInfo) {
             requireVersion = providerInfo.requireVersion as string;
           }
+          console.debug(`  → Loading shared provider: ${packageName}@${requireVersion || 'latest'}`);
           // Visit this package as a dependency
           await visit(packageName, requireVersion, key);
         }
