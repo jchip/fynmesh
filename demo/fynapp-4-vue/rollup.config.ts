@@ -9,23 +9,19 @@ import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
   isProduction,
+  setupFynAppOutputConfig,
   fynappDummyEntryName,
   fynappEntryFilename,
   setupDummyEntryPlugins,
   setupMinifyPlugins,
   setupFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     plugins: [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(vue)({
@@ -69,5 +65,5 @@ export default [
       // }),
       ...setupMinifyPlugins(),
     ].filter(Boolean),
-  },
+  }),
 ];

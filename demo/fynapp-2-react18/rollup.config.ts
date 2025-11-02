@@ -3,6 +3,7 @@ import typescript from "@rollup/plugin-typescript";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
+  setupFynAppOutputConfig,
   fynappDummyEntryName,
   fynappEntryFilename,
   setupDummyEntryPlugins,
@@ -10,17 +11,12 @@ import {
   setupMinifyPlugins,
   setupFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     plugins: [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
@@ -53,5 +49,5 @@ export default [
       }),
       ...setupMinifyPlugins(),
     ].filter(Boolean),
-  },
+  }),
 ];

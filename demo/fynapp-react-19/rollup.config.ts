@@ -6,25 +6,21 @@ import replace from "@rollup/plugin-replace";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
+  setupFynAppOutputConfig,
   fynappEntryFilename,
   setupMinifyPlugins,
   setupFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [
       "src/index.ts",
       // this is the filename from federation plugin config.
       fynappEntryFilename,
     ],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     plugins: [
       newRollupPlugin(nodeResolve)({
         extensions: [".js", ".jsx", ".ts", ".tsx"],
@@ -59,5 +55,5 @@ export default [
       }),
       ...setupMinifyPlugins(),
     ],
-  },
+  }),
 ];

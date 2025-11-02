@@ -3,6 +3,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
     env,
+    setupFynAppOutputConfig,
     fynappDummyEntryName,
     fynappEntryFilename,
     setupDummyEntryPlugins,
@@ -13,13 +14,7 @@ import { defineConfig } from "rollup";
 
 export default defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    output: [
-        {
-            dir: "dist",
-            format: "system",
-            sourcemap: true,
-        },
-    ],
+    ...setupFynAppOutputConfig(),
     plugins: [
         ...setupDummyEntryPlugins(),
         newRollupPlugin(resolve)({

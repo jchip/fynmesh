@@ -6,6 +6,7 @@ import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
   isProduction,
+  setupFynAppOutputConfig,
   fynappDummyEntryName,
   fynappEntryFilename,
   setupDummyEntryPlugins,
@@ -13,21 +14,16 @@ import {
   setupReactAliasPlugins,
   setupReactFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [
       fynappDummyEntryName,
       // this is the filename from federation plugin config.
       fynappEntryFilename,
     ],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     external: ["esm-react", "esm-react-dom"],
     plugins: [
       ...setupDummyEntryPlugins(),
@@ -43,10 +39,9 @@ export default [
       ...setupReactFederationPlugins({
         name: "fynapp-x1",
         exposes: {
-          "./main": "./src/main.tsx"
+          "./main": "./src/main.tsx",
         },
-        shared: {
-        },
+        shared: {},
         debugging: true,
       }),
       newRollupPlugin(typescript)({
@@ -57,5 +52,5 @@ export default [
       ...setupReactAliasPlugins(),
       ...setupMinifyPlugins(),
     ],
-  },
+  }),
 ];

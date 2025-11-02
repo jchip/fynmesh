@@ -13,7 +13,8 @@ load({
             console.log("🚀 Building templates for local development...");
 
             const success = await buildTemplates({
-                verbose: true
+                verbose: true,
+                isProduction: process.env.NODE_ENV === "production"
             });
 
             if (!success) {

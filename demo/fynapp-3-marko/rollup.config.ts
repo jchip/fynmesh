@@ -6,23 +6,19 @@ import json from "@rollup/plugin-json";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
+  setupFynAppOutputConfig,
   fynappDummyEntryName,
   fynappEntryFilename,
   setupDummyEntryPlugins,
   setupMinifyPlugins,
   setupFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     plugins: [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(markoPlugin.browser)(),
@@ -55,5 +51,5 @@ export default [
       // }),
       ...setupMinifyPlugins(),
     ].filter(Boolean),
-  },
+  }),
 ];

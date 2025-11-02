@@ -17,7 +17,13 @@ import alias from "@rollup/plugin-alias";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import terser from "@rollup/plugin-terser";
 import federation from "rollup-plugin-federation";
-import type { FederationPluginOptions, GenDynamicImportIdInfo, FederationRuntime, SharedConfig, FederationInfo } from "rollup-plugin-federation";
+import type {
+  FederationPluginOptions,
+  GenDynamicImportIdInfo,
+  FederationRuntime,
+  SharedConfig,
+  FederationInfo,
+} from "rollup-plugin-federation";
 import { DependencyAnalyzer } from "rollup-plugin-federation";
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
@@ -31,20 +37,23 @@ export type FynAppManifest = {
   /** App version */
   version: string;
   /** Modules exposed by this FynApp */
-  exposes?: Record<string, {
-    /** Source path of the exposed module */
-    path: string;
-    /** Final bundle chunk file for this module */
-    chunk?: string;
-  }>;
+  exposes?: Record<
+    string,
+    {
+      /** Source path of the exposed module */
+      path: string;
+      /** Final bundle chunk file for this module */
+      chunk?: string;
+    }
+  >;
   /** Modules provided as shared by this FynApp */
-  'provide-shared'?: Record<string, SharedConfig>;
+  "provide-shared"?: Record<string, SharedConfig>;
   /** Dependencies for consuming shared modules */
-  'consume-shared'?: Record<string, { requireVersion?: string }>;
+  "consume-shared"?: Record<string, { requireVersion?: string }>;
   /** Dependencies for importing exposed modules */
-  'import-exposed'?: Record<string, Record<string, { requireVersion?: string; sites?: string[] }>>;
+  "import-exposed"?: Record<string, Record<string, { requireVersion?: string; sites?: string[] }>>;
   /** FynApps that provide shared modules consumed by this FynApp */
-  'shared-providers'?: Record<string, { requireVersion?: string; provides?: string[] }>;
+  "shared-providers"?: Record<string, { requireVersion?: string; provides?: string[] }>;
 };
 
 export const env = process.env.NODE_ENV || "development";
@@ -65,6 +74,16 @@ export const fynappEntryFilename = "fynapp-entry.js";
  * modules between the fynmesh and the fynapps.
  */
 export const fynmeshShareScope = "fynmesh";
+
+export function setupFynAppOutputConfig(mode = env, sourceMap = true) {
+  return {
+    output: {
+      dir: "dist",
+      format: "system",
+      sourcemap: sourceMap,
+    },
+  };
+}
 
 /**
  * Setup plugins to create a dummy entry for the fynapp.
@@ -141,9 +160,9 @@ export function setupReactFederationPlugins(config: Partial<FederationPluginOpti
           right: "",
           genId(info: GenDynamicImportIdInfo): string {
             return `${this.idPrefix} ${info.packageName} ${info.request} ${info.requireVersion}`;
-          }
+          },
         },
-        ...config.renderDynamicImport
+        ...config.renderDynamicImport,
       },
       enrichManifest: createEnrichManifest(),
       emitFederationMeta: createEmitFederationMeta(),
@@ -174,8 +193,8 @@ export const fynappMiddlewareDynamicImport = {
     right: "",
     genId(info: any): string {
       return `${this.idPrefix} ${info.packageName} ${info.request} ${info.requireVersion}`;
-    }
-  }
+    },
+  },
 };
 
 /**
@@ -202,7 +221,9 @@ export const fynappMiddlewareDynamicImport = {
  * ]
  * ```
  */
-export function setupFederationPlugins(config: Partial<FederationPluginOptions> & { name: string }) {
+export function setupFederationPlugins(
+  config: Partial<FederationPluginOptions> & { name: string },
+) {
   return [
     newRollupPlugin(federation)({
       shareScope: fynmeshShareScope,
@@ -210,7 +231,7 @@ export function setupFederationPlugins(config: Partial<FederationPluginOptions> 
       ...config,
       renderDynamicImport: {
         ...fynappMiddlewareDynamicImport,
-        ...config.renderDynamicImport
+        ...config.renderDynamicImport,
       },
       enrichManifest: createEnrichManifest(),
       emitFederationMeta: createEmitFederationMeta(),
@@ -241,15 +262,20 @@ export function createEnrichManifest() {
     const cwd = process.cwd();
 
     // Debug: Log dynamicImports to see what we're receiving
-    console.log('enrichManifest - dynamicImports count:', baseManifest.dynamicImports?.length);
+    console.log("enrichManifest - dynamicImports count:", baseManifest.dynamicImports?.length);
     if (baseManifest.dynamicImports?.length > 0) {
-      console.log('enrichManifest - first dynamicImport:', JSON.stringify(baseManifest.dynamicImports[0], null, 2));
+      console.log(
+        "enrichManifest - first dynamicImport:",
+        JSON.stringify(baseManifest.dynamicImports[0], null, 2),
+      );
     }
 
     // Process consume-shared from shared config
     const consumeShared: Record<string, { requireVersion?: string }> = {};
     if (baseManifest.shared) {
-      for (const [moduleName, config] of Object.entries(baseManifest.shared as Record<string, any>)) {
+      for (const [moduleName, config] of Object.entries(
+        baseManifest.shared as Record<string, any>,
+      )) {
         if (config.import === false) {
           consumeShared[moduleName] = { requireVersion: config.requiredVersion };
         }
@@ -259,7 +285,9 @@ export function createEnrichManifest() {
     // Process provide-shared from shared config
     const provideShared: Record<string, any> = {};
     if (baseManifest.shared) {
-      for (const [moduleName, config] of Object.entries(baseManifest.shared as Record<string, any>)) {
+      for (const [moduleName, config] of Object.entries(
+        baseManifest.shared as Record<string, any>,
+      )) {
         if (config.import !== false) {
           provideShared[moduleName] = config;
         }
@@ -267,12 +295,18 @@ export function createEnrichManifest() {
     }
 
     // Process import-exposed from dynamicImports
-    const importExposed: Record<string, Record<string, { requireVersion?: string; sites?: string[]; type?: string }>> = {};
+    const importExposed: Record<
+      string,
+      Record<string, { requireVersion?: string; sites?: string[]; type?: string }>
+    > = {};
     for (const dynImp of baseManifest.dynamicImports) {
       const { specifier, attributes, importer } = dynImp;
 
       // Only process mf-expose and fynapp-middleware imports
-      if (!attributes || (attributes.type !== 'mf-expose' && attributes.type !== 'fynapp-middleware')) {
+      if (
+        !attributes ||
+        (attributes.type !== "mf-expose" && attributes.type !== "fynapp-middleware")
+      ) {
         continue;
       }
 
@@ -280,18 +314,18 @@ export function createEnrichManifest() {
       let packageName: string;
       let modulePath: string;
 
-      if (specifier.startsWith('@')) {
+      if (specifier.startsWith("@")) {
         // Scoped package: @scope/name/module/...
-        const parts = specifier.split('/');
+        const parts = specifier.split("/");
         if (parts.length >= 3) {
           packageName = `${parts[0]}/${parts[1]}`;
-          modulePath = parts.slice(2).join('/');
+          modulePath = parts.slice(2).join("/");
         } else {
           continue;
         }
       } else {
         // Regular package: name/module/...
-        const slashIndex = specifier.indexOf('/');
+        const slashIndex = specifier.indexOf("/");
         if (slashIndex > 0) {
           packageName = specifier.substring(0, slashIndex);
           modulePath = specifier.substring(slashIndex + 1);
@@ -301,9 +335,7 @@ export function createEnrichManifest() {
       }
 
       // Make importer path relative to cwd
-      const relativeSite = importer.startsWith(cwd)
-        ? importer.substring(cwd.length + 1)
-        : importer;
+      const relativeSite = importer.startsWith(cwd) ? importer.substring(cwd.length + 1) : importer;
 
       // Initialize package entry if needed
       if (!importExposed[packageName]) {
@@ -315,7 +347,7 @@ export function createEnrichManifest() {
         const entry: any = {
           requireVersion: attributes.requireVersion,
           sites: [relativeSite],
-          type: attributes.type === 'fynapp-middleware' ? 'middleware' : 'module'
+          type: attributes.type === "fynapp-middleware" ? "middleware" : "module",
         };
 
         // For middleware imports, parse the modulePath to extract expose module and middleware name
@@ -325,8 +357,8 @@ export function createEnrichManifest() {
         // Example: "middleware/design-tokens/design-tokens"
         //   - exposeModule = "middleware/design-tokens"
         //   - middlewareName = "design-tokens"
-        if (attributes.type === 'fynapp-middleware') {
-          const lastSlashIndex = modulePath.lastIndexOf('/');
+        if (attributes.type === "fynapp-middleware") {
+          const lastSlashIndex = modulePath.lastIndexOf("/");
 
           if (lastSlashIndex > 0) {
             entry.exposeModule = modulePath.substring(0, lastSlashIndex);
@@ -337,7 +369,9 @@ export function createEnrichManifest() {
             entry.middlewareName = modulePath;
           }
 
-          console.log(`[enrichManifest] Added middleware fields: packageName=${packageName}, modulePath=${modulePath}, exposeModule=${entry.exposeModule}, middlewareName=${entry.middlewareName}`);
+          console.log(
+            `[enrichManifest] Added middleware fields: packageName=${packageName}, modulePath=${modulePath}, exposeModule=${entry.exposeModule}, middlewareName=${entry.middlewareName}`,
+          );
         }
 
         importExposed[packageName][modulePath] = entry;
@@ -353,20 +387,23 @@ export function createEnrichManifest() {
     const sharedProviders = detectSharedProviders(consumeShared, provideShared, cwd);
 
     // Debug: Log importExposed to see if middleware fields are present
-    console.log('[enrichManifest] Final importExposed:', JSON.stringify(importExposed, null, 2));
+    console.log("[enrichManifest] Final importExposed:", JSON.stringify(importExposed, null, 2));
 
     // Build enriched manifest
     const enrichedManifest = {
       name: baseManifest.name,
       version: baseManifest.version,
       exposes: baseManifest.exposes,
-      'provide-shared': Object.keys(provideShared).length > 0 ? provideShared : undefined,
-      'consume-shared': Object.keys(consumeShared).length > 0 ? consumeShared : undefined,
-      'import-exposed': Object.keys(importExposed).length > 0 ? importExposed : undefined,
-      'shared-providers': Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined
+      "provide-shared": Object.keys(provideShared).length > 0 ? provideShared : undefined,
+      "consume-shared": Object.keys(consumeShared).length > 0 ? consumeShared : undefined,
+      "import-exposed": Object.keys(importExposed).length > 0 ? importExposed : undefined,
+      "shared-providers": Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined,
     };
 
-    console.log('[enrichManifest] Final enrichedManifest:', JSON.stringify(enrichedManifest, null, 2));
+    console.log(
+      "[enrichManifest] Final enrichedManifest:",
+      JSON.stringify(enrichedManifest, null, 2),
+    );
 
     return enrichedManifest;
   };
@@ -390,12 +427,19 @@ export function createEnrichManifest() {
  * ```
  */
 export function createEmitFederationMeta() {
-  return async (federationInfo: FederationInfo, runtime: FederationRuntime, context: any, bundle: any) => {
+  return async (
+    federationInfo: FederationInfo,
+    runtime: FederationRuntime,
+    context: any,
+    bundle: any,
+  ) => {
     // Use the enriched manifest from runtime.fynappManifest instead of regenerating
     // This ensures we keep all the enriched fields like exposeModule and middlewareName
-    const manifest = runtime.fynappManifest || await generateFynAppManifest(federationInfo, runtime, context, bundle);
+    const manifest =
+      runtime.fynappManifest ||
+      (await generateFynAppManifest(federationInfo, runtime, context, bundle));
 
-    console.log('[createEmitFederationMeta] Using manifest:', JSON.stringify(manifest, null, 2));
+    console.log("[createEmitFederationMeta] Using manifest:", JSON.stringify(manifest, null, 2));
 
     // Still emit the manifest file for backwards compatibility and debugging
     context.emitFile({
@@ -416,7 +460,7 @@ export function createEmitFederationMeta() {
 function detectSharedProviders(
   consumeShared: Record<string, { requireVersion?: string }>,
   provideShared: Record<string, any>,
-  cwd: string
+  cwd: string,
 ): Record<string, { requireVersion?: string; provides?: string[] }> {
   const sharedProviders: Record<string, { requireVersion?: string; provides?: string[] }> = {};
 
@@ -433,30 +477,36 @@ function detectSharedProviders(
   }
 
   // Step 2: Read package.json dependencies
-  const packageJsonPath = resolve(cwd, 'package.json');
+  const packageJsonPath = resolve(cwd, "package.json");
   if (!existsSync(packageJsonPath)) {
     return sharedProviders;
   }
 
   let packageJson: any;
   try {
-    packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
   } catch (e) {
     return sharedProviders;
   }
 
   const allDependencies = {
     ...packageJson.dependencies,
-    ...packageJson.devDependencies
+    ...packageJson.devDependencies,
   };
 
   // Step 3: For each dependency, check if it has fynapp.manifest.json with provide-shared
   for (const [depName, depVersion] of Object.entries(allDependencies)) {
     // Try to find the dependency's manifest
     // First try in node_modules
-    const nodeModulesManifestPath = resolve(cwd, 'node_modules', depName, 'dist', 'fynapp.manifest.json');
+    const nodeModulesManifestPath = resolve(
+      cwd,
+      "node_modules",
+      depName,
+      "dist",
+      "fynapp.manifest.json",
+    );
     // Also try relative path for monorepo (peer FynApps in demo/)
-    const relativeManifestPath = resolve(cwd, '..', depName, 'dist', 'fynapp.manifest.json');
+    const relativeManifestPath = resolve(cwd, "..", depName, "dist", "fynapp.manifest.json");
 
     let manifestPath: string | null = null;
     if (existsSync(nodeModulesManifestPath)) {
@@ -471,27 +521,27 @@ function detectSharedProviders(
 
     let depManifest: any;
     try {
-      depManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      depManifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
     } catch (e) {
       continue;
     }
 
     // Step 4: Check if this dependency provides any of the consumed shared modules
-    if (!depManifest['provide-shared']) {
+    if (!depManifest["provide-shared"]) {
       continue;
     }
 
     const providedModules: string[] = [];
     for (const sharedModule of Object.keys(allSharedModules)) {
-      if (depManifest['provide-shared'][sharedModule]) {
+      if (depManifest["provide-shared"][sharedModule]) {
         providedModules.push(sharedModule);
       }
     }
 
     if (providedModules.length > 0) {
       sharedProviders[depName] = {
-        requireVersion: typeof depVersion === 'string' ? depVersion : undefined,
-        provides: providedModules
+        requireVersion: typeof depVersion === "string" ? depVersion : undefined,
+        provides: providedModules,
       };
     }
   }
@@ -509,7 +559,7 @@ async function generateFynAppManifest(
   federationInfo: FederationInfo,
   runtime: FederationRuntime,
   context?: any,
-  bundle?: any
+  bundle?: any,
 ): Promise<FynAppManifest> {
   const analyzer = new DependencyAnalyzer({}, "");
   const cwd = process.cwd();
@@ -521,15 +571,16 @@ async function generateFynAppManifest(
     for (const [exposeKey, exposePath] of Object.entries(runtime.options.exposes)) {
       const allChunks = getModuleBundles(context, bundle, resolve(cwd, exposePath));
       // Find the final chunk (the one that matches the expose key pattern)
-      const finalChunk = allChunks.find(chunk =>
-        chunk.endsWith('.js') &&
-        !chunk.includes('/') && // Not a full path
-        !chunk.startsWith('esm-') // Not an external module
+      const finalChunk = allChunks.find(
+        (chunk) =>
+          chunk.endsWith(".js") &&
+          !chunk.includes("/") && // Not a full path
+          !chunk.startsWith("esm-"), // Not an external module
       );
 
       exposes[exposeKey] = {
         path: exposePath,
-        chunk: finalChunk
+        chunk: finalChunk,
       };
     }
   } else {
@@ -548,13 +599,19 @@ async function generateFynAppManifest(
   }
 
   // Process import-exposed from runtime.dynamicImports
-  const importExposed: Record<string, Record<string, { requireVersion?: string; sites?: string[]; type?: string }>> = {};
+  const importExposed: Record<
+    string,
+    Record<string, { requireVersion?: string; sites?: string[]; type?: string }>
+  > = {};
 
   for (const dynImp of runtime.dynamicImports) {
     const { specifier, attributes, importer } = dynImp;
 
     // Only process mf-expose and fynapp-middleware imports
-    if (!attributes || (attributes.type !== 'mf-expose' && attributes.type !== 'fynapp-middleware')) {
+    if (
+      !attributes ||
+      (attributes.type !== "mf-expose" && attributes.type !== "fynapp-middleware")
+    ) {
       continue;
     }
 
@@ -564,18 +621,18 @@ async function generateFynAppManifest(
     let packageName: string;
     let modulePath: string;
 
-    if (specifier.startsWith('@')) {
+    if (specifier.startsWith("@")) {
       // Scoped package: @scope/name/module/...
-      const parts = specifier.split('/');
+      const parts = specifier.split("/");
       if (parts.length >= 3) {
         packageName = `${parts[0]}/${parts[1]}`;
-        modulePath = parts.slice(2).join('/');
+        modulePath = parts.slice(2).join("/");
       } else {
         continue; // Invalid format
       }
     } else {
       // Regular package: name/module/...
-      const slashIndex = specifier.indexOf('/');
+      const slashIndex = specifier.indexOf("/");
       if (slashIndex > 0) {
         packageName = specifier.substring(0, slashIndex);
         modulePath = specifier.substring(slashIndex + 1);
@@ -585,9 +642,7 @@ async function generateFynAppManifest(
     }
 
     // Make importer path relative to cwd
-    const relativeSite = importer.startsWith(cwd)
-      ? importer.substring(cwd.length + 1)
-      : importer;
+    const relativeSite = importer.startsWith(cwd) ? importer.substring(cwd.length + 1) : importer;
 
     // Initialize package entry if needed
     if (!importExposed[packageName]) {
@@ -599,7 +654,7 @@ async function generateFynAppManifest(
       importExposed[packageName][modulePath] = {
         requireVersion: attributes.requireVersion,
         sites: [relativeSite],
-        type: attributes.type === 'fynapp-middleware' ? 'middleware' : 'module'
+        type: attributes.type === "fynapp-middleware" ? "middleware" : "module",
       };
     } else {
       // Add site if not already present
@@ -624,12 +679,12 @@ async function generateFynAppManifest(
 
   const manifest: FynAppManifest = {
     name: runtime.options.name,
-    version: runtime.options.version || '1.0.0',
+    version: runtime.options.version || "1.0.0",
     exposes: exposes,
-    'provide-shared': Object.keys(provideShared).length > 0 ? provideShared : undefined,
-    'consume-shared': Object.keys(consumeShared).length > 0 ? consumeShared : undefined,
-    'import-exposed': Object.keys(importExposed).length > 0 ? importExposed : undefined,
-    'shared-providers': Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined
+    "provide-shared": Object.keys(provideShared).length > 0 ? provideShared : undefined,
+    "consume-shared": Object.keys(consumeShared).length > 0 ? consumeShared : undefined,
+    "import-exposed": Object.keys(importExposed).length > 0 ? importExposed : undefined,
+    "shared-providers": Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined,
   };
 
   return manifest;
@@ -638,11 +693,7 @@ async function generateFynAppManifest(
 /**
  * Helper function to get bundle information for each module
  */
-function getModuleBundles(
-  context: any,
-  bundle: any,
-  moduleId: string
-): string[] {
+function getModuleBundles(context: any, bundle: any, moduleId: string): string[] {
   const moduleInfo = context.getModuleInfo(moduleId);
   if (!moduleInfo) return [];
 

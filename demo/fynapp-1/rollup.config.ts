@@ -4,6 +4,7 @@ import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
+  setupFynAppOutputConfig,
   fynappDummyEntryName,
   fynappEntryFilename,
   setupDummyEntryPlugins,
@@ -11,17 +12,12 @@ import {
   setupMinifyPlugins,
   setupReactFederationPlugins,
 } from "create-fynapp";
+import { defineConfig } from "rollup";
 
 export default [
-  {
+  defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    output: [
-      {
-        dir: "dist",
-        format: "system",
-        sourcemap: true,
-      },
-    ],
+    ...setupFynAppOutputConfig(),
     external: ["esm-react", "esm-react-dom"],
     plugins: [
       ...setupDummyEntryPlugins(),
@@ -60,5 +56,5 @@ console.log('fynapp-1 entry footer');
       }),
       ...setupMinifyPlugins(),
     ],
-  },
+  }),
 ];
