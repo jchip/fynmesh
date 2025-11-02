@@ -9,6 +9,9 @@
 <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
 {% endif %}
 
+<!-- Lazy Loader for deferred app loading -->
+<script src="{{pathPrefix}}lazy-loader.js"></script>
+
 <script>
   (function() {
     // Configure service worker base path
@@ -87,8 +90,9 @@
         console.log("DEBUG: Starting automatic dependency resolution");
 
         // Feature flags to control which FynApps to load
+        // Values: true = eager load, "lazy" = deferred load with UI
         const features = {
-            "fynapp-2-react18": true,
+            "fynapp-2-react18": "lazy",  // Deferred loading with button and countdown
             "fynapp-1": true,
             "fynapp-1-b": true,
             "fynapp-3-marko": true,
@@ -99,21 +103,28 @@
             "fynapp-8-svelte": true
         };
 
-        // Add all consumer FynApps - kernel will analyze their import-exposed dependencies
-        // and automatically load any required middleware providers or component libraries
+        // Separate eager and lazy apps
         const requested = [];
-        if (features["fynapp-2-react18"]) requested.push({ name: "fynapp-2-react18" });
-        if (features["fynapp-1"]) requested.push({ name: "fynapp-1" });
-        if (features["fynapp-1-b"]) requested.push({ name: "fynapp-1-b" });
-        if (features["fynapp-3-marko"]) requested.push({ name: "fynapp-3-marko" });
-        if (features["fynapp-4-vue"]) requested.push({ name: "fynapp-4-vue" });
-        if (features["fynapp-5-preact"]) requested.push({ name: "fynapp-5-preact" });
-        if (features["fynapp-6-react"]) requested.push({ name: "fynapp-6-react" });
-        if (features["fynapp-7-solid"]) requested.push({ name: "fynapp-7-solid" });
-        if (features["fynapp-8-svelte"]) requested.push({ name: "fynapp-8-svelte" });
+        const lazyApps = [];
 
+        Object.entries(features).forEach(([name, mode]) => {
+            if (mode === "lazy") {
+                lazyApps.push({ name, mode: "lazy" });
+            } else if (mode === true) {
+                requested.push({ name });
+            }
+        });
+
+        // Load eager apps first
         if (requested.length > 0) {
             await fynMeshKernel.loadFynAppsByName(requested, { concurrency: 4 });
         }
+
+        // Initialize lazy loaders after eager apps complete
+        lazyApps.forEach(({ name }) => {
+            console.debug(`🔄 Initializing lazy loader for ${name}`);
+            const loader = new LazyLoader(name, "FynApp 2", fynMeshKernel, { countdown: 10 });
+            loader.init();
+        });
     })();
 </script>

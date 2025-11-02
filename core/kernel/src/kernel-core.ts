@@ -218,7 +218,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     // Acquire bootstrap lock
     this.bootstrapCoordinator.acquireBootstrapLock(fynApp.name);
-    console.debug(`🔒 ${fynApp.name} acquired bootstrap lock`);
 
     try {
       // Always load middleware modules for all FynApps
