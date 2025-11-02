@@ -18,7 +18,14 @@ export default [
         // name: "FynMeshKernel",
         sourcemap: true,
         inlineDynamicImports: true,
-        plugins: [terser()],
+        plugins: [
+          terser({
+            compress: {
+              drop_console: ['debug', 'log'],
+              passes: 2,
+            },
+          }),
+        ],
       },
     ],
     plugins: [
