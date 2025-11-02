@@ -215,7 +215,7 @@ const App: React.FC<AppProps> = ({
         title="🎨 Design Tokens Theme Selection"
         className="card-spacious section"
       >
-        <div className="space-y-2 mb-6">
+        <div className="space-y-1 mb-3">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -235,7 +235,7 @@ const App: React.FC<AppProps> = ({
             <span>Accept changes globally (from other apps)</span>
           </label>
         </div>
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {themeOptions.map((theme) => (
             <Button
               key={theme.value}
@@ -315,7 +315,7 @@ const App: React.FC<AppProps> = ({
         </div>
 
         {/* Input Section */}
-        <div>
+        <div className="component-group">
           <h3 className="section-title">Input</h3>
           <div className="max-w-md">
             <Input

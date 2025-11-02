@@ -1,8 +1,8 @@
 /* App Layout Styles - Spacing utilities for fynapp-1 */
 
 /* Spacing scale based on 8px grid */
-.space-y-1 > * + * { margin-top: 0.5rem; }
-.space-y-2 > * + * { margin-top: 1rem; }
+.space-y-1 > * + * { margin-top: 0.25rem; }
+.space-y-2 > * + * { margin-top: 0.5rem; }
 .space-y-3 > * + * { margin-top: 1.5rem; }
 .space-y-4 > * + * { margin-top: 2rem; }
 .space-y-6 > * + * { margin-top: 3rem; }
@@ -16,6 +16,7 @@
 .mb-2 { margin-bottom: 1rem; }
 .mb-3 { margin-bottom: 1.5rem; }
 .mb-4 { margin-bottom: 2rem; }
+.mb-5 { margin-bottom: 2.5rem; }
 .mb-6 { margin-bottom: 3rem; }
 
 /* Section spacing */
@@ -23,7 +24,7 @@
 .section-sm { margin-bottom: 1rem; }
 
 /* Card padding override */
-.card-spacious { padding: 2rem !important; }
+.card-spacious { padding: 0.75rem !important; }
 
 /* Layout container */
 .app-container {
@@ -37,7 +38,7 @@
 
 /* Component groups */
 .component-group {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .component-group:last-child {
@@ -55,7 +56,7 @@
 .section-title {
   font-size: var(--fynmesh-font-size-xl, 1.25rem);
   font-weight: var(--fynmesh-font-weight-semibold, 600);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   color: var(--fynmesh-color-text-primary, #1a1a1a);
 }
 
@@ -71,6 +72,7 @@
 .flex-wrap {
   display: flex;
   flex-wrap: wrap;
+  row-gap: 0.5rem;
 }
 
 .items-center {

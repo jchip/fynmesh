@@ -16,7 +16,7 @@
 }
 
 .card-body {
-  padding: var(--fynmesh-spacing-lg);
+  padding: var(--fynmesh-spacing-sm);
 }
 
 .card-footer {
