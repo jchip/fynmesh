@@ -12,6 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
 } from "../types";
+import { isFynAppMiddlewareProvider } from "../util";
 
 export class MiddlewareExecutor {
   private middlewareReady: Map<string, any> = new Map();
@@ -231,6 +232,60 @@ export class MiddlewareExecutor {
   }
 
   /**
+   * Parse middleware string format and create call context
+   * @private
+   */
+  private async parseMiddlewareString(
+    middlewareStr: string,
+    config: unknown,
+    fynMod: FynModule,
+    fynApp: FynApp,
+    kernel: FynMeshKernel,
+    runtime: FynModuleRuntime,
+    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
+  ): Promise<FynAppMiddlewareCallContext | null> {
+    const parts = middlewareStr.trim().split(' ');
+
+    if (parts.length < 3 || parts[0] !== '-FYNAPP_MIDDLEWARE') {
+      return null;
+    }
+
+    const [, packageName, middlewarePath, semver] = parts;
+    const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
+
+    console.debug("🔍 Middleware string - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
+
+    // Try to load middleware from dependency package first
+    if (loadMiddlewareFromDependency) {
+      await loadMiddlewareFromDependency(packageName, middlewarePath);
+    }
+
+    const reg = getMiddleware(middlewareName, packageName);
+    if (reg.regKey === "") {
+      console.debug("❌ No middleware found for", middlewareName, packageName);
+      return null;
+    }
+
+    return {
+      meta: {
+        info: {
+          name: middlewareName,
+          provider: packageName,
+          version: semver || "*"
+        },
+        config: config || {}
+      },
+      fynMod,
+      fynApp,
+      reg,
+      kernel,
+      runtime,
+      status: "",
+    };
+  }
+
+  /**
    * Use middleware on FynModule
    */
   async useMiddlewareOnFynModule(
@@ -257,81 +312,32 @@ export class MiddlewareExecutor {
       let cc: FynAppMiddlewareCallContext | null = null;
 
       // Handle new string format: "-FYNAPP_MIDDLEWARE package-name middleware-path [semver]"
-      // Note: semver is optional
       if (typeof meta === 'string') {
-        const parts = (meta as string).trim().split(' ');
-        if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
-          const [, packageName, middlewarePath, semver] = parts;
-          const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
-          console.debug("🔍 String format - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
-
-          // Try to load middleware from dependency package first
-          if (loadMiddlewareFromDependency) {
-            await loadMiddlewareFromDependency(packageName, middlewarePath);
-          }
-
-          const reg = getMiddleware(middlewareName, packageName);
-          if (reg.regKey === "") {
-            console.debug("❌ No middleware found for", middlewareName, packageName);
-            continue;
-          }
-          cc = {
-            meta: {
-              info: {
-                name: middlewareName,
-                provider: packageName,
-                version: semver || "*"
-              },
-              config: {}
-            },
-            fynMod,
-            fynApp,
-            reg,
-            kernel,
-            runtime,
-            status: "",
-          };
-        }
+        cc = await this.parseMiddlewareString(
+          meta,
+          {},
+          fynMod,
+          fynApp,
+          kernel,
+          runtime,
+          getMiddleware,
+          loadMiddlewareFromDependency
+        );
       } else if (meta && typeof meta === 'object') {
         console.debug("🔍 Object format meta:", meta);
 
         // Check for new format with middleware property containing the string
         if ((meta as any).middleware && typeof (meta as any).middleware === 'string') {
-          const middlewareStr = (meta as any).middleware as string;
-          const parts = middlewareStr.trim().split(' ');
-
-          if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
-            const [, packageName, middlewarePath, semver] = parts;
-            const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
-            console.debug("🔍 Object wrapper format - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
-
-            // Try to load middleware from dependency package first
-            if (loadMiddlewareFromDependency) {
-              await loadMiddlewareFromDependency(packageName, middlewarePath);
-            }
-
-            const reg = getMiddleware(middlewareName, packageName);
-            if (reg.regKey === "") {
-              console.debug("❌ No middleware found for", middlewareName, packageName);
-              continue;
-            }
-            cc = {
-              meta: {
-                info: {
-                  name: middlewareName,
-                  provider: packageName,
-                  version: semver || "*"
-                },
-                config: (meta as any).config || {}
-              },
-              fynMod,
-              fynApp,
-              reg,
-              kernel,
-              runtime,
-              status: "",
-            };
-          }
+          cc = await this.parseMiddlewareString(
+            (meta as any).middleware,
+            (meta as any).config || {},
+            fynMod,
+            fynApp,
+            kernel,
+            runtime,
+            getMiddleware,
+            loadMiddlewareFromDependency
+          );
         } else if ((meta as any).info) {
           // Handle legacy object format with info property
           const info = (meta as any).info;
@@ -388,13 +394,8 @@ export class MiddlewareExecutor {
       return;
     }
 
-    // Determine if this is a middleware provider FynApp
-    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
-      key.startsWith('./middleware')
-    );
-
     // Apply middleware based on FynApp type
-    const targetMiddlewares = isMiddlewareProvider
+    const targetMiddlewares = isFynAppMiddlewareProvider(fynApp)
       ? autoApplyMiddlewares.middleware
       : autoApplyMiddlewares.fynapp;
 

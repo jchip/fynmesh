@@ -6,6 +6,26 @@ import { FynMeshKernelCore } from "./kernel-core";
  */
 export class BrowserKernel extends FynMeshKernelCore {
   /**
+   * Inject a modulepreload link tag into the document head
+   * @private
+   */
+  private injectPreloadLink(url: string): void {
+    // Skip if document/head not available
+    if (typeof document === "undefined" || !document.head) {
+      return;
+    }
+
+    // Create modulepreload link tag
+    const link = document.createElement("link");
+    link.rel = "modulepreload";
+    link.href = url;
+    link.as = "script";
+
+    // Append to head
+    document.head.appendChild(link);
+  }
+
+  /**
    * Load a remote fynapp through federation.js (browser-specific)
    */
   async loadFynApp(baseUrl: string, loadId?: string): Promise<void> {
@@ -49,6 +69,11 @@ export function createBrowserKernel(): BrowserKernel {
       manifestUrl: `/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     };
+  });
+
+  // Set up preload callback to inject modulepreload link tags
+  kernel.setPreloadCallback((url: string) => {
+    kernel["injectPreloadLink"](url);
   });
 
   return kernel;

@@ -26,12 +26,40 @@ export class ManifestResolver {
   private registryResolver?: RegistryResolver;
   private manifestCache: Map<string, FynAppManifest> = new Map();
   private nodeMeta: Map<string, ManifestMeta> = new Map();
+  private preloadedEntries: Set<string> = new Set();
+  private preloadCallback?: (url: string) => void;
 
   /**
    * Install a registry resolver (browser: demo server paths)
    */
   setRegistryResolver(resolver: RegistryResolver): void {
     this.registryResolver = resolver;
+  }
+
+  /**
+   * Set callback for preloading entry files
+   */
+  setPreloadCallback(callback: (url: string) => void): void {
+    this.preloadCallback = callback;
+  }
+
+  /**
+   * Preload an entry file (with deduplication)
+   * @private
+   */
+  private preloadEntryFile(name: string, distBase: string): void {
+    const entryUrl = `${distBase}fynapp-entry.js`;
+
+    if (this.preloadedEntries.has(entryUrl)) {
+      return; // Already preloaded
+    }
+
+    this.preloadedEntries.add(entryUrl);
+
+    if (this.preloadCallback) {
+      console.debug(`⚡ Preloading entry file: ${entryUrl}`);
+      this.preloadCallback(entryUrl);
+    }
   }
 
   /**
@@ -54,15 +82,46 @@ export class ManifestResolver {
   clearCache(): void {
     this.manifestCache.clear();
     this.nodeMeta.clear();
+    this.preloadedEntries.clear();
   }
 
   /**
    * Fetch JSON from URL
+   * @private
    */
   private async fetchJson(url: string): Promise<any> {
     const res = await fetch(url, { credentials: "same-origin" });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
     return res.json();
+  }
+
+  /**
+   * Calculate distBase from resolver result
+   * @private
+   */
+  private calculateDistBase(res: RegistryResolverResult): string {
+    return res.distBase ||
+      (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
+  }
+
+  /**
+   * Update node metadata with manifest info
+   * @private
+   */
+  private updateNodeMeta(
+    key: string,
+    res: RegistryResolverResult,
+    manifest: FynAppManifest
+  ): void {
+    const distBase = this.calculateDistBase(res);
+    const finalVersion = manifest.version || res.version;
+
+    this.nodeMeta.set(key, {
+      name: res.name,
+      version: finalVersion,
+      manifestUrl: res.manifestUrl,
+      distBase
+    });
   }
 
   /**
@@ -82,14 +141,7 @@ export class ManifestResolver {
     
     if (cached) {
       // Fast path: already cached
-      const distBase = res.distBase || 
-        (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-      this.nodeMeta.set(cacheKey, { 
-        name: res.name, 
-        version: resolvedVersion, 
-        manifestUrl: res.manifestUrl, 
-        distBase 
-      });
+      this.updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
       return { key: cacheKey, res, manifest: cached };
     }
 
@@ -104,18 +156,9 @@ export class ManifestResolver {
         const entryModule = await Federation.import(entryUrl);
         if (entryModule && entryModule.__FYNAPP_MANIFEST__) {
           manifest = entryModule.__FYNAPP_MANIFEST__;
-          const distBase = res.distBase || 
-            (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-          // Use version from manifest if available, fallback to resolver version
-          const finalVersion = manifest.version || res.version;
-          const key = `${res.name}@${finalVersion}`;
+          const key = `${res.name}@${manifest.version || res.version}`;
           this.manifestCache.set(key, manifest);
-          this.nodeMeta.set(key, { 
-            name: res.name, 
-            version: finalVersion, 
-            manifestUrl: res.manifestUrl, 
-            distBase 
-          });
+          this.updateNodeMeta(key, res, manifest);
           return { key, res, manifest };
         }
       }
@@ -136,18 +179,9 @@ export class ManifestResolver {
       }
     }
     
-    const distBase = res.distBase || 
-      (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-    // Use version from manifest if available, fallback to resolver version
-    const finalVersion = manifest.version || res.version;
-    const key = `${res.name}@${finalVersion}`;
+    const key = `${res.name}@${manifest.version || res.version}`;
     this.manifestCache.set(key, manifest);
-    this.nodeMeta.set(key, { 
-      name: res.name, 
-      version: finalVersion, 
-      manifestUrl: res.manifestUrl, 
-      distBase 
-    });
+    this.updateNodeMeta(key, res, manifest);
     return { key, res, manifest };
   }
 
@@ -190,6 +224,11 @@ export class ManifestResolver {
       // Process explicit requires field
       const requires = manifest.requires || [];
       for (const req of requires) {
+        // Preload dependency entry file before visiting
+        const reqRes = await this.registryResolver!(req.name, req.range);
+        const reqDistBase = this.calculateDistBase(reqRes);
+        this.preloadEntryFile(req.name, reqDistBase);
+
         await visit(req.name, req.range, key);
       }
 
@@ -208,6 +247,11 @@ export class ManifestResolver {
               }
             }
           }
+          // Preload dependency entry file before visiting
+          const importRes = await this.registryResolver!(packageName, requireVersion);
+          const importDistBase = this.calculateDistBase(importRes);
+          this.preloadEntryFile(packageName, importDistBase);
+
           // Visit this package as a dependency
           await visit(packageName, requireVersion, key);
         }
@@ -224,6 +268,11 @@ export class ManifestResolver {
             requireVersion = providerInfo.requireVersion as string;
           }
           console.debug(`  → Loading shared provider: ${packageName}@${requireVersion || 'latest'}`);
+          // Preload dependency entry file before visiting
+          const sharedRes = await this.registryResolver!(packageName, requireVersion);
+          const sharedDistBase = this.calculateDistBase(sharedRes);
+          this.preloadEntryFile(packageName, sharedDistBase);
+
           // Visit this package as a dependency
           await visit(packageName, requireVersion, key);
         }

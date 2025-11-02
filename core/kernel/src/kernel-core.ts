@@ -80,6 +80,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * Set callback for preloading entry files
+   */
+  setPreloadCallback(callback: (url: string) => void): void {
+    this.manifestResolver.setPreloadCallback(callback);
+  }
+
+  /**
    * Programmatic API for middlewares to signal readiness
    */
   async signalMiddlewareReady(
@@ -132,6 +139,18 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     requests: Array<{ name: string; range?: string }>,
     options?: { concurrency?: number }
   ): Promise<void> {
+    // Preload initial FynApp entry files before building dependency graph
+    // This allows the initial batch to start loading in parallel
+    const preloadCallback = this.manifestResolver["preloadCallback"];
+    if (preloadCallback) {
+      for (const req of requests) {
+        const res = await this.manifestResolver["registryResolver"]!(req.name, req.range);
+        const distBase = this.manifestResolver["calculateDistBase"](res);
+        const entryUrl = `${distBase}fynapp-entry.js`;
+        preloadCallback(entryUrl);
+      }
+    }
+
     const graph = await this.manifestResolver.buildGraph(requests);
     const batches = this.manifestResolver.topoBatches(graph);
     const concurrency = Math.max(1, Math.min(options?.concurrency ?? 4, 8));
