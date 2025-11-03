@@ -1,10 +1,48 @@
 import { FynMeshKernelCore } from "./kernel-core";
+import type { PreloadStrategy, LoadFynAppsOptions } from "./types";
+import { PreloadPriority } from "./types";
 
 /**
  * Browser-specific implementation of FynMesh kernel
  * Handles Federation.js integration and browser-specific loading
  */
 export class BrowserKernel extends FynMeshKernelCore {
+  private preloadStrategy: Required<PreloadStrategy> = {
+    depth: 1, // Default: requested + immediate dependencies
+    priority: 'static',
+    priorityByDepth: {
+      0: PreloadPriority.CRITICAL,
+      1: PreloadPriority.IMPORTANT,
+      2: PreloadPriority.DEFERRED
+    },
+    disabled: false
+  };
+
+  /**
+   * Resolve preload strategy from options
+   */
+  private resolvePreloadStrategy(options?: LoadFynAppsOptions): Required<PreloadStrategy> {
+    if (!options?.preload) {
+      return this.preloadStrategy; // Use instance default
+    }
+
+    // Shorthand: number = depth
+    if (typeof options.preload === 'number') {
+      return {
+        ...this.preloadStrategy,
+        depth: options.preload
+      };
+    }
+
+    // Full strategy object
+    return {
+      depth: options.preload.depth ?? this.preloadStrategy.depth,
+      priority: options.preload.priority ?? this.preloadStrategy.priority,
+      priorityByDepth: options.preload.priorityByDepth ?? this.preloadStrategy.priorityByDepth,
+      disabled: options.preload.disabled ?? this.preloadStrategy.disabled
+    };
+  }
+
   /**
    * Inject a modulepreload link tag into the document head
    * @private
@@ -23,6 +61,29 @@ export class BrowserKernel extends FynMeshKernelCore {
 
     // Append to head
     document.head.appendChild(link);
+  }
+
+  /**
+   * Override loadFynAppsByName to handle preload strategy
+   */
+  async loadFynAppsByName(
+    requests: Array<{ name: string; range?: string }>,
+    options?: LoadFynAppsOptions
+  ): Promise<void> {
+    // Resolve and store strategy for this load
+    const strategy = this.resolvePreloadStrategy(options);
+
+    // Store strategy temporarily for preload callback
+    const previousStrategy = this.preloadStrategy;
+    this.preloadStrategy = strategy;
+
+    try {
+      // Call parent implementation
+      await super.loadFynAppsByName(requests, options);
+    } finally {
+      // Restore previous strategy
+      this.preloadStrategy = previousStrategy;
+    }
   }
 
   /**
@@ -71,8 +132,23 @@ export function createBrowserKernel(): BrowserKernel {
     };
   });
 
-  // Set up preload callback to inject modulepreload link tags
-  kernel.setPreloadCallback((url: string) => {
+  // Set up preload callback to inject modulepreload link tags with depth filtering
+  kernel.setPreloadCallback((url: string, depth: number) => {
+    const strategy = kernel["preloadStrategy"];
+
+    // Check if preloading is disabled
+    if (strategy.disabled) {
+      console.debug(`⏭️  Preload disabled, skipping: ${url} (depth: ${depth})`);
+      return;
+    }
+
+    // Check if depth exceeds max depth
+    if (depth > strategy.depth) {
+      console.debug(`⏭️  Depth ${depth} > max ${strategy.depth}, skipping: ${url}`);
+      return;
+    }
+
+    // Inject the preload link
     kernel["injectPreloadLink"](url);
   });
 

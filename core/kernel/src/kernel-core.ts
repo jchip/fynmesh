@@ -82,7 +82,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   /**
    * Set callback for preloading entry files
    */
-  setPreloadCallback(callback: (url: string) => void): void {
+  setPreloadCallback(callback: (url: string, depth: number) => void): void {
     this.manifestResolver.setPreloadCallback(callback);
   }
 
@@ -137,7 +137,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   async loadFynAppsByName(
     requests: Array<{ name: string; range?: string }>,
-    options?: { concurrency?: number }
+    options?: import("./types").LoadFynAppsOptions
   ): Promise<void> {
     // Preload initial FynApp entry files before building dependency graph
     // This allows the initial batch to start loading in parallel
@@ -147,7 +147,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         const res = await this.manifestResolver["registryResolver"]!(req.name, req.range);
         const distBase = this.manifestResolver["calculateDistBase"](res);
         const entryUrl = `${distBase}fynapp-entry.js`;
-        preloadCallback(entryUrl);
+        preloadCallback(entryUrl, 0); // depth 0 for requested FynApps
       }
     }
 

@@ -402,8 +402,79 @@ export interface FynMeshKernel {
    */
   loadFynAppsByName(
     requests: Array<{ name: string; range?: string }>,
-    options?: { concurrency?: number }
+    options?: LoadFynAppsOptions
   ): Promise<void>;
+}
+
+/**
+ * Preload priority levels for resource loading
+ */
+export enum PreloadPriority {
+  /** Critical: modulepreload with fetchpriority="high" */
+  CRITICAL = 'critical',
+  /** Important: modulepreload with fetchpriority="auto" */
+  IMPORTANT = 'important',
+  /** Deferred: prefetch (idle time only) */
+  DEFERRED = 'deferred',
+  /** None: no preloading */
+  NONE = 'none'
+}
+
+/**
+ * Preload strategy configuration
+ */
+export interface PreloadStrategy {
+  /**
+   * Maximum dependency depth to preload
+   * - 0: Only requested FynApps
+   * - 1: Requested + immediate dependencies (recommended default)
+   * - 2+: Include transitive dependencies
+   * - Infinity: All dependencies (current behavior)
+   * @default 1
+   */
+  depth?: number;
+
+  /**
+   * Priority assignment strategy
+   * - 'static': Use fixed priority per depth
+   * - 'adaptive': Adjust based on network conditions (future)
+   * - 'manifest': Use priorities from FynApp manifests (future)
+   * @default 'static'
+   */
+  priority?: 'static' | 'adaptive' | 'manifest';
+
+  /**
+   * Priority mapping by depth (when priority='static')
+   * @default { 0: 'critical', 1: 'important', 2: 'deferred' }
+   */
+  priorityByDepth?: Record<number, PreloadPriority>;
+
+  /**
+   * Disable preloading entirely
+   * Useful for debugging or testing without preload
+   * @default false
+   */
+  disabled?: boolean;
+}
+
+/**
+ * Options for loadFynAppsByName
+ */
+export interface LoadFynAppsOptions {
+  /**
+   * Concurrency limit for parallel FynApp loading
+   * @default 4
+   */
+  concurrency?: number;
+
+  /**
+   * Preload strategy configuration
+   * Can be:
+   * - number: shorthand for { depth: n }
+   * - PreloadStrategy: full configuration
+   * - undefined: use default (depth: 1)
+   */
+  preload?: number | PreloadStrategy;
 }
 
 export interface MiddlewareHandlerContext {

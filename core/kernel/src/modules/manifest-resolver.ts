@@ -26,8 +26,8 @@ export class ManifestResolver {
   private registryResolver?: RegistryResolver;
   private manifestCache: Map<string, FynAppManifest> = new Map();
   private nodeMeta: Map<string, ManifestMeta> = new Map();
-  private preloadedEntries: Set<string> = new Set();
-  private preloadCallback?: (url: string) => void;
+  private preloadedEntries: Map<string, number> = new Map();
+  private preloadCallback?: (url: string, depth: number) => void;
 
   /**
    * Install a registry resolver (browser: demo server paths)
@@ -39,26 +39,27 @@ export class ManifestResolver {
   /**
    * Set callback for preloading entry files
    */
-  setPreloadCallback(callback: (url: string) => void): void {
+  setPreloadCallback(callback: (url: string, depth: number) => void): void {
     this.preloadCallback = callback;
   }
 
   /**
-   * Preload an entry file (with deduplication)
+   * Preload an entry file (with deduplication and depth tracking)
    * @private
    */
-  private preloadEntryFile(name: string, distBase: string): void {
+  private preloadEntryFile(name: string, distBase: string, depth: number): void {
     const entryUrl = `${distBase}fynapp-entry.js`;
 
+    // Use Map to track both URL and depth for deduplication
     if (this.preloadedEntries.has(entryUrl)) {
       return; // Already preloaded
     }
 
-    this.preloadedEntries.add(entryUrl);
+    this.preloadedEntries.set(entryUrl, depth);
 
     if (this.preloadCallback) {
-      console.debug(`⚡ Preloading entry file: ${entryUrl}`);
-      this.preloadCallback(entryUrl);
+      console.debug(`⚡ Preloading entry file: ${entryUrl} (depth: ${depth})`);
+      this.preloadCallback(entryUrl, depth);
     }
   }
 
@@ -197,7 +198,7 @@ export class ManifestResolver {
     const indegree = new Map<string, number>();
     const nodes = new Set<string>();
 
-    const visit = async (name: string, range?: string, parentKey?: string): Promise<string> => {
+    const visit = async (name: string, range?: string, parentKey?: string, depth: number = 0): Promise<string> => {
       const { key, manifest } = await this.resolveAndFetch(name, range);
       const isNewNode = !nodes.has(key);
 
@@ -227,9 +228,9 @@ export class ManifestResolver {
         // Preload dependency entry file before visiting
         const reqRes = await this.registryResolver!(req.name, req.range);
         const reqDistBase = this.calculateDistBase(reqRes);
-        this.preloadEntryFile(req.name, reqDistBase);
+        this.preloadEntryFile(req.name, reqDistBase, depth + 1);
 
-        await visit(req.name, req.range, key);
+        await visit(req.name, req.range, key, depth + 1);
       }
 
       // Process import-exposed dependencies (middleware providers, component libraries, etc.)
@@ -250,10 +251,10 @@ export class ManifestResolver {
           // Preload dependency entry file before visiting
           const importRes = await this.registryResolver!(packageName, requireVersion);
           const importDistBase = this.calculateDistBase(importRes);
-          this.preloadEntryFile(packageName, importDistBase);
+          this.preloadEntryFile(packageName, importDistBase, depth + 1);
 
           // Visit this package as a dependency
-          await visit(packageName, requireVersion, key);
+          await visit(packageName, requireVersion, key, depth + 1);
         }
       }
 
@@ -271,10 +272,10 @@ export class ManifestResolver {
           // Preload dependency entry file before visiting
           const sharedRes = await this.registryResolver!(packageName, requireVersion);
           const sharedDistBase = this.calculateDistBase(sharedRes);
-          this.preloadEntryFile(packageName, sharedDistBase);
+          this.preloadEntryFile(packageName, sharedDistBase, depth + 1);
 
           // Visit this package as a dependency
-          await visit(packageName, requireVersion, key);
+          await visit(packageName, requireVersion, key, depth + 1);
         }
       }
 
