@@ -1,8 +1,23 @@
 # Route-Based Preloading Optimization - Design Document
 
-**Status:** Proposed
+**Status:** Partially Implemented
 **Date:** 2025-11-02
-**Prerequisites:** Routing system implementation
+**Last Updated:** 2025-11-02
+**Prerequisites:** Routing system implementation (for route-specific optimization)
+
+## Implementation Status
+
+### ✅ Completed: Runtime Preloading
+The kernel now implements a sophisticated three-phase preloading system:
+- **Pre-entry preloading:** Entry files preloaded before dependency graph traversal
+- **During-graph preloading:** Dependencies preloaded in parallel with graph building
+- **Runtime loading:** Actual module execution via Federation
+- **Optimizations:** Embedded manifest extraction, deduplication, configurable concurrency
+
+See `ManifestResolver.preloadEntryFile()` and `BrowserKernel.injectPreloadLink()` for implementation.
+
+### ⏳ Proposed: Route-Based Optimization
+The features below describe route-based enhancements that build on the existing runtime preloading system. These require routing system implementation first.
 
 ## Overview
 
@@ -10,7 +25,7 @@ Design for optimizing FynApp preloading based on route patterns. The kernel will
 
 ## Problem Statement
 
-Current Phase 1 preloading loads all FynApp entry files upfront. With routing, we want:
+Current runtime preloading loads all FynApp entry files upfront (entire dependency graph). With routing, we want:
 1. Load only FynApps needed for the current route
 2. Preload FynApps for likely-next routes
 3. Generate static preload directives based on usage patterns
