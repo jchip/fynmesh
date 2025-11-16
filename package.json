@@ -28,8 +28,11 @@
     "url": ""
   },
   "dependencies": {
+    "@types/node": "^24.10.1",
     "@xarc/run": "^2.3.0",
     "fyn": "^2.0.0",
-    "fynpo": "^2.0.0"
+    "fynpo": "^2.0.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6"
   }
 }
