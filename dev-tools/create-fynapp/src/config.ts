@@ -59,7 +59,7 @@ export interface FynAppConfig {
         exposedModules: Record<string, string>;
         sharedDependencies: Record<string, {
             singleton: boolean;
-            requiredVersion: string;
+            semver: string;
         }>;
     };
 }
@@ -382,12 +382,12 @@ export class ConfigManager {
                             ? /singleton:\s*true/.test(depConfig)
                             : false;
 
-                        const versionMatch = depConfig.match(/requiredVersion:\s*["']([^"']+)["']/);
-                        const requiredVersion = versionMatch ? versionMatch[1] : "*";
+                        const versionMatch = depConfig.match(/semver:\s*["']([^"']+)["']/);
+                        const semver = versionMatch ? versionMatch[1] : "*";
 
                         federationConfig.sharedDependencies[depName] = {
                             singleton,
-                            requiredVersion
+                            semver
                         };
                     });
                 }

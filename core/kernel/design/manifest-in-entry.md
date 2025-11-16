@@ -308,12 +308,12 @@ export function createEnrichManifest() {
     const cwd = process.cwd();
 
     // 1. Process consume-shared (modules with import: false)
-    const consumeShared: Record<string, { requireVersion?: string }> = {};
+    const consumeShared: Record<string, { semver?: string }> = {};
     if (baseManifest.shared) {
       for (const [moduleName, config] of Object.entries(baseManifest.shared)) {
         if (config.import === false) {
           consumeShared[moduleName] = {
-            requireVersion: config.requiredVersion,
+            semver: config.requiredVersion,
           };
         }
       }
@@ -454,7 +454,7 @@ interface EnrichedManifest extends BaseManifest {
   "consume-shared"?: Record<
     string,
     {
-      requireVersion?: string;
+      semver?: string;
     }
   >;
 
@@ -465,7 +465,7 @@ interface EnrichedManifest extends BaseManifest {
     Record<
       string,
       {
-        requireVersion?: string;
+        semver?: string;
         sites?: string[];
         type?: "module" | "middleware";
         subType?: string;
@@ -476,7 +476,7 @@ interface EnrichedManifest extends BaseManifest {
   "shared-providers"?: Record<
     string,
     {
-      requireVersion?: string;
+      semver?: string;
       provides: string[];
     }
   >;
@@ -500,15 +500,15 @@ const __FYNAPP_MANIFEST__ = exports("__FYNAPP_MANIFEST__", {
   },
   "consume-shared": {
     "esm-react": {
-      requireVersion: "^19.0.0",
+      semver: "^19.0.0",
     },
     "esm-react-dom": {
-      requireVersion: "^19.0.0",
+      semver: "^19.0.0",
     },
   },
   "shared-providers": {
     "fynapp-react-lib": {
-      requireVersion: "^19.0.0",
+      semver: "^19.0.0",
       provides: ["esm-react", "esm-react-dom"],
     },
   },

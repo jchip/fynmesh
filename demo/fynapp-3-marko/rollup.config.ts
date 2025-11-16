@@ -40,7 +40,7 @@ export default [
         shared: {
           marko: {
             singleton: true,
-            requiredVersion: "^5.37.31",
+            semver: "^5.37.31",
           },
         },
       }),

@@ -365,7 +365,7 @@ export const apiClient = {
             expect(configContent).toContain('"./utils": "./src/utils/index.ts"');
 
             // Verify React version detection (should preserve semver)
-            expect(configContent).toContain('"requiredVersion": "^18.3.0"');
+            expect(configContent).toContain('"semver": "^18.3.0"');
 
             // Verify no static remotes (dynamic federation)
             expect(configContent).not.toContain('remotes:');

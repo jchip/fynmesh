@@ -272,7 +272,7 @@ export interface FynAppManifest {
   }>;
   "provide-shared"?: Record<string, {
     singleton?: boolean;
-    requiredVersion?: string;
+    semver?: string;
   }>;
   requires?: FynAppRequireEdge[];
   middlewares?: {
@@ -280,14 +280,14 @@ export interface FynAppManifest {
     provides?: Array<{ name: string }>;
   };
   "import-exposed"?: Record<string, Record<string, {
-    requireVersion?: string;
+    semver?: string;
     sites?: string[];
     type?: string;
     exposeModule?: string;
     middlewareName?: string;
   }>>;
   "shared-providers"?: Record<string, {
-    requireVersion: string;
+    semver: string;
     provides: string[];
   }>;
 }

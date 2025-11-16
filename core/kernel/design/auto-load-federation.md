@@ -84,12 +84,12 @@ Consumer FynApps now include `shared-providers` section mapping shared modules t
   "name": "fynapp-1",
   "version": "1.0.0",
   "consume-shared": {
-    "esm-react": {"requireVersion": "^19.0.0"},
-    "esm-react-dom": {"requireVersion": "^19.0.0"}
+    "esm-react": {"semver": "^19.0.0"},
+    "esm-react-dom": {"semver": "^19.0.0"}
   },
   "shared-providers": {
     "fynapp-react-lib": {
-      "requireVersion": "^19.0.0",
+      "semver": "^19.0.0",
       "provides": ["esm-react", "esm-react-dom"]
     }
   },
@@ -129,7 +129,7 @@ function detectSharedProviders(packageJson, consumeShared) {
 
       if (providedModules.length > 0) {
         providers[depName] = {
-          requireVersion: depVersion,
+          semver: depVersion,
           provides: providedModules
         };
       }

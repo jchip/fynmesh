@@ -47,12 +47,12 @@ export default [
           "esm-react": {
             import: false,
             singleton: true,
-            requiredVersion: "^18.3.0",
+            semver: "^18.3.0",
           },
           "esm-react-dom": {
             import: false,
             singleton: true,
-            requiredVersion: "^18.3.0",
+            semver: "^18.3.0",
           },
         },
         debugging: true,

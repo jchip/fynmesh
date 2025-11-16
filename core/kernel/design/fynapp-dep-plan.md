@@ -55,16 +55,16 @@
   },
   "consume-shared": {
     "esm-react": {
-      "requireVersion": "^19.0.0"
+      "semver": "^19.0.0"
     },
     "esm-react-dom": {
-      "requireVersion": "^19.0.0"
+      "semver": "^19.0.0"
     }
   },
   "import-exposed": {
     "fynapp-x1": {
       "main": {
-        "requireVersion": "^2.0.0",
+        "semver": "^2.0.0",
         "sites": ["src/components.ts"],
         "type": "module"
       }
@@ -72,7 +72,7 @@
   },
   "shared-providers": {
     "fynapp-react-lib": {
-      "requireVersion": "^19.0.0",
+      "semver": "^19.0.0",
       "provides": ["esm-react", "esm-react-dom"]
     }
   }
@@ -298,7 +298,7 @@ if (order.length < nodes.size) {
 ### Common Issues
 
 1. **Missing import-exposed section**: Dynamic imports with `mf-expose` not detected
-   - Verify imports use correct syntax: `import('fynapp-name/module', { with: { type: "mf-expose", requireVersion: "^x.x.x" } })`
+   - Verify imports use correct syntax: `import('fynapp-name/module', { with: { type: "mf-expose", semver: "^x.x.x" } })`
    - Check that the rollup plugin's `resolveDynamicImport` hook is firing during build
    - Ensure the dynamic import config in rollup config includes `"mf-expose"` type
 
@@ -392,9 +392,9 @@ The build system now automatically detects which FynApps provide consumed shared
 **Algorithm** (in `create-fynapp/src/index.ts:detectSharedProviders`):
 ```typescript
 function detectSharedProviders(
-  consumeShared: Record<string, { requireVersion?: string }>,
+  consumeShared: Record<string, { semver?: string }>,
   cwd: string
-): Record<string, { requireVersion?: string; provides?: string[] }> {
+): Record<string, { semver?: string; provides?: string[] }> {
   const sharedProviders = {};
 
   // 1. Read package.json dependencies
@@ -421,7 +421,7 @@ function detectSharedProviders(
       // 4. Add to shared-providers if matches found
       if (providedModules.length > 0) {
         sharedProviders[depName] = {
-          requireVersion: depVersion,
+          semver: depVersion,
           provides: providedModules
         };
       }
@@ -436,12 +436,12 @@ function detectSharedProviders(
 ```json
 {
   "consume-shared": {
-    "esm-react": { "requireVersion": "^19.0.0" },
-    "esm-react-dom": { "requireVersion": "^19.0.0" }
+    "esm-react": { "semver": "^19.0.0" },
+    "esm-react-dom": { "semver": "^19.0.0" }
   },
   "shared-providers": {
     "fynapp-react-lib": {
-      "requireVersion": "^19.0.0",
+      "semver": "^19.0.0",
       "provides": ["esm-react", "esm-react-dom"]
     }
   }
@@ -460,7 +460,7 @@ const components = await import('fynapp-x1/main', {
   with: {
     importType: "mf-expose",
     type: "module",
-    requireVersion: "^2.0.0"
+    semver: "^2.0.0"
   }
 });
 
@@ -468,14 +468,14 @@ const middleware = await import('fynapp-react-middleware/middleware/react-contex
   with: {
     importType: "mf-expose",
     type: "middleware",
-    requireVersion: "^1.0.0"
+    semver: "^1.0.0"
   }
 });
 ```
 
 **Key detection points:**
 - Creates runtime dependency on the exposing FynApp
-- Version requirements can be specified via `requireVersion`
+- Version requirements can be specified via `semver`
 - `importType: "mf-expose"` identifies federation imports
 - `type: "middleware"` marks middleware imports (detected automatically)
 - Must ensure providing app is loaded before import execution
@@ -536,10 +536,10 @@ The rollup plugin analyzes code and configuration to detect dependencies:
     {
       "fynapp": "fynapp-x1",
       "reason": "exposed-module-import",
-      "requireVersion": "^2.0.0",
+      "semver": "^2.0.0",
       "exposes": ["main"],
       "imports": [
-        "import('fynapp-x1/main', { with: { type: 'mf-expose', requireVersion: '^2.0.0' } })"
+        "import('fynapp-x1/main', { with: { type: 'mf-expose', semver: '^2.0.0' } })"
       ]
     }
   ]
@@ -603,7 +603,7 @@ App B (consumes: moduleA, provides: moduleB)
 interface FynAppDependency {
   fynapp: string;           // Package name of dependency
   reason: 'shared-module-consumption' | 'exposed-module-import';
-  requireVersion?: string;  // Version requirement
+  semver?: string;  // Version requirement
 
   // Shared module dependencies
   provides?: string[];      // Shared modules it provides

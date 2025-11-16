@@ -23,7 +23,7 @@ export const preloadComponents = async (): Promise<ComponentLibrary> => {
     try {
         // dynamic import exposed modules from module federation remote container
         // @ts-ignore - TS can't understand module federation remote containers
-        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^2.0.0" } }) as ComponentLibrary;
+        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^2.0.0" } }) as ComponentLibrary;
 
         // Return the components library
         return components;

@@ -247,12 +247,12 @@ export default [
                         'esm-react': {
                             import: false,
                             singleton: true,
-                            requiredVersion: reactVersion,
+                            semver: reactVersion,
                         },
                         'esm-react-dom': {
                             import: false,
                             singleton: true,
-                            requiredVersion: reactVersion,
+                            semver: reactVersion,
                         },
                     },
                     alias: {
@@ -271,7 +271,7 @@ export default [
                         vue: {
                             import: false,
                             singleton: true,
-                            requiredVersion: '^3.0.0',
+                            semver: '^3.0.0',
                         },
                     },
                     alias: null,
@@ -284,7 +284,7 @@ export default [
                         'solid-js': {
                             import: false,
                             singleton: true,
-                            requiredVersion: '^1.0.0',
+                            semver: '^1.0.0',
                         },
                     },
                     alias: null,
@@ -297,7 +297,7 @@ export default [
                         preact: {
                             import: false,
                             singleton: true,
-                            requiredVersion: '^10.0.0',
+                            semver: '^10.0.0',
                         },
                     },
                     alias: {
@@ -315,7 +315,7 @@ export default [
                         marko: {
                             import: false,
                             singleton: true,
-                            requiredVersion: '^5.0.0',
+                            semver: '^5.0.0',
                         },
                     },
                     alias: null,
@@ -337,7 +337,7 @@ export default [
     }
 
     // Simple MVP: Update a single shared dependency
-    updateSharedDependency(depName: string, config: { singleton?: boolean; requiredVersion?: string }) {
+    updateSharedDependency(depName: string, config: { singleton?: boolean; semver?: string }) {
         let found = false;
         const self = this;
 
@@ -741,7 +741,7 @@ export function testConfigManager() {
     // Update React dependency to use singleton
     manager.updateSharedDependency('esm-react', {
         singleton: true,
-        requiredVersion: '^18.3.0'
+        semver: '^18.3.0'
     });
 
     console.log('Modified config:');

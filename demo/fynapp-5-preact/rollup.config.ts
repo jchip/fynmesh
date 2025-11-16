@@ -53,7 +53,7 @@ export default [
         shared: {
           preact: {
             singleton: true,
-            requiredVersion: "^10.18.1",
+            semver: "^10.18.1",
           },
         },
       }),

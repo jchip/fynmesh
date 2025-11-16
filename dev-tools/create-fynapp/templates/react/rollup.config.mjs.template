@@ -60,12 +60,12 @@ export default [
           "esm-react": {
             import: false,
             singleton: false,
-            requiredVersion: "^19.0.0",
+            semver: "^19.0.0",
           },
           "esm-react-dom": {
             import: false,
             singleton: false,
-            requiredVersion: "^19.0.0",
+            semver: "^19.0.0",
           },
         },
         debugging: true,

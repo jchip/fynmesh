@@ -49,11 +49,11 @@ export type FynAppManifest = {
   /** Modules provided as shared by this FynApp */
   "provide-shared"?: Record<string, SharedConfig>;
   /** Dependencies for consuming shared modules */
-  "consume-shared"?: Record<string, { requireVersion?: string }>;
+  "consume-shared"?: Record<string, { semver?: string }>;
   /** Dependencies for importing exposed modules */
-  "import-exposed"?: Record<string, Record<string, { requireVersion?: string; sites?: string[] }>>;
+  "import-exposed"?: Record<string, Record<string, { semver?: string; sites?: string[] }>>;
   /** FynApps that provide shared modules consumed by this FynApp */
-  "shared-providers"?: Record<string, { requireVersion?: string; provides?: string[] }>;
+  "shared-providers"?: Record<string, { semver?: string; provides?: string[] }>;
 };
 
 export const env = process.env.NODE_ENV || "development";
@@ -144,12 +144,12 @@ export function setupReactFederationPlugins(config: Partial<FederationPluginOpti
         "esm-react": {
           import: false,
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
         "esm-react-dom": {
           import: false,
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
         ...config.shared,
       },
@@ -159,7 +159,7 @@ export function setupReactFederationPlugins(config: Partial<FederationPluginOpti
           left: "",
           right: "",
           genId(info: GenDynamicImportIdInfo): string {
-            return `${this.idPrefix} ${info.packageName} ${info.request} ${info.requireVersion}`;
+            return `${this.idPrefix} ${info.packageName} ${info.request} ${info.semver}`;
           },
         },
         ...config.renderDynamicImport,
@@ -192,7 +192,7 @@ export const fynappMiddlewareDynamicImport = {
     left: "",
     right: "",
     genId(info: any): string {
-      return `${this.idPrefix} ${info.packageName} ${info.request} ${info.requireVersion}`;
+      return `${this.idPrefix} ${info.packageName} ${info.request} ${info.semver}`;
     },
   },
 };
@@ -214,7 +214,7 @@ export const fynappMiddlewareDynamicImport = {
  *     shared: {
  *       "my-lib": {
  *         singleton: true,
- *         requiredVersion: "^1.0.0"
+ *         semver: "^1.0.0"
  *       }
  *     }
  *   })
@@ -271,13 +271,13 @@ export function createEnrichManifest() {
     }
 
     // Process consume-shared from shared config
-    const consumeShared: Record<string, { requireVersion?: string }> = {};
+    const consumeShared: Record<string, { semver?: string }> = {};
     if (baseManifest.shared) {
       for (const [moduleName, config] of Object.entries(
         baseManifest.shared as Record<string, any>,
       )) {
         if (config.import === false) {
-          consumeShared[moduleName] = { requireVersion: config.requiredVersion };
+          consumeShared[moduleName] = { semver: config.semver };
         }
       }
     }
@@ -297,7 +297,7 @@ export function createEnrichManifest() {
     // Process import-exposed from dynamicImports
     const importExposed: Record<
       string,
-      Record<string, { requireVersion?: string; sites?: string[]; type?: string }>
+      Record<string, { semver?: string; sites?: string[]; type?: string }>
     > = {};
     for (const dynImp of baseManifest.dynamicImports) {
       const { specifier, attributes, importer } = dynImp;
@@ -345,7 +345,7 @@ export function createEnrichManifest() {
       // Initialize or update module entry
       if (!importExposed[packageName][modulePath]) {
         const entry: any = {
-          requireVersion: attributes.requireVersion,
+          semver: attributes.semver,
           sites: [relativeSite],
           type: attributes.type === "fynapp-middleware" ? "middleware" : "module",
         };
@@ -458,17 +458,17 @@ export function createEmitFederationMeta() {
  * @returns Map of provider FynApps to their provided modules and versions
  */
 function detectSharedProviders(
-  consumeShared: Record<string, { requireVersion?: string }>,
+  consumeShared: Record<string, { semver?: string }>,
   provideShared: Record<string, any>,
   cwd: string,
-): Record<string, { requireVersion?: string; provides?: string[] }> {
-  const sharedProviders: Record<string, { requireVersion?: string; provides?: string[] }> = {};
+): Record<string, { semver?: string; provides?: string[] }> {
+  const sharedProviders: Record<string, { semver?: string; provides?: string[] }> = {};
 
   // Step 1: Collect all shared modules (both consumed and provided)
   const allSharedModules = { ...consumeShared };
   for (const key of Object.keys(provideShared)) {
     if (!allSharedModules[key]) {
-      allSharedModules[key] = { requireVersion: provideShared[key]?.requiredVersion };
+      allSharedModules[key] = { semver: provideShared[key]?.semver };
     }
   }
 
@@ -540,7 +540,7 @@ function detectSharedProviders(
 
     if (providedModules.length > 0) {
       sharedProviders[depName] = {
-        requireVersion: typeof depVersion === "string" ? depVersion : undefined,
+        semver: typeof depVersion === "string" ? depVersion : undefined,
         provides: providedModules,
       };
     }
@@ -589,11 +589,11 @@ async function generateFynAppManifest(
   }
 
   // Process consume-shared from federation config
-  const consumeShared: Record<string, { requireVersion?: string }> = {};
+  const consumeShared: Record<string, { semver?: string }> = {};
   if (runtime.options.shared) {
     for (const [moduleName, config] of Object.entries(runtime.options.shared)) {
       if (config.import === false) {
-        consumeShared[moduleName] = { requireVersion: config.requiredVersion };
+        consumeShared[moduleName] = { semver: config.semver };
       }
     }
   }
@@ -601,7 +601,7 @@ async function generateFynAppManifest(
   // Process import-exposed from runtime.dynamicImports
   const importExposed: Record<
     string,
-    Record<string, { requireVersion?: string; sites?: string[]; type?: string }>
+    Record<string, { semver?: string; sites?: string[]; type?: string }>
   > = {};
 
   for (const dynImp of runtime.dynamicImports) {
@@ -652,7 +652,7 @@ async function generateFynAppManifest(
     // Initialize or update module entry
     if (!importExposed[packageName][modulePath]) {
       importExposed[packageName][modulePath] = {
-        requireVersion: attributes.requireVersion,
+        semver: attributes.semver,
         sites: [relativeSite],
         type: attributes.type === "fynapp-middleware" ? "middleware" : "module",
       };

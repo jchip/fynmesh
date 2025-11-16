@@ -71,7 +71,7 @@ From a FynApp developer perspective, nothing changes:
 ```javascript
 // FynApp code remains exactly the same
 const components = await import('fynapp-x1/main', {
-  with: { type: "mf-expose", requireVersion: "^2.0.0" }
+  with: { type: "mf-expose", semver: "^2.0.0" }
 });
 
 // The fallback mechanism works transparently:

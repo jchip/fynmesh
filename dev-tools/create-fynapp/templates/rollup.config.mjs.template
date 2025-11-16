@@ -20,11 +20,11 @@ export default {
       shared: {
         react: {
           singleton: true,
-          requiredVersion: false
+          semver: false
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: false
+          semver: false
         }
       }
     })

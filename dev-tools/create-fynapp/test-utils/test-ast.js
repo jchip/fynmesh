@@ -18,11 +18,11 @@ export default {
       shared: {
         "esm-react": {
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
         "esm-react-dom": {
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
       },
     }),
@@ -48,19 +48,19 @@ async function testAST() {
     // Update React to use singleton and React 18
     manager.updateSharedDependency("esm-react", {
       singleton: true,
-      requiredVersion: "^18.3.0",
+      semver: "^18.3.0",
     });
 
     // Update React DOM as well
     manager.updateSharedDependency("esm-react-dom", {
       singleton: true,
-      requiredVersion: "^18.3.0",
+      semver: "^18.3.0",
     });
 
     // Add a new dependency
     manager.updateSharedDependency("lodash", {
       singleton: false,
-      requiredVersion: "^4.17.21",
+      semver: "^4.17.21",
     });
 
     // Generate modified config

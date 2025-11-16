@@ -18,7 +18,7 @@ export default {
       shared: {
         "esm-react": {
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
       },
     }),
@@ -47,7 +47,7 @@ export default {
 
             manager.updateSharedDependency('esm-react', {
                 singleton: true,
-                requiredVersion: '^18.3.0'
+                semver: '^18.3.0'
             });
 
             const result = manager.generate();
@@ -66,7 +66,7 @@ export default {
 
             manager.updateSharedDependency('esm-react-dom', {
                 singleton: true,
-                requiredVersion: '^18.3.0'
+                semver: '^18.3.0'
             });
 
             const result = manager.generate();
@@ -99,7 +99,7 @@ export default {
         it('should handle partial updates', () => {
             const manager = new RollupConfigManager(testConfigPath);
 
-            // Only update singleton, leave requiredVersion unchanged
+            // Only update singleton, leave semver unchanged
             manager.updateSharedDependency('esm-react', {
                 singleton: true
             });
@@ -135,7 +135,7 @@ export default {
 
             manager.updateSharedDependency('esm-react', {
                 singleton: true,
-                requiredVersion: '^18.3.0'
+                semver: '^18.3.0'
             });
 
             manager.save();

@@ -237,24 +237,24 @@ export class ManifestResolver {
       const importExposed = manifest["import-exposed"];
       if (importExposed && typeof importExposed === "object") {
         for (const [packageName, modules] of Object.entries(importExposed)) {
-          // Extract requireVersion from any module in this package
-          let requireVersion: string | undefined;
+          // Extract semver from any module in this package
+          let semver: string | undefined;
           if (modules && typeof modules === "object") {
-            // Find the first module with a requireVersion
+            // Find the first module with a semver
             for (const moduleInfo of Object.values(modules)) {
-              if (moduleInfo && typeof moduleInfo === "object" && "requireVersion" in moduleInfo) {
-                requireVersion = moduleInfo.requireVersion as string;
+              if (moduleInfo && typeof moduleInfo === "object" && "semver" in moduleInfo) {
+                semver = moduleInfo.semver as string;
                 break;
               }
             }
           }
           // Preload dependency entry file before visiting
-          const importRes = await this.registryResolver!(packageName, requireVersion);
+          const importRes = await this.registryResolver!(packageName, semver);
           const importDistBase = this.calculateDistBase(importRes);
           this.preloadEntryFile(packageName, importDistBase, depth + 1);
 
           // Visit this package as a dependency
-          await visit(packageName, requireVersion, key, depth + 1);
+          await visit(packageName, semver, key, depth + 1);
         }
       }
 
@@ -263,19 +263,19 @@ export class ManifestResolver {
       if (sharedProviders && typeof sharedProviders === "object") {
         console.debug(`📦 Processing shared-providers for ${name}@${range}:`, Object.keys(sharedProviders));
         for (const [packageName, providerInfo] of Object.entries(sharedProviders)) {
-          // Extract requireVersion from the provider info
-          let requireVersion: string | undefined;
-          if (providerInfo && typeof providerInfo === "object" && "requireVersion" in providerInfo) {
-            requireVersion = providerInfo.requireVersion as string;
+          // Extract semver from the provider info
+          let semver: string | undefined;
+          if (providerInfo && typeof providerInfo === "object" && "semver" in providerInfo) {
+            semver = providerInfo.semver as string;
           }
-          console.debug(`  → Loading shared provider: ${packageName}@${requireVersion || 'latest'}`);
+          console.debug(`  → Loading shared provider: ${packageName}@${semver || 'latest'}`);
           // Preload dependency entry file before visiting
-          const sharedRes = await this.registryResolver!(packageName, requireVersion);
+          const sharedRes = await this.registryResolver!(packageName, semver);
           const sharedDistBase = this.calculateDistBase(sharedRes);
           this.preloadEntryFile(packageName, sharedDistBase, depth + 1);
 
           // Visit this package as a dependency
-          await visit(packageName, requireVersion, key, depth + 1);
+          await visit(packageName, semver, key, depth + 1);
         }
       }
 

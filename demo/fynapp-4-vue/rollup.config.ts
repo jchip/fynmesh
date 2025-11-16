@@ -54,7 +54,7 @@ export default [
         shared: {
           vue: {
             singleton: true,
-            requiredVersion: "^3.3.4",
+            semver: "^3.3.4",
           },
         },
       }),

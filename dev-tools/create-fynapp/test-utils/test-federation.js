@@ -34,7 +34,7 @@ export default {
       shared: {
         "esm-react": {
           singleton: false,
-          requiredVersion: "^19.0.0",
+          semver: "^19.0.0",
         },
       },
     }),
@@ -106,12 +106,12 @@ async function testFederationManagement() {
   // Also update shared dependencies
   manager2.updateSharedDependency("esm-react", {
     singleton: true,
-    requiredVersion: "^18.3.0",
+    semver: "^18.3.0",
   });
 
   manager2.updateSharedDependency("esm-react-dom", {
     singleton: true,
-    requiredVersion: "^18.3.0",
+    semver: "^18.3.0",
   });
 
   console.log("\nUpdated config:");
@@ -132,11 +132,11 @@ async function testFederationManagement() {
   manager3.ensureFederationPlugin(packageJsonPath);
   manager3.updateSharedDependency("esm-react", {
     singleton: true,
-    requiredVersion: "^18.3.0",
+    semver: "^18.3.0",
   });
   manager3.updateSharedDependency("esm-react-dom", {
     singleton: true,
-    requiredVersion: "^18.3.0",
+    semver: "^18.3.0",
   });
 
   console.log("Complete federation setup:");

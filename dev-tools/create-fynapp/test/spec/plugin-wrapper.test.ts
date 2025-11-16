@@ -179,7 +179,7 @@ describe('Plugin Wrapper', () => {
                                 'esm-react': {
                                     import: false,
                                     singleton: false,
-                                    requiredVersion: '^19.0.0'
+                                    semver: '^19.0.0'
                                 }
                             }
                         }),

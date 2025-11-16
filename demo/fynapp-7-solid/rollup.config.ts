@@ -47,7 +47,7 @@ export default [
         shared: {
           "solid-js": {
             singleton: true,
-            requiredVersion: "^1.8.15",
+            semver: "^1.8.15",
           },
         },
       }),

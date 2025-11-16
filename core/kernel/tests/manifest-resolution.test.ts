@@ -238,7 +238,7 @@ describe("Manifest Resolution", () => {
         "import-exposed": {
           "middleware-provider": {
             "middleware/test": {
-              requireVersion: "2.0.0",
+              semver: "2.0.0",
               type: "middleware",
             },
           },
@@ -271,7 +271,7 @@ describe("Manifest Resolution", () => {
         version: "1.0.0",
         "shared-providers": {
           "react-provider": {
-            requireVersion: "18.0.0",
+            semver: "18.0.0",
             provides: ["react", "react-dom"],
           },
         },
