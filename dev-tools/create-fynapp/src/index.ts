@@ -27,6 +27,7 @@ import type {
 import { DependencyAnalyzer } from "rollup-plugin-federation";
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
+import { RollupOptions, ModuleFormat } from "rollup";
 
 /**
  * Enhanced FynApp manifest with comprehensive dependency information
@@ -75,11 +76,14 @@ export const fynappEntryFilename = "fynapp-entry.js";
  */
 export const fynmeshShareScope = "fynmesh";
 
-export function setupFynAppOutputConfig(mode = env, sourceMap = true) {
+export function setupFynAppOutputConfig(
+  format: ModuleFormat = "systemjs",
+  sourceMap = true,
+): Partial<RollupOptions> {
   return {
     output: {
       dir: "dist",
-      format: "system",
+      format,
       sourcemap: sourceMap,
     },
   };

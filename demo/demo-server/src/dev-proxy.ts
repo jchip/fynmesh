@@ -91,4 +91,8 @@ startDevProxy([
     { path: "/fynapp-test-shared" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-test-shared") },
   ],
+  [
+    { path: "/fynapp-sidebar" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-sidebar") },
+  ],
 ]);

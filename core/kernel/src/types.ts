@@ -367,8 +367,9 @@ export interface FynMeshKernel {
    *
    * @param baseUrl - base URL to the fynapp assets
    * @param loadId - id for the load task
+   * @returns the loaded FynApp, or null if loading failed
    */
-  loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
+  loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null>;
 
   /**
    * Bootstrap a fynapp

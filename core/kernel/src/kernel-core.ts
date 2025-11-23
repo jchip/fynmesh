@@ -317,5 +317,5 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   // Abstract methods that must be implemented by platform-specific classes
-  abstract loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
+  abstract loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null>;
 }

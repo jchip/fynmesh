@@ -1,5 +1,5 @@
 import { FynMeshKernelCore } from "./kernel-core";
-import type { PreloadStrategy, LoadFynAppsOptions } from "./types";
+import type { FynApp, PreloadStrategy, LoadFynAppsOptions } from "./types";
 import { PreloadPriority } from "./types";
 
 /**
@@ -88,8 +88,9 @@ export class BrowserKernel extends FynMeshKernelCore {
 
   /**
    * Load a remote fynapp through federation.js (browser-specific)
+   * Returns the loaded FynApp after bootstrapping
    */
-  async loadFynApp(baseUrl: string, loadId?: string): Promise<void> {
+  async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
     const Federation = (globalThis as any).Federation;
     if (!Federation) {
       throw new Error("Federation.js is not loaded.");
@@ -103,6 +104,7 @@ export class BrowserKernel extends FynMeshKernelCore {
       console.debug("🚀 FynApp entry loaded", fynAppEntry);
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
+      return fynApp;
     } catch (err) {
       console.error(`Failed to load remote fynapp from ${baseUrl}:`, err);
       throw err;

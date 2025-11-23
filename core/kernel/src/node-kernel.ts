@@ -1,4 +1,5 @@
 import { FynMeshKernelCore } from "./kernel-core";
+import type { FynApp } from "./types";
 
 /**
  * Node.js-specific implementation of FynMesh kernel
@@ -7,8 +8,9 @@ import { FynMeshKernelCore } from "./kernel-core";
 export class NodeKernel extends FynMeshKernelCore {
   /**
    * Load a remote fynapp in Node.js environment
+   * Returns the loaded FynApp after bootstrapping
    */
-  async loadFynApp(baseUrl: string, loadId?: string): Promise<void> {
+  async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
     loadId = loadId || baseUrl;
     const urlPath = this.buildFynAppUrl(baseUrl);
 
@@ -21,6 +23,7 @@ export class NodeKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
+      return fynApp;
     } catch (err) {
       console.error(`Failed to load remote fynapp from ${baseUrl} in Node.js:`, err);
       throw err;
