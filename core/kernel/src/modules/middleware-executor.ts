@@ -13,6 +13,10 @@ import type {
   MiddlewareUseMeta,
 } from "../types";
 import { isFynAppMiddlewareProvider } from "../util";
+import {
+  MiddlewareError,
+  KernelErrorCode,
+} from "../errors";
 
 export class MiddlewareExecutor {
   private middlewareReady: Map<string, any> = new Map();
@@ -137,8 +141,17 @@ export class MiddlewareExecutor {
     }
 
     if (tries > 1) {
-      console.error("🚨 Middleware setup failed after 2 tries", ccs);
-      throw new Error("Middleware setup failed after 2 tries");
+      const mwError = new MiddlewareError(
+        KernelErrorCode.MIDDLEWARE_SETUP_FAILED,
+        `Middleware setup failed after 2 tries for ${ccs.map(cc => cc.reg.regKey).join(", ")}`,
+        {
+          middlewareName: ccs[0]?.reg.middleware.name,
+          provider: ccs[0]?.reg.hostFynApp.name,
+          fynAppName: ccs[0]?.fynApp.name,
+        }
+      );
+      console.error(`🚨 ${mwError.message}`);
+      throw mwError;
     }
 
     this.checkMiddlewareReady(ccs);
@@ -376,6 +389,7 @@ export class MiddlewareExecutor {
 
   /**
    * Apply auto-scope middlewares
+   * @returns Array of errors that occurred during middleware application (empty if all succeeded)
    */
   async applyAutoScopeMiddlewares(
     fynApp: FynApp,
@@ -387,11 +401,13 @@ export class MiddlewareExecutor {
     } | undefined,
     createRuntime: () => FynModuleRuntime,
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
-  ): Promise<void> {
+  ): Promise<MiddlewareError[]> {
+    const errors: MiddlewareError[] = [];
+
     console.log(`🎯 Auto-apply check for ${fynApp.name}: autoApplyMiddlewares exists?`, !!autoApplyMiddlewares);
     if (!autoApplyMiddlewares) {
       console.log(`⏭️ No auto-apply middlewares registered yet for ${fynApp.name}`);
-      return;
+      return errors;
     }
 
     // Apply middleware based on FynApp type
@@ -409,7 +425,18 @@ export class MiddlewareExecutor {
             continue;
           }
         } catch (error) {
-          console.error(`❌ Error in shouldApply for ${mwReg.regKey}:`, error);
+          const mwError = new MiddlewareError(
+            KernelErrorCode.MIDDLEWARE_FILTER_ERROR,
+            `Error in shouldApply for ${mwReg.regKey}: ${error instanceof Error ? error.message : String(error)}`,
+            {
+              middlewareName: mwReg.middleware.name,
+              provider: mwReg.hostFynApp.name,
+              fynAppName: fynApp.name,
+              cause: error instanceof Error ? error : undefined,
+            }
+          );
+          console.error(`❌ ${mwError.message}`);
+          errors.push(mwError);
           continue;
         }
       }
@@ -446,9 +473,22 @@ export class MiddlewareExecutor {
           await mwReg.middleware.apply(context);
         }
       } catch (error) {
-        console.error(`❌ Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}:`, error);
+        const mwError = new MiddlewareError(
+          KernelErrorCode.MIDDLEWARE_APPLY_FAILED,
+          `Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}: ${error instanceof Error ? error.message : String(error)}`,
+          {
+            middlewareName: mwReg.middleware.name,
+            provider: mwReg.hostFynApp.name,
+            fynAppName: fynApp.name,
+            cause: error instanceof Error ? error : undefined,
+          }
+        );
+        console.error(`❌ ${mwError.message}`);
+        errors.push(mwError);
       }
     }
+
+    return errors;
   }
 
   /**

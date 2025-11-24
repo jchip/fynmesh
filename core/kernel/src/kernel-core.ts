@@ -257,7 +257,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
 
         // Apply auto-scope middlewares
-        await this.middlewareExecutor.applyAutoScopeMiddlewares(
+        const middlewareErrors = await this.middlewareExecutor.applyAutoScopeMiddlewares(
           fynApp,
           mainFynModule as FynModule,
           this,
@@ -265,6 +265,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           () => this.moduleLoader.createFynModuleRuntime(fynApp),
           async (cc, share) => this.signalMiddlewareReady(cc, { share })
         );
+
+        // Log middleware errors but don't fail bootstrap - middleware issues shouldn't break the app
+        if (middlewareErrors.length > 0) {
+          console.warn(`⚠️ ${middlewareErrors.length} middleware error(s) during bootstrap of ${fynApp.name}:`,
+            middlewareErrors.map(e => e.toDetailedString()));
+        }
 
         if (typeof mainFynModule === "function") {
           await (mainFynModule as any)(this.moduleLoader.createFynModuleRuntime(fynApp));
