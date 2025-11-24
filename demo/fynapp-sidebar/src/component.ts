@@ -129,11 +129,15 @@ function SidebarComponent({ fynApp, runtime }: any): React.ReactElement {
     appInfo: {
       flex: 1,
       minWidth: 0,
+      overflow: 'hidden',
     },
     appName: {
       fontWeight: 500,
       color: '#111827',
       marginBottom: '2px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap' as const,
     },
     appFramework: {
       fontSize: '12px',
@@ -146,6 +150,7 @@ function SidebarComponent({ fynApp, runtime }: any): React.ReactElement {
       borderRadius: '9999px',
       fontSize: '11px',
       fontWeight: 500,
+      flexShrink: 0,
     },
     loadingSpinner: {
       width: '16px',
@@ -216,15 +221,26 @@ function SidebarComponent({ fynApp, runtime }: any): React.ReactElement {
             // App info
             React.createElement('div', { key: 'info', style: styles.appInfo }, [
               React.createElement('div', { key: 'name', style: styles.appName }, app.name),
-              React.createElement('div', { key: 'framework', style: styles.appFramework }, app.framework)
+              React.createElement('div', {
+                key: 'framework',
+                style: {
+                  ...styles.appFramework,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }
+              }, [
+                React.createElement('span', { key: 'fw-text' }, app.framework),
+                isLoaded
+                  ? React.createElement('span', { key: 'badge', style: styles.loadedBadge }, 'Loaded')
+                  : null
+              ])
             ]),
 
-            // Status
+            // Status (spinner only)
             isLoading
               ? React.createElement('div', { key: 'status', style: styles.loadingSpinner })
-              : isLoaded
-                ? React.createElement('span', { key: 'status', style: styles.loadedBadge }, 'Loaded')
-                : null
+              : null
           ])
         );
       })

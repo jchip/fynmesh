@@ -5,11 +5,17 @@ export async function main(runtime) {
 
   try {
     // Find or create the div element to render into
-    let targetDiv = document.getElementById("fynapp-8-svelte");
+    // Priority: shell-managed container > standalone pre-defined container > create new
+    let targetDiv = document.getElementById(`shell-fynapp-${runtime.fynApp.name}`);
+
     if (!targetDiv) {
-      targetDiv = document.createElement("div");
-      targetDiv.id = "fynapp-8-svelte";
-      document.body.appendChild(targetDiv);
+      // Fallback for standalone mode (no shell)
+      targetDiv = document.getElementById("fynapp-8-svelte");
+      if (!targetDiv) {
+        targetDiv = document.createElement("div");
+        targetDiv.id = "fynapp-8-svelte";
+        document.body.appendChild(targetDiv);
+      }
     }
 
     // Clear any existing content
@@ -25,16 +31,14 @@ export async function main(runtime) {
 
     console.log(`${runtime.fynApp.name} bootstrapped successfully`);
 
-    // Return cleanup function
-    return () => {
-      app.$destroy();
-      console.log(`${runtime.fynApp.name} unmounted`);
-    };
+    // Return self-managed result to tell shell middleware we've handled rendering
+    return { type: 'self-managed' };
   } catch (error) {
     console.error(`Error bootstrapping ${runtime.fynApp.name}:`, error);
 
     // Fallback rendering if component fails
-    let targetDiv = document.getElementById("fynapp-8-svelte");
+    let targetDiv = document.getElementById(`shell-fynapp-${runtime.fynApp.name}`) ||
+                    document.getElementById("fynapp-8-svelte");
     if (targetDiv) {
       targetDiv.innerHTML = `
         <div style="padding: 20px; color: #ff3e00;">

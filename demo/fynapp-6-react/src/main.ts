@@ -1,4 +1,4 @@
-import { useMiddleware, FynModule, FynModuleRuntime } from "@fynmesh/kernel";
+import { useMiddleware, FynModule, FynModuleRuntime, SelfManagedResult } from "@fynmesh/kernel";
 import React from "react";
 import { version as ReactDomVersion } from "react-dom";
 import ReactDomClient from "react-dom/client";
@@ -27,7 +27,7 @@ class MiddlewareUser implements FynModule {
   /**
    * Do our actual work - called when middleware is ready
    */
-  async execute(runtime: FynModuleRuntime) {
+  async execute(runtime: FynModuleRuntime): Promise<SelfManagedResult> {
     console.log("MiddlewareUser.main called", { fynApp: runtime.fynApp.name });
     console.log(
       `Bootstrapping ${runtime.fynApp.name}...`,
@@ -39,11 +39,17 @@ class MiddlewareUser implements FynModule {
     );
 
     // Find or create the div element to render into
-    let targetDiv = document.getElementById("fynapp-6-react");
+    // Priority: shell-managed container > standalone pre-defined container > create new
+    let targetDiv = document.getElementById(`shell-fynapp-${runtime.fynApp.name}`);
+
     if (!targetDiv) {
-      targetDiv = document.createElement("div");
-      targetDiv.id = "fynapp-6-react";
-      document.body.appendChild(targetDiv);
+      // Fallback for standalone mode (no shell)
+      targetDiv = document.getElementById("fynapp-6-react");
+      if (!targetDiv) {
+        targetDiv = document.createElement("div");
+        targetDiv.id = "fynapp-6-react";
+        document.body.appendChild(targetDiv);
+      }
     }
 
     // Get basic-counter middleware API
@@ -59,6 +65,9 @@ class MiddlewareUser implements FynModule {
     );
 
     console.log(`${runtime.fynApp.name} bootstrapped successfully`);
+
+    // Return self-managed result to tell shell middleware we've handled rendering
+    return { type: 'self-managed', target: targetDiv };
   }
 }
 
