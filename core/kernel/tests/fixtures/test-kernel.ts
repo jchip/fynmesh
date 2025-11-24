@@ -14,45 +14,46 @@ import type {
 export class TestKernel extends FynMeshKernelCore {
   // Track calls to loadFynApp for testing
   public loadFynAppCalls: Array<{ baseUrl: string; loadId?: string }> = [];
-  
+
   // Control test behavior
   public shouldFailLoad = false;
   public loadDelay = 0;
-  
+
   constructor() {
     super();
     // Replace with test fixtures that expose protected methods
     this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events);
     this.middlewareExecutor = new TestMiddlewareExecutor();
   }
-  
-  async loadFynApp(baseUrl: string, loadId?: string): Promise<void> {
+
+  async loadFynApp(baseUrl: string, loadId?: string): Promise<import("../../src/types").FynApp | null> {
     this.loadFynAppCalls.push({ baseUrl, loadId });
-    
+
     if (this.loadDelay > 0) {
       await new Promise(resolve => setTimeout(resolve, this.loadDelay));
     }
-    
+
     if (this.shouldFailLoad) {
       throw new Error(`Test: Failed to load FynApp from ${baseUrl}`);
     }
-    
+
     // For testing, we don't actually load anything
     // Tests can manually call loadFynAppBasics and bootstrapFynApp
+    return null;
   }
-  
+
   // Expose protected/private methods for testing
   // Call methods directly on kernel which may delegate to modules internally
   testResolveAndFetch(name: string, range?: string) {
-    return (this as any).resolveAndFetch(name, range);
+    return this.manifestResolver.resolveAndFetch(name, range);
   }
 
   testBuildGraph(requests: Array<{ name: string; range?: string }>) {
-    return (this as any).buildGraph(requests);
+    return this.manifestResolver.buildGraph(requests);
   }
 
   testTopoBatches(graph: any) {
-    return (this as any).topoBatches(graph);
+    return this.manifestResolver.topoBatches(graph);
   }
 
   testLoadExposeModule(fynApp: any, exposeName: string, loadMiddlewares?: boolean) {
@@ -110,7 +111,7 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testLoadMiddlewareFromDependency(packageName: string, middlewarePath: string) {
-    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath);
+    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath, this.runTime.appsLoaded);
   }
 
   testCleanContainerName(name: string) {
@@ -137,23 +138,23 @@ export class TestKernel extends FynMeshKernelCore {
   public getMiddlewareReady() {
     return (this.middlewareExecutor as TestMiddlewareExecutor).testMiddlewareReady;
   }
-  
+
   public get testBootstrappingApp() {
     return this.bootstrapCoordinator.bootstrappingApp;
   }
-  
+
   public set testBootstrappingApp(value: string | null) {
     this.bootstrapCoordinator.bootstrappingApp = value;
   }
-  
+
   public get testDeferredBootstraps() {
     return this.bootstrapCoordinator.deferredBootstraps;
   }
-  
+
   public get testFynAppBootstrapStatus() {
     return this.bootstrapCoordinator.fynAppBootstrapStatus;
   }
-  
+
   public get testFynAppProviderModes() {
     return this.bootstrapCoordinator.fynAppProviderModes;
   }
@@ -168,13 +169,13 @@ export function createTestKernel(options?: {
   loadDelay?: number;
 }): TestKernel {
   const kernel = new TestKernel();
-  
+
   // Initialize runtime
   kernel.initRunTime({
     appsLoaded: {},
     middlewares: {},
   });
-  
+
   // Set up default test registry resolver
   const defaultResolver: RegistryResolver = vi.fn().mockImplementation(
     async (name: string, range?: string): Promise<RegistryResolverResult> => ({
@@ -184,17 +185,17 @@ export function createTestKernel(options?: {
       distBase: `/test/${name}/dist/`,
     })
   );
-  
+
   kernel.setRegistryResolver(options?.registryResolver || defaultResolver);
-  
+
   if (options?.shouldFailLoad !== undefined) {
     kernel.shouldFailLoad = options.shouldFailLoad;
   }
-  
+
   if (options?.loadDelay !== undefined) {
     kernel.loadDelay = options.loadDelay;
   }
-  
+
   return kernel;
 }
 

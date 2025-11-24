@@ -324,7 +324,9 @@ export class ManifestResolver {
 
     if (order.length < nodes.size) {
       const cyclic = [...nodes].filter((k) => (indegree.get(k) ?? 0) > 0);
-      throw new Error(`Dependency cycle detected among: ${cyclic.join(", ")}`);
+      console.warn(`⚠️ Dependency cycle detected among: ${cyclic.join(", ")} - proceeding with best-effort loading`);
+      // Add all cyclic nodes as a final batch
+      batches.push(cyclic);
     }
 
     return batches;
