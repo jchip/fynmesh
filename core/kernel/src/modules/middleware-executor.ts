@@ -5,8 +5,8 @@
 
 import type {
   FynApp,
-  FynModule,
-  FynModuleRuntime,
+  FynUnit,
+  FynUnitRuntime,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
   FynMeshKernel,
@@ -27,6 +27,38 @@ export class MiddlewareExecutor {
    */
   setMiddlewareReady(fullKey: string, share: any): void {
     this.middlewareReady.set(fullKey, share);
+  }
+
+  /**
+   * Find execution override middleware
+   */
+  private findExecutionOverride(
+    fynApp: FynApp,
+    fynUnit: FynUnit,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    }
+  ): FynAppMiddlewareReg | null {
+    if (!autoApplyMiddlewares) return null;
+
+    // Check middleware that auto-applies to this FynApp type
+    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
+      key.startsWith('./middleware')
+    );
+
+    const targetMiddlewares = isMiddlewareProvider
+      ? autoApplyMiddlewares.middleware
+      : autoApplyMiddlewares.fynapp;
+
+    // Find first middleware that can override execution
+    for (const mwReg of targetMiddlewares) {
+      if (mwReg.middleware.canOverrideExecution?.(fynApp, fynUnit)) {
+        return mwReg;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -132,6 +164,10 @@ export class MiddlewareExecutor {
     ccs: FynAppMiddlewareCallContext[],
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
     providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    },
     tries = 0
   ): Promise<string> {
     // Handle empty middleware array - nothing to call
@@ -187,16 +223,16 @@ export class MiddlewareExecutor {
       return status;
     }
     if (status === "retry") {
-      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, tries + 1);
+      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, tries + 1);
     }
 
-    const fynMod = ccs[0].fynMod;
+    const fynUnit = ccs[0].fynUnit;
     const fynApp = ccs[0].fynApp;
     const runtime = ccs[0].runtime;
 
-    if (fynMod.initialize) {
-      console.debug("🚀 Invoking user.initialize for", fynApp.name, fynApp.version);
-      const result: any = await fynMod.initialize(runtime);
+    if (fynUnit.initialize) {
+      console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
+      const result: any = await fynUnit.initialize(runtime);
 
       // Capture provider/consumer mode for dependency tracking
       if (result?.mode && providerModeRegistrar) {
@@ -209,15 +245,22 @@ export class MiddlewareExecutor {
 
       status = this.checkDeferCalls(result?.status, ccs);
       if (status === "defer") {
-        // User initialize requested defer and middleware not all ready: respect defer
-        return "defer";
+        // Check if app declared it can handle deferred middleware
+        if (result?.deferOk) {
+          console.debug(`✅ ${fynApp.name} declared deferOk=true, continuing execution despite deferred middleware`);
+          // Continue to execution - don't return defer
+          // The app will render with degraded functionality and can upgrade later
+        } else {
+          // User initialize requested defer and middleware not all ready: respect defer
+          return "defer";
+        }
       }
 
       if (status === "retry") {
         if (result?.status === "defer") {
-          return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, tries + 1);
+          return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, tries + 1);
         }
-        return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, tries + 1);
+        return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, tries + 1);
       }
     }
 
@@ -236,9 +279,48 @@ export class MiddlewareExecutor {
       }
     }
 
-    if (fynMod.execute) {
-      console.debug("🚀 Invoking user.execute for", fynApp.name, fynApp.version);
-      await fynMod.execute(runtime);
+    // Check for execution override AFTER middleware setup/apply
+    const executionOverride = this.findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
+
+    if (executionOverride) {
+      console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+
+      const overrideContext = {
+        meta: {
+          info: {
+            name: executionOverride.middleware.name,
+            provider: executionOverride.hostFynApp.name,
+            version: executionOverride.hostFynApp.version
+          },
+          config: {}
+        },
+        fynUnit,
+        fynMod: fynUnit, // deprecated compatibility
+        fynApp,
+        reg: executionOverride,
+        runtime,
+        kernel: ccs[0].kernel,
+        status: "ready" as const,
+      };
+
+      // Let middleware handle initialize first
+      if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
+        console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
+        const initResult = await executionOverride.middleware.overrideInitialize(overrideContext);
+        console.debug(`🎭 Initialize result:`, initResult);
+      }
+
+      // Let middleware handle execute
+      if (executionOverride.middleware.overrideExecute && typeof fynUnit.execute === 'function') {
+        console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
+        await executionOverride.middleware.overrideExecute(overrideContext);
+      }
+    } else {
+      // Normal execution when no override is present
+      if (fynUnit.execute) {
+        console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
+        await fynUnit.execute(runtime);
+      }
     }
 
     return "ready";
@@ -251,10 +333,10 @@ export class MiddlewareExecutor {
   private async parseMiddlewareString(
     middlewareStr: string,
     config: unknown,
-    fynMod: FynModule,
+    fynUnit: FynUnit,
     fynApp: FynApp,
     kernel: FynMeshKernel,
-    runtime: FynModuleRuntime,
+    runtime: FynUnitRuntime,
     getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
   ): Promise<FynAppMiddlewareCallContext | null> {
@@ -289,7 +371,8 @@ export class MiddlewareExecutor {
         },
         config: config || {}
       },
-      fynMod,
+      fynUnit,
+      fynMod: fynUnit, // deprecated compatibility
       fynApp,
       reg,
       kernel,
@@ -299,27 +382,31 @@ export class MiddlewareExecutor {
   }
 
   /**
-   * Use middleware on FynModule
+   * Use middleware on FynUnit
    */
-  async useMiddlewareOnFynModule(
-    fynMod: FynModule,
+  async useMiddlewareOnFynUnit(
+    fynUnit: FynUnit,
     fynApp: FynApp,
     kernel: FynMeshKernel,
-    createRuntime: () => FynModuleRuntime,
+    createRuntime: () => FynUnitRuntime,
     getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
-    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
+    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    }
   ): Promise<string> {
-    if (!fynMod.__middlewareMeta) {
+    if (!fynUnit.__middlewareMeta) {
       return "";
     }
 
     const runtime = createRuntime();
 
-    console.debug("🔍 Processing middleware metadata:", fynMod.__middlewareMeta);
+    console.debug("🔍 Processing middleware metadata:", fynUnit.__middlewareMeta);
 
     const ccs: FynAppMiddlewareCallContext[] = [];
 
-    for (const meta of fynMod.__middlewareMeta) {
+    for (const meta of fynUnit.__middlewareMeta) {
       console.debug("🔍 Processing meta item:", meta);
 
       let cc: FynAppMiddlewareCallContext | null = null;
@@ -329,7 +416,7 @@ export class MiddlewareExecutor {
         cc = await this.parseMiddlewareString(
           meta,
           {},
-          fynMod,
+          fynUnit,
           fynApp,
           kernel,
           runtime,
@@ -344,7 +431,7 @@ export class MiddlewareExecutor {
           cc = await this.parseMiddlewareString(
             (meta as any).middleware,
             (meta as any).config || {},
-            fynMod,
+            fynUnit,
             fynApp,
             kernel,
             runtime,
@@ -363,7 +450,8 @@ export class MiddlewareExecutor {
           }
           cc = {
             meta: meta as MiddlewareUseMeta<unknown>,
-            fynMod,
+            fynUnit,
+            fynMod: fynUnit, // deprecated compatibility
             fynApp,
             reg,
             kernel,
@@ -384,7 +472,25 @@ export class MiddlewareExecutor {
 
     console.debug("✅ Created", ccs.length, "middleware call contexts");
 
-    return this.callMiddlewares(ccs);
+    return this.callMiddlewares(ccs, undefined, undefined, autoApplyMiddlewares);
+  }
+
+  /**
+   * @deprecated Use useMiddlewareOnFynUnit instead
+   */
+  async useMiddlewareOnFynModule(
+    fynMod: FynUnit,
+    fynApp: FynApp,
+    kernel: FynMeshKernel,
+    createRuntime: () => FynUnitRuntime,
+    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    }
+  ): Promise<string> {
+    return this.useMiddlewareOnFynUnit(fynMod, fynApp, kernel, createRuntime, getMiddleware, loadMiddlewareFromDependency, autoApplyMiddlewares);
   }
 
   /**
@@ -393,13 +499,13 @@ export class MiddlewareExecutor {
    */
   async applyAutoScopeMiddlewares(
     fynApp: FynApp,
-    fynModule: FynModule | undefined,
+    fynUnit: FynUnit | undefined,
     kernel: FynMeshKernel,
     autoApplyMiddlewares: {
       fynapp: FynAppMiddlewareReg[];
       middleware: FynAppMiddlewareReg[];
     } | undefined,
-    createRuntime: () => FynModuleRuntime,
+    createRuntime: () => FynUnitRuntime,
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
   ): Promise<MiddlewareError[]> {
     const errors: MiddlewareError[] = [];
@@ -445,6 +551,7 @@ export class MiddlewareExecutor {
         `🔄 Auto-applying ${mwReg.middleware.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`
       );
 
+      const unit = fynUnit || { async execute() { } };
       const context: FynAppMiddlewareCallContext = {
         meta: {
           info: {
@@ -454,7 +561,8 @@ export class MiddlewareExecutor {
           },
           config: {},
         },
-        fynMod: fynModule || { async execute() { } },
+        fynUnit: unit,
+        fynMod: unit, // deprecated compatibility
         fynApp,
         reg: mwReg,
         runtime: createRuntime(),

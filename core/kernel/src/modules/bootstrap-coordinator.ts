@@ -6,27 +6,50 @@
 import type { FynApp } from "../types";
 import type { FynEventTarget } from "../event-target";
 
+/** Default bootstrap timeout: 30 seconds */
+const DEFAULT_BOOTSTRAP_TIMEOUT = 30000;
+
 export interface BootstrapDependencies {
   bootstrappingApp: string | null;
-  deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void }>;
+  deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> }>;
   fynAppBootstrapStatus: Map<string, "bootstrapped">;
   fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">>;
 }
 
 export class BootstrapCoordinator {
   public bootstrappingApp: string | null = null;
-  public deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void }> = [];
+  public deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> }> = [];
   public fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
   public fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
   public events: FynEventTarget;
 
-  constructor(events: FynEventTarget) {
+  /** Bootstrap timeout in milliseconds */
+  private timeout: number = DEFAULT_BOOTSTRAP_TIMEOUT;
+
+  constructor(events: FynEventTarget, timeout?: number) {
     this.events = events;
-    
+    if (timeout !== undefined) {
+      this.timeout = timeout;
+    }
+
     // Listen for bootstrap completion events
     this.events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
       this.handleFynAppBootstrapped(event as CustomEvent);
     });
+  }
+
+  /**
+   * Set bootstrap timeout
+   */
+  setTimeout(timeout: number): void {
+    this.timeout = timeout;
+  }
+
+  /**
+   * Get current bootstrap timeout
+   */
+  getTimeout(): number {
+    return this.timeout;
   }
 
   /**
@@ -70,6 +93,7 @@ export class BootstrapCoordinator {
 
   /**
    * Defer a bootstrap until dependencies are ready
+   * If timeout is reached, the FynApp will be skipped with an error
    */
   deferBootstrap(fynApp: FynApp): Promise<void> {
     const reason = this.bootstrappingApp !== null
@@ -78,8 +102,51 @@ export class BootstrapCoordinator {
 
     console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
 
-    return new Promise<void>((resolve) => {
-      this.deferredBootstraps.push({ fynApp, resolve });
+    return new Promise<void>((resolve, reject) => {
+      const deferred: { fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> } = {
+        fynApp,
+        resolve: () => {
+          // Clear timeout when resolved normally
+          if (deferred.timeoutId) {
+            clearTimeout(deferred.timeoutId);
+          }
+          resolve();
+        },
+      };
+
+      // Set up timeout - party goes on even if this FynApp times out
+      deferred.timeoutId = setTimeout(() => {
+        // Remove from deferred queue
+        const idx = this.deferredBootstraps.indexOf(deferred);
+        if (idx >= 0) {
+          this.deferredBootstraps.splice(idx, 1);
+        }
+
+        // Log timeout error but don't reject - allow promise to resolve
+        // This prevents blocking the entire bootstrap process
+        console.error(
+          `⏰ Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}. ` +
+          `Skipping this FynApp - the party goes on!`
+        );
+
+        // Emit timeout event for observability
+        this.events.dispatchEvent(
+          new CustomEvent("FYNAPP_BOOTSTRAP_TIMEOUT", {
+            detail: {
+              name: fynApp.name,
+              version: fynApp.version,
+              reason,
+              timeout: this.timeout,
+            },
+          })
+        );
+
+        // Resolve instead of reject - party goes on!
+        // The FynApp just won't be bootstrapped
+        resolve();
+      }, this.timeout);
+
+      this.deferredBootstraps.push(deferred);
     });
   }
 
@@ -194,6 +261,12 @@ export class BootstrapCoordinator {
    */
   clear(): void {
     this.bootstrappingApp = null;
+    // Clear any pending timeouts
+    for (const deferred of this.deferredBootstraps) {
+      if (deferred.timeoutId) {
+        clearTimeout(deferred.timeoutId);
+      }
+    }
     this.deferredBootstraps = [];
     this.fynAppBootstrapStatus.clear();
     this.fynAppProviderModes.clear();

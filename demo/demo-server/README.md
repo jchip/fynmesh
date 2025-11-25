@@ -35,7 +35,8 @@ The demo server provides local development and GitHub Pages deployment for the F
    ```
 
 3. Open your browser:
-   - HTTP: http://localhost:3000
+   - Main Demo: http://localhost:3000
+   - Shell Demo: http://localhost:3000/shell.html
    - HTTPS: https://localhost:3443
 
 ### Development Server Features
@@ -43,7 +44,29 @@ The demo server provides local development and GitHub Pages deployment for the F
 - **Hot Template Reloading**: Templates are rebuilt on server start
 - **Development Proxy**: Routes requests to FynApp packages during development
 - **Module Federation**: Dynamically loads micro-frontends at runtime
-- **Multi-Framework Support**: Serves React 18/19, Vue, Preact, Solid, and Marko apps
+- **Multi-Framework Support**: Serves React 18/19, Vue, Preact, Solid, Svelte, and Marko apps
+- **Shell Middleware Demo**: Dynamic FynApp loading with multi-region layout
+
+### Demo Pages
+
+| URL | Description |
+|-----|-------------|
+| `/` | Main demo with all FynApps displayed in a grid layout |
+| `/shell.html` | Shell middleware demo with dynamic loading and multi-region layout |
+
+#### Main Demo (`/`)
+The main demo page displays all FynApps in a scrollable grid:
+- FynApp 1 & 1-B (React 19) - Design tokens theme selection
+- FynApp 2 (React 18) - Middleware consumer example
+- FynApp 3 (Marko), 4 (Vue), 5 (Preact), 6 (React), 7 (Solid), 8 (Svelte) - Framework demos
+
+#### Shell Demo (`/shell.html`)
+Interactive shell middleware demo with:
+- **Dynamic FynApp Loading**: Click sidebar items to load FynApps into the main region
+- **Multi-Region Layout**: Header, sidebar, main content, footer regions
+- **Load Controls**: Dropdown to select FynApp and target region
+- **Status Tracking**: Shows loaded FynApps count and individual load status
+- **Footer Info**: Current FynApp name, version, kernel version, middleware count
 
 ## GitHub Pages Deployment
 
@@ -246,10 +269,14 @@ demo/demo-server/
 ├── templates/
 │   ├── pages/
 │   │   └── index.html       # Main page template (Nunjucks)
+│   ├── layouts/
+│   │   └── base.html        # Base layout template
 │   └── components/
-│       └── fynapp-loader.html  # FynApp loading logic
+│       ├── fynapp-loader.html  # FynApp loading logic
+│       └── styles.html      # Shared styles component
 ├── public/
 │   ├── index.html           # Generated HTML (local dev)
+│   ├── shell.html           # Shell middleware demo page
 │   ├── system.js            # SystemJS loader
 │   ├── sw.js                # Service Worker
 │   └── sw-utils.js          # Service Worker utilities

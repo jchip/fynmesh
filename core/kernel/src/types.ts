@@ -38,6 +38,11 @@ export type KernelConfig = {
    * Whether to enable debug mode
    */
   debug?: boolean;
+  /**
+   * Bootstrap timeout in milliseconds. FynApps waiting for dependencies
+   * longer than this will be skipped with an error log. Default: 30000 (30s)
+   */
+  bootstrapTimeout?: number;
 };
 
 /**
@@ -71,73 +76,59 @@ export interface MiddlewareUseMeta<ConfigT> {
   config: ConfigT;
 }
 
-export type FynModuleRuntime = {
+/**
+ * Runtime context passed to FynUnit during execution
+ */
+export type FynUnitRuntime = {
   fynApp: FynApp;
   middlewareContext: Map<string, Record<string, any>>;
   [key: string]: any;
 };
 
 /**
- * Execution result type definitions for strongly typed FynModule results
+ * @deprecated Use FynUnitRuntime instead. Will be removed in next major version.
  */
-export interface FynModuleExecutionResult {
-  type: 'component-factory' | 'rendered-content' | 'self-managed' | 'no-render';
-  metadata?: {
-    framework: string;
-    version: string;
-    capabilities: string[];
-  };
-}
+export type FynModuleRuntime = FynUnitRuntime;
 
-export interface ComponentFactoryResult extends FynModuleExecutionResult {
-  type: 'component-factory';
-  componentFactory: (React: any) => {
-    component: any; // React.ComponentType<ComponentProps> but avoiding React namespace
-    props?: Record<string, any>;
-  };
-}
-
-export interface RenderedContentResult extends FynModuleExecutionResult {
-  type: 'rendered-content';
-  content: HTMLElement | string;
-}
-
-export interface SelfManagedResult extends FynModuleExecutionResult {
-  type: 'self-managed';
-  target: HTMLElement;
-  cleanup?: () => void;
-}
-
-export interface NoRenderResult extends FynModuleExecutionResult {
-  type: 'no-render';
-  message?: string;
-}
-
-// Union type for all possible results
-export type FynModuleResult = 
-  | ComponentFactoryResult 
-  | RenderedContentResult 
-  | SelfManagedResult 
-  | NoRenderResult;
-
-// Component props interface
-export interface ComponentProps {
-  fynAppName: string;
-  runtime: FynModuleRuntime;
+/**
+ * Standardized interface for FynMesh execution units
+ *
+ * FynUnit is the core contract for any executable unit in FynMesh.
+ * It can be implemented by plain objects, functions (wrapped by kernel), or class instances.
+ *
+ * @example Plain object
+ * ```typescript
+ * export const main: FynUnit = {
+ *   execute(runtime) { return { type: 'component', component: MyComponent }; }
+ * };
+ * ```
+ *
+ * @example Function (kernel wraps as { execute: fn })
+ * ```typescript
+ * export const main = (runtime: FynUnitRuntime) => { ... };
+ * ```
+ *
+ * @example With middleware
+ * ```typescript
+ * export const main = useMiddleware(
+ *   [{ middleware: import('...'), config: {...} }],
+ *   { execute(runtime) { ... } }
+ * );
+ * ```
+ */
+export interface FynUnit {
+  __middlewareMeta?: MiddlewareUseMeta<unknown>[];
+  /** Tell middleware what you need - called first to determine readiness */
+  initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }> | { status: string; mode?: string };
+  /** Do your actual work - called when middleware is ready. Returns any value - middleware defines contract. */
+  execute(runtime: FynUnitRuntime): Promise<any> | any;
   [key: string]: any;
 }
 
 /**
- * Standardized interface for FynMesh modules (formerly MiddlewareUserCode)
+ * @deprecated Use FynUnit instead. Will be removed in next major version.
  */
-export interface FynModule {
-  __middlewareMeta?: MiddlewareUseMeta<unknown>[];
-  /** Tell middleware what you need - called first to determine readiness */
-  initialize?(runtime: FynModuleRuntime): Promise<{ status: string; mode?: string }> | { status: string; mode?: string };
-  /** Do your actual work - called when middleware is ready */
-  execute(runtime: FynModuleRuntime): Promise<FynModuleResult | void> | FynModuleResult | void;
-  [key: string]: any;
-}
+export type FynModule = FynUnit;
 
 /**
  * Expose object for a fynapp that represents a module exposed by federation
@@ -149,7 +140,7 @@ export type FynAppExpose = {
    */
   __name?: string;
   /** main export of the exposed module */
-  main?: FynModule;
+  main?: FynUnit;
   /** other exports from the exposed module */
   [key: string]: any;
 };
@@ -168,12 +159,14 @@ export type FynApp = FynAppInfo & {
 
 export type FynAppMiddlewareCallContext = {
   meta: MiddlewareUseMeta<unknown>;
-  fynMod: FynModule;
+  fynUnit: FynUnit;
   fynApp: FynApp;
   reg: FynAppMiddlewareReg;
-  runtime: FynModuleRuntime;
+  runtime: FynUnitRuntime;
   kernel: FynMeshKernel;
   status: string;
+  /** @deprecated Use fynUnit instead */
+  fynMod?: FynUnit;
 };
 
 /**
@@ -190,9 +183,9 @@ export type FynAppMiddleware = {
   setup?(context: FynAppMiddlewareCallContext): Promise<{ status: string; share?: any } | void>;
   /** apply the middleware to a fynapp with context */
   apply?(context: FynAppMiddlewareCallContext): Promise<void> | void;
-  
-  /** NEW: Execution override capabilities */
-  canOverrideExecution?(fynApp: FynApp, fynModule: FynModule): boolean;
+
+  /** Execution override capabilities */
+  canOverrideExecution?(fynApp: FynApp, fynUnit: FynUnit): boolean;
   overrideInitialize?(context: FynAppMiddlewareCallContext): Promise<{ status: string; mode?: string }>;
   overrideExecute?(context: FynAppMiddlewareCallContext): Promise<void>;
 };

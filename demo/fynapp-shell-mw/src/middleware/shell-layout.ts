@@ -1,14 +1,90 @@
-import type { 
-  FynAppMiddleware, 
-  FynAppMiddlewareCallContext, 
-  FynApp, 
-  FynModule,
-  FynModuleResult,
-  ComponentFactoryResult,
-  RenderedContentResult,
-  SelfManagedResult,
-  NoRenderResult
+import type {
+  FynAppMiddleware,
+  FynAppMiddlewareCallContext,
+  FynApp,
+  FynUnit,
 } from "@fynmesh/kernel";
+
+/**
+ * Shell execution result types - middleware-defined contracts
+ * These types are specific to the shell middleware and define
+ * what FynUnits can return when rendered by the shell.
+ */
+export interface ShellExecutionResultBase {
+  type: string;
+  metadata?: {
+    framework?: string;
+    version?: string;
+    capabilities?: string[];
+  };
+}
+
+/**
+ * Return a component factory - shell will call it with React to get the component
+ */
+export interface ComponentFactoryResult extends ShellExecutionResultBase {
+  type: 'component-factory';
+  componentFactory: (React: any) => {
+    component: any;
+    props?: Record<string, any>;
+  };
+}
+
+/**
+ * Return pre-rendered HTML content
+ */
+export interface RenderedContentResult extends ShellExecutionResultBase {
+  type: 'rendered-content';
+  content: HTMLElement | string;
+}
+
+/**
+ * FynApp will manage its own rendering into the provided container
+ */
+export interface SelfManagedResult extends ShellExecutionResultBase {
+  type: 'self-managed';
+  target: HTMLElement;
+  cleanup?: () => void;
+}
+
+/**
+ * FynApp has nothing to render (e.g., utility/service FynApp)
+ */
+export interface NoRenderResult extends ShellExecutionResultBase {
+  type: 'no-render';
+  message?: string;
+}
+
+/**
+ * Return a React component directly with its React and ReactDOM dependencies
+ */
+export interface ReactComponentResult extends ShellExecutionResultBase {
+  type: 'react-component';
+  component: any;
+  props?: Record<string, any>;
+  react?: any;
+  reactDOM?: any;
+}
+
+/**
+ * Return a render function that will be called with the container
+ */
+export interface RenderFunctionResult extends ShellExecutionResultBase {
+  type: 'render-function';
+  render: (container: HTMLElement) => void | Promise<void>;
+  cleanup?: () => void;
+}
+
+/**
+ * Union type for all shell-supported execution results
+ */
+export type ShellExecutionResult =
+  | ComponentFactoryResult
+  | RenderedContentResult
+  | SelfManagedResult
+  | NoRenderResult
+  | ReactComponentResult
+  | RenderFunctionResult;
 
 // Region types for layout
 type RegionName = 'sidebar' | 'main';
@@ -30,6 +106,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   private kernel: any = null; // Store kernel reference for dynamic loading
   private fynappContainers = new Map<string, HTMLElement>(); // Store container elements for each FynApp
   private selfManagedApps = new Map<string, SelfManagedResult>(); // Track self-managed FynApps
+  private reactRoots = new Map<string, any>(); // Track React roots for each FynApp to avoid double-mounting
 
   // Multi-region layout support
   private regions = new Map<RegionName, RegionInfo>([
@@ -476,8 +553,19 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
     // Clear the fynapp tracking for this region
     if (regionInfo.fynAppId) {
+      // Unmount React root before cleanup
+      const root = this.reactRoots.get(regionInfo.fynAppId);
+      if (root && root.unmount) {
+        try {
+          root.unmount();
+        } catch (error) {
+          console.warn(`Failed to unmount React root for ${regionInfo.fynAppId}:`, error);
+        }
+      }
+
       this.loadedFynApps.delete(regionInfo.fynAppId);
       this.fynappContainers.delete(regionInfo.fynAppId);
+      this.reactRoots.delete(regionInfo.fynAppId);
     }
 
     // Reset region state
@@ -594,6 +682,19 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     const regionInfo = this.regions.get(region);
     if (!regionInfo?.container) return;
 
+    // Clean up existing React root for this FynApp before clearing the container
+    // This prevents stale root references when reloading the same FynApp
+    const existingRoot = this.reactRoots.get(fynApp.name);
+    if (existingRoot) {
+      try {
+        existingRoot.unmount();
+        console.debug(`🧹 Unmounted existing React root for ${fynApp.name}`);
+      } catch (error) {
+        console.warn(`Failed to unmount React root for ${fynApp.name}:`, error);
+      }
+      this.reactRoots.delete(fynApp.name);
+    }
+
     // Clear the region
     regionInfo.container.innerHTML = '';
 
@@ -606,6 +707,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       content.id = `shell-fynapp-${fynApp.name}`;
       regionInfo.container.appendChild(content);
       this.fynappContainers.set(fynApp.name, content);
+
+      // For sidebar apps (like fynapp-sidebar), try rendering via ./component export
+      // This won't double-render because sidebar app doesn't use execution override
       await this.tryRenderComponent(fynApp, content);
       return;
     }
@@ -647,8 +751,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       });
     }
 
-    // Try to render the component
-    await this.tryRenderComponent(fynApp, content);
+    // Don't tryRenderComponent here - let overrideExecute handle it
+    // This prevents double rendering for apps that return component-factory results
   }
 
   private async manageAppLayout(fynApp: FynApp): Promise<void> {
@@ -858,18 +962,18 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
   }
 
-  // NEW: Execution override methods
-  canOverrideExecution(fynApp: FynApp, fynModule: FynModule): boolean {
+  // Execution override methods
+  canOverrideExecution(fynApp: FynApp, fynUnit: FynUnit): boolean {
     // Override execution only if shell is available and FynApp is not the shell itself
     const mainRegion = this.regions.get('main');
     return !!mainRegion?.container && fynApp.name !== 'fynapp-shell-mw';
   }
 
   async overrideInitialize(context: FynAppMiddlewareCallContext): Promise<{ status: string; mode?: string }> {
-    const { fynMod, fynApp, runtime } = context;
-    
+    const { fynUnit, fynApp, runtime } = context;
+
     console.debug(`🎭 Shell middleware overriding initialize for ${fynApp.name}`);
-    
+
     // Enhance runtime with shell-specific context
     runtime.middlewareContext.set(this.name, {
       ...runtime.middlewareContext.get(this.name),
@@ -879,23 +983,23 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     });
 
     // Call original initialize if it exists, with enhanced context
-    if (fynMod.initialize) {
-      const result = await fynMod.initialize(runtime);
+    if (fynUnit.initialize) {
+      const result = await fynUnit.initialize(runtime);
       console.debug(`🎭 Original initialize returned:`, result);
       return { ...result, mode: 'shell-managed' };
     }
-    
+
     return { status: 'ready', mode: 'shell-managed' };
   }
 
   async overrideExecute(context: FynAppMiddlewareCallContext): Promise<void> {
-    const { fynMod, fynApp, runtime } = context;
-    
+    const { fynUnit, fynApp, runtime } = context;
+
     console.debug(`🎭 Shell middleware overriding execute for ${fynApp.name}`);
 
     // Execute with proper type handling
-    const result = await this.executeWithShellContext(fynMod, runtime);
-    
+    const result = await this.executeWithShellContext(fynUnit, runtime);
+
     // Type-safe result handling
     if (result) {
       await this.handleTypedExecutionResult(fynApp.name, result);
@@ -908,54 +1012,62 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
   }
 
-  private async executeWithShellContext(fynMod: FynModule, runtime: any): Promise<FynModuleResult | null> {
-    if (!fynMod.execute) return null;
+  private async executeWithShellContext(fynUnit: FynUnit, runtime: any): Promise<ShellExecutionResult | null> {
+    if (!fynUnit.execute) return null;
 
     try {
-      const result = await fynMod.execute(runtime);
-      
-      // Type guard to ensure we have a proper result
+      const result = await fynUnit.execute(runtime);
+
+      // Type guard to ensure we have a proper shell result
       if (result && this.isValidExecutionResult(result)) {
         return result;
       }
-      
+
       return null;
-      
+
     } catch (error) {
       console.error(`❌ Error in shell-aware execute:`, error);
       throw error;
     }
   }
 
-  // Type guard function
-  private isValidExecutionResult(result: any): result is FynModuleResult {
-    return result && 
-           typeof result === 'object' && 
+  // Type guard function for shell execution results
+  private isValidExecutionResult(result: any): result is ShellExecutionResult {
+    return result &&
+           typeof result === 'object' &&
            typeof result.type === 'string' &&
-           ['component-factory', 'rendered-content', 'self-managed', 'no-render'].includes(result.type);
+           ['component-factory', 'rendered-content', 'self-managed', 'no-render', 'react-component', 'render-function'].includes(result.type);
   }
 
-  private async handleTypedExecutionResult(fynAppName: string, result: FynModuleResult): Promise<void> {
+  private async handleTypedExecutionResult(fynAppName: string, result: ShellExecutionResult): Promise<void> {
     console.debug(`🎨 Handling typed execution result for ${fynAppName}:`, result.type);
 
     switch (result.type) {
       case 'component-factory':
         await this.renderComponentFactory(fynAppName, result.componentFactory);
         break;
-        
+
       case 'rendered-content':
         this.renderContent(fynAppName, result.content);
         break;
-        
+
       case 'self-managed':
         this.handleSelfManaged(fynAppName, result);
         break;
-        
+
       case 'no-render':
         console.debug(`📝 ${fynAppName} chose not to render: ${result.message || 'No reason provided'}`);
         this.renderNoContent(fynAppName, result.message);
         break;
-        
+
+      case 'react-component':
+        await this.renderReactComponent(fynAppName, result);
+        break;
+
+      case 'render-function':
+        await this.renderWithFunction(fynAppName, result);
+        break;
+
       default:
         // TypeScript will catch this as unreachable if all cases are handled
         const exhaustiveCheck: never = result;
@@ -964,12 +1076,53 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
   }
 
+  private async renderReactComponent(fynAppName: string, result: ReactComponentResult): Promise<void> {
+    const container = this.getAppContainer(fynAppName);
+
+    // Use FynApp's React/ReactDOM if provided, otherwise use shell's
+    const React = result.react || await this.getShellReact();
+    const ReactDOM = result.reactDOM || await this.getShellReactDOM();
+
+    try {
+      const element = React.createElement(result.component, {
+        fynAppName,
+        runtime: this.shellRuntime,
+        ...result.props
+      });
+
+      // Reuse existing root or create new one
+      let root = this.reactRoots.get(fynAppName);
+      if (!root) {
+        root = ReactDOM.createRoot(container);
+        this.reactRoots.set(fynAppName, root);
+      }
+      root.render(element);
+
+      console.log(`✅ React component rendered for ${fynAppName}`);
+    } catch (error) {
+      console.error(`❌ Failed to render React component for ${fynAppName}:`, error);
+      this.fallbackRender(container, fynAppName);
+    }
+  }
+
+  private async renderWithFunction(fynAppName: string, result: RenderFunctionResult): Promise<void> {
+    const container = this.getAppContainer(fynAppName);
+
+    try {
+      await result.render(container);
+      console.log(`✅ Render function executed for ${fynAppName}`);
+    } catch (error) {
+      console.error(`❌ Failed to execute render function for ${fynAppName}:`, error);
+      this.fallbackRender(container, fynAppName);
+    }
+  }
+
   private async renderComponentFactory(fynAppName: string, componentFactory: ComponentFactoryResult['componentFactory']): Promise<void> {
     const container = this.getAppContainer(fynAppName);
-    
+
     const React = await this.getShellReact();
     const ReactDOM = await this.getShellReactDOM();
-    
+
     try {
       const { component: Component, props = {} } = componentFactory(React);
       const element = React.createElement(Component, {
@@ -977,12 +1130,17 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         runtime: this.shellRuntime,
         ...props
       });
-      
-      const root = ReactDOM.createRoot(container);
+
+      // Reuse existing root or create new one
+      let root = this.reactRoots.get(fynAppName);
+      if (!root) {
+        root = ReactDOM.createRoot(container);
+        this.reactRoots.set(fynAppName, root);
+      }
       root.render(element);
-      
+
       console.log(`✅ Component factory rendered for ${fynAppName}`);
-      
+
     } catch (error) {
       console.error(`❌ Failed to render component factory for ${fynAppName}:`, error);
       this.fallbackRender(container, fynAppName);

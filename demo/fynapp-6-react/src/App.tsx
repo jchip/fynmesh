@@ -292,12 +292,17 @@ const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
                                         {connectionStatus === 'connected' ? '✅ Connected' : '❌ Not Connected'}
                                     </span>
                                     <br />
-                                    <small>Updates instantly across all apps!</small>
+                                    <small>
+                                        {connectionStatus === 'connected'
+                                            ? 'Updates instantly across all apps!'
+                                            : '⚠️ Load FynApp 1 first to enable counter sharing'}
+                                    </small>
                                 </p>
                             </div>
                             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
                                 <button
                                     className="primary-button"
+                                    disabled={connectionStatus !== 'connected'}
                                     onClick={() => {
                                         console.log('🔍 fynapp-6-react: Incrementing shared counter...');
                                         if (counterAPI?.increment) {
@@ -307,11 +312,16 @@ const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
                                             console.error('❌ fynapp-6-react: increment action not available');
                                         }
                                     }}
+                                    style={{
+                                        opacity: connectionStatus !== 'connected' ? 0.5 : 1,
+                                        cursor: connectionStatus !== 'connected' ? 'not-allowed' : 'pointer'
+                                    }}
                                 >
                                     + Increment (Cross-App)
                                 </button>
                                 <button
                                     className="primary-button"
+                                    disabled={connectionStatus !== 'connected'}
                                     onClick={() => {
                                         console.log('🔍 fynapp-6-react: Resetting shared counter...');
                                         if (counterAPI?.reset) {
@@ -321,7 +331,11 @@ const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
                                             console.error('❌ fynapp-6-react: reset action not available');
                                         }
                                     }}
-                                    style={{ backgroundColor: '#e53e3e' }}
+                                    style={{
+                                        backgroundColor: '#e53e3e',
+                                        opacity: connectionStatus !== 'connected' ? 0.5 : 1,
+                                        cursor: connectionStatus !== 'connected' ? 'not-allowed' : 'pointer'
+                                    }}
                                 >
                                     Reset
                                 </button>

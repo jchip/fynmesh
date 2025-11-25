@@ -1,4 +1,5 @@
-import { useMiddleware, FynModuleRuntime } from "@fynmesh/kernel";
+import { useMiddleware } from "@fynmesh/kernel";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
 import React from "esm-react";
 import ReactDOMClient from "esm-react-dom";
 import App from "./App";
@@ -11,7 +12,7 @@ const middlewareUser = {
   /**
    * Tell middleware what we need - called first to determine readiness
    */
-  initialize(runtime: FynModuleRuntime) {
+  initialize(runtime: FynUnitRuntime) {
     const basicCounterData = runtime.middlewareContext.get("basic-counter");
     const config = basicCounterData?.config;
 
@@ -30,13 +31,24 @@ const middlewareUser = {
   /**
    * Main function - called when middleware is ready
    */
-  async execute(runtime: FynModuleRuntime) {
+  async execute(runtime: FynUnitRuntime) {
     console.debug("MiddlewareUser.main called", {
       fynApp: runtime.fynApp.name,
     });
     console.debug(
       `Bootstrapping ${runtime.fynApp.name} with React ${React.version}`
     );
+
+    // Check if shell middleware is managing this execution
+    const shellMiddleware = runtime.middlewareContext.get("shell-layout");
+    const isShellManaged = shellMiddleware?.isShellManaged;
+
+    console.debug(`${runtime.fynApp.name} isShellManaged check:`, isShellManaged);
+    if (isShellManaged) {
+      console.debug(`✅ ${runtime.fynApp.name} is shell-managed, skipping direct DOM rendering`);
+      return;
+    }
+    console.debug(`⚠️ ${runtime.fynApp.name} is NOT shell-managed, proceeding with direct DOM rendering`);
 
     // Find or create the div element to render into
     let targetDiv = document.getElementById("fynapp-2-react18");

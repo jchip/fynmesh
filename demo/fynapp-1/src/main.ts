@@ -1,4 +1,5 @@
-import type { FynModuleRuntime, ComponentFactoryResult, SelfManagedResult, NoRenderResult, ComponentProps } from "@fynmesh/kernel";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import type { ComponentFactoryResult, SelfManagedResult, NoRenderResult } from "fynapp-shell-mw/middleware/shell-layout";
 import { useMiddleware } from "@fynmesh/kernel";
 
 /**
@@ -8,7 +9,7 @@ const middlewareUser = {
   /**
    * Tell middleware what we need - called first to determine readiness
    */
-  initialize(runtime: FynModuleRuntime) {
+  initialize(runtime: FynUnitRuntime) {
     console.debug(
       `📋 ${runtime.fynApp.name} initialize called`
     );
@@ -23,7 +24,7 @@ const middlewareUser = {
   /**
    * Main function - called when middleware is ready
    */
-  async execute(runtime: FynModuleRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void> {
+  async execute(runtime: FynUnitRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void> {
     console.debug("🚀 FynApp 1 initializing with middleware support");
 
     // Check if shell middleware is managing this execution
@@ -81,24 +82,41 @@ const middlewareUser = {
     if (isShellManaged) {
       // Shell middleware will handle execution - return component factory with full App
       console.debug(`🎭 ${runtime.fynApp.name} returning component factory for shell`);
-      
+
+      // Import App module synchronously at this point since we're already in async context
+      const App = (await import('./App')).default;
+
       const result: ComponentFactoryResult = {
         type: 'component-factory',
-        componentFactory: (React: any) => ({
-          component: async ({ fynAppName, runtime: shellRuntime, ...props }: ComponentProps) => {
-            const AppComponent = await createAppComponent(React);
-            return React.createElement(AppComponent, props);
-          },
-        }),
+        componentFactory: (React: any) => {
+          // Create wrapper component - shell will provide React
+          const AppWrapper = (props: any) => {
+            return React.createElement(
+              React.Suspense,
+              { fallback: React.createElement('div', { style: { padding: '1rem' } }, 'Loading...') },
+              React.createElement(App, {
+                appName: runtime.fynApp.name,
+                components,
+                runtime,
+                ...props
+              })
+            );
+          };
+
+          return {
+            component: AppWrapper,
+            props: {}
+          };
+        },
         metadata: {
           framework: 'react',
           version: '19',
           capabilities: ['component']
         }
       };
-      
+
       return result;
-    } else {
+    } else{
       // Standalone mode - render the same App component using our own React
       console.debug(`🚀 ${runtime.fynApp.name} executing in standalone mode`);
       

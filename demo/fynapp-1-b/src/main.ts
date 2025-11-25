@@ -1,4 +1,6 @@
-import { useMiddleware, FynModuleRuntime, ComponentFactoryResult, SelfManagedResult, NoRenderResult, ComponentProps } from "@fynmesh/kernel";
+import { useMiddleware } from "@fynmesh/kernel";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import type { ComponentFactoryResult, SelfManagedResult, NoRenderResult } from "fynapp-shell-mw/middleware/shell-layout";
 // Used by dynamic component imports
 import "./components";
 
@@ -9,7 +11,7 @@ const middlewareUser = {
   /**
    * Tell middleware what we need - called first to determine readiness
    */
-  initialize(runtime: FynModuleRuntime) {
+  initialize(runtime: FynUnitRuntime) {
     console.debug(
       `📋 ${runtime.fynApp.name} initialize called`
     );
@@ -24,7 +26,7 @@ const middlewareUser = {
   /**
    * Main function - called when middleware is ready
    */
-  async execute(runtime: FynModuleRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void> {
+  async execute(runtime: FynUnitRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void> {
     console.debug("🚀 FynApp 1-B initializing with middleware support");
 
     // Check if shell middleware is managing this execution
@@ -82,12 +84,14 @@ const middlewareUser = {
     if (isShellManaged) {
       // Shell middleware will handle execution - return component factory with full App
       console.debug(`🎭 ${runtime.fynApp.name} returning component factory for shell`);
-      
+
+      // Pre-create the AppComponent synchronously by loading it immediately
+      const AppComponent = await createAppComponent((await import('react')).default);
+
       const result: ComponentFactoryResult = {
         type: 'component-factory',
         componentFactory: (React: any) => ({
-          component: async ({ fynAppName, runtime: shellRuntime, ...props }: ComponentProps) => {
-            const AppComponent = await createAppComponent(React);
+          component: ({ fynAppName, runtime: shellRuntime, ...props }: any) => {
             return React.createElement(AppComponent, props);
           },
         }),
@@ -97,7 +101,7 @@ const middlewareUser = {
           capabilities: ['component']
         }
       };
-      
+
       return result;
     } else {
       // Standalone mode - render the same App component using our own React

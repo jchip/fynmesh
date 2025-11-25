@@ -1,4 +1,5 @@
-import type { FynModuleRuntime, NoRenderResult } from "@fynmesh/kernel";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import type { NoRenderResult } from "fynapp-shell-mw/middleware/shell-layout";
 
 /**
  * Test FynApp that imports a consume-only shared module with no provider.
@@ -10,7 +11,7 @@ import type { FynModuleRuntime, NoRenderResult } from "@fynmesh/kernel";
  */
 
 const middlewareUser = {
-  initialize(runtime: FynModuleRuntime) {
+  initialize(runtime: FynUnitRuntime) {
     console.debug(`[fynapp-test-shared] initialize called`);
     return {
       status: "ready",
@@ -18,7 +19,7 @@ const middlewareUser = {
     };
   },
 
-  async execute(runtime: FynModuleRuntime): Promise<NoRenderResult | void> {
+  async execute(runtime: FynUnitRuntime): Promise<NoRenderResult | void> {
     console.debug("[fynapp-test-shared] execute - about to import shared module");
 
     const targetElement = document.getElementById('fynapp-test-shared');

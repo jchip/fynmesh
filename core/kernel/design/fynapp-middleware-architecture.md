@@ -25,17 +25,19 @@ Middleware follows a comprehensive lifecycle for each FynApp:
 - **Registry**: Kernel-managed registry using `provider::middleware-name` format
 - **Context**: Per-FynApp middleware data storage and sharing
 
-### 3. **FynModule Interface**
+### 3. **FynUnit Interface**
 
-FynApps implement the standardized `FynModule` interface:
+FynApps implement the standardized `FynUnit` interface (formerly `FynModule`):
 
 ```typescript
-export interface FynModule {
+export interface FynUnit {
   __middlewareMeta?: MiddlewareUseMeta<unknown>[];
-  initialize?(runtime: FynModuleRuntime): any;
-  execute(runtime: FynModuleRuntime): Promise<void> | void;
+  initialize?(runtime: FynUnitRuntime): any;
+  execute(runtime: FynUnitRuntime): Promise<any> | any;
 }
 ```
+
+> **Note:** `FynModule` and `FynModuleRuntime` are deprecated aliases preserved for backward compatibility.
 
 ### 4. **Registry and Discovery**
 
@@ -49,33 +51,37 @@ export interface FynModule {
 ### useMiddleware API
 
 ```typescript
-export const useMiddleware = <UserT extends FynModule = FynModule>(
+export const useMiddleware = <T extends FynUnit = FynUnit>(
   meta: MiddlewareUseMeta<unknown> | MiddlewareUseMeta<unknown>[],
-  user: UserT,
-): UserT
+  unit: T,
+): T
 ```
 
 **Parameters:**
 
-1. **Middleware metadata**: Object(s) with `info` and `config` fields
-2. **User module**: Object implementing the `FynModule` interface
+1. **Middleware metadata**: Object(s) with `middleware` import and `config` fields
+2. **Unit**: Object implementing the `FynUnit` interface
 
-**Returns:** The user module with `__middlewareMeta` field attached
+**Returns:** The unit with `__middlewareMeta` field attached
 
-### FynModule Interface
+### FynUnit Interface
 
 ```typescript
-export interface FynModule {
+export interface FynUnit {
   __middlewareMeta?: MiddlewareUseMeta<unknown>[];
-  initialize?(runtime: FynModuleRuntime): any;
-  execute(runtime: FynModuleRuntime): Promise<void> | void;
+  initialize?(runtime: FynUnitRuntime): any;
+  execute(runtime: FynUnitRuntime): Promise<any> | any;
 }
 
-export type FynModuleRuntime = {
+export type FynUnitRuntime = {
   fynApp: FynApp;
+  kernel: FynMeshKernel;
   middlewareContext: Map<string, Record<string, any>>;
-  [key: string]: any;
 };
+
+// Deprecated aliases (for backward compatibility)
+export type FynModule = FynUnit;
+export type FynModuleRuntime = FynUnitRuntime;
 ```
 
 ### Middleware Implementation Interface
@@ -85,14 +91,24 @@ export type FynAppMiddleware = {
   name: string;
   setup?(context: FynAppMiddlewareCallContext): Promise<{ status: string }>;
   apply?(context: FynAppMiddlewareCallContext): Promise<void> | void;
+
+  // Auto-apply configuration (optional)
+  autoApplyScope?: ("all" | "fynapp" | "middleware")[];
+  shouldApply?(fynApp: FynApp): boolean;
+
+  // Execution override hooks (optional) - see execution-override-architecture.md
+  canOverrideExecution?(fynApp: FynApp, fynModule: FynModule): boolean;
+  overrideInitialize?(context: FynAppMiddlewareCallContext): Promise<{ status: string; mode?: string }>;
+  overrideExecute?(context: FynAppMiddlewareCallContext): Promise<void>;
 };
 
 export type FynAppMiddlewareCallContext = {
   meta: MiddlewareUseMeta<unknown>;
-  fynMod: FynModule;
+  fynUnit: FynUnit;  // The FynUnit being executed
+  fynMod: FynUnit;   // Deprecated alias for fynUnit
   fynApp: FynApp;
   reg: FynAppMiddlewareReg;
-  runtime: FynModuleRuntime;
+  runtime: FynUnitRuntime;
   kernel: FynMeshKernel;
   status: string;
 };
@@ -178,15 +194,15 @@ export const config = {
 ### Dynamic Import Usage Pattern
 
 ```typescript
-import { useMiddleware, FynModule, FynModuleRuntime } from "@fynmesh/kernel";
+import { useMiddleware, FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
 
-const middlewareUser: FynModule = {
-  initialize(runtime: FynModuleRuntime) {
+const middlewareUser: FynUnit = {
+  initialize(runtime: FynUnitRuntime) {
     // Optional readiness check
     return { status: "ready" };
   },
 
-  async execute(runtime: FynModuleRuntime) {
+  async execute(runtime: FynUnitRuntime) {
     // Main application logic
     const middlewareData = runtime.middlewareContext.get("my-middleware");
 
@@ -286,11 +302,11 @@ export const main = useMiddleware(
 ### Class-Based Implementation
 
 ```typescript
-class MiddlewareUser implements FynModule {
+class MiddlewareUser implements FynUnit {
   private designTokens: any;
   private reactContext: any;
 
-  initialize(runtime: FynModuleRuntime) {
+  initialize(runtime: FynUnitRuntime) {
     // Get middleware data
     this.designTokens = runtime.middlewareContext.get("design-tokens");
     this.reactContext = runtime.middlewareContext.get("react-context");
@@ -298,7 +314,7 @@ class MiddlewareUser implements FynModule {
     return { status: "ready" };
   }
 
-  async execute(runtime: FynModuleRuntime) {
+  async execute(runtime: FynUnitRuntime) {
     // Use middleware functionality
     if (this.designTokens?.api) {
       this.designTokens.api.setTheme("fynmesh-dark");
@@ -519,8 +535,8 @@ export const __middleware__DesignTokens = new DesignTokensMiddleware();
 
 ```typescript
 // fynapp-1/src/main.ts
-const middlewareUser: FynModule = {
-  async execute(runtime: FynModuleRuntime) {
+const middlewareUser: FynUnit = {
+  async execute(runtime: FynUnitRuntime) {
     // Get design tokens from middleware
     const designTokensContext = runtime.middlewareContext.get("design-tokens");
     const { api: designTokens } = designTokensContext || {};
@@ -581,6 +597,58 @@ export const main = useMiddleware(
 ```
 
 ## Advanced Features
+
+### Auto-Apply Middleware
+
+Middleware can be configured to automatically apply to FynApps without explicit dependency declaration:
+
+```typescript
+export const __middleware__ShellLayout: FynAppMiddleware = {
+  name: "shell-layout",
+
+  // Apply to all regular FynApps and middleware providers
+  autoApplyScope: ["fynapp", "middleware"],
+
+  // Optional filter for fine-grained control
+  shouldApply(fynApp: FynApp): boolean {
+    // Skip certain FynApps if needed
+    return fynApp.name !== 'special-case-app';
+  },
+
+  async setup(context) {
+    // Auto-applied middleware setup
+    // ...
+  }
+}
+```
+
+### Execution Override
+
+Middleware can override FynModule execution to control the execution environment. This is useful for shell UI systems, debugging tools, or security wrappers. For detailed information, see [Execution Override Architecture](./execution-override-architecture.md).
+
+```typescript
+export const __middleware__ShellLayout: FynAppMiddleware = {
+  name: "shell-layout",
+
+  canOverrideExecution(fynApp: FynApp, fynModule: FynModule): boolean {
+    // Determine if this middleware should override execution
+    return this.shellReady && fynApp.name !== 'shell-app';
+  },
+
+  async overrideExecute(context: FynAppMiddlewareCallContext): Promise<void> {
+    // Execute the FynModule with our wrapper
+    const result = await context.fynMod.execute(context.runtime);
+
+    // Handle the execution result
+    if (result?.type === 'self-managed') {
+      // FynApp manages its own rendering
+      this.handleSelfManagedApp(context.fynApp, result);
+    }
+  }
+}
+```
+
+**Note:** Currently (as of 2024-11-24), execution overrides only work for regular FynModules. FynModules using `useMiddleware()` don't support execution overrides yet. See [Execution Override Architecture](./execution-override-architecture.md) for the planned fix.
 
 ### Deferred Execution
 
@@ -668,7 +736,7 @@ export const __middleware__MiddlewareA: FynAppMiddleware = {
 
 ## Best Practices
 
-### FynModule Structure
+### FynUnit Structure
 
 - **Keep `initialize()` lightweight**: Only perform quick readiness checks
 - **Use `execute()` for main logic**: Put the bulk of your application logic here

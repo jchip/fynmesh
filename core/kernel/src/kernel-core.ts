@@ -20,11 +20,12 @@ import type {
   FynMeshRuntimeData,
   FynApp,
   FynAppEntry,
-  FynModule,
+  FynUnit,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
-  FynModuleRuntime,
+  FynUnitRuntime,
   RegistryResolver,
+  KernelConfig,
 } from "./types";
 
 /**
@@ -225,6 +226,27 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * Validate and normalize a main export into a FynUnit
+   * - Functions are wrapped as { execute: fn }
+   * - Objects with execute method pass through
+   * - Invalid exports throw descriptive errors
+   */
+  private validateFynUnit(mainExport: any, fynAppName: string): FynUnit {
+    if (typeof mainExport === "function") {
+      // Path 1: Simple function - wrap as FynUnit
+      return { execute: mainExport };
+    }
+    if (mainExport && typeof mainExport.execute === "function") {
+      // Path 2: Object with execute method - valid FynUnit
+      return mainExport as FynUnit;
+    }
+    throw new Error(
+      `${fynAppName}: main export must be a function or have an execute method. ` +
+      `Got: ${typeof mainExport}${mainExport ? ` with keys: ${Object.keys(mainExport).join(", ")}` : ""}`
+    );
+  }
+
+  /**
    * Bootstrap a fynapp
    */
   async bootstrapFynApp(fynApp: FynApp): Promise<void> {
@@ -243,26 +265,29 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
         if (exposeName.startsWith("./middleware")) {
           await this.moduleLoader.loadExposeModule(
-            fynApp, 
-            exposeName, 
+            fynApp,
+            exposeName,
             true,
             (mwReg) => this.registerMiddleware(mwReg)
           );
         }
       }
 
-      const mainFynModule = fynApp.exposes["./main"]?.main;
+      const mainExport = fynApp.exposes["./main"]?.main;
 
-      if (mainFynModule) {
+      if (mainExport) {
         console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+
+        // Validate and normalize to FynUnit
+        const fynUnit = this.validateFynUnit(mainExport, fynApp.name);
 
         // Apply auto-scope middlewares
         const middlewareErrors = await this.middlewareExecutor.applyAutoScopeMiddlewares(
           fynApp,
-          mainFynModule as FynModule,
+          fynUnit,
           this,
           this.middlewareManager.getAutoApplyMiddlewares(),
-          () => this.moduleLoader.createFynModuleRuntime(fynApp),
+          () => this.moduleLoader.createFynUnitRuntime(fynApp),
           async (cc, share) => this.signalMiddlewareReady(cc, { share })
         );
 
@@ -272,14 +297,16 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
             middlewareErrors.map(e => e.toDetailedString()));
         }
 
-        if (typeof mainFynModule === "function") {
-          await (mainFynModule as any)(this.moduleLoader.createFynModuleRuntime(fynApp));
-        } else if ((mainFynModule as FynModule).__middlewareMeta) {
-          await this.middlewareExecutor.useMiddlewareOnFynModule(
-            mainFynModule as FynModule,
+        // Simplified 2-path execution:
+        // Path A: FynUnit with __middlewareMeta - full middleware coordination
+        // Path B: FynUnit without __middlewareMeta - direct execution with auto-apply only
+        if (fynUnit.__middlewareMeta) {
+          // Path A: Full middleware coordination
+          await this.middlewareExecutor.useMiddlewareOnFynUnit(
+            fynUnit,
             fynApp,
             this,
-            () => this.moduleLoader.createFynModuleRuntime(fynApp),
+            () => this.moduleLoader.createFynUnitRuntime(fynApp),
             (name, provider) => this.getMiddleware(name, provider),
             async (packageName, middlewarePath) => {
               await this.moduleLoader.loadMiddlewareFromDependency(
@@ -288,11 +315,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
                 this.runTime.appsLoaded,
                 (mwReg) => this.registerMiddleware(mwReg)
               );
-            }
+            },
+            this.middlewareManager.getAutoApplyMiddlewares()
           );
         } else {
-          await this.moduleLoader.invokeFynModule(
-            mainFynModule as FynModule,
+          // Path B: Direct execution with auto-apply middleware only
+          await this.moduleLoader.invokeFynUnit(
+            fynUnit,
             fynApp,
             this.middlewareManager.getAutoApplyMiddlewares()
           );
@@ -308,10 +337,21 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
     } catch (error) {
+      // Error isolation: Log error but don't crash the kernel
       console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
-      // Release lock and resume next
+
+      // Emit failure event so other systems can react
+      await this.emitAsync(
+        new CustomEvent("FYNAPP_BOOTSTRAP_FAILED", {
+          detail: { name: fynApp.name, version: fynApp.version, error },
+        })
+      );
+
+      // Release lock so other FynApps can continue - party goes on!
       this.bootstrapCoordinator.releaseBootstrapLock();
-      throw error;
+
+      // Don't rethrow - allow other FynApps to bootstrap
+      // The error has been logged and an event emitted for observability
     }
   }
 
