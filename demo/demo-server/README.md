@@ -392,6 +392,6 @@ If you encounter `EPERM` errors during local development:
 ## See Also
 
 - [FynMesh Main README](../../README.md)
-- [Middleware Demo Guide](../MIDDLEWARE-DEMO.md)
+- [Demo Documentation](../../notes/DEMO.md)
 - [Service Worker Documentation](SERVICE_WORKER.md)
 
