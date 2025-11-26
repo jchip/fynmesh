@@ -176,6 +176,16 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         writeFileSync(demoOutputPath, demoHtml);
         log(`📄 Generated: ${demoOutputPath}`);
 
+        // Build the shell page (shell.html)
+        const shellHtml = env.render("pages/shell.html", {
+            title: "FynMesh Shell Demo",
+            isProduction,
+            pathPrefix,
+        });
+        const shellOutputPath = path.join(outputDir, "shell.html");
+        writeFileSync(shellOutputPath, shellHtml);
+        log(`📄 Generated: ${shellOutputPath}`);
+
         log("✅ Templates compiled successfully!");
         log(`🌐 Path prefix: ${pathPrefix}`);
 

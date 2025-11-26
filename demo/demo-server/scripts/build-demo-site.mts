@@ -200,6 +200,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(demoOutputPath, demoHtml);
         log("📄 Generated: " + demoOutputPath);
 
+        // Build the shell page (shell.html)
+        const shellHtml = env.render("pages/shell.html", {
+            title: "FynMesh Shell Demo",
+            isProduction,
+            pathPrefix,
+        });
+        const shellOutputPath = path.join(outputDir, "shell.html");
+        writeFileSync(shellOutputPath, shellHtml);
+        log("📄 Generated: " + shellOutputPath);
+
         // Copy all required static assets for GitHub Pages (skip index.html since we build it directly)
         log("📁 Copying static assets...");
 
@@ -210,8 +220,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "system.min.js.map",
             "sw.js",           // Service Worker
             "sw-utils.js",     // Service Worker Utilities
-            "favicon.ico",     // Favicon
-            "shell.html"       // Shell demo page
+            "favicon.ico"      // Favicon
+            // Note: shell.html is now generated from template
         ];
         
         // In production, exclude .map files
