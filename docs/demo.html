@@ -288,17 +288,6 @@
 <script src="/lazy-loader.js"></script>
 
 <script>
-  (function() {
-    // Configure service worker base path
-    window.SW_BASE_PATH = '/';
-
-    // Load service worker utils
-    const script = document.createElement('script');
-    script.src = '/sw-utils.js';
-    document.head.appendChild(script);
-  })();
-</script>
-<script>
     (async () => {
         // Configure kernel manifest resolver with path prefix (demo only)
         if (typeof fynMeshKernel?.setRegistryResolver === "function") {
