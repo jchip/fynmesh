@@ -237,6 +237,14 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             log(`📄 Copied: CNAME (custom domain: ${readFileSync(cnameSource, 'utf-8').trim()})`);
         }
 
+        // Copy Google verification file
+        const googleVerifySource = path.join(__dirname, "../googlee9bcb5713536aa25.html");
+        if (existsSync(googleVerifySource)) {
+            const googleVerifyDest = path.join(outputDir, "googlee9bcb5713536aa25.html");
+            writeFileSync(googleVerifyDest, readFileSync(googleVerifySource));
+            log(`📄 Copied: googlee9bcb5713536aa25.html (Google verification)`);
+        }
+
         // Copy dist directories from various packages
         const packages = [
             // node_modules packages
