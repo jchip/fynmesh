@@ -220,7 +220,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "system.min.js.map",
             "sw.js",           // Service Worker
             "sw-utils.js",     // Service Worker Utilities
-            "favicon.ico"      // Favicon
+            "favicon.ico",     // Favicon
+            "sitemap.xml",     // SEO: XML Sitemap
+            "robots.txt"       // SEO: Robots.txt
             // Note: shell.html is now generated from template
         ];
         
