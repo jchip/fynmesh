@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.js",
       "chunks": [
-        "main-CDnYOrfG.js"
+        "main-Dmm4On0z.js"
       ]
     }
   },
@@ -16,10 +16,10 @@
       "chunks": [],
       "config": {
         "singleton": true,
-        "requiredVersion": "^5.37.31"
+        "semver": "^5.37.31"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:52.811Z",
+  "timestamp": "2025-11-26T07:14:23.716Z",
   "version": "1.0.0"
 }

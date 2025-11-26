@@ -1,0 +1,61 @@
+{
+  "name": "fynapp-1",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./hello": "./src/hello.ts",
+    "./getInfo": "./src/getInfo.ts",
+    "./App": "./src/App.tsx",
+    "./component": "./src/component.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  },
+  "import-exposed": {
+    "fynapp-react-middleware": {
+      "main/basic-counter": {
+        "semver": "^1.0.0",
+        "sites": [
+          "src/main.ts"
+        ],
+        "type": "middleware",
+        "exposeModule": "main",
+        "middlewareName": "basic-counter"
+      }
+    },
+    "fynapp-design-tokens": {
+      "middleware/design-tokens/design-tokens": {
+        "semver": "^1.0.0",
+        "sites": [
+          "src/main.ts"
+        ],
+        "type": "middleware",
+        "exposeModule": "middleware/design-tokens",
+        "middlewareName": "design-tokens"
+      }
+    },
+    "fynapp-x1": {
+      "main": {
+        "semver": "^2.0.0",
+        "sites": [
+          "src/components.ts"
+        ],
+        "type": "module"
+      }
+    }
+  },
+  "shared-providers": {
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}

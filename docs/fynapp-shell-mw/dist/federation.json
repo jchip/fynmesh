@@ -1,0 +1,71 @@
+{
+  "name": "fynapp-shell-mw",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.tsx",
+      "chunks": [
+        "main-C9XGg3Go.js"
+      ]
+    },
+    "./middleware/shell-layout": {
+      "path": "./src/middleware/shell-layout.ts",
+      "chunks": [
+        "esm-react",
+        "esm-react-dom",
+        "shell-layout-CDJ6TeUg.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "esm-react"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+          "path": "esm-react"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "esm-react"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "esm-react-dom"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+          "path": "esm-react-dom"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "esm-react-dom"
+        }
+      ]
+    }
+  },
+  "timestamp": "2025-11-26T07:14:21.037Z",
+  "version": "1.0.0"
+}

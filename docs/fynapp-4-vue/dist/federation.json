@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.js",
       "chunks": [
-        "main-C9GvFQbX.js"
+        "main-BtC9pvsF.js"
       ]
     }
   },
@@ -20,7 +20,7 @@
       ],
       "config": {
         "singleton": true,
-        "requiredVersion": "^3.3.4"
+        "semver": "^3.3.4"
       },
       "importers": [
         {
@@ -36,6 +36,6 @@
       ]
     }
   },
-  "timestamp": "2025-10-23T07:23:56.316Z",
+  "timestamp": "2025-11-26T07:14:23.951Z",
   "version": "1.0.0"
 }

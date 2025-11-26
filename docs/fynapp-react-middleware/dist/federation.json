@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-Bysg-Gy3.js"
+        "main-D4zeyPPD.js"
       ]
     },
     "./middleware/react-context": {
@@ -23,7 +23,7 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     },
     "esm-react-dom": {
@@ -32,10 +32,10 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:54.113Z",
+  "timestamp": "2025-11-26T07:14:26.121Z",
   "version": "1.0.0"
 }

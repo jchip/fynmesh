@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.js",
       "chunks": [
-        "main-DFGOF7hU.js"
+        "main-BDs1OATL.js"
       ]
     }
   },
@@ -20,7 +20,7 @@
       ],
       "config": {
         "singleton": true,
-        "requiredVersion": "^10.18.1"
+        "semver": "^10.18.1"
       },
       "importers": [
         {
@@ -40,6 +40,6 @@
       ]
     }
   },
-  "timestamp": "2025-10-23T07:23:55.627Z",
+  "timestamp": "2025-11-26T07:14:23.101Z",
   "version": "1.0.0"
 }

@@ -1,0 +1,25 @@
+{
+  "name": "fynapp-react-middleware",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./middleware/react-context": "./src/middleware/react-context.tsx"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}

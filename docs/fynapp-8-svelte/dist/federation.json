@@ -1,0 +1,25 @@
+{
+  "name": "fynapp-8-svelte",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-KHLWMpU_.js"
+      ]
+    }
+  },
+  "shared": {
+    "svelte": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "singleton": true,
+        "semver": "^4.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-11-26T07:14:22.256Z",
+  "version": "1.0.0"
+}

@@ -3,14 +3,39 @@
   "filename": "fynapp-entry.js",
   "shareScope": "fynmesh",
   "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "fynapp-entry.js"
+      ]
+    },
     "./middleware/design-tokens": {
       "path": "./src/middleware/design-tokens.ts",
       "chunks": [
-        "design-tokens-Beyzkwgu.js"
+        "design-tokens-C6JPUjdn.js"
       ]
     }
   },
-  "shared": {},
-  "timestamp": "2025-10-23T07:23:54.614Z",
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2025-11-26T07:14:21.435Z",
   "version": "1.0.0"
 }

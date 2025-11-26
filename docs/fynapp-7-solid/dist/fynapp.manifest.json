@@ -1,0 +1,13 @@
+{
+  "name": "fynapp-7-solid",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.js"
+  },
+  "provide-shared": {
+    "solid-js": {
+      "singleton": true,
+      "semver": "^1.8.15"
+    }
+  }
+}

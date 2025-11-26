@@ -6,7 +6,8 @@
     "./main": {
       "path": "./src/main.ts",
       "chunks": [
-        "main-B_vEEDax.js"
+        "-FYNAPP_MIDDLEWARE fynapp-react-middleware main/basic-counter ",
+        "main-GzdFYFvf.js"
       ]
     }
   },
@@ -17,7 +18,7 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     },
     "esm-react-dom": {
@@ -26,10 +27,10 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:55.449Z",
+  "timestamp": "2025-11-26T07:14:26.402Z",
   "version": "1.0.0"
 }

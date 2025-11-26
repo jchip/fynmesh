@@ -1,0 +1,15 @@
+{
+  "name": "fynapp-react-lib",
+  "version": "18.3.0",
+  "exposes": {},
+  "provide-shared": {
+    "esm-react": {
+      "singleton": true,
+      "semver": "^18.0.0"
+    },
+    "esm-react-dom": {
+      "singleton": true,
+      "semver": "^18.0.0"
+    }
+  }
+}

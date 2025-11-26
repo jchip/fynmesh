@@ -13,7 +13,7 @@
       ],
       "config": {
         "singleton": true,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       },
       "importers": [
         {
@@ -37,10 +37,10 @@
       "chunks": [],
       "config": {
         "singleton": true,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:54.361Z",
+  "timestamp": "2025-11-26T07:14:21.849Z",
   "version": "19.1.0"
 }

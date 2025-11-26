@@ -1,0 +1,13 @@
+{
+  "name": "fynapp-8-svelte",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.js"
+  },
+  "provide-shared": {
+    "svelte": {
+      "singleton": true,
+      "semver": "^4.0.0"
+    }
+  }
+}

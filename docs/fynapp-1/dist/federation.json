@@ -8,9 +8,12 @@
       "chunks": [
         "/Users/jc/dev/fynmesh/demo/fynapp-1/src/components.ts",
         "/Users/jc/dev/fynmesh/demo/fynapp-1/src/App.tsx",
+        "/Users/jc/dev/fynmesh/demo/fynapp-1/src/App.tsx",
         "esm-react",
         "esm-react-dom",
-        "main-BqksXXYQ.js"
+        "-FYNAPP_MIDDLEWARE fynapp-react-middleware main/basic-counter ^1.0.0",
+        "-FYNAPP_MIDDLEWARE fynapp-design-tokens middleware/design-tokens/design-tokens ^1.0.0",
+        "main-mvf8uRYW.js"
       ]
     },
     "./hello": {
@@ -28,13 +31,13 @@
     "./App": {
       "path": "./src/App.tsx",
       "chunks": [
-        "App-boHcTULx.js"
+        "App-BUeGym7g.js"
       ]
     },
     "./component": {
       "path": "./src/component.ts",
       "chunks": [
-        "component-DX8UEf8V.js"
+        "component-COC3GarU.js"
       ]
     }
   },
@@ -45,7 +48,7 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     },
     "esm-react-dom": {
@@ -54,10 +57,10 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:59.698Z",
+  "timestamp": "2025-11-26T07:14:29.313Z",
   "version": "1.0.0"
 }

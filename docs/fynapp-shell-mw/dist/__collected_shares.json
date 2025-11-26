@@ -1,0 +1,68 @@
+{
+  "esm-react": {
+    "options": {
+      "import": false,
+      "singleton": false,
+      "semver": "^19.0.0"
+    },
+    "byImporters": {
+      "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware": {
+        "_key": "esm-react",
+        "importerDir": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+        "allImportees": [
+          {
+            "id": "esm-react",
+            "importer": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+            "resolveOptions": {
+              "attributes": {},
+              "custom": {},
+              "isEntry": false
+            }
+          }
+        ],
+        "importee": {
+          "id": "esm-react",
+          "importer": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+          "resolveOptions": {
+            "attributes": {},
+            "custom": {},
+            "isEntry": false
+          }
+        }
+      }
+    }
+  },
+  "esm-react-dom": {
+    "options": {
+      "import": false,
+      "singleton": false,
+      "semver": "^19.0.0"
+    },
+    "byImporters": {
+      "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware": {
+        "_key": "esm-react-dom",
+        "importerDir": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+        "allImportees": [
+          {
+            "id": "esm-react-dom",
+            "importer": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+            "resolveOptions": {
+              "attributes": {},
+              "custom": {},
+              "isEntry": false
+            }
+          }
+        ],
+        "importee": {
+          "id": "esm-react-dom",
+          "importer": "/Users/jc/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+          "resolveOptions": {
+            "attributes": {},
+            "custom": {},
+            "isEntry": false
+          }
+        }
+      }
+    }
+  }
+}

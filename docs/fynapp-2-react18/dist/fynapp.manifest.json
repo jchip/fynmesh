@@ -1,0 +1,40 @@
+{
+  "name": "fynapp-2-react18",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./App": "./src/App.tsx",
+    "./component": "./src/component.ts"
+  },
+  "provide-shared": {
+    "esm-react": {
+      "singleton": true,
+      "semver": "^18.0.0"
+    },
+    "esm-react-dom": {
+      "singleton": true,
+      "semver": "^18.0.0"
+    }
+  },
+  "import-exposed": {
+    "fynapp-react-middleware": {
+      "main/basic-counter": {
+        "sites": [
+          "src/main.ts"
+        ],
+        "type": "middleware",
+        "exposeModule": "main",
+        "middlewareName": "basic-counter"
+      }
+    },
+    "fynapp-x1": {
+      "main": {
+        "semver": "^1.0.0",
+        "sites": [
+          "src/components.ts"
+        ],
+        "type": "module"
+      }
+    }
+  }
+}

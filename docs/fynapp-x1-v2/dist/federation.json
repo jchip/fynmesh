@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.tsx",
       "chunks": [
-        "main-CnMm6h5N.js"
+        "main-B6nb4zWm.js"
       ]
     }
   },
@@ -17,7 +17,7 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     },
     "esm-react-dom": {
@@ -26,10 +26,10 @@
       "config": {
         "import": false,
         "singleton": false,
-        "requiredVersion": "^19.0.0"
+        "semver": "^19.0.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:57.292Z",
+  "timestamp": "2025-11-26T07:14:26.807Z",
   "version": "2.0.0"
 }

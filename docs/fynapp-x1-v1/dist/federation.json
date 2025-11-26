@@ -6,7 +6,7 @@
     "./main": {
       "path": "./src/main.tsx",
       "chunks": [
-        "main-CT3Z6i_p.js"
+        "main-fFIdX-MW.js"
       ]
     }
   },
@@ -17,7 +17,7 @@
       "config": {
         "import": false,
         "singleton": true,
-        "requiredVersion": "^18.3.0"
+        "semver": "^18.3.0"
       }
     },
     "esm-react-dom": {
@@ -26,10 +26,10 @@
       "config": {
         "import": false,
         "singleton": true,
-        "requiredVersion": "^18.3.0"
+        "semver": "^18.3.0"
       }
     }
   },
-  "timestamp": "2025-10-23T07:23:57.701Z",
+  "timestamp": "2025-11-26T07:14:25.683Z",
   "version": "1.0.0"
 }
