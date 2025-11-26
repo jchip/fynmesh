@@ -4,9 +4,9 @@ $fyn:
 $pkg:
  dep:
   '@types/node': ^24.10.1
-  '@xarc/run': ^2.3.0
-  fyn: ^2.0.0
-  fynpo: ^2.0.0
+  '@xarc/run': ../xarc-run
+  fyn: ^2.0.1
+  fynpo: ^2.0.1
   prettier: ^3.6.2
   tsx: ^4.20.6
 '@babel/code-frame':
@@ -77,25 +77,26 @@ $pkg:
   $: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==
   _: 'https://registry.npmjs.org/@types/normalize-package-data/-/normalize-package-data-2.4.4.tgz'
 '@xarc/run':
- _latest: 2.3.0
+ _latest: 2.3.0-fynlocal_h
  _:
-  ^2.3.0: 2.3.0
- 2.3.0:
+  ../xarc-run: 2.3.0-fynlocal_h
+ 2.3.0-fynlocal_h:
   top: 1
-  $: sha512-PLR1Z/3oCiTqWQhhEXNGCtSt+XgnaT68DgDtGGZwrTkkkg7m9tyn8ZVYl1/w8RLx7IaVvjAjLzhYAlmH8sNSKg==
-  _: 'https://registry.npmjs.org/@xarc/run/-/run-2.3.0.tgz'
+  $: local
+  _: ../xarc-run
   dependencies:
    chalk: ^4.1.2
    chalker: ^1.2.0
    insync: ^2.1.1
    jaro-winkler: ^0.2.8
    lodash.foreach: ^4.5.0
-   nix-clap: ^2.4.0
+   nix-clap: ^2.4.1
    optional-require: ^2.1.0
    path-is-inside: ^1.0.2
    read-pkg-up: ^7.0.1
    require-at: ^1.0.6
    string-array: ^1.0.1
+   tsx: ^4.20.6
    unwrap-npm-cmd: ^1.1.2
    xsh: ^0.4.5
 ansi-regex:
@@ -292,21 +293,21 @@ function-bind:
 fyn:
  _latest: 1.1.46
  _:
-  ^2.0.0: 2.0.0
- 2.0.0:
+  ^2.0.1: 2.0.1
+ 2.0.1:
   top: 1
-  $: sha512-snqTGRAHZ+KJ/mNzYb6Z3/6gawiilRXLomLoJ0nC4MbM5coJoue0pRQ50/fmnoCJkSiNzTXoG5BTePnpFqKGkw==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-2.0.0.tgz'
+  $: sha512-09+8TpmLpcfTGtIqaumC9hJ/qbJk2SXgVB/u9jmMcEdAcdD5nccCYhOf3DQVwRO064TFB3LTLZsvPxUuZ7gJOw==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-2.0.1.tgz'
 fynpo:
  _latest: 1.1.49
  _:
-  ^2.0.0: 2.0.0
- 2.0.0:
+  ^2.0.1: 2.0.1
+ 2.0.1:
   top: 1
-  $: sha512-vNOFRFh75W3y2tM2MwZy4fkivpg57wWUUiMzeqr8uiL4n86AqfV7FqYxjY+XSDpQ+cGMmw/Gy0JBOS97e/Aqgw==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.0.0.tgz'
+  $: sha512-jkJ/veCVuNjL7xepbMaEwKH3JWW7+q0SU1pBBTpxfYWKKm2v7Znr7Qbzj/dkAMkQfeFP1l/9zOYEJalonoerew==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.0.1.tgz'
   dependencies:
-   fyn: ^2.0.0
+   fyn: ^2.0.1
    import-fresh: 3.3.0
    resolve-global: 1.0.0
    prettier: 2.4.1
@@ -500,7 +501,7 @@ minipass:
 nix-clap:
  _latest: 1.3.13
  _:
-  ^2.4.0: 2.4.1
+  ^2.4.1: 2.4.1
  2.4.1:
   $: sha512-mpZlm1o4epfkdhyydrv582nIcq1YErOH7qwmVQ8EXsNOnKrtCHXaGjLr6BPMqcfZDHAI7aIrNPmgCaf3F6oeiw==
   _: 'https://registry.npmjs.org/nix-clap/-/nix-clap-2.4.1.tgz'
