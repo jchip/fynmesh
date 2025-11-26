@@ -205,7 +205,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         }
         .shell-footer {
           grid-area: footer;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
           color: white;
           padding: 0.5rem 1.5rem;
           display: flex;
@@ -245,7 +245,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         }
         .shell-header {
           grid-area: header;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
           color: white;
           padding: 1rem 1.5rem;
         }
@@ -294,25 +294,27 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         }
         .btn-load {
           padding: 0.375rem 0.75rem;
-          background: #4f46e5;
+          background: #2563eb;
           color: white;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 0.875rem;
+          font-weight: 500;
         }
-        .btn-load:hover { background: #4338ca; }
+        .btn-load:hover { background: #1d4ed8; }
         .btn-load:disabled { background: #9ca3af; cursor: not-allowed; }
         .btn-clear {
           padding: 0.25rem 0.5rem;
-          background: #ef4444;
+          background: #dc2626;
           color: white;
           border: none;
           border-radius: 4px;
           cursor: pointer;
           font-size: 0.75rem;
+          font-weight: 500;
         }
-        .btn-clear:hover { background: #dc2626; }
+        .btn-clear:hover { background: #b91c1c; }
         .region-select {
           padding: 0.25rem 0.5rem;
           border: 1px solid #d1d5db;
