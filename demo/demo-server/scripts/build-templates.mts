@@ -152,10 +152,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             ],
         };
 
-        log("Rendering template...");
-
-        // Build the main page
-        const html = env.render("pages/index.html", templateData);
+        log("Rendering templates...");
 
         // Ensure output directory exists
         if (!existsSync(outputDir)) {
@@ -163,11 +160,23 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             log(`Created output directory: ${outputDir}`);
         }
 
-        const outputPath = path.join(outputDir, "index.html");
-        writeFileSync(outputPath, html);
+        // Build the landing page (index.html)
+        const landingHtml = env.render("pages/landing.html", {
+            title: "FynMesh - Enterprise Micro Frontend Framework",
+            isProduction,
+            pathPrefix,
+        });
+        const landingOutputPath = path.join(outputDir, "index.html");
+        writeFileSync(landingOutputPath, landingHtml);
+        log(`📄 Generated: ${landingOutputPath}`);
+
+        // Build the demo page (demo.html)
+        const demoHtml = env.render("pages/demo.html", templateData);
+        const demoOutputPath = path.join(outputDir, "demo.html");
+        writeFileSync(demoOutputPath, demoHtml);
+        log(`📄 Generated: ${demoOutputPath}`);
 
         log("✅ Templates compiled successfully!");
-        log(`📄 Generated: ${outputPath}`);
         log(`🌐 Path prefix: ${pathPrefix}`);
 
         return true;

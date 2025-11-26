@@ -1,0 +1,474 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}FynMesh - Enterprise Micro Frontend Framework{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary: #3b82f6;
+        --primary-dark: #2563eb;
+        --secondary: #8b5cf6;
+        --accent: #fbbf24;
+        --text-dark: #1f2937;
+        --text-muted: #6b7280;
+        --bg-light: #f8fafc;
+        --bg-card: #ffffff;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-light);
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%);
+        color: white;
+        padding: 6rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.5;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--accent);
+    }
+
+    .hero h1 span {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+    }
+
+    .hero p {
+        font-size: 1.25rem;
+        color: #cbd5e1;
+        max-width: 700px;
+        margin: 2rem auto;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2.5rem;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .btn-github {
+        background: #24292e;
+        color: white;
+    }
+
+    .btn-github:hover {
+        background: #1a1e22;
+        transform: translateY(-2px);
+    }
+
+    /* Features Section */
+    .features {
+        padding: 5rem 2rem;
+        background: white;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .section-title h2 {
+        font-size: 2.5rem;
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+    }
+
+    .section-title p {
+        color: var(--text-muted);
+        font-size: 1.125rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-card {
+        background: var(--bg-light);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+
+    .feature-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+    .feature-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+    .feature-icon.green { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .feature-icon.orange { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .feature-icon.cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
+    .feature-icon.pink { background: linear-gradient(135deg, #ec4899, #db2777); color: white; }
+
+    .feature-card h3 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        color: var(--text-dark);
+    }
+
+    .feature-card p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    /* Frameworks Section */
+    .frameworks {
+        padding: 5rem 2rem;
+        background: var(--bg-light);
+    }
+
+    .framework-logos {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 3rem;
+        margin-top: 3rem;
+    }
+
+    .framework-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+
+    .framework-item:hover {
+        color: var(--primary);
+        transform: scale(1.1);
+    }
+
+    .framework-badge {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    /* CTA Section */
+    .cta {
+        padding: 5rem 2rem;
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%);
+        color: white;
+        text-align: center;
+    }
+
+    .cta h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .cta p {
+        color: #cbd5e1;
+        margin-bottom: 2rem;
+    }
+
+    /* Footer */
+    .footer {
+        background: #111827;
+        color: #9ca3af;
+        padding: 3rem 2rem;
+        text-align: center;
+    }
+
+    .footer a {
+        color: #60a5fa;
+        text-decoration: none;
+    }
+
+    .footer a:hover {
+        text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        .hero h1 span {
+            font-size: 1.25rem;
+        }
+        .hero-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        .btn {
+            width: 100%;
+            max-width: 280px;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body_class %}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <!-- GitHub Icon - Top Right -->
+    <div style="position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10;">
+        <a href="https://github.com/jchip/fynmesh"
+           target="_blank"
+           rel="noopener noreferrer"
+           style="background: rgba(255, 255, 255, 0.1); border-radius: 50%;
+                  width: 48px; height: 48px; display: flex; align-items: center;
+                  justify-content: center; color: white; text-decoration: none;
+                  transition: all 0.3s ease; backdrop-filter: blur(10px);
+                  border: 1px solid rgba(255, 255, 255, 0.2);"
+           onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='scale(1.05)'"
+           onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.transform='scale(1)'"
+           title="View source on GitHub">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+            </svg>
+        </a>
+    </div>
+
+    <div class="hero-content container">
+        <h1>
+            FynMesh
+            <span>Enterprise Micro Frontend Framework</span>
+        </h1>
+        <p>
+            Build large-scale web applications with independently deployable micro-frontends.
+            Powered by Module Federation and Rollup for seamless code sharing at runtime.
+        </p>
+        <div class="hero-buttons">
+            <a href="{{pathPrefix}}demo.html" class="btn btn-primary">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                View All FynApps Demo
+            </a>
+            <a href="{{pathPrefix}}shell.html" class="btn btn-secondary">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14z"/><path d="M7 7h4v4H7V7zm6 0h4v2h-4V7zm0 4h4v2h-4v-2zm-6 4h10v2H7v-2z"/></svg>
+                Shell Demo
+            </a>
+            <a href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" class="btn btn-github">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <div class="section-title">
+            <h2>Why FynMesh?</h2>
+            <p>A modern approach to building scalable enterprise applications with micro-frontends</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon blue">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                </div>
+                <h3>Module Federation</h3>
+                <p>Share code and dependencies between applications at runtime using Rollup-based Module Federation with SystemJS.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon purple">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3>Multi-Framework Support</h3>
+                <p>Run React, Vue, Preact, Solid, Svelte, and Marko applications side by side in the same shell.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon green">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h3>Independent Deployment</h3>
+                <p>Each micro-frontend can be developed, tested, and deployed independently by different teams.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon orange">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <h3>Middleware System</h3>
+                <p>Extensible middleware architecture for cross-cutting concerns like authentication, theming, and layouts.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon cyan">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Multi-Version Support</h3>
+                <p>Run multiple versions of the same library simultaneously. Use React 18 and React 19 in different FynApps.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon pink">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <h3>Smart Dependency Sharing</h3>
+                <p>Intelligent sharing of dependencies across FynApps with version negotiation and deduplication.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Frameworks Section -->
+<section class="frameworks">
+    <div class="container">
+        <div class="section-title">
+            <h2>Framework Agnostic</h2>
+            <p>Build micro-frontends with your preferred framework - they all work together seamlessly</p>
+        </div>
+        <div class="framework-logos">
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #61dafb, #087ea4);">R</div>
+                <span>React 18/19</span>
+            </div>
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #42b883, #35495e);">V</div>
+                <span>Vue</span>
+            </div>
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #673ab8, #512da8);">P</div>
+                <span>Preact</span>
+            </div>
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #2c4f7c, #446b9e);">S</div>
+                <span>Solid</span>
+            </div>
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #ff3e00, #ff6b35);">Sv</div>
+                <span>Svelte</span>
+            </div>
+            <div class="framework-item">
+                <div class="framework-badge" style="background: linear-gradient(135deg, #2b9ccc, #1a7ca8);">M</div>
+                <span>Marko</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="container">
+        <h2>See It In Action</h2>
+        <p>Explore the live demos to see micro-frontends working together</p>
+        <div class="hero-buttons">
+            <a href="{{pathPrefix}}demo.html" class="btn btn-primary">
+                All FynApps Demo
+            </a>
+            <a href="{{pathPrefix}}shell.html" class="btn btn-secondary">
+                Shell Layout Demo
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2025 FynMesh. Enterprise-scale micro-frontend architecture.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="https://github.com/jchip/fynmesh">GitHub</a>
+        </p>
+    </div>
+</footer>
+{% endblock %}

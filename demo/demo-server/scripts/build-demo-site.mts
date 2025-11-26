@@ -176,10 +176,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             ],
         };
 
-        log("Rendering template...");
-
-        // Build the main page
-        const html = env.render("pages/index.html", templateData);
+        log("Rendering templates...");
 
         // Ensure output directory exists
         if (!existsSync(outputDir)) {
@@ -187,10 +184,21 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             log(`Created output directory: ${outputDir}`);
         }
 
-        const outputPath = path.join(outputDir, "index.html");
-        writeFileSync(outputPath, html);
+        // Build the landing page (index.html)
+        const landingHtml = env.render("pages/landing.html", {
+            title: "FynMesh - Enterprise Micro Frontend Framework",
+            isProduction,
+            pathPrefix,
+        });
+        const landingOutputPath = path.join(outputDir, "index.html");
+        writeFileSync(landingOutputPath, landingHtml);
+        log("📄 Generated: " + landingOutputPath);
 
-        log("📄 Generated: " + outputPath);
+        // Build the demo page (demo.html)
+        const demoHtml = env.render("pages/demo.html", templateData);
+        const demoOutputPath = path.join(outputDir, "demo.html");
+        writeFileSync(demoOutputPath, demoHtml);
+        log("📄 Generated: " + demoOutputPath);
 
         // Copy all required static assets for GitHub Pages (skip index.html since we build it directly)
         log("📁 Copying static assets...");
@@ -202,7 +210,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "system.min.js.map",
             "sw.js",           // Service Worker
             "sw-utils.js",     // Service Worker Utilities
-            "favicon.ico"      // Favicon
+            "favicon.ico",     // Favicon
+            "shell.html"       // Shell demo page
         ];
         
         // In production, exclude .map files
@@ -250,7 +259,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-react-18", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-react-19", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-react-middleware", basePath: path.join(__dirname, "../..") },
-            { name: "fynapp-design-tokens", basePath: path.join(__dirname, "../..") }
+            { name: "fynapp-design-tokens", basePath: path.join(__dirname, "../..") },
+            { name: "fynapp-shell-mw", basePath: path.join(__dirname, "../..") },
+            { name: "fynapp-sidebar", basePath: path.join(__dirname, "../..") }
         ];
 
         // Define file filter based on production mode
