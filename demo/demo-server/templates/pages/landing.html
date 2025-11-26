@@ -309,6 +309,13 @@
 
 {% block body_class %}{% endblock %}
 
+{% block scripts_body %}
+<script>
+  window.SW_BASE_PATH = '{{pathPrefix}}';
+</script>
+<script src="{{pathPrefix}}sw-utils.js"></script>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <!-- GitHub Icon - Fixed Top Right -->
