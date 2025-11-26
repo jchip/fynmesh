@@ -8,3 +8,6 @@ node_modules
 # own lockfile, but remove this if you want to commit the package lock file.
 *-lock*
 public/index.html
+public/demo.html
+public/shell.html
+public/*.html
