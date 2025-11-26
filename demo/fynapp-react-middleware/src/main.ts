@@ -127,13 +127,13 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
       );
     }
 
-    // If consumer-only and no provider available, allow apps to continue with status="ready"
-    // The app can handle missing provider gracefully by checking if counterAPI is available
+    // If consumer-only and no provider available, remain in "defer" status
+    // This allows the consumer to be resumed when the provider becomes ready
     if (cc.meta.config === "consume-only" && status === "defer") {
       console.debug(
-        `✅ fynapp-react-middleware: Allowing ${cc.fynApp.name} to continue despite missing provider (consume-only mode)`
+        `⏳ fynapp-react-middleware: ${cc.fynApp.name} waiting for provider (consume-only mode)`
       );
-      status = "ready"; // Let app continue - it can handle missing provider
+      // Keep status as "defer" - don't change to "ready"
     }
 
     return { status };

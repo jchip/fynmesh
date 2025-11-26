@@ -164,6 +164,10 @@ export class ModuleLoader {
   ): Promise<FynApp> {
     const container = fynAppEntry.container;
 
+    if (!container?.name || !container?.version) {
+      throw new Error(`Invalid FynApp container: ${JSON.stringify(container)}`);
+    }
+
     console.debug("🚀 Initializing FynApp entry", container.name, container.version);
 
     // Step 1: Initialize the entry

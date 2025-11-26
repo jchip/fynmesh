@@ -25,8 +25,8 @@ export class NodeKernel extends FynMeshKernelCore {
       await this.bootstrapFynApp(fynApp);
       return fynApp;
     } catch (err) {
-      console.error(`Failed to load remote fynapp from ${baseUrl} in Node.js:`, err);
-      throw err;
+      console.error(`Failed to load FynApp from ${baseUrl} in Node.js:`, err);
+      return null;
     }
   }
 }
