@@ -356,6 +356,48 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * Shutdown a FynApp - calls shutdown() on its FynUnits and removes from registry
+   */
+  async shutdownFynApp(name: string): Promise<boolean> {
+    const fynApp = this.runTime.appsLoaded[name];
+    if (!fynApp) {
+      console.debug(`⚠️ shutdownFynApp: FynApp "${name}" not found`);
+      return false;
+    }
+
+    console.debug(`🛑 Shutting down FynApp ${name}`);
+
+    try {
+      // Call shutdown on each FynUnit that has it
+      for (const exposeName of Object.keys(fynApp.exposes)) {
+        const fynUnit = fynApp.exposes[exposeName]?.main;
+        if (fynUnit?.shutdown) {
+          const runtime = this.moduleLoader.createFynUnitRuntime(fynApp);
+          await fynUnit.shutdown(runtime);
+        }
+      }
+
+      // Remove from registry
+      delete this.runTime.appsLoaded[name];
+
+      // Emit shutdown event
+      await this.emitAsync(
+        new CustomEvent("FYNAPP_SHUTDOWN", {
+          detail: { name, version: fynApp.version },
+        })
+      );
+
+      console.debug(`✅ FynApp ${name} shutdown complete`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error during shutdown of ${name}:`, error);
+      // Still remove from registry even if shutdown fails
+      delete this.runTime.appsLoaded[name];
+      return false;
+    }
+  }
+
+  /**
    * Protected helper to build fynapp URL
    */
   protected buildFynAppUrl(baseUrl: string, entryFile: string = "fynapp-entry.js"): string {

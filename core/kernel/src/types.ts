@@ -122,6 +122,8 @@ export interface FynUnit {
   initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }> | { status: string; mode?: string };
   /** Do your actual work - called when middleware is ready. Returns any value - middleware defines contract. */
   execute(runtime: FynUnitRuntime): Promise<any> | any;
+  /** Graceful shutdown - called when FynApp is being unloaded. Clean up resources here. */
+  shutdown?(runtime: FynUnitRuntime): Promise<void> | void;
   [key: string]: any;
 }
 
@@ -370,6 +372,14 @@ export interface FynMeshKernel {
    * @param fynApp - fynapp to bootstrap
    */
   bootstrapFynApp(fynApp: FynApp): Promise<void>;
+
+  /**
+   * Shutdown a FynApp - calls shutdown() on its FynUnits and removes from registry
+   *
+   * @param name - name of the FynApp to shutdown
+   * @returns true if FynApp was found and shutdown, false otherwise
+   */
+  shutdownFynApp(name: string): Promise<boolean>;
 
   /**
    * Send an event to the kernel
