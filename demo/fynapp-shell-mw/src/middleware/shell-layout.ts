@@ -705,8 +705,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       const content = document.createElement('div');
       content.className = 'fynapp-render-target sidebar-content';
       content.style.cssText = 'height: 100%; display: flex; flex-direction: column;';
-      // Add predictable ID for fynapps to find their shell-managed container
-      content.id = `shell-fynapp-${fynApp.name}`;
+      // Use fynApp.name as ID so design-tokens CSS scoping works correctly
+      content.id = fynApp.name;
       regionInfo.container.appendChild(content);
       this.fynappContainers.set(fynApp.name, content);
 
@@ -735,8 +735,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // Add content area
     const content = document.createElement('div');
     content.className = 'fynapp-render-target';
-    // Add predictable ID for fynapps to find their shell-managed container
-    content.id = `shell-fynapp-${fynApp.name}`;
+    // Use fynApp.name as ID so design-tokens CSS scoping works correctly
+    content.id = fynApp.name;
 
     appContainer.appendChild(header);
     appContainer.appendChild(content);
@@ -1127,9 +1127,10 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
     try {
       const { component: Component, props = {} } = componentFactory(React);
+      // Note: Don't pass runtime here - component factories already capture the correct
+      // runtime in their closure. Passing shell's runtime would overwrite it.
       const element = React.createElement(Component, {
         fynAppName,
-        runtime: this.shellRuntime,
         ...props
       });
 
