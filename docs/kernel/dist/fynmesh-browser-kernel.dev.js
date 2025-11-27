@@ -918,6 +918,9 @@
          */
         async loadFynAppBasics(fynAppEntry, appsLoaded, middlewareRegistrar) {
             const container = fynAppEntry.container;
+            if (!container?.name || !container?.version) {
+                throw new Error(`Invalid FynApp container: ${JSON.stringify(container)}`);
+            }
             console.debug("🚀 Initializing FynApp entry", container.name, container.version);
             // Step 1: Initialize the entry
             fynAppEntry.init();
@@ -1876,14 +1879,13 @@
                 const urlPath = this.buildFynAppUrl(baseUrl);
                 console.debug("🚀 Loading FynApp from", urlPath);
                 const fynAppEntry = await Federation.import(urlPath);
-                console.debug("🚀 FynApp entry loaded", fynAppEntry);
                 const fynApp = await this.loadFynAppBasics(fynAppEntry);
                 await this.bootstrapFynApp(fynApp);
                 return fynApp;
             }
             catch (err) {
-                console.error(`Failed to load remote fynapp from ${baseUrl}:`, err);
-                throw err;
+                console.error(`Failed to load FynApp from ${baseUrl}:`, err);
+                return null;
             }
         }
     }

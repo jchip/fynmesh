@@ -915,6 +915,9 @@ class ModuleLoader {
      */
     async loadFynAppBasics(fynAppEntry, appsLoaded, middlewareRegistrar) {
         const container = fynAppEntry.container;
+        if (!container?.name || !container?.version) {
+            throw new Error(`Invalid FynApp container: ${JSON.stringify(container)}`);
+        }
         console.debug("🚀 Initializing FynApp entry", container.name, container.version);
         // Step 1: Initialize the entry
         fynAppEntry.init();
@@ -1790,8 +1793,8 @@ class NodeKernel extends FynMeshKernelCore {
             return fynApp;
         }
         catch (err) {
-            console.error(`Failed to load remote fynapp from ${baseUrl} in Node.js:`, err);
-            throw err;
+            console.error(`Failed to load FynApp from ${baseUrl} in Node.js:`, err);
+            return null;
         }
     }
 }
