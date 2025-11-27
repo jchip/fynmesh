@@ -21,31 +21,34 @@ FynMesh has solid foundations:
 ## Core Framework Features
 
 ### 1. FynApp Lifecycle (Priority 1 - Pain Point)
-**Current state**: FynApps have initialize() and execute(), but no cleanup
+**Current state**: FynApps have initialize() and execute(), and now shutdown()
 
-**Needed**:
-- `cleanup()` / `unmount()` lifecycle hook
+**Implemented**:
+- ✅ `shutdown()` lifecycle hook on FynUnit
+- ✅ `shutdownFynApp(name)` kernel method with `FYNAPP_SHUTDOWN` event
+
+**Remaining**:
 - `suspend()` / `resume()` for background FynApps
 - Hot module replacement (HMR) support
 - Error boundary per FynApp (isolate failures)
-- Lifecycle events for observability
 
-**Proposed FynUnit lifecycle**:
+**Current FynUnit lifecycle**:
 ```typescript
 interface FynUnit {
-  initialize?(runtime: FynUnitRuntime): Promise<void>;
-  execute(runtime: FynUnitRuntime): Promise<ExecutionResult>;
-  cleanup?(runtime: FynUnitRuntime): Promise<void>;  // NEW
-  suspend?(runtime: FynUnitRuntime): Promise<void>;  // NEW
-  resume?(runtime: FynUnitRuntime): Promise<void>;   // NEW
-  onError?(error: Error, runtime: FynUnitRuntime): ErrorRecovery; // NEW
+  initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }>;
+  execute(runtime: FynUnitRuntime): Promise<any>;
+  shutdown?(runtime: FynUnitRuntime): Promise<void> | void;  // ✅ IMPLEMENTED
+  // Future:
+  // suspend?(runtime: FynUnitRuntime): Promise<void>;
+  // resume?(runtime: FynUnitRuntime): Promise<void>;
 }
 ```
 
 **Kernel enhancements**:
-- Track mounted FynApps
-- Call cleanup on unmount/replace
-- Error boundaries with recovery options (retry, fallback, ignore)
+- ✅ `shutdownFynApp(name)` - calls shutdown() and removes from registry
+- ✅ `FYNAPP_SHUTDOWN` event emitted on shutdown
+- Track mounted FynApps (future)
+- Error boundaries with recovery options (future)
 
 ---
 
@@ -188,10 +191,11 @@ FynMesh Kernel (Core)
 
 ## Milestone Structure
 
-### Milestone 1: Lifecycle Hooks
-- Add cleanup() to FynUnit interface
+### Milestone 1: Lifecycle Hooks (In Progress)
+- ✅ Add `shutdown()` to FynUnit interface
+- ✅ Add `shutdownFynApp(name)` to kernel
+- ✅ Emit `FYNAPP_SHUTDOWN` event
 - Implement mount tracking in kernel
-- Call cleanup on FynApp unmount/replace
 - Add error boundary per FynApp
 - Demo: FynApp that properly cleans up subscriptions
 

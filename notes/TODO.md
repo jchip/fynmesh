@@ -20,11 +20,12 @@
 ### 1. **FynApp Lifecycle** ⭐ Priority 1
 **Pain Point:** FynApps have initialize() and execute(), but no cleanup
 
-- [ ] Add `cleanup()` lifecycle hook to FynUnit interface
+- [x] Add `shutdown()` lifecycle hook to FynUnit interface
+- [x] Add `shutdownFynApp()` to kernel with `FYNAPP_SHUTDOWN` event
+- [x] Lifecycle events (`FYNAPP_BOOTSTRAPPED`, `FYNAPP_BOOTSTRAP_FAILED`, `FYNAPP_BOOTSTRAP_TIMEOUT`, `FYNAPP_SHUTDOWN`)
 - [ ] Add `suspend()` / `resume()` for background FynApps
 - [ ] Implement mount tracking in kernel
 - [ ] Add error boundary per FynApp (isolate failures)
-- [ ] Lifecycle events for observability
 - [ ] HMR support for development
 
 ### 2. **Inter-FynApp Communication (FynBus)** ⭐ Priority 2
@@ -62,7 +63,8 @@
 
 ### 4. **Performance & Optimization** ⭐ Priority 4
 - [ ] Lazy region loading (Intersection Observer)
-- [ ] Preload hints in manifest
+- [x] Preload hints in manifest (`shared-providers`, `import-exposed`, `requires`)
+- [x] Entry file preloading with depth-based prioritization
 - [ ] Performance event emission
 - [ ] Bundle analysis tooling
 - [ ] Intelligent caching strategies
@@ -78,9 +80,9 @@
 - [ ] Router middleware (URL mapping, deep linking)
 
 ### 6. **Dependency Resolution**
-- [ ] Runtime dependency graph with topological sort
-- [ ] Intelligent preloading and prefetching
-- [ ] Circular dependency detection
+- [x] Runtime dependency graph with topological sort (`buildGraph`, `topoBatches`)
+- [x] Intelligent preloading and prefetching (entry file preloading with depth tracking)
+- [x] Circular dependency detection (warning + best-effort loading)
 - [ ] federation.json generation
 
 ### 7. **Observability & APM**
