@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom/client";
 
-export { createPortal } from "react-dom";
+export { createPortal, flushSync } from "react-dom";
 
 export default ReactDOM;
 

@@ -95,4 +95,12 @@ startDevProxy([
     { path: "/fynapp-sidebar" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-sidebar") },
   ],
+  [
+    { path: "/fynapp-ag-grid" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-ag-grid") },
+  ],
+  [
+    { path: "/fynapp-ag-grid-lib" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-ag-grid-lib") },
+  ],
 ]);

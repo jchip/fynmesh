@@ -1,0 +1,34 @@
+{
+  "name": "esm-ag-grid-react",
+  "version": "33.3.2",
+  "description": "ESM wrapper for ag-grid-react",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    "production": "./dist/ag-grid-react.production.js",
+    "development": "./dist/ag-grid-react.development.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "ag-grid-community": "^33.3.2",
+    "ag-grid-react": "^33.3.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "rollup": "^4.40.2"
+  },
+  "dependencies": {
+    "esm-ag-grid": "^33.3.2",
+    "esm-react": "^19.1.0"
+  }
+}

@@ -1,0 +1,163 @@
+.ag-grid-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 600px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f8fafc;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.app-header .subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background: white;
+  color: #1e40af;
+}
+
+.btn-primary:hover {
+  background: #f0f9ff;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 20px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.stat.selected .stat-value {
+  color: #3b82f6;
+}
+
+.grid-container {
+  flex: 1;
+  width: 100%;
+  min-height: 400px;
+}
+
+.app-footer {
+  padding: 10px 20px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* AG Grid Theme Customizations */
+.ag-theme-alpine {
+  --ag-header-background-color: #f8fafc;
+  --ag-header-foreground-color: #334155;
+  --ag-header-cell-hover-background-color: #f1f5f9;
+  --ag-row-hover-color: #f0f9ff;
+  --ag-selected-row-background-color: #dbeafe;
+  --ag-range-selection-border-color: #3b82f6;
+  --ag-input-focus-border-color: #3b82f6;
+}
+
+.ag-theme-alpine .ag-header-cell-label {
+  font-weight: 600;
+}
+
+.ag-theme-alpine .ag-cell {
+  display: flex;
+  align-items: center;
+}
+
+.ag-theme-alpine .ag-cell-inline-editing {
+  padding: 0;
+}
+
+/* Editable cell indicator */
+.ag-theme-alpine .ag-cell-editable:not(.ag-cell-inline-editing)::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-top: 6px solid #94a3b8;
+}
+
+.ag-theme-alpine .ag-cell-editable:hover::after {
+  border-top-color: #3b82f6;
+}
+
+/* Pagination styling */
+.ag-theme-alpine .ag-paging-panel {
+  border-top: 1px solid #e2e8f0;
+  padding: 8px 16px;
+}

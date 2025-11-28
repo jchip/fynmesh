@@ -164,6 +164,11 @@
                                 await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-x1-v2/dist");
                 console.log("✅ FynApp X1 v2 preloaded");
 
+                // Preload AG Grid library provider
+                console.log("📦 Preloading AG Grid library...");
+                await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-ag-grid-lib/dist");
+                console.log("✅ AG Grid library preloaded");
+
                 // Now load the shell middleware FynApp - it will handle everything else
                 console.log("🏠 Loading Shell Middleware {{pathPrefix}}fynapp-shell-mw/dist");
                 await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-shell-mw/dist");

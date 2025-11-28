@@ -4,4 +4,4 @@ export default ReactDOM;
 
 console.log("ESM_REACT_DOM_VERSION 18.3.1");
 
-export { createPortal } from "react-dom";
+export { createPortal, flushSync } from "react-dom";
