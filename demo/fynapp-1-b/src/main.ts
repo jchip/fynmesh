@@ -16,10 +16,11 @@ const middlewareUser = {
       `📋 ${runtime.fynApp.name} initialize called`
     );
 
-    // We're a consumer
+    // We're a consumer - can render without provider, counter just won't work
     return {
       status: "ready",
       mode: "consumer",
+      deferOk: true,
     };
   },
 
