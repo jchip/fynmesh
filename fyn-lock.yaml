@@ -5,8 +5,8 @@ $pkg:
  dep:
   '@types/node': ^24.10.1
   '@xarc/run': ../xarc-run
-  fyn: ^2.0.1
-  fynpo: ^2.0.1
+  fyn: ^2.0.4
+  fynpo: ^2.0.4
   prettier: ^3.6.2
   tsx: ^4.20.6
 '@babel/code-frame':
@@ -293,21 +293,21 @@ function-bind:
 fyn:
  _latest: 1.1.46
  _:
-  ^2.0.1: 2.0.1
- 2.0.1:
+  ^2.0.4: 2.0.4
+ 2.0.4:
   top: 1
-  $: sha512-09+8TpmLpcfTGtIqaumC9hJ/qbJk2SXgVB/u9jmMcEdAcdD5nccCYhOf3DQVwRO064TFB3LTLZsvPxUuZ7gJOw==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-2.0.1.tgz'
+  $: sha512-JcHHBb5pOeruYdP4b2NoiKczQz4DgAhYhKSGpM+Tv2xzE0RLxZMRH/cIfWB4iay+7RBxjTueIdnP1qxrI0QK2Q==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-2.0.4.tgz'
 fynpo:
  _latest: 1.1.49
  _:
-  ^2.0.1: 2.0.1
- 2.0.1:
+  ^2.0.4: 2.0.4
+ 2.0.4:
   top: 1
-  $: sha512-jkJ/veCVuNjL7xepbMaEwKH3JWW7+q0SU1pBBTpxfYWKKm2v7Znr7Qbzj/dkAMkQfeFP1l/9zOYEJalonoerew==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.0.1.tgz'
+  $: sha512-fbRv1kmtYCI6EMlueUAtNnNRZD/L3b6f2G8A3wcCkrAtAEruXsdtTBjvZQCBtnu/5FkrJ4qoPViQOiRquDQujA==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.0.4.tgz'
   dependencies:
-   fyn: ^2.0.1
+   fyn: ^2.0.4
    import-fresh: 3.3.0
    resolve-global: 1.0.0
    prettier: 2.4.1

@@ -37,7 +37,7 @@ $pkg:
   $: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==
   _: 'https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.28.5.tgz'
 '@inquirer/external-editor':
- _latest: 2.0.1
+ _latest: 2.0.2
  _:
   ^1.0.2: 1.0.3
  1.0.3:
@@ -49,7 +49,7 @@ $pkg:
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/figures':
- _latest: 2.0.1
+ _latest: 2.0.2
  _:
   ^1.0.3: 1.0.15
  1.0.15:
@@ -223,6 +223,20 @@ $pkg:
    picomatch: ^4.0.2
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+'@rollup/rollup-android-arm-eabi':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-android-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
 '@rollup/rollup-darwin-arm64':
  _latest: 4.53.3
  _:
@@ -234,6 +248,139 @@ $pkg:
    - darwin
   cpu:
    - arm64
+'@rollup/rollup-darwin-x64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-freebsd-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-freebsd-x64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm-gnueabihf':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm-musleabihf':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-loong64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-ppc64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-riscv64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-riscv64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-s390x-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-x64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-x64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-openharmony-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-arm64-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-ia32-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-x64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-x64-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
 '@types/estree':
  _latest: 1.0.8
  _:
@@ -307,15 +454,15 @@ ast-types:
   dependencies:
    tslib: ^2.0.1
 aveazul:
- _latest: 1.0.2
+ _latest: 1.1.0
  _:
-  '^1.0.1,^1.0.2': 1.0.2
- 1.0.2:
-  $: sha512-AxNC1s5Nv++jqk9qpyD6RojhoUrr5anfYWKIlUXVreXT3bVBjtOiibTc8snQSVNHq+5BAAE5gyM+XkOUR9fbEQ==
-  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.2.tgz'
+  '^1.0.1,^1.0.2': 1.1.0
+ 1.1.0:
+  $: sha512-BJNXJhZHxI+FWAOz9/AXGpRt82XTcUt2hPyoQRyKqnCIs/2JiO8qA6zAc28ZHuN6GeWOxdjKzw1amQ7erTNCSg==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.1.0.tgz'
   dependencies:
    '@jchip/error': ^1.0.3
-   xaa: ^1.8.0
+   xaa: ^2.0.0
 balanced-match:
  _latest: 3.0.1
  _:
@@ -651,7 +798,7 @@ inherits:
   $: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
   _: 'https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz'
 inquirer:
- _latest: 13.0.1
+ _latest: 13.0.2
  _:
   ^9.2.10: 9.3.8
  9.3.8:
@@ -771,7 +918,7 @@ log-symbols:
    chalk: ^4.1.0
    is-unicode-supported: ^0.1.0
 lru-cache:
- _latest: 11.2.2
+ _latest: 11.2.4
  _:
   ^10.0.1: 10.4.3
  10.4.3:
@@ -1127,7 +1274,7 @@ semver:
   $: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==
   _: 'https://registry.npmjs.org/semver/-/semver-7.7.3.tgz'
 serialize-javascript:
- _latest: 7.0.0
+ _latest: 7.0.1
  _:
   ^6.0.1: 6.0.2
  6.0.2:
@@ -1273,7 +1420,7 @@ tslib:
   $: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
   _: 'https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz'
 type-fest:
- _latest: 5.2.0
+ _latest: 5.3.0
  _:
   ^0.21.3: 0.21.3
   ^3.8.0: 3.13.1
@@ -1347,9 +1494,15 @@ wrappy:
   $: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
   _: 'https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz'
 xaa:
- _latest: 1.8.0
+ _latest: 2.0.0
  _:
   ^1.8.0: 1.8.0
+  ^2.0.0: 2.0.0
+ 2.0.0:
+  $: sha512-qJ58bzCh2/qzU1zSx8PQ77ySJotdSjwypxBF4i4tJzNkixjkqTSH1ryg2Gf1Z9dNyO0/jcuY2KHmrFF0Cn7YRA==
+  _: 'https://registry.npmjs.org/xaa/-/xaa-2.0.0.tgz'
+  dependencies:
+   tslib: ^2.6.2
  1.8.0:
   $: sha512-XPNHZLhbO/KyboMyJaJnqma/KUSRAkMUHZpNRVbilvsloJErKsTaOcxxte79u3Hj4UixCHR+y+p+DFp7rZ7MWQ==
   _: 'https://registry.npmjs.org/xaa/-/xaa-1.8.0.tgz'

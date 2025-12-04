@@ -144,6 +144,20 @@ $pkg:
    picomatch: ^4.0.2
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+'@rollup/rollup-android-arm-eabi':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-android-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
 '@rollup/rollup-darwin-arm64':
  _latest: 4.53.3
  _:
@@ -155,6 +169,139 @@ $pkg:
    - darwin
   cpu:
    - arm64
+'@rollup/rollup-darwin-x64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-freebsd-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-freebsd-x64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm-gnueabihf':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm-musleabihf':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-arm64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-loong64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-ppc64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-riscv64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-riscv64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-s390x-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-x64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-linux-x64-musl':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-openharmony-arm64':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-arm64-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-ia32-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-x64-gnu':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
+'@rollup/rollup-win32-x64-msvc':
+ _:
+  4.53.3: metaFail_4.53.3
+ metaFail_4.53.3:
+  optFailed: 1
+  $: 0
+  _: null
 '@types/estree':
  _latest: 1.0.8
  _:

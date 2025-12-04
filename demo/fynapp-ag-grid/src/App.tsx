@@ -69,7 +69,6 @@ const App: React.FC<AppProps> = ({ appName }) => {
   const columnDefs = useMemo<ColDef<OrderData>[]>(() => [
     {
       headerName: '',
-      field: 'orderId',
       checkboxSelection: true,
       headerCheckboxSelection: true,
       width: 50,
