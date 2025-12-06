@@ -227,16 +227,14 @@ describe("Middleware Registration", () => {
     it("should not load if expose module not found", async () => {
       const fynApp = createMockFynApp();
       const consoleSpy = vi.spyOn(console, "debug");
-      
+
       // No expose module in container
       delete fynApp.entry.container.$E["./main"];
-      
+
       await kernel.testLoadExposeModule(fynApp, "./main", true);
-      
+
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("❌ No expose module"),
-        expect.anything(),
-        expect.anything()
+        expect.stringContaining("❌ No expose module")
       );
       expect(fynApp.exposes["./main"]).toBeUndefined();
     });

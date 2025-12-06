@@ -215,13 +215,22 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * Create middleware scanner callback that delegates to MiddlewareManager
+   * This is the single source of truth for middleware scanning
+   */
+  protected createMiddlewareScanner(): (fynApp: FynApp, exposeName: string, exposedModule: any) => string[] {
+    return (fynApp, exposeName, exposedModule) =>
+      this.middlewareManager.scanAndRegisterMiddleware(fynApp, exposeName, exposedModule);
+  }
+
+  /**
    * Load FynApp basics
    */
   async loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp> {
     return this.moduleLoader.loadFynAppBasics(
       fynAppEntry,
       this.runTime.appsLoaded,
-      (mwReg) => this.registerMiddleware(mwReg)
+      this.createMiddlewareScanner()
     );
   }
 
@@ -262,13 +271,14 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     try {
       // Always load middleware modules for all FynApps
+      const middlewareScanner = this.createMiddlewareScanner();
       for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
         if (exposeName.startsWith("./middleware")) {
           await this.moduleLoader.loadExposeModule(
             fynApp,
             exposeName,
             true,
-            (mwReg) => this.registerMiddleware(mwReg)
+            middlewareScanner
           );
         }
       }
@@ -313,7 +323,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
                 packageName,
                 middlewarePath,
                 this.runTime.appsLoaded,
-                (mwReg) => this.registerMiddleware(mwReg)
+                middlewareScanner
               );
             },
             this.middlewareManager.getAutoApplyMiddlewares()

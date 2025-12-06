@@ -8,7 +8,6 @@ import type {
   FynAppEntry,
   FynUnit,
   FynUnitRuntime,
-  FynAppMiddleware,
   FynAppMiddlewareReg,
 } from "../types";
 import {
@@ -19,18 +18,31 @@ import {
   err,
 } from "../errors";
 
+/**
+ * Callback type for middleware scanning
+ * Returns array of middleware export names that were registered
+ */
+export type MiddlewareScanner = (
+  fynApp: FynApp,
+  exposeName: string,
+  exposedModule: any
+) => string[];
+
 export class ModuleLoader {
-  private scannedModules: Set<string> = new Set();
 
   /**
    * Load an expose module from a FynApp
+   * @param fynApp - The FynApp to load the module from
+   * @param exposeName - The name of the exposed module (e.g., "./main")
+   * @param loadMiddlewares - Whether to scan for and register middlewares
+   * @param middlewareScanner - Callback to scan and register middleware (delegates to MiddlewareManager)
    * @returns Result with the loaded module or an error
    */
   async loadExposeModule(
     fynApp: FynApp,
     exposeName: string,
     loadMiddlewares?: boolean,
-    middlewareRegistrar?: (mwReg: FynAppMiddlewareReg) => void
+    middlewareScanner?: MiddlewareScanner
   ): Promise<Result<any, ModuleLoadError>> {
     const container = fynApp.entry.container;
     if (!container?.$E[exposeName]) {
@@ -50,51 +62,11 @@ export class ModuleLoader {
     const factory = await fynApp.entry.get(exposeName);
     const exposedModule = typeof factory === "function" ? factory() : undefined;
 
-    const mwExports = [];
-
-    // Create cache key to track if we've already scanned this module for middleware
-    const scanCacheKey = `${fynApp.name}@${fynApp.version}::${exposeName}`;
-
     if (loadMiddlewares && exposedModule && typeof exposedModule === "object") {
-      // Check if we've already scanned this module
-      if (!this.scannedModules.has(scanCacheKey)) {
-        // Mark as scanned before processing to prevent duplicate scans
-        this.scannedModules.add(scanCacheKey);
-
-        for (const [exportName, exportValue] of Object.entries(exposedModule)) {
-          if (exportName.startsWith("__middleware__")) {
-            const middleware = exportValue as FynAppMiddleware;
-            const mwName = middleware.name;
-            const mwReg: FynAppMiddlewareReg = {
-              regKey: `${fynApp.name}::${mwName}`,
-              fullKey: `${fynApp.name}@${fynApp.version}::${mwName}`,
-              hostFynApp: fynApp,
-              exposeName: exposeName,
-              exportName,
-              middleware,
-            };
-
-            // Register middleware using the provided registrar
-            if (middlewareRegistrar) {
-              middlewareRegistrar(mwReg);
-            }
-            mwExports.push(exportName);
-          }
-        }
-
-        console.debug(
-          `✅ Expose module '${exposeName}' loaded for`,
-          fynApp.name,
-          fynApp.version,
-          mwExports.length > 0 ? "middlewares registered:" : "",
-          mwExports.join(", "),
-        );
-      } else {
-        console.debug(
-          `⏭️  Skipping middleware scan for '${exposeName}' - already scanned for`,
-          fynApp.name,
-          fynApp.version,
-        );
+      // Delegate middleware scanning to MiddlewareManager via callback
+      // This ensures single source of truth for scanning logic and deduplication
+      if (middlewareScanner) {
+        middlewareScanner(fynApp, exposeName, exposedModule);
       }
 
       fynApp.exposes[exposeName] = exposedModule;
@@ -111,13 +83,17 @@ export class ModuleLoader {
 
   /**
    * Load middleware from a dependency package
+   * @param packageName - Name of the dependency package
+   * @param middlewarePath - Path to the middleware within the package
+   * @param appsLoaded - Map of loaded FynApps
+   * @param middlewareScanner - Callback to scan and register middleware
    * @returns Result indicating success or error with details
    */
   async loadMiddlewareFromDependency(
     packageName: string,
     middlewarePath: string,
     appsLoaded: Record<string, FynApp>,
-    middlewareRegistrar?: (mwReg: FynAppMiddlewareReg) => void
+    middlewareScanner?: MiddlewareScanner
   ): Promise<Result<void, ModuleLoadError>> {
     console.debug(`📦 Loading middleware from dependency: ${packageName}/${middlewarePath}`);
 
@@ -145,7 +121,7 @@ export class ModuleLoader {
     const exposeName = `./${exposeModule}`;
 
     console.debug(`📦 Loading middleware module ${exposeName} from ${packageName} (full path: ${middlewarePath})`);
-    const result = await this.loadExposeModule(dependencyApp, exposeName, true, middlewareRegistrar);
+    const result = await this.loadExposeModule(dependencyApp, exposeName, true, middlewareScanner);
 
     if (!result.success) {
       return err(result.error);
@@ -156,11 +132,14 @@ export class ModuleLoader {
 
   /**
    * Load the basics of a FynApp
+   * @param fynAppEntry - The FynApp entry point
+   * @param appsLoaded - Map of loaded FynApps
+   * @param middlewareScanner - Callback to scan and register middleware
    */
   async loadFynAppBasics(
     fynAppEntry: FynAppEntry,
     appsLoaded: Record<string, FynApp>,
-    middlewareRegistrar?: (mwReg: FynAppMiddlewareReg) => void
+    middlewareScanner?: MiddlewareScanner
   ): Promise<FynApp> {
     const container = fynAppEntry.container;
 
@@ -198,7 +177,7 @@ export class ModuleLoader {
     }
 
     // Step 5: Load main module
-    const mainResult = await this.loadExposeModule(fynApp, "./main", true, middlewareRegistrar);
+    const mainResult = await this.loadExposeModule(fynApp, "./main", true, middlewareScanner);
     if (!mainResult.success) {
       // Main module not found is not fatal - some FynApps may not have a main module
       console.debug(`⚠️ Main module not loaded for ${fynApp.name}: ${mainResult.error.message}`);
@@ -228,7 +207,7 @@ export class ModuleLoader {
                 packageName,
                 modulePath,
                 appsLoaded,
-                middlewareRegistrar
+                middlewareScanner
               );
               if (!depResult.success) {
                 loadErrors.push(depResult.error);
@@ -389,8 +368,9 @@ export class ModuleLoader {
 
   /**
    * Clear module loader state
+   * Note: Middleware scanning state is now managed by MiddlewareManager
    */
   clear(): void {
-    this.scannedModules.clear();
+    // No local state to clear - middleware scanning delegated to MiddlewareManager
   }
 }
