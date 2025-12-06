@@ -1,10 +1,13 @@
 # FynMesh Core MFE Framework Roadmap
 
 ## Vision
+
 Evolve FynMesh from demo-ready to production-ready micro-frontend framework by addressing core framework gaps.
 
 ## Current State
+
 FynMesh has solid foundations:
+
 - Kernel with module loading via SystemJS federation
 - Middleware system with setup/apply/execute phases
 - Manifest resolution and bootstrap coordination
@@ -13,6 +16,7 @@ FynMesh has solid foundations:
 - Error reporting with KernelError hierarchy
 
 ## Key Pain Points
+
 1. **Missing lifecycle hooks** - No cleanup/unmount, no hot reload, limited error recovery
 2. **FynApps can't communicate** - No event bus, messaging, or contracts between FynApps
 
@@ -21,23 +25,29 @@ FynMesh has solid foundations:
 ## Core Framework Features
 
 ### 1. FynApp Lifecycle (Priority 1 - Pain Point)
+
 **Current state**: FynApps have initialize() and execute(), and now shutdown()
 
 **Implemented**:
+
 - ✅ `shutdown()` lifecycle hook on FynUnit
 - ✅ `shutdownFynApp(name)` kernel method with `FYNAPP_SHUTDOWN` event
 
 **Remaining**:
+
 - `suspend()` / `resume()` for background FynApps
 - Hot module replacement (HMR) support
 - Error boundary per FynApp (isolate failures)
 
 **Current FynUnit lifecycle**:
+
 ```typescript
 interface FynUnit {
-  initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }>;
+  initialize?(
+    runtime: FynUnitRuntime
+  ): Promise<{ status: string; mode?: string }>;
   execute(runtime: FynUnitRuntime): Promise<any>;
-  shutdown?(runtime: FynUnitRuntime): Promise<void> | void;  // ✅ IMPLEMENTED
+  shutdown?(runtime: FynUnitRuntime): Promise<void> | void; // ✅ IMPLEMENTED
   // Future:
   // suspend?(runtime: FynUnitRuntime): Promise<void>;
   // resume?(runtime: FynUnitRuntime): Promise<void>;
@@ -45,6 +55,7 @@ interface FynUnit {
 ```
 
 **Kernel enhancements**:
+
 - ✅ `shutdownFynApp(name)` - calls shutdown() and removes from registry
 - ✅ `FYNAPP_SHUTDOWN` event emitted on shutdown
 - Track mounted FynApps (future)
@@ -53,15 +64,18 @@ interface FynUnit {
 ---
 
 ### 2. Inter-FynApp Communication (Priority 2 - Pain Point)
+
 **Current state**: FynApps can only communicate via middleware context (indirect)
 
 **Needed**:
+
 - Event bus for pub/sub messaging
 - Typed event contracts
 - Request/response pattern (RPC-like)
 - Broadcast vs targeted messaging
 
 **Proposed API**:
+
 ```typescript
 // Available via kernel or middleware
 interface FynBus {
@@ -80,6 +94,7 @@ interface FynBus {
 ```
 
 **Design considerations**:
+
 - Kernel-level vs middleware-level
 - Type safety for events (TypeScript generics, schemas)
 - Event namespacing/scoping
@@ -90,9 +105,11 @@ interface FynBus {
 ### 3. Developer Experience & Tooling (Priority 3)
 
 #### 3a. create-fynapp Improvements
+
 **Current state**: Basic scaffolding with React/Vue templates, simple string replacement
 
 **Needed**:
+
 - Complete all framework templates (Preact, Solid, Marko, Svelte)
 - Proper template engine (handlebars/EJS) instead of string replacement
 - Built-in dev server with HMR support
@@ -102,6 +119,7 @@ interface FynBus {
 - Config schema validation
 
 **CLI enhancements**:
+
 ```bash
 create-fynapp --name my-app --framework react --template starter
 cfa dev                    # Built-in dev server with HMR
@@ -111,9 +129,11 @@ cfa lint                   # Lint/format
 ```
 
 #### 3b. DevTools & Debugging
+
 **Current state**: Console logging only
 
 **Needed**:
+
 - Dev overlay showing FynApp boundaries and names
 - Console integration (prefix logs with FynApp name)
 - Federation debugger (visualize loaded modules, versions)
@@ -121,12 +141,15 @@ cfa lint                   # Lint/format
 - Performance profiler
 
 **Proposed**:
+
 - `fynmesh-devtools` in-page overlay (dev mode only)
 
 #### 3c. FynMesh Chrome Extension
+
 **Purpose**: Visual debugging and inspection for FynMesh apps
 
 **Features**:
+
 - **FynApp Panel**: List all loaded FynApps with status (loading, ready, error)
 - **Federation Inspector**: Show loaded modules, versions, sharing relationships
 - **Dependency Graph**: Visualize module dependencies and shared chunks
@@ -136,6 +159,7 @@ cfa lint                   # Lint/format
 - **Console Filter**: Filter console by FynApp source
 
 **Implementation**:
+
 - Chrome DevTools panel (like React DevTools)
 - Communicates with kernel via injected script
 - Works in both dev and production modes
@@ -143,9 +167,11 @@ cfa lint                   # Lint/format
 ---
 
 ### 4. Performance & Optimization (Priority 4)
+
 **Current state**: Preloading exists, route-based preload started
 
 **Needed**:
+
 - Intelligent preloading based on user behavior
 - Bundle caching strategies
 - Lazy region loading (load FynApp only when region visible)
@@ -153,6 +179,7 @@ cfa lint                   # Lint/format
 - Performance metrics collection
 
 **Proposed enhancements**:
+
 - `preload` hints in manifest
 - Intersection observer for lazy regions
 - Shared chunk analysis tooling
@@ -192,6 +219,7 @@ FynMesh Kernel (Core)
 ## Milestone Structure
 
 ### Milestone 1: Lifecycle Hooks (In Progress)
+
 - ✅ Add `shutdown()` to FynUnit interface
 - ✅ Add `shutdownFynApp(name)` to kernel
 - ✅ Emit `FYNAPP_SHUTDOWN` event
@@ -200,6 +228,7 @@ FynMesh Kernel (Core)
 - Demo: FynApp that properly cleans up subscriptions
 
 ### Milestone 2: FynBus Communication
+
 - Design event bus API
 - Implement kernel-level FynBus
 - Add pub/sub messaging
@@ -207,6 +236,7 @@ FynMesh Kernel (Core)
 - Demo: Two FynApps communicating via events
 
 ### Milestone 3: create-fynapp & Dev Experience
+
 - Complete framework templates (Preact, Solid, Marko, Svelte)
 - Replace string templating with proper template engine
 - Add `cfa dev` command with built-in dev server
@@ -215,6 +245,7 @@ FynMesh Kernel (Core)
 - Console integration (FynApp name tagging)
 
 ### Milestone 4: Performance
+
 - Lazy region loading
 - Preload hints system
 - Performance event emission
@@ -225,16 +256,19 @@ FynMesh Kernel (Core)
 ## Design Questions to Resolve
 
 ### Lifecycle
+
 - Should cleanup be sync or async?
 - How to handle cleanup timeout (force unmount after X ms)?
 - What happens if cleanup throws?
 
 ### FynBus
+
 - Kernel-level or separate package?
 - How to type events across FynApp boundaries?
 - Should events persist for late subscribers?
 
 ### Dev Experience
+
 - Build into kernel or separate devtools package?
 - Browser extension vs in-page overlay?
 
@@ -247,3 +281,23 @@ FynMesh Kernel (Core)
 - `core/kernel/src/module-loader.ts` - Module loading
 - `core/kernel/design/` - Architecture docs
 - `demo/fynapp-shell-mw/` - Complex middleware example
+
+  Project Stats:
+  | Metric | Value |
+  |----------------|-------|
+  | Total Issues | 48 |
+  | Epics | 8 |
+  | Tasks | 40 |
+  | Ready to Start | 48 |
+
+  Epics Summary:
+  | ID | Epic | Tasks |
+  |-------|----------------------|----------------------|
+  | FYM-1 | FynApp Lifecycle | 4 (FYM-9 to FYM-12) |
+  | FYM-2 | FynBus Communication | 6 (FYM-13 to FYM-18) |
+  | FYM-3 | create-fynapp CLI | 8 (FYM-19 to FYM-26) |
+  | FYM-4 | DevTools | 7 (FYM-27 to FYM-33) |
+  | FYM-5 | Performance | 4 (FYM-34 to FYM-37) |
+  | FYM-6 | Platform Middleware | 4 (FYM-38 to FYM-41) |
+  | FYM-7 | Observability | 4 (FYM-42 to FYM-45) |
+  | FYM-8 | Security | 3 (FYM-46 to FYM-48) |
