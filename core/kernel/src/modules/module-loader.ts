@@ -227,6 +227,10 @@ export class ModuleLoader {
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
     // Record app in runtime registry for observability
+    // Use name@version as key to support multiple versions of the same package
+    const appKey = `${fynApp.name}@${fynApp.version}`;
+    appsLoaded[appKey] = fynApp;
+    // Also store by name for backward compatibility and simple lookups
     appsLoaded[fynApp.name] = fynApp;
 
     return fynApp;

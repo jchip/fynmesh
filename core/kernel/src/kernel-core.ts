@@ -367,6 +367,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
   /**
    * Shutdown a FynApp - calls shutdown() on its FynUnits and removes from registry
+   * @param name - Can be either "name" or "name@version" format
    */
   async shutdownFynApp(name: string): Promise<boolean> {
     const fynApp = this.runTime.appsLoaded[name];
@@ -387,22 +388,28 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         }
       }
 
-      // Remove from registry
+      // Remove from registry (both versioned and unversioned keys)
+      const versionedKey = `${fynApp.name}@${fynApp.version}`;
       delete this.runTime.appsLoaded[name];
+      delete this.runTime.appsLoaded[versionedKey];
+      delete this.runTime.appsLoaded[fynApp.name];
 
       // Emit shutdown event
       await this.emitAsync(
         new CustomEvent("FYNAPP_SHUTDOWN", {
-          detail: { name, version: fynApp.version },
+          detail: { name: fynApp.name, version: fynApp.version },
         })
       );
 
-      console.debug(`✅ FynApp ${name} shutdown complete`);
+      console.debug(`✅ FynApp ${fynApp.name}@${fynApp.version} shutdown complete`);
       return true;
     } catch (error) {
       console.error(`❌ Error during shutdown of ${name}:`, error);
       // Still remove from registry even if shutdown fails
+      const versionedKey = `${fynApp.name}@${fynApp.version}`;
       delete this.runTime.appsLoaded[name];
+      delete this.runTime.appsLoaded[versionedKey];
+      delete this.runTime.appsLoaded[fynApp.name];
       return false;
     }
   }
