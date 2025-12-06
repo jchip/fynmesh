@@ -21,6 +21,13 @@ export class NodeKernel extends FynMeshKernelCore {
       // For now, we'll use dynamic import as a starting point
       const fynAppEntry = await import(urlPath);
 
+      // Check if already loaded - return existing instance to prevent duplicates
+      const fynAppName = fynAppEntry.container?.name;
+      if (fynAppName && this.runTime.appsLoaded[fynAppName]) {
+        console.debug(`✅ FynApp ${fynAppName} already loaded, returning existing instance`);
+        return this.runTime.appsLoaded[fynAppName];
+      }
+
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
       return fynApp;

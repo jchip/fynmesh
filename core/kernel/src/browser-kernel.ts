@@ -101,7 +101,14 @@ export class BrowserKernel extends FynMeshKernelCore {
       const urlPath = this.buildFynAppUrl(baseUrl);
       console.debug("🚀 Loading FynApp from", urlPath);
       const fynAppEntry = await Federation.import(urlPath);
-      
+
+      // Check if already loaded - return existing instance to prevent duplicates
+      const fynAppName = fynAppEntry.container?.name;
+      if (fynAppName && this.runTime.appsLoaded[fynAppName]) {
+        console.debug(`✅ FynApp ${fynAppName} already loaded, returning existing instance`);
+        return this.runTime.appsLoaded[fynAppName];
+      }
+
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
       return fynApp;
