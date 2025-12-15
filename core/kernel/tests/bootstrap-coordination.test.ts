@@ -114,6 +114,38 @@ describe("Bootstrap Coordination", () => {
       expect((consumerApp.exposes["./main"] as any).main.execute).toHaveBeenCalled();
     });
 
+    it("should resume deferred bootstraps when a bootstrap fails", async () => {
+      const fynApp1 = createMockFynApp({ name: "app1" });
+      const fynApp2 = createMockFynApp({ name: "app2" });
+
+      // app1 fails during execute
+      fynApp1.exposes["./main"] = {
+        main: {
+          execute: vi.fn(() => {
+            throw new Error("boom");
+          }),
+        } as any,
+      };
+
+      // app2 should still bootstrap after app1 fails
+      fynApp2.exposes["./main"] = {
+        main: {
+          execute: vi.fn(),
+        } as any,
+      };
+
+      const bootstrap1 = kernel.bootstrapFynApp(fynApp1);
+      const bootstrap2 = kernel.bootstrapFynApp(fynApp2);
+
+      expect(kernel.testBootstrappingApp).toBe("app1");
+      expect(kernel.testDeferredBootstraps).toHaveLength(1);
+
+      await bootstrap1;
+      await bootstrap2;
+
+      expect((fynApp2.exposes["./main"] as any).main.execute).toHaveBeenCalled();
+    });
+
     it("should emit FYNAPP_BOOTSTRAPPED event", async () => {
       const fynApp = createMockFynApp({ name: "test-app" });
       fynApp.exposes["./main"] = { 
@@ -142,10 +174,14 @@ describe("Bootstrap Coordination", () => {
           execute: vi.fn().mockRejectedValue(new Error(errorMessage))
         } as any
       };
-      
-      await expect(kernel.bootstrapFynApp(fynApp)).rejects.toThrow(errorMessage);
-      
-      // Should clear bootstrap lock
+
+      const failSpy = vi.fn();
+      kernel.events.addEventListener("FYNAPP_BOOTSTRAP_FAILED", failSpy);
+
+      // Kernel isolates failures and does not rethrow from bootstrapFynApp
+      await kernel.bootstrapFynApp(fynApp);
+
+      expect(failSpy).toHaveBeenCalled();
       expect(kernel.testBootstrappingApp).toBeNull();
     });
 
@@ -170,8 +206,8 @@ describe("Bootstrap Coordination", () => {
       // Queue another bootstrap
       const bootstrap2 = kernel.bootstrapFynApp(fynApp2);
       
-      // First should fail
-      await expect(bootstrap1).rejects.toThrow();
+      // First should not throw (kernel isolates errors)
+      await bootstrap1;
       
       // Lock should be cleared
       expect(kernel.testBootstrappingApp).toBeNull();

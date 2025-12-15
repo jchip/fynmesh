@@ -36,6 +36,11 @@ export class BootstrapCoordinator {
     this.events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
       this.handleFynAppBootstrapped(event as CustomEvent);
     });
+
+    // Also advance deferred queue on failures so the kernel doesn't stall
+    this.events.on("FYNAPP_BOOTSTRAP_FAILED", (event: Event) => {
+      this.handleFynAppBootstrapFailed(event as CustomEvent);
+    });
   }
 
   /**
@@ -185,29 +190,7 @@ export class BootstrapCoordinator {
     // Mark this FynApp as bootstrapped
     this.markBootstrapped(name);
 
-    // Clear the currently bootstrapping app
-    this.releaseBootstrapLock();
-
-    // Find the FIRST deferred bootstrap whose dependencies are now satisfied
-    let nextIndex = -1;
-    for (let i = 0; i < this.deferredBootstraps.length; i++) {
-      const deferred = this.deferredBootstraps[i];
-      if (this.areBootstrapDependenciesSatisfied(deferred.fynApp)) {
-        nextIndex = i;
-        break;
-      }
-    }
-
-    // Resume the ready FynApp and remove from queue
-    if (nextIndex >= 0) {
-      const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
-      console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
-      next.resolve();
-    } else if (this.deferredBootstraps.length > 0) {
-      console.debug(
-        `⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`
-      );
-    }
+    this.finishBootstrapAndResumeNext();
   }
 
   /**
@@ -254,6 +237,46 @@ export class BootstrapCoordinator {
       }
     }
     return null;
+  }
+
+  /**
+   * Handle a bootstrap failure event.
+   *
+   * This intentionally does not mark the app as bootstrapped; it only releases
+   * the bootstrap lock and advances the deferred queue for apps whose
+   * dependencies are already satisfied.
+   */
+  private async handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
+    const { name } = event.detail;
+    console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
+    this.finishBootstrapAndResumeNext();
+  }
+
+  /**
+   * Release bootstrap lock and resume the next eligible deferred bootstrap.
+   */
+  private finishBootstrapAndResumeNext(): void {
+    // Clear the currently bootstrapping app
+    this.releaseBootstrapLock();
+
+    // Find the FIRST deferred bootstrap whose dependencies are now satisfied
+    let nextIndex = -1;
+    for (let i = 0; i < this.deferredBootstraps.length; i++) {
+      const deferred = this.deferredBootstraps[i];
+      if (this.areBootstrapDependenciesSatisfied(deferred.fynApp)) {
+        nextIndex = i;
+        break;
+      }
+    }
+
+    // Resume the ready FynApp and remove from queue
+    if (nextIndex >= 0) {
+      const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
+      console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
+      next.resolve();
+    } else if (this.deferredBootstraps.length > 0) {
+      console.debug(`⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`);
+    }
   }
 
   /**

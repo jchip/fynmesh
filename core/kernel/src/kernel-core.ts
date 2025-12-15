@@ -266,8 +266,16 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       console.debug(`▶️ Resuming bootstrap of ${fynApp.name}`);
     }
 
-    // Acquire bootstrap lock
-    this.bootstrapCoordinator.acquireBootstrapLock(fynApp.name);
+    // Acquire bootstrap lock (must succeed to preserve serialization)
+    if (!this.bootstrapCoordinator.acquireBootstrapLock(fynApp.name)) {
+      console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (bootstrap lock busy)`);
+      await this.bootstrapCoordinator.deferBootstrap(fynApp);
+      console.debug(`▶️ Resuming bootstrap of ${fynApp.name} (retry lock acquisition)`);
+      if (!this.bootstrapCoordinator.acquireBootstrapLock(fynApp.name)) {
+        console.error(`⏰ ${fynApp.name} unable to acquire bootstrap lock after deferral; skipping bootstrap`);
+        return;
+      }
+    }
 
     try {
       // Always load middleware modules for all FynApps
