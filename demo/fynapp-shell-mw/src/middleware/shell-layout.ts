@@ -555,7 +555,19 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     if (!regionInfo?.container) return;
 
     // Clear the fynapp tracking for this region
-    if (regionInfo.fynAppId) {
+    if (regionInfo.fynAppId && regionInfo.fynApp) {
+      // Call shutdown on the FynApp's FynUnit if it has one
+      // This allows the FynApp to clean up resources (e.g., React roots, event listeners)
+      const mainExport = regionInfo.fynApp.exposes?.["./main"]?.main;
+      if (mainExport?.shutdown) {
+        try {
+          console.debug(`🔄 Calling shutdown for ${regionInfo.fynAppId}`);
+          mainExport.shutdown();
+        } catch (error) {
+          console.warn(`Failed to shutdown FynUnit for ${regionInfo.fynAppId}:`, error);
+        }
+      }
+
       // Unmount React root before cleanup
       const root = this.reactRoots.get(regionInfo.fynAppId);
       if (root && root.unmount) {
@@ -569,6 +581,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       this.loadedFynApps.delete(regionInfo.fynAppId);
       this.fynappContainers.delete(regionInfo.fynAppId);
       this.reactRoots.delete(regionInfo.fynAppId);
+      this.selfManagedApps.delete(regionInfo.fynAppId);
     }
 
     // Reset region state
@@ -685,6 +698,31 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     const regionInfo = this.regions.get(region);
     if (!regionInfo?.container) return;
 
+    // Clean up the PREVIOUS FynApp in this region before rendering a new one
+    // This is critical for self-managed FynApps that store React roots
+    if (regionInfo.fynApp && regionInfo.fynAppId && regionInfo.fynAppId !== fynApp.name) {
+      const prevMainExport = regionInfo.fynApp.exposes?.["./main"]?.main;
+      if (prevMainExport?.shutdown) {
+        try {
+          console.debug(`🔄 Calling shutdown for previous FynApp ${regionInfo.fynAppId} in ${region}`);
+          prevMainExport.shutdown();
+        } catch (error) {
+          console.warn(`Failed to shutdown previous FynUnit for ${regionInfo.fynAppId}:`, error);
+        }
+      }
+      // Also unmount any React root the shell was tracking for the previous app
+      const prevRoot = this.reactRoots.get(regionInfo.fynAppId);
+      if (prevRoot) {
+        try {
+          prevRoot.unmount();
+        } catch (error) {
+          console.warn(`Failed to unmount previous React root for ${regionInfo.fynAppId}:`, error);
+        }
+        this.reactRoots.delete(regionInfo.fynAppId);
+      }
+      this.selfManagedApps.delete(regionInfo.fynAppId);
+    }
+
     // Clean up existing React root for this FynApp before clearing the container
     // This prevents stale root references when reloading the same FynApp
     const existingRoot = this.reactRoots.get(fynApp.name);
@@ -696,6 +734,17 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         console.warn(`Failed to unmount React root for ${fynApp.name}:`, error);
       }
       this.reactRoots.delete(fynApp.name);
+    }
+
+    // Also shutdown the FynApp being loaded if it has a stale root (e.g., from being previously loaded)
+    const mainExport = fynApp.exposes?.["./main"]?.main;
+    if (mainExport?.shutdown) {
+      try {
+        console.debug(`🔄 Calling shutdown for ${fynApp.name} before re-render`);
+        mainExport.shutdown();
+      } catch (error) {
+        console.warn(`Failed to shutdown FynUnit for ${fynApp.name}:`, error);
+      }
     }
 
     // Clear the region
@@ -958,11 +1007,183 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         console.log(`📝 No component module found for ${fynApp.name} (this is normal for non-component FynApps)`);
       }
 
+      // Try to re-execute self-managed FynApps by calling their execute() method
+      // This handles the case where a previously loaded FynApp is being re-rendered
+      const reRendered = await this.tryReExecuteFynUnit(fynApp, container);
+      if (reRendered) {
+        return;
+      }
+
       // Fallback to placeholder
       this.fallbackRender(container, fynApp.name);
     } catch (error) {
       console.error(`❌ Failed to render component for ${fynApp.name}:`, error);
       this.fallbackRender(container, fynApp.name);
+    }
+  }
+
+  /**
+   * Try to re-execute a FynApp's main FynUnit for re-rendering
+   * This is used when switching back to a previously loaded self-managed FynApp
+   */
+  private async tryReExecuteFynUnit(fynApp: FynApp, container: HTMLElement): Promise<boolean> {
+    try {
+      // Get the main FynUnit from the FynApp's exposes
+      const mainExport = fynApp.exposes?.["./main"]?.main;
+      if (!mainExport || typeof mainExport.execute !== 'function') {
+        console.debug(`📝 No executable main export for ${fynApp.name}`);
+        return false;
+      }
+
+      console.log(`🔄 Re-executing FynUnit for ${fynApp.name}`);
+
+      // Create a runtime context using the kernel's moduleLoader for proper middleware support
+      const runtime = this.kernel.moduleLoader.createFynUnitRuntime(fynApp);
+
+      // Apply middlewares to populate the runtime.middlewareContext
+      // This ensures the FynApp gets access to shared middleware APIs like basic-counter
+      await this.applyMiddlewaresForReExecution(fynApp, mainExport, runtime);
+
+      // Set up the shell middleware context so the FynApp knows it's shell-managed
+      runtime.middlewareContext.set(this.name, {
+        isShellManaged: true,
+        renderTarget: container,
+        shellMode: 'component',
+        loadApp: this.loadApp.bind(this),
+        getAvailableApps: () => [...this.availableFynApps],
+        getLoadedApps: () => Array.from(this.loadedFynApps.keys()),
+      });
+
+      // Call execute to let the FynApp render itself
+      const result = await mainExport.execute(runtime);
+
+      // Handle the result
+      if (result && this.isValidExecutionResult(result)) {
+        if (result.type === 'self-managed') {
+          console.log(`✅ Self-managed FynApp ${fynApp.name} re-rendered successfully`);
+          this.selfManagedApps.set(fynApp.name, result);
+          return true;
+        }
+        // Handle other result types if needed
+        await this.handleTypedExecutionResult(fynApp.name, result);
+        return true;
+      }
+
+      console.log(`✅ FynUnit executed for ${fynApp.name}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to re-execute FynUnit for ${fynApp.name}:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Apply middlewares for re-execution to populate the runtime's middlewareContext
+   * This is needed when re-rendering a FynApp that uses middleware-provided APIs
+   */
+  private async applyMiddlewaresForReExecution(fynApp: FynApp, fynUnit: any, runtime: any): Promise<void> {
+    // Get auto-apply middlewares from the kernel's middleware manager
+    const autoApplyMiddlewares = this.kernel.middlewareManager?.getAutoApplyMiddlewares?.();
+    if (!autoApplyMiddlewares) {
+      console.debug(`📝 No auto-apply middlewares available for ${fynApp.name}`);
+      return;
+    }
+
+    // Apply middlewares that target fynapps (not middleware providers)
+    const targetMiddlewares = autoApplyMiddlewares.fynapp || [];
+
+    for (const mwReg of targetMiddlewares) {
+      // Skip the shell middleware - we handle it separately
+      if (mwReg.middleware.name === this.name) continue;
+
+      // Check if middleware has a filter function
+      if (mwReg.middleware.shouldApply) {
+        try {
+          if (!mwReg.middleware.shouldApply(fynApp)) {
+            continue;
+          }
+        } catch (error) {
+          console.warn(`Error in shouldApply for ${mwReg.regKey}:`, error);
+          continue;
+        }
+      }
+
+      // Create a context for the middleware apply call
+      const context = {
+        meta: {
+          info: {
+            name: mwReg.middleware.name,
+            provider: mwReg.hostFynApp.name,
+            version: mwReg.hostFynApp.version,
+          },
+          config: {},
+        },
+        fynUnit,
+        fynMod: fynUnit,
+        fynApp,
+        reg: mwReg,
+        runtime,
+        kernel: this.kernel,
+        status: "ready" as const,
+      };
+
+      try {
+        // Call setup to initialize middleware state
+        if (mwReg.middleware.setup) {
+          await mwReg.middleware.setup(context);
+        }
+        // Call apply to populate middlewareContext
+        if (mwReg.middleware.apply) {
+          await mwReg.middleware.apply(context);
+        }
+      } catch (error) {
+        console.warn(`Failed to apply middleware ${mwReg.regKey} for re-execution:`, error);
+      }
+    }
+
+    // Also apply middlewares from the FynUnit's __middlewareMeta if present
+    if (fynUnit.__middlewareMeta) {
+      for (const meta of fynUnit.__middlewareMeta) {
+        if (typeof meta === 'object' && meta.middleware) {
+          // Parse the middleware string to get the name
+          const parts = (meta.middleware as string).trim().split(' ');
+          if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
+            const middlewareName = parts[2].split('/').pop() || parts[2];
+            const mwReg = this.kernel.getMiddleware(middlewareName, parts[1]);
+
+            if (mwReg && mwReg.regKey) {
+              const context = {
+                meta: {
+                  info: {
+                    name: mwReg.middleware.name,
+                    provider: mwReg.hostFynApp.name,
+                    version: mwReg.hostFynApp.version,
+                  },
+                  config: meta.config || {},
+                },
+                fynUnit,
+                fynMod: fynUnit,
+                fynApp,
+                reg: mwReg,
+                runtime,
+                kernel: this.kernel,
+                status: "ready" as const,
+              };
+
+              try {
+                if (mwReg.middleware.setup) {
+                  await mwReg.middleware.setup(context);
+                }
+                if (mwReg.middleware.apply) {
+                  await mwReg.middleware.apply(context);
+                }
+              } catch (error) {
+                console.warn(`Failed to apply declared middleware ${mwReg.regKey}:`, error);
+              }
+            }
+          }
+        }
+      }
     }
   }
 
