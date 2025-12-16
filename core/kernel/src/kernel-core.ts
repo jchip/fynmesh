@@ -343,7 +343,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           await this.moduleLoader.invokeFynUnit(
             fynUnit,
             fynApp,
-            this.middlewareManager.getAutoApplyMiddlewares()
+            this.middlewareManager.getAutoApplyMiddlewares(),
+            this
           );
         }
       }

@@ -9,6 +9,7 @@ import type {
   FynUnit,
   FynUnitRuntime,
   FynAppMiddlewareReg,
+  FynMeshKernel,
 } from "../types";
 import {
   ModuleLoadError,
@@ -294,7 +295,8 @@ export class ModuleLoader {
     autoApplyMiddlewares?: {
       fynapp: FynAppMiddlewareReg[];
       middleware: FynAppMiddlewareReg[];
-    }
+    },
+    kernel?: FynMeshKernel
   ): Promise<void> {
     const runtime = this.createFynUnitRuntime(fynApp);
 
@@ -318,7 +320,7 @@ export class ModuleLoader {
         fynApp,
         reg: executionOverride,
         runtime,
-        kernel: null as any, // Kernel reference injected by caller
+        kernel: kernel!,
         status: "ready",
       };
 
@@ -365,9 +367,10 @@ export class ModuleLoader {
     autoApplyMiddlewares?: {
       fynapp: FynAppMiddlewareReg[];
       middleware: FynAppMiddlewareReg[];
-    }
+    },
+    kernel?: FynMeshKernel
   ): Promise<void> {
-    return this.invokeFynUnit(fynMod, fynApp, autoApplyMiddlewares);
+    return this.invokeFynUnit(fynMod, fynApp, autoApplyMiddlewares, kernel);
   }
 
   /**
