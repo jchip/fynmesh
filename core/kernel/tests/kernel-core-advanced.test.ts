@@ -164,7 +164,7 @@ describe('KernelCore Advanced Functionality', () => {
     });
 
     describe('error handling and edge cases', () => {
-        it('should handle missing version in loadFynAppBasics', async () => {
+        it('should throw for missing version in loadFynAppBasics', async () => {
             const mockEntry: FynAppEntry = {
                 container: {
                     name: 'test-app',
@@ -175,9 +175,9 @@ describe('KernelCore Advanced Functionality', () => {
                 get: vi.fn(),
             };
 
-            const fynApp = await kernel.testLoadFynAppBasics(mockEntry);
-
-            expect(fynApp.version).toBe('1.0.0'); // Default version
+            // Version is required - should throw
+            await expect(kernel.testLoadFynAppBasics(mockEntry))
+                .rejects.toThrow('Invalid FynApp container');
         });
 
         it('should handle empty bootstrap gracefully', async () => {

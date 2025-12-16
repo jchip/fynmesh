@@ -77,8 +77,8 @@ describe('KernelCore Precision Coverage for 90%', () => {
             kernel.registerMiddleware(retryMiddleware);
 
             // Mock the checkMiddlewareReady to return "ready" so defer becomes retry
-            const originalCheck = (kernel as any).checkMiddlewareReady;
-            (kernel as any).checkMiddlewareReady = vi.fn().mockReturnValue('ready');
+            const originalCheck = (kernel.middlewareExecutor as any).checkMiddlewareReady;
+            (kernel.middlewareExecutor as any).checkMiddlewareReady = vi.fn().mockReturnValue('ready');
 
             const mockEntry: FynAppEntry = {
                 container: {
@@ -113,7 +113,7 @@ describe('KernelCore Precision Coverage for 90%', () => {
                 expect(retryMiddleware.middleware.setup).toHaveBeenCalled();
             } finally {
                 // Restore original method
-                (kernel as any).checkMiddlewareReady = originalCheck;
+                (kernel.middlewareExecutor as any).checkMiddlewareReady = originalCheck;
             }
         });
 
@@ -173,8 +173,8 @@ describe('KernelCore Precision Coverage for 90%', () => {
             kernel.registerMiddleware(testMiddleware);
 
             // Mock checkMiddlewareReady to return ready so defer becomes retry
-            const originalCheck = (kernel as any).checkMiddlewareReady;
-            (kernel as any).checkMiddlewareReady = vi.fn().mockReturnValue('ready');
+            const originalCheck = (kernel.middlewareExecutor as any).checkMiddlewareReady;
+            (kernel.middlewareExecutor as any).checkMiddlewareReady = vi.fn().mockReturnValue('ready');
 
             const mockEntry: FynAppEntry = {
                 container: {
@@ -211,7 +211,7 @@ describe('KernelCore Precision Coverage for 90%', () => {
                 expect(mainModule!.initialize).toHaveBeenCalled();
             } finally {
                 // Restore original method
-                (kernel as any).checkMiddlewareReady = originalCheck;
+                (kernel.middlewareExecutor as any).checkMiddlewareReady = originalCheck;
             }
         });
 

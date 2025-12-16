@@ -10,8 +10,16 @@ class UniversalMiddlewareTestKernel extends FynMeshKernelCore {
     }
 
     // Expose protected method for testing
-    public testApplyAutoScopeMiddlewares(fynApp: FynApp, fynModule?: FynModule): Promise<void> {
-        return (this as any).applyAutoScopeMiddlewares(fynApp, fynModule);
+    public async testApplyAutoScopeMiddlewares(fynApp: FynApp, fynModule?: FynModule): Promise<void> {
+        const autoApplyMiddlewares = this.middlewareManager.getAutoApplyMiddlewares();
+        await this.middlewareExecutor.applyAutoScopeMiddlewares(
+            fynApp,
+            fynModule,
+            this,
+            autoApplyMiddlewares,
+            () => this.moduleLoader.createFynModuleRuntime(fynApp),
+            async (cc, share) => this.signalMiddlewareReady(cc, { share })
+        );
     }
 
     // Helper to access runtime data

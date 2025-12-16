@@ -82,28 +82,30 @@ describe('BrowserKernel', () => {
                 .rejects.toThrow('Federation.js is not loaded.');
         });
 
-        it('should handle Federation.js import errors', async () => {
+        it('should handle Federation.js import errors gracefully', async () => {
             const importError = new Error('Federation import failed');
             mockFederation.import.mockRejectedValue(importError);
 
-            await expect(kernel.loadFynApp('http://example.com/app'))
-                .rejects.toThrow('Federation import failed');
+            // Kernel returns null on error instead of throwing for graceful error isolation
+            const result = await kernel.loadFynApp('http://example.com/app');
+            expect(result).toBeNull();
 
             expect(mockFederation.import).toHaveBeenCalledWith('http://example.com/app/fynapp-entry.js');
         });
 
-        it('should handle loadFynAppBasics errors', async () => {
+        it('should handle loadFynAppBasics errors gracefully', async () => {
             const mockEntry = { name: 'test-app', version: '1.0.0' };
             mockFederation.import.mockResolvedValue(mockEntry);
 
             const basicsError = new Error('Failed to load basics');
             vi.spyOn(kernel, 'loadFynAppBasics' as any).mockRejectedValue(basicsError);
 
-            await expect(kernel.loadFynApp('http://example.com/app'))
-                .rejects.toThrow('Failed to load basics');
+            // Kernel returns null on error instead of throwing for graceful error isolation
+            const result = await kernel.loadFynApp('http://example.com/app');
+            expect(result).toBeNull();
         });
 
-        it('should handle bootstrapFynApp errors', async () => {
+        it('should handle bootstrapFynApp errors gracefully', async () => {
             const mockEntry = { name: 'test-app', version: '1.0.0' };
             mockFederation.import.mockResolvedValue(mockEntry);
 
@@ -112,8 +114,9 @@ describe('BrowserKernel', () => {
             const bootstrapError = new Error('Failed to bootstrap');
             vi.spyOn(kernel, 'bootstrapFynApp' as any).mockRejectedValue(bootstrapError);
 
-            await expect(kernel.loadFynApp('http://example.com/app'))
-                .rejects.toThrow('Failed to bootstrap');
+            // Kernel returns null on error instead of throwing for graceful error isolation
+            const result = await kernel.loadFynApp('http://example.com/app');
+            expect(result).toBeNull();
         });
     });
 });

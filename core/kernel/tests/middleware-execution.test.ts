@@ -42,32 +42,35 @@ describe("Middleware Execution", () => {
       });
       
       const fynApp = createMockFynApp({ name: "test-app", version: "1.0.0" });
-      
-      const fynMod = {}; // Simple module without initialize/execute
-      
+
+      const fynUnit = {
+        initialize: vi.fn().mockResolvedValue({ status: "ready" }),
+        execute: vi.fn().mockResolvedValue(undefined)
+      };
+
       const ccs = [
-        { 
+        {
           reg: { fullKey: "mw1-key", middleware: mw1.middleware, regKey: "test::mw1" },
           mwReg: mw1,
-          runtime: {},
+          runtime: { fynApp, middlewareContext: new Map() },
           fynApp,
-          fynMod,
-          module: {}, 
-          config: {} 
+          fynUnit,
+          module: {},
+          config: {}
         },
-        { 
+        {
           reg: { fullKey: "mw2-key", middleware: mw2.middleware, regKey: "test::mw2" },
           mwReg: mw2,
-          runtime: {},
+          runtime: { fynApp, middlewareContext: new Map() },
           fynApp,
-          fynMod,
-          module: {}, 
-          config: {} 
+          fynUnit,
+          module: {},
+          config: {}
         }
       ];
-      
+
       await kernel.testCallMiddlewares(ccs);
-      
+
       expect(setupOrder).toEqual(["mw1", "mw2"]);
       expect(applyOrder).toEqual(["mw1", "mw2"]);
     });
@@ -83,62 +86,68 @@ describe("Middleware Execution", () => {
       mwReg.middleware.apply = vi.fn(async () => {});
       
       // Mock checkMiddlewareReady to return "ready" so defer becomes retry
-      const originalCheck = (kernel as any).checkMiddlewareReady;
-      (kernel as any).checkMiddlewareReady = vi.fn().mockReturnValue("ready");
-      
+      const originalCheck = (kernel.middlewareExecutor as any).checkMiddlewareReady;
+      (kernel.middlewareExecutor as any).checkMiddlewareReady = vi.fn().mockReturnValue("ready");
+
       const fynApp = createMockFynApp({ name: "test-app", version: "1.0.0" });
-      
-      const fynMod = {}; // Simple module without initialize/execute
-      
+
+      const fynUnit = {
+        initialize: vi.fn().mockResolvedValue({ status: "ready" }),
+        execute: vi.fn().mockResolvedValue(undefined)
+      };
+
       const ccs = [{
         reg: { fullKey: "test-mw", middleware: mwReg.middleware, regKey: mwReg.regKey },
-        mwReg, 
-        runtime: {},
+        mwReg,
+        runtime: { fynApp, middlewareContext: new Map() },
         fynApp,
-        fynMod,
-        module: {}, 
-        config: {} 
+        fynUnit,
+        module: {},
+        config: {}
       }];
-      
+
       try {
         await kernel.testCallMiddlewares(ccs);
-        
+
         expect(mwReg.middleware.setup).toHaveBeenCalledTimes(2);
         expect(mwReg.middleware.apply).toHaveBeenCalled();
       } finally {
-        (kernel as any).checkMiddlewareReady = originalCheck;
+        (kernel.middlewareExecutor as any).checkMiddlewareReady = originalCheck;
       }
     });
 
     it("should throw after max retries", async () => {
       const mwReg = createMockMiddlewareReg();
       mwReg.middleware.setup = vi.fn(async () => ({ status: "defer" }));
-      
+
       // Mock checkMiddlewareReady to always return "ready" (forcing retry)
-      const originalCheck = (kernel as any).checkMiddlewareReady;
-      (kernel as any).checkMiddlewareReady = vi.fn().mockReturnValue("ready");
-      
+      const originalCheck = (kernel.middlewareExecutor as any).checkMiddlewareReady;
+      (kernel.middlewareExecutor as any).checkMiddlewareReady = vi.fn().mockReturnValue("ready");
+
       const fynApp = createMockFynApp({ name: "test-app", version: "1.0.0" });
-      
-      const fynMod = {}; // Simple module without initialize/execute
-      
+
+      const fynUnit = {
+        initialize: vi.fn().mockResolvedValue({ status: "ready" }),
+        execute: vi.fn().mockResolvedValue(undefined)
+      };
+
       const ccs = [{
         reg: { fullKey: "defer-mw", middleware: mwReg.middleware, regKey: mwReg.regKey },
         mwReg,
-        runtime: {},
+        runtime: { fynApp, middlewareContext: new Map() },
         fynApp,
-        fynMod,
-        module: {}, 
-        config: {} 
+        fynUnit,
+        module: {},
+        config: {}
       }];
-      
+
       try {
         await expect(kernel.testCallMiddlewares(ccs)).rejects.toThrow(
           "Middleware setup failed after 2 tries"
         );
         expect(mwReg.middleware.setup).toHaveBeenCalledTimes(2);
       } finally {
-        (kernel as any).checkMiddlewareReady = originalCheck;
+        (kernel.middlewareExecutor as any).checkMiddlewareReady = originalCheck;
       }
     });
 
@@ -147,23 +156,26 @@ describe("Middleware Execution", () => {
       const mwReg = createMockMiddlewareReg();
       mwReg.middleware.setup = vi.fn(async () => ({ status: "skip" }));
       mwReg.middleware.apply = vi.fn();
-      
+
       const fynApp = createMockFynApp({ name: "test-app", version: "1.0.0" });
-      
-      const fynMod = {}; // Simple module without initialize/execute
-      
+
+      const fynUnit = {
+        initialize: vi.fn().mockResolvedValue({ status: "ready" }),
+        execute: vi.fn().mockResolvedValue(undefined)
+      };
+
       const ccs = [{
         reg: { fullKey: "skip-mw", middleware: mwReg.middleware, regKey: mwReg.regKey },
         mwReg,
-        runtime: {},
+        runtime: { fynApp, middlewareContext: new Map() },
         fynApp,
-        fynMod,
-        module: {}, 
-        config: {} 
+        fynUnit,
+        module: {},
+        config: {}
       }];
-      
+
       await kernel.testCallMiddlewares(ccs);
-      
+
       expect(mwReg.middleware.setup).toHaveBeenCalled();
       // The implementation actually calls apply even for skip status
       expect(mwReg.middleware.apply).toHaveBeenCalled();
@@ -173,9 +185,9 @@ describe("Middleware Execution", () => {
   describe("checkMiddlewareReady", () => {
     it("should return ready when all middlewares are ready", () => {
       // Mark middlewares as ready in the middlewareReady map
-      (kernel as any).middlewareReady.set("mw1", {});
-      (kernel as any).middlewareReady.set("mw2", {});
-      (kernel as any).middlewareReady.set("mw3", {}); // Need to mark mw3 as ready too
+      kernel.testMiddlewareReady.set("mw1", {});
+      kernel.testMiddlewareReady.set("mw2", {});
+      kernel.testMiddlewareReady.set("mw3", {}); // Need to mark mw3 as ready too
       
       const ccs = [
         { reg: { fullKey: "mw1" }, runtime: {}, mwReg: { regKey: "mw1" }, status: undefined },
@@ -189,8 +201,8 @@ describe("Middleware Execution", () => {
 
     it("should return defer when any middleware is defer", () => {
       // Mark some middlewares as ready
-      (kernel as any).middlewareReady.set("mw1", {});
-      (kernel as any).middlewareReady.set("mw3", {});
+      kernel.testMiddlewareReady.set("mw1", {});
+      kernel.testMiddlewareReady.set("mw3", {});
       // mw2 is not ready
       
       const ccs = [
@@ -213,8 +225,8 @@ describe("Middleware Execution", () => {
   describe("checkDeferCalls", () => {
     it("should return retry when status changed from defer to ready", () => {
       // Mark all middlewares as ready
-      (kernel as any).middlewareReady.set("mw1", {});
-      (kernel as any).middlewareReady.set("mw2", {});
+      kernel.testMiddlewareReady.set("mw1", {});
+      kernel.testMiddlewareReady.set("mw2", {});
       
       const ccs = [
         { reg: { fullKey: "mw1" }, runtime: {}, mwReg: { regKey: "mw1" }, status: undefined },
@@ -228,7 +240,7 @@ describe("Middleware Execution", () => {
 
     it("should return defer when still deferred", () => {
       // Mark only mw1 as ready, mw2 not ready
-      (kernel as any).middlewareReady.set("mw1", {});
+      kernel.testMiddlewareReady.set("mw1", {});
       
       const ccs = [
         { reg: { fullKey: "mw1" }, runtime: {}, mwReg: { regKey: "mw1" }, status: undefined },
@@ -254,7 +266,7 @@ describe("Middleware Execution", () => {
   describe("checkSingleMiddlewareReady", () => {
     it("should mark ready when middleware is registered", () => {
       // Mark middleware as ready in the map
-      (kernel as any).middlewareReady.set("test-app@1.0.0::test-middleware", {});
+      kernel.testMiddlewareReady.set("test-app@1.0.0::test-middleware", {});
       
       const cc = { 
         reg: { fullKey: "test-app@1.0.0::test-middleware" },
@@ -283,7 +295,7 @@ describe("Middleware Execution", () => {
 
     it("should update runtime share when middleware ready", () => {
       const shareData = { someData: "value" };
-      (kernel as any).middlewareReady.set("test-app::test-middleware", shareData);
+      kernel.testMiddlewareReady.set("test-app::test-middleware", shareData);
       
       const cc = { 
         reg: { fullKey: "test-app::test-middleware" },

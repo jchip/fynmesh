@@ -101,7 +101,13 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testUseMiddlewareOnFynModule(fynModule: any, fynApp: any) {
-    return (this.middlewareExecutor as any).useMiddlewareOnFynModule(fynModule, fynApp);
+    return (this.middlewareExecutor as any).useMiddlewareOnFynModule(
+      fynModule,
+      fynApp,
+      this,
+      () => this.moduleLoader.createFynModuleRuntime(fynApp),
+      (name: string, provider?: string) => this.getMiddleware(name, provider)
+    );
   }
 
   async testApplyAutoScopeMiddlewares(fynApp: any, fynModule?: any) {

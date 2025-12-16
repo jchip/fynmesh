@@ -42,8 +42,9 @@ describe('NodeKernel', () => {
     describe('error handling', () => {
         it('should handle invalid URLs gracefully', async () => {
             // Test with an invalid URL that will fail during dynamic import
-            await expect(kernel.loadFynApp('invalid-url'))
-                .rejects.toThrow();
+            // Kernel returns null on error instead of throwing for graceful error isolation
+            const result = await kernel.loadFynApp('invalid-url');
+            expect(result).toBeNull();
         });
     });
 });

@@ -18,7 +18,7 @@ class FinalPushKernel extends FynMeshKernelCore {
     }
 
     public getMiddlewareReady() {
-        return (this as any).middlewareReady;
+        return (this.middlewareExecutor as any).middlewareReady;
     }
 }
 
