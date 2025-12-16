@@ -124,7 +124,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         resume.callContexts,
         async (cc, share) => this.signalMiddlewareReady(cc, { share }),
         (fynAppName, middlewareName, mode) => 
-          this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode)
+          this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode),
+        undefined,
+        resume.resumeMode === "middleware_only" ? { skipFynUnit: true } : undefined
       );
     }
 

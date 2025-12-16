@@ -10,6 +10,10 @@ import App from "./App";
  * Standardized middleware user interface
  */
 class MiddlewareUser implements FynUnit {
+  private root?: ReturnType<typeof ReactDomClient.createRoot>;
+  private kernelEvents?: EventTarget;
+  private middlewareReadyHandler?: (event: Event) => void;
+
   /**
    * Tell middleware what we need - called first to determine readiness
    */
@@ -69,17 +73,55 @@ class MiddlewareUser implements FynUnit {
     }
 
     // Render the React component with counter API (may be undefined)
-    ReactDomClient.createRoot(targetDiv).render(
-      React.createElement(App, {
-        appName: runtime.fynApp.name,
-        counterAPI,
-      })
-    );
+    if (!this.root) {
+      this.root = ReactDomClient.createRoot(targetDiv);
+    }
+
+    const renderApp = (api: any) => {
+      this.root!.render(
+        React.createElement(App, {
+          appName: runtime.fynApp.name,
+          counterAPI: api,
+        })
+      );
+    };
+
+    renderApp(counterAPI);
+
+    // If the counter middleware isn't ready yet, re-render once it becomes ready.
+    // This enables the "degrade then upgrade" UX in the shell demo.
+    const kernel: any = (globalThis as any).fynMeshKernel;
+    const events: EventTarget | undefined = kernel?.events;
+    if (events && !this.middlewareReadyHandler) {
+      this.kernelEvents = events;
+      this.middlewareReadyHandler = (event: Event) => {
+        const detail: any = (event as any).detail;
+        if (detail?.name !== "basic-counter") return;
+        if (detail?.cc?.fynApp?.name !== runtime.fynApp.name) return;
+
+        const updated = runtime.middlewareContext.get("basic-counter");
+        if (updated) {
+          console.log("✅ fynapp-6-react: basic-counter became ready, re-rendering with counter API");
+          renderApp(updated);
+        }
+      };
+      events.addEventListener("MIDDLEWARE_READY", this.middlewareReadyHandler);
+    }
 
     console.log(`${runtime.fynApp.name} bootstrapped successfully`);
 
     // Return self-managed result to tell shell middleware we've handled rendering
     return { type: 'self-managed', target: targetDiv };
+  }
+
+  shutdown(): void {
+    if (this.kernelEvents && this.middlewareReadyHandler) {
+      this.kernelEvents.removeEventListener("MIDDLEWARE_READY", this.middlewareReadyHandler);
+    }
+    this.root?.unmount();
+    this.root = undefined;
+    this.kernelEvents = undefined;
+    this.middlewareReadyHandler = undefined;
   }
 }
 
