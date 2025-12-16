@@ -368,8 +368,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       <div class="shell-layout">
         <!-- Header -->
         <div class="shell-header">
-          <h1 style="margin: 0; font-size: 1.5rem;">🏠 FynMesh Shell Demo</h1>
-          <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">
+          <h1 style="margin: 0; font-size: 1.5rem; color: white;">🏠 FynMesh Shell Demo</h1>
+          <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.875rem; color: white;">
             Multi-Region Layout with Dynamic FynApp Loading
           </p>
         </div>
