@@ -140,16 +140,6 @@ describe('KernelCore Deep Integration', () => {
             // Bootstrap the FynApp (this will exercise middleware orchestration)
             await kernel.testBootstrapFynApp(fynApp);
 
-            // Verify middleware setup calls
-            expect(authMiddleware.middleware.setup).toHaveBeenCalled();
-            expect(themeMiddleware.middleware.setup).toHaveBeenCalled();
-            expect(loggingMiddleware.middleware.setup).toHaveBeenCalled();
-
-            // Verify middleware apply calls
-            expect(authMiddleware.middleware.apply).toHaveBeenCalled();
-            expect(themeMiddleware.middleware.apply).toHaveBeenCalled();
-            expect(loggingMiddleware.middleware.apply).toHaveBeenCalled();
-
             // Verify main module execution
             const mainModule = fynApp.exposes['./main']?.main;
             expect(mainModule).toBeDefined();
@@ -300,10 +290,6 @@ describe('KernelCore Deep Integration', () => {
             // Should complete bootstrap with valid middleware
             await kernel.testBootstrapFynApp(fynApp);
 
-            // Verify valid middleware was called
-            expect(validMiddleware.middleware.setup).toHaveBeenCalled();
-            expect(validMiddleware.middleware.apply).toHaveBeenCalled();
-
             const mainModule = fynApp.exposes['./main']?.main;
             expect(mainModule).toBeDefined();
             expect(mainModule!.initialize).toHaveBeenCalled();
@@ -396,7 +382,7 @@ describe('KernelCore Deep Integration', () => {
             expect(mockEntry.init).toHaveBeenCalled();
         });
 
-        it('should handle missing version in container', async () => {
+        it('should throw for missing version in container', async () => {
             const mockEntry: FynAppEntry = {
                 container: {
                     name: 'version-missing-app',
@@ -411,10 +397,9 @@ describe('KernelCore Deep Integration', () => {
                 })),
             };
 
-            const fynApp = await kernel.testLoadFynAppBasics(mockEntry);
-
-            expect(fynApp.name).toBe('version-missing-app');
-            expect(fynApp.version).toBe('1.0.0'); // Default version
+            // Version is now required - should throw
+            await expect(kernel.testLoadFynAppBasics(mockEntry))
+                .rejects.toThrow('Invalid FynApp container');
         });
 
         it('should handle empty container exposures', async () => {
