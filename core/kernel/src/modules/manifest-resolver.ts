@@ -44,6 +44,27 @@ export class ManifestResolver {
   }
 
   /**
+   * Get the current preload callback
+   */
+  getPreloadCallback(): ((url: string, depth: number) => void) | undefined {
+    return this.preloadCallback;
+  }
+
+  /**
+   * Get the current registry resolver
+   */
+  getRegistryResolver(): RegistryResolver | undefined {
+    return this.registryResolver;
+  }
+
+  /**
+   * Calculate distBase from resolver result (public API)
+   */
+  getDistBase(res: RegistryResolverResult): string {
+    return this.calculateDistBase(res);
+  }
+
+  /**
    * Preload an entry file (with deduplication and depth tracking)
    * @private
    */

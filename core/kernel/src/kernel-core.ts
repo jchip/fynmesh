@@ -144,11 +144,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   ): Promise<void> {
     // Preload initial FynApp entry files before building dependency graph
     // This allows the initial batch to start loading in parallel
-    const preloadCallback = this.manifestResolver["preloadCallback"];
-    if (preloadCallback) {
+    const preloadCallback = this.manifestResolver.getPreloadCallback();
+    const registryResolver = this.manifestResolver.getRegistryResolver();
+    if (preloadCallback && registryResolver) {
       for (const req of requests) {
-        const res = await this.manifestResolver["registryResolver"]!(req.name, req.range);
-        const distBase = this.manifestResolver["calculateDistBase"](res);
+        const res = await registryResolver(req.name, req.range);
+        const distBase = this.manifestResolver.getDistBase(res);
         const entryUrl = `${distBase}fynapp-entry.js`;
         preloadCallback(entryUrl, 0); // depth 0 for requested FynApps
       }

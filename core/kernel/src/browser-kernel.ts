@@ -64,6 +64,29 @@ export class BrowserKernel extends FynMeshKernelCore {
   }
 
   /**
+   * Try to preload a URL based on current preload strategy
+   * This is the public API for preload functionality
+   * @param url - The URL to preload
+   * @param depth - The dependency depth (0 = direct request, 1+ = transitive)
+   */
+  tryPreload(url: string, depth: number): void {
+    // Check if preloading is disabled
+    if (this.preloadStrategy.disabled) {
+      console.debug(`⏭️  Preload disabled, skipping: ${url} (depth: ${depth})`);
+      return;
+    }
+
+    // Check if depth exceeds max depth
+    if (depth > this.preloadStrategy.depth) {
+      console.debug(`⏭️  Depth ${depth} > max ${this.preloadStrategy.depth}, skipping: ${url}`);
+      return;
+    }
+
+    // Inject the preload link
+    this.injectPreloadLink(url);
+  }
+
+  /**
    * Override loadFynAppsByName to handle preload strategy
    */
   async loadFynAppsByName(
@@ -144,24 +167,9 @@ export function createBrowserKernel(): BrowserKernel {
     };
   });
 
-  // Set up preload callback to inject modulepreload link tags with depth filtering
+  // Set up preload callback to use the kernel's public tryPreload API
   kernel.setPreloadCallback((url: string, depth: number) => {
-    const strategy = kernel["preloadStrategy"];
-
-    // Check if preloading is disabled
-    if (strategy.disabled) {
-      console.debug(`⏭️  Preload disabled, skipping: ${url} (depth: ${depth})`);
-      return;
-    }
-
-    // Check if depth exceeds max depth
-    if (depth > strategy.depth) {
-      console.debug(`⏭️  Depth ${depth} > max ${strategy.depth}, skipping: ${url}`);
-      return;
-    }
-
-    // Inject the preload link
-    kernel["injectPreloadLink"](url);
+    kernel.tryPreload(url, depth);
   });
 
   return kernel;
