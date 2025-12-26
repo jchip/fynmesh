@@ -10,6 +10,10 @@ describe('Export Files Coverage', () => {
             expect(indexModule.useMiddleware).toBeDefined();
             expect(indexModule.noOpMiddlewareUser).toBeDefined();
             expect(indexModule.fynMeshShareScope).toBeDefined();
+
+            // Should export state management classes
+            expect(indexModule.ObservableState).toBeDefined();
+            expect(indexModule.MiddlewareStateRegistry).toBeDefined();
         });
     });
 
@@ -39,6 +43,7 @@ describe('Export Files Coverage', () => {
             expect((globalThis as any).fynMeshKernel).toBeDefined();
             expect(typeof (globalThis as any).fynMeshKernel.loadFynApp).toBe('function');
             expect(typeof (globalThis as any).fynMeshKernel.registerMiddleware).toBe('function');
+            expect(typeof (globalThis as any).fynMeshKernel.getMiddlewareRegistry).toBe('function');
         });
     });
 
@@ -50,6 +55,7 @@ describe('Export Files Coverage', () => {
             expect(nodeModule.fynMeshKernel).toBeDefined();
             expect(typeof nodeModule.fynMeshKernel.loadFynApp).toBe('function');
             expect(typeof nodeModule.fynMeshKernel.registerMiddleware).toBe('function');
+            expect(typeof nodeModule.fynMeshKernel.getMiddlewareRegistry).toBe('function');
         });
 
         it('should create different instance from browser kernel', async () => {

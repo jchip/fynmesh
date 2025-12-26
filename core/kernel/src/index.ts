@@ -1,5 +1,7 @@
 // Export types
-export * from "./types.ts";
-export * from "./use-middleware.ts";
-export * from "./share-scope.ts";
-export * from "./errors.ts";
+export * from "./types";
+export * from "./use-middleware";
+export * from "./share-scope";
+export * from "./errors";
+export * from "./observable-state";
+export * from "./middleware-state-registry";

@@ -6,6 +6,7 @@
 import { FynEventTarget } from "./event-target";
 import { fynMeshShareScope } from "./share-scope";
 import { urlJoin } from "./util";
+import { MiddlewareStateRegistry } from "./middleware-state-registry";
 
 // Import extracted modules
 import { ManifestResolver } from "./modules/manifest-resolver";
@@ -38,6 +39,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public readonly shareScopeName: string = fynMeshShareScope;
 
   protected runTime: FynMeshRuntimeData;
+
+  // Middleware state registries
+  private globalMiddlewareRegistry = new MiddlewareStateRegistry();
+  private regionRegistries: Map<string, MiddlewareStateRegistry> = new Map();
 
   // Extracted modules
   public manifestResolver: ManifestResolver;
@@ -199,6 +204,24 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   getMiddleware(name: string, provider?: string): FynAppMiddlewareReg {
     return this.middlewareManager.getMiddleware(name, provider);
+  }
+
+  /**
+   * Get middleware state registry for global or region scope
+   */
+  getMiddlewareRegistry(scope: "global" | { region: string }): MiddlewareStateRegistry {
+    if (scope === "global") {
+      return this.globalMiddlewareRegistry;
+    }
+
+    const regionId = scope.region;
+    if (!this.regionRegistries.has(regionId)) {
+      this.regionRegistries.set(
+        regionId,
+        this.globalMiddlewareRegistry.createScope()
+      );
+    }
+    return this.regionRegistries.get(regionId)!;
   }
 
   /**

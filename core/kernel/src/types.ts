@@ -335,6 +335,12 @@ export interface FynMeshKernel {
   getMiddleware(name: string, provider?: string): FynAppMiddlewareReg;
 
   /**
+   * Get middleware state registry for global or region scope
+   * @param scope - either "global" or { region: string }
+   */
+  getMiddlewareRegistry(scope: "global" | { region: string }): import("./middleware-state-registry").MiddlewareStateRegistry;
+
+  /**
    * Clean up a container name to ensure it's a valid identifier
    * - this is needed so we can use npm package name as container name directly
    * - replace all chars @/-. with _, and then remove leading _
