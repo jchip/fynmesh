@@ -146,6 +146,11 @@ const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
             console.log('🔍 fynapp-6-react: Setting up shared counter event listener');
             setConnectionStatus('connected');
 
+            // Initial sync - read current count from shared state (late join support)
+            const currentCount = counterAPI?.config?.count ?? 0;
+            setSharedCount(currentCount);
+            console.log('🔍 fynapp-6-react: Initial sync - current count:', currentCount);
+
             const handleCounterChange = (event: any) => {
                 console.log('🔍 fynapp-6-react: Counter changed event received:', event.detail);
                 setSharedCount(event.detail.count);
