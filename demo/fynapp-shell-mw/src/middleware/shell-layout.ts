@@ -1060,10 +1060,41 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
             throw new Error(`FynApp must provide react and reactDOM dependencies`);
           }
 
+          // Create a proper runtime for the FynApp with populated middlewareContext
+          // This ensures the component has access to shared middleware APIs like basic-counter
+          const fynAppRuntime = this.kernel.moduleLoader.createFynUnitRuntime(fynApp);
+
+          // Apply middlewares to populate the FynApp's middlewareContext
+          // Look up any main FynUnit to get middleware metadata
+          const mainExport = fynApp.exposes?.["./main"]?.main;
+          if (mainExport) {
+            await this.applyMiddlewaresForReExecution(fynApp, mainExport, fynAppRuntime);
+          }
+
+          // Set up the shell-layout API in the FynApp's runtime
+          // This is needed because applyMiddlewaresForReExecution skips the shell middleware
+          fynAppRuntime.middlewareContext.set(this.name, {
+            isShellManaged: true,
+            renderTarget: container,
+            shellMode: 'component',
+            loadApp: this.loadApp.bind(this),
+            getAvailableApps: () => [...this.availableFynApps],
+            getLoadedApps: () => Array.from(this.loadedFynApps.keys()),
+            loadFynApp: this.loadFynApp.bind(this),
+            unloadFynApp: this.unloadFynApp.bind(this),
+            getLoadedFynApps: () => Array.from(this.loadedFynApps.keys()),
+            renderIntoShell: this.renderIntoShell.bind(this),
+            isShellAvailable: () => !!this.regions.get('main')?.container,
+            loadIntoRegion: this.loadIntoRegion.bind(this),
+            clearRegion: this.clearRegion.bind(this),
+            getRegions: () => Array.from(this.regions.keys()),
+            getRegionContent: (region: RegionName) => this.regions.get(region)?.fynAppId || null,
+          });
+
           // Use FynApp's React to create element and FynApp's ReactDOM to render
           const element = React.createElement(ReactComponent, {
             fynApp: fynApp,
-            runtime: this.shellRuntime
+            runtime: fynAppRuntime
           });
 
           // Use FynApp's ReactDOM to create root and render
