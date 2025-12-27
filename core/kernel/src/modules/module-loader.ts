@@ -239,11 +239,14 @@ export class ModuleLoader {
 
   /**
    * Create a FynUnit runtime
+   * Reuses the FynApp's middlewareContext to ensure consistency across multiple runtime creations
    */
   createFynUnitRuntime(fynApp: FynApp): FynUnitRuntime {
     return {
       fynApp,
-      middlewareContext: new Map<string, Record<string, any>>(),
+      // Reuse the FynApp's middlewareContext to maintain consistency
+      // This is critical for deferred loading scenarios where middlewares are resumed
+      middlewareContext: fynApp.middlewareContext || new Map<string, Record<string, any>>(),
     };
   }
 
