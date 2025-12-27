@@ -29,6 +29,7 @@ export default [
         name: "fynapp-react-middleware",
         exposes: {
           "./middleware/react-context": "./src/middleware/react-context.tsx",
+          "./hooks/useSharedCounter": "./src/hooks/useSharedCounter.ts",
         },
         shared: {},
         entry: {
