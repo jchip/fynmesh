@@ -37,13 +37,18 @@ const App: React.FC<AppProps> = ({
     { value: "fynmesh-cyberpunk", label: "Cyberpunk" },
   ];
 
-  // Function to get the shared data object from middleware context
+  // Function to get the shared data object from middleware context or global registry
   const getSharedDataObject = () => {
+    // First try runtime.middlewareContext (set during middleware setup)
     if (runtime?.middlewareContext) {
       const basicCounterData = runtime.middlewareContext.get("basic-counter");
-      return basicCounterData; // Return the actual object, not a copy
+      if (basicCounterData) return basicCounterData;
     }
-    return null;
+    // Fallback: check global registry directly (handles edge cases)
+    const kernel: any = (globalThis as any).fynMeshKernel;
+    const registry = kernel?.getMiddlewareRegistry?.("global");
+    const counterState = registry?.lookup?.("basic-counter");
+    return counterState?.get?.() || null;
   };
 
   // Function to read current count from the shared data object

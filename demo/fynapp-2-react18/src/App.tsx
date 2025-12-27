@@ -26,13 +26,18 @@ const App: React.FC<AppProps> = ({
     count: middlewareConfig?.count || 0,
   });
 
-  // Function to get the shared data object from middleware context
+  // Function to get the shared data object from middleware context or global registry
   const getSharedDataObject = () => {
+    // First try runtime.middlewareContext (set during middleware setup)
     if (runtime?.middlewareContext) {
       const basicCounterData = runtime.middlewareContext.get("basic-counter");
-      return basicCounterData; // Return the actual object, not a copy
+      if (basicCounterData) return basicCounterData;
     }
-    return null;
+    // Fallback: check global registry directly (handles late provider loading)
+    const kernel: any = (globalThis as any).fynMeshKernel;
+    const registry = kernel?.getMiddlewareRegistry?.("global");
+    const counterState = registry?.lookup?.("basic-counter");
+    return counterState?.get?.() || null;
   };
 
   // Function to read current count from the shared data object
@@ -64,20 +69,51 @@ const App: React.FC<AppProps> = ({
       }
     };
 
-    const sharedData = getSharedDataObject();
-    if (sharedData?.eventTarget) {
-      sharedData.eventTarget.addEventListener(
-        "counterChanged",
-        handleCounterChange
-      );
+    // Track current listener for cleanup
+    let currentEventTarget: EventTarget | null = null;
 
-      return () => {
-        sharedData.eventTarget.removeEventListener(
-          "counterChanged",
-          handleCounterChange
-        );
-      };
+    const setupCounterListener = () => {
+      const sharedData = getSharedDataObject();
+      if (sharedData?.eventTarget && sharedData.eventTarget !== currentEventTarget) {
+        // Clean up old listener if switching to new eventTarget
+        if (currentEventTarget) {
+          currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
+        }
+        currentEventTarget = sharedData.eventTarget;
+        currentEventTarget.addEventListener("counterChanged", handleCounterChange);
+        // Sync with current value
+        syncWithSharedData();
+        console.debug("✅ fynapp-2-react18: Subscribed to counter events");
+      }
+    };
+
+    // Initial setup
+    setupCounterListener();
+
+    // Listen for MIDDLEWARE_READY to handle late provider loading
+    const kernel: any = (globalThis as any).fynMeshKernel;
+    const kernelEvents: EventTarget | undefined = kernel?.events;
+
+    const handleMiddlewareReady = (event: Event) => {
+      const detail: any = (event as any).detail;
+      if (detail?.name === "basic-counter") {
+        console.debug("🔔 fynapp-2-react18: basic-counter became ready, syncing...");
+        setupCounterListener();
+      }
+    };
+
+    if (kernelEvents) {
+      kernelEvents.addEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
     }
+
+    return () => {
+      if (currentEventTarget) {
+        currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
+      }
+      if (kernelEvents) {
+        kernelEvents.removeEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
+      }
+    };
   }, [runtime, middlewareConfig]);
 
   // Destructure the components
