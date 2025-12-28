@@ -1,18 +1,116 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+import { useMiddleware } from "@fynmesh/kernel";
+import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
+import type { SelfManagedResult, ComponentFactoryResult } from "fynapp-shell-mw/middleware/shell-layout";
+import React from "react";
+import ReactDOMClient from "react-dom/client";
+import App from "./App";
 
-// Export the App component for federation
-export { default as App } from './App';
+/**
+ * FynUnit implementation for {{appName}}
+ *
+ * This handles the FynApp lifecycle:
+ * - initialize: Called first to determine readiness
+ * - execute: Called when middleware is ready, renders the app
+ * - shutdown: Called when the FynApp is being unloaded
+ */
+class {{appNamePascal}}Unit implements FynUnit {
+  private root?: ReturnType<typeof ReactDOMClient.createRoot>;
 
-// Bootstrap the app if running standalone
-if (typeof window !== 'undefined') {
-  const container = document.getElementById('root');
-  if (container) {
-    const root = ReactDOM.createRoot(container);
-    root.render(React.createElement(App, {
-      appName: '{{appName}}',
-      components: []
-    }));
+  /**
+   * Initialize - tell the kernel what mode we're in
+   */
+  initialize(runtime: FynUnitRuntime) {
+    console.debug(`📋 ${runtime.fynApp.name} initialize called`);
+    return {
+      status: "ready" as const,
+      mode: "standalone" as const,
+    };
+  }
+
+  /**
+   * Execute - render the React app
+   */
+  async execute(runtime: FynUnitRuntime): Promise<SelfManagedResult | ComponentFactoryResult> {
+    console.debug(`🚀 ${runtime.fynApp.name} executing`);
+
+    // Check if shell middleware is managing this execution
+    const shellMiddleware = runtime.middlewareContext.get("shell-layout");
+    const isShellManaged = shellMiddleware?.isShellManaged;
+
+    if (isShellManaged) {
+      // Shell-managed mode: return a component factory
+      console.debug(`🎭 ${runtime.fynApp.name} returning component factory for shell`);
+
+      return {
+        type: "component-factory",
+        componentFactory: (React: any) => ({
+          component: (props: any) =>
+            React.createElement(App, {
+              appName: runtime.fynApp.name,
+              runtime,
+              ...props,
+            }),
+          props: {},
+        }),
+        metadata: {
+          framework: "react",
+          version: React.version,
+          capabilities: ["component"],
+        },
+      };
+    }
+
+    // Standalone mode: render directly
+    console.debug(`🚀 ${runtime.fynApp.name} rendering in standalone mode`);
+
+    // Find or create target element
+    let targetElement = document.getElementById("{{appName}}");
+    if (!targetElement) {
+      targetElement = document.createElement("div");
+      targetElement.id = "{{appName}}";
+      document.body.appendChild(targetElement);
+    }
+
+    // Create React root and render
+    this.root = ReactDOMClient.createRoot(targetElement);
+    this.root.render(
+      React.createElement(App, {
+        appName: runtime.fynApp.name,
+        runtime,
+      })
+    );
+
+    return {
+      type: "self-managed",
+      target: targetElement,
+      cleanup: () => this.shutdown(),
+      metadata: {
+        framework: "react",
+        version: React.version,
+        capabilities: ["self-managed"],
+      },
+    };
+  }
+
+  /**
+   * Shutdown - cleanup when FynApp is unloaded
+   */
+  shutdown(): void {
+    console.debug(`🛑 {{appName}} shutting down`);
+    this.root?.unmount();
+    this.root = undefined;
   }
 }
+
+// Export the main entry point wrapped with middleware support
+export const main = useMiddleware(
+  [
+    // Add middleware here, e.g.:
+    // {
+    //   middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
+    //     { with: { type: "fynapp-middleware" } }),
+    //   config: { theme: "fynmesh-default" },
+    // },
+  ],
+  new {{appNamePascal}}Unit()
+);

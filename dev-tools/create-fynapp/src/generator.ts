@@ -28,6 +28,16 @@ interface GeneratorConfig extends AppConfig {
 }
 
 /**
+ * Convert kebab-case or snake_case to PascalCase
+ */
+function toPascalCase(str: string): string {
+    return str
+        .split(/[-_]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('');
+}
+
+/**
  * Creates a FynApp from templates based on the configuration
  */
 export async function generateApp(config: GeneratorConfig): Promise<void> {
@@ -83,6 +93,7 @@ async function createPackageJson(templateDir: string, config: GeneratorConfig): 
         // Replace template variables
         content = content
             .replace(/\{\{appName\}\}/g, config.name)
+            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
             .replace(/\{\{framework\}\}/g, config.framework);
 
         // Write the file
@@ -106,6 +117,7 @@ async function createRollupConfig(templateDir: string, config: GeneratorConfig):
         // Replace template variables
         content = content
             .replace(/\{\{appName\}\}/g, config.name)
+            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
             .replace(/\{\{framework\}\}/g, config.framework);
 
         // Write the file
@@ -171,6 +183,7 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
                 // Replace template variables
                 content = content
                     .replace(/\{\{appName\}\}/g, config.name)
+                    .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
                     .replace(/\{\{framework\}\}/g, config.framework);
 
                 // Handle component inclusion based on selected components
