@@ -17,6 +17,18 @@ import alias from "@rollup/plugin-alias";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import terser from "@rollup/plugin-terser";
 import federation from "rollup-plugin-federation";
+
+// Debug logging - enabled via DEBUG=create-fynapp or DEBUG=*
+const debugEnabled =
+  process.env.DEBUG === "create-fynapp" ||
+  process.env.DEBUG === "*" ||
+  process.env.DEBUG?.includes("create-fynapp");
+
+function debug(...args: any[]) {
+  if (debugEnabled) {
+    console.log("[create-fynapp]", ...args);
+  }
+}
 import type {
   FederationPluginOptions,
   GenDynamicImportIdInfo,
@@ -265,13 +277,9 @@ export function createEnrichManifest() {
   return async (baseManifest: any, runtime: FederationRuntime, context: any) => {
     const cwd = process.cwd();
 
-    // Debug: Log dynamicImports to see what we're receiving
-    console.log("enrichManifest - dynamicImports count:", baseManifest.dynamicImports?.length);
-    if (baseManifest.dynamicImports?.length > 0) {
-      console.log(
-        "enrichManifest - first dynamicImport:",
-        JSON.stringify(baseManifest.dynamicImports[0], null, 2),
-      );
+    debug("enrichManifest - dynamicImports count:", baseManifest.dynamicImports?.length);
+    if (debugEnabled && baseManifest.dynamicImports?.length > 0) {
+      debug("enrichManifest - first dynamicImport:", JSON.stringify(baseManifest.dynamicImports[0], null, 2));
     }
 
     // Process consume-shared from shared config
@@ -373,8 +381,8 @@ export function createEnrichManifest() {
             entry.middlewareName = modulePath;
           }
 
-          console.log(
-            `[enrichManifest] Added middleware fields: packageName=${packageName}, modulePath=${modulePath}, exposeModule=${entry.exposeModule}, middlewareName=${entry.middlewareName}`,
+          debug(
+            `enrichManifest - Added middleware fields: packageName=${packageName}, modulePath=${modulePath}, exposeModule=${entry.exposeModule}, middlewareName=${entry.middlewareName}`,
           );
         }
 
@@ -390,8 +398,7 @@ export function createEnrichManifest() {
     // Detect shared providers
     const sharedProviders = detectSharedProviders(consumeShared, provideShared, cwd);
 
-    // Debug: Log importExposed to see if middleware fields are present
-    console.log("[enrichManifest] Final importExposed:", JSON.stringify(importExposed, null, 2));
+    debug("enrichManifest - Final importExposed:", JSON.stringify(importExposed, null, 2));
 
     // Build enriched manifest
     const enrichedManifest = {
@@ -404,10 +411,7 @@ export function createEnrichManifest() {
       "shared-providers": Object.keys(sharedProviders).length > 0 ? sharedProviders : undefined,
     };
 
-    console.log(
-      "[enrichManifest] Final enrichedManifest:",
-      JSON.stringify(enrichedManifest, null, 2),
-    );
+    debug("enrichManifest - Final enrichedManifest:", JSON.stringify(enrichedManifest, null, 2));
 
     return enrichedManifest;
   };
@@ -443,7 +447,7 @@ export function createEmitFederationMeta() {
       runtime.fynappManifest ||
       (await generateFynAppManifest(federationInfo, runtime, context, bundle));
 
-    console.log("[createEmitFederationMeta] Using manifest:", JSON.stringify(manifest, null, 2));
+    debug("emitFederationMeta - Using manifest:", JSON.stringify(manifest, null, 2));
 
     // Still emit the manifest file for backwards compatibility and debugging
     context.emitFile({
