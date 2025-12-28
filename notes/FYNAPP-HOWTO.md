@@ -1,47 +1,64 @@
 # How to Create a FynApp
 
-This guide walks you through creating a FynApp micro frontend from scratch.
+This guide provides complete instructions for creating a FynApp micro frontend. All code examples are complete and copy-paste ready.
 
-## Quick Start
+## Prerequisites
 
-The fastest way to create a FynApp:
+- Working in the `fynmesh` monorepo
+- Node.js installed
+- `fyn` package manager available
+
+## Step-by-Step Checklist
+
+1. [ ] Create FynApp directory under `demo/`
+2. [ ] Create `package.json`
+3. [ ] Create `tsconfig.json`
+4. [ ] Create `rollup.config.mjs`
+5. [ ] Create `src/main.ts` (FynUnit entry)
+6. [ ] Create `src/App.tsx` (React component)
+7. [ ] Create `src/styles.css`
+8. [ ] Register in demo-server
+9. [ ] Build and test
+
+---
+
+## Complete File Contents
+
+### 1. Create Directory
 
 ```bash
-# From the fynmesh repo root
-create-fynapp --name my-fynapp --framework react
+mkdir -p demo/my-fynapp/src
+cd demo/my-fynapp
 ```
 
-Or manually create the following structure:
+### 2. package.json
 
-```
-my-fynapp/
-├── package.json
-├── rollup.config.mjs
-├── tsconfig.json
-└── src/
-    ├── main.ts      # FynUnit entry point
-    ├── App.tsx      # React component
-    └── styles.css
-```
-
-## Project Structure
-
-### package.json
+Create `demo/my-fynapp/package.json`:
 
 ```json
 {
   "name": "my-fynapp",
   "version": "1.0.0",
+  "description": "My FynApp micro frontend",
   "type": "module",
   "main": "dist/fynapp-entry.js",
+  "exports": {
+    ".": "./dist/fynapp-entry.js"
+  },
   "scripts": {
     "build": "rm -rf dist && rollup -c",
     "dev": "rollup -c -w"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.8.9",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
@@ -54,9 +71,43 @@ my-fynapp/
 }
 ```
 
-### rollup.config.mjs
+### 3. tsconfig.json
 
-Use the `create-fynapp` helper APIs for consistent configuration:
+Create `demo/my-fynapp/tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "react": ["./node_modules/esm-react"],
+      "react-dom": ["./node_modules/esm-react-dom"],
+      "react-dom/client": ["./node_modules/esm-react-dom"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+### 4. rollup.config.mjs
+
+Create `demo/my-fynapp/rollup.config.mjs`:
 
 ```javascript
 import resolve from "@rollup/plugin-node-resolve";
@@ -103,283 +154,445 @@ export default [
 ];
 ```
 
-### Helper APIs
+### 5. src/main.ts
 
-| Helper | Purpose |
-|--------|---------|
-| `setupFynAppOutputConfig()` | Standard output config (dist/, systemjs, sourcemaps) |
-| `setupDummyEntryPlugins()` | Virtual entry for federation |
-| `setupReactAliasPlugins()` | Alias react to esm-react |
-| `setupReactFederationPlugins()` | React-specific federation with manifest generation |
-| `setupFederationPlugins()` | Generic federation (for Vue, etc.) |
-| `setupMinifyPlugins()` | Terser for production builds |
-
-## FynUnit Lifecycle
-
-Every FynApp exports a `main` that wraps a FynUnit with middleware support:
-
-### src/main.ts
+Create `demo/my-fynapp/src/main.ts`:
 
 ```typescript
 import { useMiddleware } from "@fynmesh/kernel";
 import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
-import type { SelfManagedResult, ComponentFactoryResult } from "fynapp-shell-mw/middleware/shell-layout";
+import type {
+  SelfManagedResult,
+  ComponentFactoryResult,
+} from "fynapp-shell-mw/middleware/shell-layout";
 import React from "react";
 import ReactDOMClient from "react-dom/client";
 import App from "./App";
 
-class MyFynAppUnit implements FynUnit {
+/**
+ * FynUnit implementation for my-fynapp
+ */
+class MyFynappUnit implements FynUnit {
   private root?: ReturnType<typeof ReactDOMClient.createRoot>;
 
   /**
-   * Called first - return readiness status
+   * Initialize - called first to determine readiness
    */
   initialize(runtime: FynUnitRuntime) {
+    console.debug(`📋 ${runtime.fynApp.name} initialize called`);
     return {
       status: "ready" as const,
-      mode: "standalone" as const,  // or "provider" / "consumer"
+      mode: "standalone" as const,
     };
   }
 
   /**
-   * Called when middleware is ready - render the app
+   * Execute - called when middleware is ready, renders the app
    */
-  async execute(runtime: FynUnitRuntime): Promise<SelfManagedResult | ComponentFactoryResult> {
-    // Check if shell is managing us
+  async execute(
+    runtime: FynUnitRuntime
+  ): Promise<SelfManagedResult | ComponentFactoryResult> {
+    console.debug(`🚀 ${runtime.fynApp.name} executing`);
+
+    // Check if shell middleware is managing this execution
     const shellMiddleware = runtime.middlewareContext.get("shell-layout");
     const isShellManaged = shellMiddleware?.isShellManaged;
 
     if (isShellManaged) {
-      // Return component factory for shell to render
+      // Shell-managed mode: return a component factory
+      console.debug(
+        `🎭 ${runtime.fynApp.name} returning component factory for shell`
+      );
+
       return {
         type: "component-factory",
-        componentFactory: (React) => ({
-          component: (props) => React.createElement(App, { ...props, runtime }),
+        componentFactory: (React: any) => ({
+          component: (props: any) =>
+            React.createElement(App, {
+              appName: runtime.fynApp.name,
+              runtime,
+              ...props,
+            }),
           props: {},
         }),
-        metadata: { framework: "react", version: React.version },
+        metadata: {
+          framework: "react",
+          version: React.version,
+          capabilities: ["component"],
+        },
       };
     }
 
-    // Standalone: render ourselves
-    const target = document.getElementById("my-fynapp") || document.createElement("div");
-    this.root = ReactDOMClient.createRoot(target);
-    this.root.render(React.createElement(App, { runtime }));
+    // Standalone mode: render directly
+    console.debug(`🚀 ${runtime.fynApp.name} rendering in standalone mode`);
+
+    // Find or create target element
+    let targetElement = document.getElementById("my-fynapp");
+    if (!targetElement) {
+      targetElement = document.createElement("div");
+      targetElement.id = "my-fynapp";
+      document.body.appendChild(targetElement);
+    }
+
+    // Create React root and render
+    this.root = ReactDOMClient.createRoot(targetElement);
+    this.root.render(
+      React.createElement(App, {
+        appName: runtime.fynApp.name,
+        runtime,
+      })
+    );
 
     return {
       type: "self-managed",
-      target,
+      target: targetElement,
       cleanup: () => this.shutdown(),
+      metadata: {
+        framework: "react",
+        version: React.version,
+        capabilities: ["self-managed"],
+      },
     };
   }
 
   /**
-   * Called when FynApp is unloaded
+   * Shutdown - cleanup when FynApp is unloaded
    */
   shutdown(): void {
+    console.debug(`🛑 my-fynapp shutting down`);
     this.root?.unmount();
     this.root = undefined;
   }
 }
 
-export const main = useMiddleware([], new MyFynAppUnit());
+// Export the main entry point wrapped with middleware support
+export const main = useMiddleware(
+  [
+    // Add middleware here if needed, e.g.:
+    // {
+    //   middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
+    //     { with: { type: "fynapp-middleware" } }),
+    //   config: { theme: "fynmesh-default" },
+    // },
+  ],
+  new MyFynappUnit()
+);
 ```
 
-### Lifecycle Methods
+### 6. src/App.tsx
 
-| Method | When Called | Purpose |
+Create `demo/my-fynapp/src/App.tsx`:
+
+```tsx
+import React, { useState } from "react";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import "./styles.css";
+
+interface AppProps {
+  appName: string;
+  runtime?: FynUnitRuntime;
+}
+
+const App: React.FC<AppProps> = ({ appName, runtime }) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div className="fynapp-container">
+      <h2 className="fynapp-title">
+        {appName} - React {React.version}
+      </h2>
+
+      <div className="fynapp-content">
+        <p>Welcome to your new FynApp!</p>
+
+        <div className="counter-section">
+          <p>
+            Count: <strong>{count}</strong>
+          </p>
+          <button
+            className="fynapp-button"
+            onClick={() => setCount((c) => c + 1)}
+          >
+            Increment
+          </button>
+        </div>
+
+        {runtime && (
+          <div className="runtime-info">
+            <p>
+              <small>
+                Running as: {runtime.fynApp.name} v{runtime.fynApp.version}
+              </small>
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;
+```
+
+### 7. src/styles.css
+
+Create `demo/my-fynapp/src/styles.css`:
+
+```css
+.fynapp-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.fynapp-title {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.fynapp-content {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.counter-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.fynapp-button {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.fynapp-button:hover {
+  background: #0052a3;
+}
+
+.runtime-info {
+  margin-top: 1rem;
+  color: #666;
+  text-align: center;
+}
+```
+
+---
+
+## Register in Demo Server
+
+### 8. Update demo-server fynapp-loader.html
+
+Add your FynApp to the features list. Edit `demo/demo-server/templates/components/fynapp-loader.html`:
+
+Find the `features` object and add your FynApp:
+
+```javascript
+const features = {
+    "fynapp-2-react18": "lazy",
+    "fynapp-1": true,
+    "fynapp-1-b": true,
+    // ... other apps ...
+    "my-fynapp": true,  // <-- Add this line
+};
+```
+
+**Options:**
+- `true` - Load eagerly on page load
+- `"lazy"` - Deferred loading with UI button
+- `false` or omit - Don't load
+
+The kernel's registry resolver automatically finds FynApps at `demo/{name}/dist/` based on the name.
+
+---
+
+## Build and Test
+
+### 9. Build
+
+From the fynmesh repo root:
+
+```bash
+# Install dependencies and build all
+fyn bootstrap
+
+# Or build just your FynApp
+cd demo/my-fynapp
+fyn install
+fyn build
+```
+
+### Expected Build Output
+
+After building, you should see:
+```
+demo/my-fynapp/dist/
+├── fynapp-entry.js        # Main entry point
+├── fynapp-entry.js.map    # Source map
+├── fynapp.manifest.json   # Federation manifest
+└── main-[hash].js         # Exposed module chunk
+```
+
+### 10. Test
+
+```bash
+# From repo root
+fyn start
+```
+
+Navigate to:
+- `http://localhost:3000/demo.html` - Full demo with all FynApps
+- `http://localhost:3000/shell.html` - Shell middleware demo
+
+---
+
+## Key Concepts
+
+### FynUnit Lifecycle
+
+| Method | When Called | Returns |
 |--------|-------------|---------|
-| `initialize(runtime)` | First, before middleware | Report readiness and mode |
-| `execute(runtime)` | After middleware ready | Render the app |
-| `shutdown()` | When FynApp unloads | Cleanup resources |
+| `initialize(runtime)` | First, before middleware setup | `{ status, mode, deferOk? }` |
+| `execute(runtime)` | After middleware ready | `SelfManagedResult` or `ComponentFactoryResult` |
+| `shutdown()` | When FynApp unloads | `void` |
 
-### Initialize Return Values
+### Result Types
 
+**SelfManagedResult** - FynApp renders itself:
 ```typescript
-{
-  status: "ready" | "waiting" | "error",
-  mode: "standalone" | "provider" | "consumer",
-  deferOk?: boolean,  // Can we continue if middleware isn't ready?
-}
+{ type: "self-managed", target: HTMLElement, cleanup?: () => void }
 ```
 
-## Result Types
-
-### SelfManagedResult
-
-Use when your FynApp renders itself (standalone mode):
-
+**ComponentFactoryResult** - Shell renders the FynApp:
 ```typescript
-{
-  type: "self-managed",
-  target: HTMLElement,
-  cleanup?: () => void,
-  metadata?: { framework: string, version: string }
-}
+{ type: "component-factory", componentFactory: (React) => ({ component, props }) }
 ```
 
-### ComponentFactoryResult
-
-Use when shell middleware manages rendering:
-
+**NoRenderResult** - Cannot render:
 ```typescript
-{
-  type: "component-factory",
-  componentFactory: (React) => ({
-    component: YourComponent,
-    props: {}
-  }),
-  metadata?: { framework: string, version: string }
-}
+{ type: "no-render", message: string }
 ```
 
-### NoRenderResult
+### Initialize Modes
 
-Use when rendering isn't possible:
+- `standalone` - FynApp manages its own rendering
+- `provider` - FynApp provides shared state/services to others
+- `consumer` - FynApp consumes shared state from a provider
 
-```typescript
-{
-  type: "no-render",
-  message: "Target element not found",
-  metadata?: { framework: string, version: string }
-}
-```
+---
 
-## Middleware Usage
+## Adding Middleware
 
-### Using Middleware
+To use middleware (e.g., design tokens, shared counter):
 
 ```typescript
 export const main = useMiddleware(
   [
     {
-      middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
-        { with: { type: "fynapp-middleware" } }),
-      config: { theme: "fynmesh-default" },
-    },
-    {
-      middleware: import('fynapp-react-middleware/main/basic-counter',
-        { with: { type: "fynapp-middleware" } }),
-      config: { share: true },
+      // @ts-ignore - TS can't understand module federation imports
+      middleware: import(
+        "fynapp-design-tokens/middleware/design-tokens/design-tokens",
+        { with: { type: "fynapp-middleware" } }
+      ),
+      config: {
+        theme: "fynmesh-default",
+        cssCustomProperties: true,
+      },
     },
   ],
-  new MyFynAppUnit()
+  new MyFynappUnit()
 );
 ```
 
-### Accessing Middleware in Execute
-
+Access middleware in execute:
 ```typescript
 async execute(runtime: FynUnitRuntime) {
-  // Get middleware APIs
   const designTokens = runtime.middlewareContext.get("design-tokens");
-  const counter = runtime.middlewareContext.get("basic-counter");
-
-  // Use them
   if (designTokens?.api) {
     designTokens.api.setTheme("fynmesh-dark");
   }
+  // ... rest of execute
 }
 ```
 
-### Provider vs Consumer
+---
 
-- **Provider**: Supplies shared state/functionality to other FynApps
-- **Consumer**: Uses shared state from a provider
+## Adding CSS Support with PostCSS
 
-```typescript
-// Provider FynApp
-initialize(runtime) {
-  return { status: "ready", mode: "provider" };
-}
-
-// Consumer FynApp
-initialize(runtime) {
-  return { status: "ready", mode: "consumer", deferOk: true };
-}
-```
-
-## Building & Testing
-
-### Build Commands
-
-```bash
-# Development build with watch
-fyn dev
-
-# Production build
-NODE_ENV=production fyn build
-```
-
-### Debug Logging
-
-Enable verbose logging during builds:
-
-```bash
-DEBUG=create-fynapp fyn build
-```
-
-### Testing in Demo Server
-
-1. Add your FynApp to `demo/`
-2. Update `demo/demo-server/src/fynapps.ts` to include it
-3. Run `fyn bootstrap` to build all
-4. Run `fyn start` and navigate to `http://localhost:3000/demo.html`
-
-## Common Patterns
-
-### Exposing Multiple Modules
-
-```javascript
-setupReactFederationPlugins({
-  name: "my-fynapp",
-  exposes: {
-    "./main": "./src/main.ts",
-    "./components": "./src/components/index.ts",
-    "./hooks": "./src/hooks/index.ts",
-  },
-})
-```
-
-### Consuming Shared Dependencies
-
-```javascript
-setupReactFederationPlugins({
-  name: "my-fynapp",
-  exposes: { "./main": "./src/main.ts" },
-  shared: {
-    "esm-react": { import: false, semver: "^19.0.0" },
-    "esm-react-dom": { import: false, semver: "^19.0.0" },
-  },
-})
-```
-
-### Adding CSS Support
+If you need CSS processing, update rollup.config.mjs:
 
 ```javascript
 import postcss from "rollup-plugin-postcss";
 
-plugins: [
-  ...setupDummyEntryPlugins(),
-  newRollupPlugin(postcss)({ inject: true }),
-  // ... rest of plugins
-]
+// In plugins array, add after setupDummyEntryPlugins():
+newRollupPlugin(postcss)({
+  inject: true,
+  extract: false,
+}),
 ```
+
+And add to package.json devDependencies:
+```json
+"rollup-plugin-postcss": "^4.0.2"
+```
+
+---
 
 ## Troubleshooting
 
-### "Cannot find module '@fynmesh/kernel'"
+### Build fails with "Cannot find module"
 
-Make sure you have the kernel as a dev dependency and run `fyn install`.
+Run `fyn install` in your FynApp directory.
 
-### FynApp not loading
+### FynApp not loading in browser
 
-1. Check the browser console for errors
-2. Verify `fynapp-entry.js` exists in `dist/`
-3. Ensure the FynApp is registered in the demo server
+1. Check browser console for errors
+2. Verify `dist/fynapp-entry.js` exists
+3. Check the FynApp is added to `features` object in `demo/demo-server/templates/components/fynapp-loader.html`
+4. Verify the FynApp directory name matches the name in `features`
+5. Rebuild demo-server: `cd demo/demo-server && fyn build`
 
 ### Middleware not available
 
-1. Middleware loads asynchronously - use `deferOk: true` in initialize
-2. Check the provider FynApp is loaded first
-3. Verify the middleware import path is correct
+1. Use `deferOk: true` in initialize return
+2. Ensure the provider FynApp loads before consumers
+3. Check middleware import path matches the expose path in the provider
+
+### TypeScript errors with middleware imports
+
+Add `// @ts-ignore` above the import - TypeScript doesn't understand module federation dynamic imports with import attributes.
+
+---
+
+## Quick Reference
+
+### Helper APIs from create-fynapp
+
+| API | Purpose |
+|-----|---------|
+| `setupFynAppOutputConfig()` | Standard output: dist/, systemjs, sourcemaps |
+| `setupDummyEntryPlugins()` | Virtual entry required by federation |
+| `setupReactAliasPlugins()` | Maps react → esm-react |
+| `setupReactFederationPlugins(config)` | React federation with manifest |
+| `setupFederationPlugins(config)` | Generic federation (Vue, etc.) |
+| `setupMinifyPlugins()` | Terser for production |
+| `fynappDummyEntryName` | Constant for input array |
+| `fynappEntryFilename` | Constant for input array |
+| `env` | Current NODE_ENV |
+
+### Debug Logging
+
+```bash
+DEBUG=create-fynapp fyn build
+```
