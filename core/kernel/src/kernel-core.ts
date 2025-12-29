@@ -342,9 +342,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         }
 
         // Simplified 2-path execution:
-        // Path A: FynUnit with __middlewareMeta - full middleware coordination
-        // Path B: FynUnit without __middlewareMeta - direct execution with auto-apply only
-        if (fynUnit.__middlewareMeta) {
+        // Path A: FynUnit with non-empty __middlewareMeta - full middleware coordination
+        // Path B: FynUnit without __middlewareMeta or empty array - direct execution with auto-apply only
+        // FYM-99: Check for non-empty array to avoid skipping FynUnit execution
+        if (fynUnit.__middlewareMeta && fynUnit.__middlewareMeta.length > 0) {
           // Path A: Full middleware coordination
           await this.middlewareExecutor.useMiddlewareOnFynUnit(
             fynUnit,

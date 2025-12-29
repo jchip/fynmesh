@@ -278,17 +278,9 @@ class MyFynappUnit implements FynUnit {
   }
 }
 
-// Export the main entry point wrapped with middleware support
-// IMPORTANT: At least one middleware is required for the kernel to call initialize/execute
-export const main = useMiddleware(
-  {
-    // @ts-ignore - TS can't understand module federation remote containers
-    middleware: import('fynapp-react-middleware/main/basic-counter',
-        { with: { type: "fynapp-middleware" } }),
-    config: "consume-only",
-  },
-  new MyFynappUnit()
-);
+// Export the main entry point
+// Middleware is optional - use an empty array if not needed
+export const main = useMiddleware([], new MyFynappUnit());
 ```
 
 ### 6. src/App.tsx
@@ -592,10 +584,6 @@ Run `fyn install` in your FynApp directory.
 ### TypeScript errors with middleware imports
 
 Add `// @ts-ignore` above the import - TypeScript doesn't understand module federation dynamic imports with import attributes.
-
-### FynApp loads but initialize/execute not called
-
-**At least one middleware is required.** Using an empty middleware array `useMiddleware([], unit)` causes the kernel to skip the FynUnit lifecycle. Add at least one middleware like `basic-counter` to enable the bootstrap process.
 
 ---
 

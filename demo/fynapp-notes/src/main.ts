@@ -114,13 +114,5 @@ class NotesUnit implements FynUnit {
   }
 }
 
-// Export the main entry point wrapped with middleware support
-export const main = useMiddleware(
-  {
-    // @ts-ignore - TS can't understand module federation remote containers
-    middleware: import('fynapp-react-middleware/main/basic-counter',
-        { with: { type: "fynapp-middleware" } }),
-    config: "consume-only",
-  },
-  new NotesUnit()
-);
+// Export the main entry point - no middleware needed for this simple app
+export const main = useMiddleware([], new NotesUnit());

@@ -76,6 +76,18 @@ describe('useMiddleware', () => {
             expect(result.__middlewareMeta![0].info.provider).toBe('simple-provider');
         });
 
+        it('should handle empty middleware array', () => {
+            const user: FynModule = {
+                initialize: vi.fn(),
+                execute: vi.fn(),
+            };
+
+            const result = useMiddleware([], user);
+
+            expect(result).toBe(user);
+            expect(result.__middlewareMeta).toEqual([]);
+        });
+
         it('should preserve existing user module properties', () => {
             const meta: MiddlewareUseMeta<unknown> = {
                 info: {
