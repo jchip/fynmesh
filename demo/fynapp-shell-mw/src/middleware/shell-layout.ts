@@ -130,6 +130,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     { id: "fynapp-2-react18", name: "FynApp 2 (React 18)", url: "/fynapp-2-react18/dist", framework: "React 18" },
     { id: "fynapp-6-react", name: "FynApp 6 (React)", url: "/fynapp-6-react/dist", framework: "React" },
     { id: "fynapp-ag-grid", name: "AG Grid (React 19)", url: "/fynapp-ag-grid/dist", framework: "React 19" },
+    { id: "fynapp-notes", name: "Notes (React 19, No MW)", url: "/fynapp-notes/dist", framework: "React 19" },
     { id: "fynapp-4-vue", name: "FynApp 4 (Vue)", url: "/fynapp-4-vue/dist", framework: "Vue" },
     { id: "fynapp-5-preact", name: "FynApp 5 (Preact)", url: "/fynapp-5-preact/dist", framework: "Preact" },
     { id: "fynapp-7-solid", name: "FynApp 7 (Solid)", url: "/fynapp-7-solid/dist", framework: "Solid" },
