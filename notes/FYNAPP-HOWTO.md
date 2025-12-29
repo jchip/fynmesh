@@ -17,7 +17,7 @@ This guide provides complete instructions for creating a FynApp micro frontend. 
 5. [ ] Create `src/main.ts` (FynUnit entry)
 6. [ ] Create `src/App.tsx` (React component)
 7. [ ] Create `src/styles.css`
-8. [ ] Register in demo-server
+8. [ ] Register in demo-server (fynapp-loader.html AND dev-proxy.ts)
 9. [ ] Build and test
 
 ---
@@ -62,8 +62,9 @@ Create `demo/my-fynapp/package.json`:
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
-    "fynapp-shell-mw": "^1.0.0",
+    "postcss": "^8.5.3",
     "rollup": "^4.9.1",
+    "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-federation": "^1.0.0",
     "rollup-wrap-plugin": "^1.0.0",
     "typescript": "^5.2.2"
@@ -78,32 +79,29 @@ Create `demo/my-fynapp/tsconfig.json`:
 ```json
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "isolatedModules": true,
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "./dist/types",
     "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {
-      "react": ["./node_modules/esm-react"],
-      "react-dom": ["./node_modules/esm-react-dom"],
-      "react-dom/client": ["./node_modules/esm-react-dom"]
-    }
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
 ```
+
+**Note**: Use `"jsx": "react"` (classic mode) instead of `"jsx": "react-jsx"` because the `esm-react` package doesn't export `/jsx-runtime`.
 
 ### 4. rollup.config.mjs
 
@@ -112,6 +110,7 @@ Create `demo/my-fynapp/rollup.config.mjs`:
 ```javascript
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
+import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -134,6 +133,10 @@ export default [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
+      }),
+      newRollupPlugin(postcss)({
+        inject: true,
+        extract: false,
       }),
       ...setupReactFederationPlugins({
         name: "my-fynapp",
@@ -161,13 +164,23 @@ Create `demo/my-fynapp/src/main.ts`:
 ```typescript
 import { useMiddleware } from "@fynmesh/kernel";
 import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
-import type {
-  SelfManagedResult,
-  ComponentFactoryResult,
-} from "fynapp-shell-mw/middleware/shell-layout";
 import React from "react";
 import ReactDOMClient from "react-dom/client";
 import App from "./App";
+
+// Inline result types to avoid fynapp-shell-mw dependency
+interface SelfManagedResult {
+  type: "self-managed";
+  target: HTMLElement;
+  cleanup?: () => void;
+  metadata?: Record<string, unknown>;
+}
+
+interface ComponentFactoryResult {
+  type: "component-factory";
+  componentFactory: (React: unknown) => { component: unknown; props: unknown };
+  metadata?: Record<string, unknown>;
+}
 
 /**
  * FynUnit implementation for my-fynapp
@@ -266,15 +279,14 @@ class MyFynappUnit implements FynUnit {
 }
 
 // Export the main entry point wrapped with middleware support
+// IMPORTANT: At least one middleware is required for the kernel to call initialize/execute
 export const main = useMiddleware(
-  [
-    // Add middleware here if needed, e.g.:
-    // {
-    //   middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
-    //     { with: { type: "fynapp-middleware" } }),
-    //   config: { theme: "fynmesh-default" },
-    // },
-  ],
+  {
+    // @ts-ignore - TS can't understand module federation remote containers
+    middleware: import('fynapp-react-middleware/main/basic-counter',
+        { with: { type: "fynapp-middleware" } }),
+    config: "consume-only",
+  },
   new MyFynappUnit()
 );
 ```
@@ -415,6 +427,21 @@ const features = {
 
 The kernel's registry resolver automatically finds FynApps at `demo/{name}/dist/` based on the name.
 
+### 8b. Update demo-server dev-proxy.ts
+
+Add your FynApp path mapping to `demo/demo-server/src/dev-proxy.ts`:
+
+Find the array passed to `startDevProxy()` and add your FynApp:
+
+```typescript
+  [
+    { path: "/my-fynapp" },
+    { protocol: "file", path: Path.join(__dirname, "../../my-fynapp") },
+  ],
+```
+
+This step is required for the dev server to know where to find your FynApp's files.
+
 ---
 
 ## Build and Test
@@ -528,23 +555,16 @@ async execute(runtime: FynUnitRuntime) {
 
 ---
 
-## Adding CSS Support with PostCSS
+## CSS Support
 
-If you need CSS processing, update rollup.config.mjs:
+CSS support via PostCSS is already included in the base configuration. The setup includes:
 
-```javascript
-import postcss from "rollup-plugin-postcss";
+- `postcss` and `rollup-plugin-postcss` in package.json devDependencies
+- PostCSS plugin configured in rollup.config.mjs with `inject: true`
 
-// In plugins array, add after setupDummyEntryPlugins():
-newRollupPlugin(postcss)({
-  inject: true,
-  extract: false,
-}),
-```
-
-And add to package.json devDependencies:
-```json
-"rollup-plugin-postcss": "^4.0.2"
+Simply import your CSS files in your components:
+```typescript
+import "./styles.css";
 ```
 
 ---
@@ -572,6 +592,10 @@ Run `fyn install` in your FynApp directory.
 ### TypeScript errors with middleware imports
 
 Add `// @ts-ignore` above the import - TypeScript doesn't understand module federation dynamic imports with import attributes.
+
+### FynApp loads but initialize/execute not called
+
+**At least one middleware is required.** Using an empty middleware array `useMiddleware([], unit)` causes the kernel to skip the FynUnit lifecycle. Add at least one middleware like `basic-counter` to enable the bootstrap process.
 
 ---
 

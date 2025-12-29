@@ -127,6 +127,13 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
                     color: "fynapp-3",
                     badge: "warning",
                 },
+                {
+                    id: "fynapp-notes",
+                    name: "FynApp Notes",
+                    framework: "React 19",
+                    color: "fynapp-notes",
+                    badge: "info",
+                },
             ],
             infoCards: [
                 {

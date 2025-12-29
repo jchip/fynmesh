@@ -103,4 +103,8 @@ startDevProxy([
     { path: "/fynapp-ag-grid-lib" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-ag-grid-lib") },
   ],
+  [
+    { path: "/fynapp-notes" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-notes") },
+  ],
 ]);
