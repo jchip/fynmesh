@@ -128,7 +128,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       await this.middlewareExecutor.callMiddlewares(
         resume.callContexts,
         async (cc, share) => this.signalMiddlewareReady(cc, { share }),
-        (fynAppName, middlewareName, mode) => 
+        (fynAppName, middlewareName, mode) =>
           this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode),
         undefined,
         resume.resumeMode === "middleware_only" ? { skipFynUnit: true } : undefined
@@ -261,6 +261,21 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * Check if a FynApp is already loaded by examining the registry
+   * Returns the existing FynApp instance if found, null otherwise
+   */
+  protected checkAlreadyLoaded(fynAppEntry: FynAppEntry): FynApp | null {
+    const fynAppName = fynAppEntry.container?.name;
+    const fynAppVersion = fynAppEntry.container?.version;
+    const fynAppKey = fynAppName && fynAppVersion ? `${fynAppName}@${fynAppVersion}` : fynAppName;
+    if (fynAppKey && this.runTime.appsLoaded[fynAppKey]) {
+      console.debug(`✅ FynApp ${fynAppKey} already loaded, returning existing instance`);
+      return this.runTime.appsLoaded[fynAppKey];
+    }
+    return null;
+  }
+
+  /**
    * Validate and normalize a main export into a FynUnit
    * - Functions are wrapped as { execute: fn }
    * - Objects with execute method pass through
@@ -282,9 +297,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
-   * Bootstrap a fynapp
+   * Check bootstrap readiness and handle deferral if needed
+   * Returns true if bootstrap should proceed, false if it should be skipped
    */
-  async bootstrapFynApp(fynApp: FynApp): Promise<void> {
+  private async checkBootstrapReadiness(fynApp: FynApp): Promise<boolean> {
     // Check if can bootstrap or need to defer
     if (!this.bootstrapCoordinator.canBootstrap(fynApp)) {
       console.debug(`⏸️ Deferring bootstrap of ${fynApp.name}`);
@@ -299,54 +315,101 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       console.debug(`▶️ Resuming bootstrap of ${fynApp.name} (retry lock acquisition)`);
       if (!this.bootstrapCoordinator.acquireBootstrapLock(fynApp.name)) {
         console.error(`⏰ ${fynApp.name} unable to acquire bootstrap lock after deferral; skipping bootstrap`);
-        return;
+        return false;
       }
     }
 
-    try {
-      // Always load middleware modules for all FynApps
-      const middlewareScanner = this.createMiddlewareScanner();
-      for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
-        if (exposeName.startsWith("./middleware")) {
-          await this.moduleLoader.loadExposeModule(
-            fynApp,
-            exposeName,
-            true,
-            middlewareScanner
-          );
-        }
-      }
+    return true;
+  }
 
-      const mainExport = fynApp.exposes["./main"]?.main;
-
-      if (mainExport) {
-        console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
-
-        // Validate and normalize to FynUnit
-        const fynUnit = this.validateFynUnit(mainExport, fynApp.name);
-
-        // Apply auto-scope middlewares
-        const middlewareErrors = await this.middlewareExecutor.applyAutoScopeMiddlewares(
+  /**
+   * Load all middleware modules exposed by a FynApp
+   */
+  private async loadMiddlewareModules(fynApp: FynApp): Promise<void> {
+    const middlewareScanner = this.createMiddlewareScanner();
+    for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
+      if (exposeName.startsWith("./middleware")) {
+        await this.moduleLoader.loadExposeModule(
           fynApp,
-          fynUnit,
-          this,
-          this.middlewareManager.getAutoApplyMiddlewares(),
-          () => this.moduleLoader.createFynUnitRuntime(fynApp),
-          async (cc, share) => this.signalMiddlewareReady(cc, { share })
+          exposeName,
+          true,
+          middlewareScanner
         );
+      }
+    }
+  }
 
-        // Log middleware errors but don't fail bootstrap - middleware issues shouldn't break the app
-        if (middlewareErrors.length > 0) {
-          console.warn(`⚠️ ${middlewareErrors.length} middleware error(s) during bootstrap of ${fynApp.name}:`,
-            middlewareErrors.map(e => e.toDetailedString()));
-        }
+  /**
+   * Prepare the main export for execution: validate it, apply auto-scope middlewares,
+   * and return the validated FynUnit
+   * Returns null if no main export exists (middleware-only FynApp)
+   */
+  private async prepareMainExport(fynApp: FynApp): Promise<FynUnit | null> {
+    const mainExport = fynApp.exposes["./main"]?.main;
+    if (!mainExport) {
+      return null;
+    }
 
+    console.debug("🚀 Bootstrapping FynApp", fynApp.name, fynApp.version);
+
+    // Validate and normalize to FynUnit
+    const fynUnit = this.validateFynUnit(mainExport, fynApp.name);
+
+    // Apply auto-scope middlewares
+    const middlewareErrors = await this.middlewareExecutor.applyAutoScopeMiddlewares(
+      fynApp,
+      fynUnit,
+      this,
+      this.middlewareManager.getAutoApplyMiddlewares(),
+      () => this.moduleLoader.createFynUnitRuntime(fynApp),
+      async (cc, share) => this.signalMiddlewareReady(cc, { share })
+    );
+
+    // Log middleware errors but don't fail bootstrap - middleware issues shouldn't break the app
+    if (middlewareErrors.length > 0) {
+      console.warn(`⚠️ ${middlewareErrors.length} middleware error(s) during bootstrap of ${fynApp.name}:`,
+        middlewareErrors.map(e => e.toDetailedString()));
+    }
+
+    return fynUnit;
+  }
+
+  /**
+   * Execute a FynUnit directly (Path B: no explicit middleware meta)
+   */
+  private async executeFynUnit(fynUnit: FynUnit, fynApp: FynApp): Promise<void> {
+    await this.moduleLoader.invokeFynUnit(
+      fynUnit,
+      fynApp,
+      this.middlewareManager.getAutoApplyMiddlewares(),
+      this
+    );
+  }
+
+  /**
+   * Bootstrap a fynapp
+   */
+  async bootstrapFynApp(fynApp: FynApp): Promise<void> {
+    // Check readiness and acquire lock
+    if (!await this.checkBootstrapReadiness(fynApp)) {
+      return;
+    }
+
+    try {
+      // Load middleware modules for all FynApps
+      await this.loadMiddlewareModules(fynApp);
+
+      // Prepare and validate main export
+      const fynUnit = await this.prepareMainExport(fynApp);
+
+      if (fynUnit) {
         // Simplified 2-path execution:
         // Path A: FynUnit with non-empty __middlewareMeta - full middleware coordination
         // Path B: FynUnit without __middlewareMeta or empty array - direct execution with auto-apply only
         // FYM-99: Check for non-empty array to avoid skipping FynUnit execution
         if (fynUnit.__middlewareMeta && fynUnit.__middlewareMeta.length > 0) {
           // Path A: Full middleware coordination
+          const middlewareScanner = this.createMiddlewareScanner();
           await this.middlewareExecutor.useMiddlewareOnFynUnit(
             fynUnit,
             fynApp,
@@ -365,12 +428,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           );
         } else {
           // Path B: Direct execution with auto-apply middleware only
-          await this.moduleLoader.invokeFynUnit(
-            fynUnit,
-            fynApp,
-            this.middlewareManager.getAutoApplyMiddlewares(),
-            this
-          );
+          await this.executeFynUnit(fynUnit, fynApp);
         }
       }
 
@@ -425,10 +483,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       }
 
       // Remove from registry (both versioned and unversioned keys)
-      const versionedKey = `${fynApp.name}@${fynApp.version}`;
-      delete this.runTime.appsLoaded[name];
-      delete this.runTime.appsLoaded[versionedKey];
-      delete this.runTime.appsLoaded[fynApp.name];
+      this.removeFromRegistry(fynApp, name);
 
       // Emit shutdown event
       await this.emitAsync(
@@ -442,12 +497,22 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     } catch (error) {
       console.error(`❌ Error during shutdown of ${name}:`, error);
       // Still remove from registry even if shutdown fails
-      const versionedKey = `${fynApp.name}@${fynApp.version}`;
-      delete this.runTime.appsLoaded[name];
-      delete this.runTime.appsLoaded[versionedKey];
-      delete this.runTime.appsLoaded[fynApp.name];
+      this.removeFromRegistry(fynApp, name);
       return false;
     }
+  }
+
+  /**
+   * Remove a FynApp from the registry by all its keys
+   * - the lookup name (could be name or name@version)
+   * - the versioned key (name@version)
+   * - the canonical name (fynApp.name)
+   */
+  private removeFromRegistry(fynApp: FynApp, name: string): void {
+    const versionedKey = `${fynApp.name}@${fynApp.version}`;
+    delete this.runTime.appsLoaded[name];
+    delete this.runTime.appsLoaded[versionedKey];
+    delete this.runTime.appsLoaded[fynApp.name];
   }
 
   /**
