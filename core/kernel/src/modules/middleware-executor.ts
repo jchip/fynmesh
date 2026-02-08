@@ -140,25 +140,9 @@ export class MiddlewareExecutor {
   }
 
   /**
-   * Call middlewares with setup and apply
+   * Validate retry count and throw if exceeded
    */
-  async callMiddlewares(
-    ccs: FynAppMiddlewareCallContext[],
-    signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
-    providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
-    autoApplyMiddlewares?: {
-      fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
-    },
-    options?: { skipFynUnit?: boolean },
-    tries = 0
-  ): Promise<string> {
-    // Handle empty middleware array - nothing to call
-    if (ccs.length === 0) {
-      console.debug("⚠️ No middleware contexts to call, skipping middleware setup");
-      return "ready";
-    }
-
+  private validateRetryCount(ccs: FynAppMiddlewareCallContext[], tries: number): void {
     if (tries > 1) {
       const mwError = new MiddlewareError(
         KernelErrorCode.MIDDLEWARE_SETUP_FAILED,
@@ -172,7 +156,16 @@ export class MiddlewareExecutor {
       console.error(`🚨 ${mwError.message}`);
       throw mwError;
     }
+  }
 
+  /**
+   * Run middleware setup phase and signal readiness
+   * @returns {{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }}
+   */
+  private async setupMiddlewares(
+    ccs: FynAppMiddlewareCallContext[],
+    signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
+  ): Promise<{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }> {
     this.checkMiddlewareReady(ccs);
     let middlewareSetupStatus = "ready";
     let hasDeferredMiddleware = false;
@@ -182,15 +175,8 @@ export class MiddlewareExecutor {
       const mw = reg.middleware;
       this.checkSingleMiddlewareReady(cc);
       if (mw.setup) {
-        console.debug(
-          "🚀 Invoking middleware",
-          reg.regKey,
-          "setup for",
-          fynApp.name,
-          fynApp.version,
-        );
+        console.debug("🚀 Invoking middleware", reg.regKey, "setup for", fynApp.name, fynApp.version);
         const result = await mw.setup(cc);
-        // Auto-signal if middleware reports ready and didn't already signal via event
         if (result?.status === "ready" && !this.middlewareReady.has(cc.reg.fullKey)) {
           if (signalReady) {
             await signalReady(cc, result?.share);
@@ -203,47 +189,44 @@ export class MiddlewareExecutor {
       }
     }
 
-    const fynUnit = ccs[0].fynUnit;
-    const fynApp = ccs[0].fynApp;
-    const runtime = ccs[0].runtime;
+    return { middlewareSetupStatus, hasDeferredMiddleware };
+  }
 
-    let allowDegraded = false;
-
-    // If some middleware setup deferred, enqueue for resumption but don't necessarily block unit execution.
-    const postSetupStatus = this.checkDeferCalls(middlewareSetupStatus, ccs);
-    if (postSetupStatus === "retry") {
-      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
+  /**
+   * Initialize the FynUnit and handle provider mode registration
+   * @returns {{ allowDegraded: boolean; deferResult: string | null }} where deferResult is non-null if the caller should return early
+   */
+  private async initializeFynUnit(
+    ccs: FynAppMiddlewareCallContext[],
+    fynUnit: FynUnit,
+    fynApp: FynApp,
+    runtime: FynUnitRuntime,
+    providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
+    skipFynUnit?: boolean
+  ): Promise<{ allowDegraded: boolean; initDeferStatus: string }> {
+    if (skipFynUnit || !fynUnit.initialize) {
+      return { allowDegraded: false, initDeferStatus: "ready" };
     }
 
-    if (!options?.skipFynUnit && fynUnit.initialize) {
-      console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
-      const result: any = await fynUnit.initialize(runtime);
-      allowDegraded = Boolean(result?.deferOk);
+    console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
+    const result: any = await fynUnit.initialize(runtime);
+    const allowDegraded = Boolean(result?.deferOk);
 
-      // Capture provider/consumer mode for dependency tracking
-      if (result?.mode && providerModeRegistrar) {
-        // Store mode for each middleware this FynApp uses
-        for (const cc of ccs) {
-          providerModeRegistrar(fynApp.name, cc.reg.middleware.name, result.mode);
-        }
-        console.debug(`📝 ${fynApp.name} registered as ${result.mode} for middleware(s)`);
+    if (result?.mode && providerModeRegistrar) {
+      for (const cc of ccs) {
+        providerModeRegistrar(fynApp.name, cc.reg.middleware.name, result.mode);
       }
-
-      const initStatus = this.checkDeferCalls(result?.status, ccs);
-      if (initStatus === "defer" && !allowDegraded) {
-        return "defer";
-      }
-      if (initStatus === "retry") {
-        return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
-      }
+      console.debug(`📝 ${fynApp.name} registered as ${result.mode} for middleware(s)`);
     }
 
-    // If middleware setup deferred and the unit doesn't allow degraded execution, block before execute.
-    if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options?.skipFynUnit) {
-      return "defer";
-    }
+    const initDeferStatus = this.checkDeferCalls(result?.status, ccs);
+    return { allowDegraded, initDeferStatus };
+  }
 
-    // Apply only middlewares that are currently ready (deferred ones are applied when they resume).
+  /**
+   * Apply middlewares that are currently ready
+   */
+  private async applyReadyMiddlewares(ccs: FynAppMiddlewareCallContext[], fynApp: FynApp): Promise<void> {
     for (const cc of ccs) {
       if (cc.status !== "ready") continue;
       const mw = cc.reg.middleware;
@@ -251,25 +234,93 @@ export class MiddlewareExecutor {
       console.debug("🚀 Invoking middleware", cc.reg.regKey, "apply for", fynApp.name, fynApp.version);
       await mw.apply(cc);
     }
+  }
+
+  /**
+   * Execute the FynUnit with possible middleware override
+   */
+  private async executeWithOverride(
+    fynUnit: FynUnit,
+    fynApp: FynApp,
+    runtime: FynUnitRuntime,
+    kernel: FynMeshKernel,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    }
+  ): Promise<void> {
+    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
+
+    if (executionOverride) {
+      await executeMiddlewareOverride(executionOverride, fynUnit, fynApp, runtime, kernel);
+    } else if (fynUnit.execute) {
+      console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
+      await fynUnit.execute(runtime);
+    }
+  }
+
+  /**
+   * Call middlewares with setup and apply - orchestrates the middleware lifecycle
+   */
+  async callMiddlewares(
+    ccs: FynAppMiddlewareCallContext[],
+    signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
+    providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
+    autoApplyMiddlewares?: {
+      fynapp: FynAppMiddlewareReg[];
+      middleware: FynAppMiddlewareReg[];
+    },
+    options?: { skipFynUnit?: boolean },
+    tries = 0
+  ): Promise<string> {
+    if (ccs.length === 0) {
+      console.debug("⚠️ No middleware contexts to call, skipping middleware setup");
+      return "ready";
+    }
+
+    this.validateRetryCount(ccs, tries);
+
+    // Phase 1: Setup middlewares
+    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.setupMiddlewares(ccs, signalReady);
+
+    const fynUnit = ccs[0].fynUnit;
+    const fynApp = ccs[0].fynApp;
+    const runtime = ccs[0].runtime;
+
+    const postSetupStatus = this.checkDeferCalls(middlewareSetupStatus, ccs);
+    if (postSetupStatus === "retry") {
+      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
+    }
+
+    // Phase 2: Initialize the FynUnit
+    const { allowDegraded, initDeferStatus } = await this.initializeFynUnit(
+      ccs, fynUnit, fynApp, runtime, providerModeRegistrar, options?.skipFynUnit
+    );
+
+    if (initDeferStatus === "defer" && !allowDegraded) {
+      return "defer";
+    }
+    if (initDeferStatus === "retry") {
+      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
+    }
+
+    if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options?.skipFynUnit) {
+      return "defer";
+    }
+
+    // Phase 3: Apply ready middlewares
+    await this.applyReadyMiddlewares(ccs, fynApp);
 
     if (options?.skipFynUnit) {
       return "ready";
     }
 
-    // If the unit ran with degraded middleware, make sure any deferred resumption does not re-execute it.
     if (allowDegraded && postSetupStatus === "defer") {
       this.markDeferResumeMode(ccs, "middleware_only");
     }
 
-    // Check for execution override AFTER middleware setup/apply
-    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
-
-    if (executionOverride) {
-      await executeMiddlewareOverride(executionOverride, fynUnit, fynApp, runtime, ccs[0].kernel);
-    } else if (fynUnit.execute) {
-      console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
-      await fynUnit.execute(runtime);
-    }
+    // Phase 4: Execute with possible override
+    await this.executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, autoApplyMiddlewares);
 
     return "ready";
   }
