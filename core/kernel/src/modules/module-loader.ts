@@ -18,6 +18,7 @@ import {
   ok,
   err,
 } from "../errors";
+import { MIDDLEWARE_EXPOSE_PREFIX } from "../util";
 
 /**
  * Callback type for middleware scanning
@@ -272,7 +273,7 @@ export class ModuleLoader {
 
     // Check middleware that auto-applies to this FynApp type
     const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
-      key.startsWith('./middleware')
+      key.startsWith(MIDDLEWARE_EXPOSE_PREFIX)
     );
 
     const targetMiddlewares = isMiddlewareProvider

@@ -9,6 +9,7 @@ import type {
   FynApp,
   FynMeshRuntimeData,
 } from "../types";
+import { MIDDLEWARE_EXPORT_PREFIX } from "../util";
 
 const DummyMiddlewareReg: FynAppMiddlewareReg = {
   regKey: "",
@@ -160,7 +161,7 @@ export class MiddlewareManager {
     const mwExports: string[] = [];
 
     for (const [exportName, exportValue] of Object.entries(exposedModule)) {
-      if (exportName.startsWith("__middleware__")) {
+      if (exportName.startsWith(MIDDLEWARE_EXPORT_PREFIX)) {
         const middleware = exportValue as FynAppMiddleware;
         const mwName = middleware.name;
         const mwReg: FynAppMiddlewareReg = {
