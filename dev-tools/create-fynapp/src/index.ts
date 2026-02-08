@@ -10,6 +10,10 @@ export { updateDependencies } from "./updater.js";
 export type { FynAppConfigOptions } from "./config-ast.js";
 export { RollupConfigManager } from "./config-ast.js";
 
+// Export rollup config factory
+export { createFynAppRollupConfig } from "./rollup-config-factory.ts";
+export type { FynAppRollupConfigOptions } from "./rollup-config-factory.ts";
+
 import process from "node:process";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
