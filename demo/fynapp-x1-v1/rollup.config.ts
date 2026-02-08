@@ -31,6 +31,7 @@ export default [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({
         exportConditions: [env],
+        extensions: [".mjs", ".js", ".json", ".node", ".ts", ".tsx"],
       }),
       // commonjs({ transformMixedEsModules: true }),
       newRollupPlugin(postcss)({

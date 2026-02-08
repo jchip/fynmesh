@@ -6,16 +6,21 @@
     "esModuleInterop": true,
     "strict": true,
     "outDir": "dist/types",
-    "rootDir": "src",
-    "declaration": true,
+    "rootDir": "..",
+    "declaration": false,
     "sourceMap": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"]
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "baseUrl": ".",
+    "paths": {
+      "react": ["./node_modules/esm-react"],
+      "@fynmesh/kernel": ["./node_modules/@fynmesh/kernel"]
+    }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../shared-demo-utils/x1-components/**/*"],
   "exclude": ["node_modules", "dist"]
 }
