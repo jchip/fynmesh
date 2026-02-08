@@ -1,4 +1,4 @@
-import type { FynApp } from "./types";
+import type { FynApp, FynAppMiddlewareReg } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -18,4 +18,20 @@ export function urlJoin(baseUrl: string, urlPath: string): string {
  */
 export function isFynAppMiddlewareProvider(fynApp: FynApp): boolean {
   return Object.keys(fynApp.exposes).some(key => key.startsWith(MIDDLEWARE_EXPOSE_PREFIX));
+}
+
+/**
+ * Get the appropriate middleware list based on FynApp type
+ * @param fynApp The FynApp to check
+ * @param autoApplyMiddlewares The categorized middleware lists
+ * @returns The middleware list for the given FynApp type, or empty array if no auto-apply middlewares
+ */
+export function getTargetMiddlewares(
+  fynApp: FynApp,
+  autoApplyMiddlewares?: { fynapp: FynAppMiddlewareReg[]; middleware: FynAppMiddlewareReg[] }
+): FynAppMiddlewareReg[] {
+  if (!autoApplyMiddlewares) return [];
+  return isFynAppMiddlewareProvider(fynApp)
+    ? autoApplyMiddlewares.middleware
+    : autoApplyMiddlewares.fynapp;
 }

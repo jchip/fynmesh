@@ -12,7 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
 } from "../types";
-import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX } from "../util";
+import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
@@ -56,14 +56,7 @@ export class MiddlewareExecutor {
   ): FynAppMiddlewareReg | null {
     if (!autoApplyMiddlewares) return null;
 
-    // Check middleware that auto-applies to this FynApp type
-    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
-      key.startsWith(MIDDLEWARE_EXPOSE_PREFIX)
-    );
-
-    const targetMiddlewares = isMiddlewareProvider
-      ? autoApplyMiddlewares.middleware
-      : autoApplyMiddlewares.fynapp;
+    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
 
     // Find first middleware that can override execution
     for (const mwReg of targetMiddlewares) {
@@ -526,9 +519,7 @@ export class MiddlewareExecutor {
     }
 
     // Apply middleware based on FynApp type
-    const targetMiddlewares = isFynAppMiddlewareProvider(fynApp)
-      ? autoApplyMiddlewares.middleware
-      : autoApplyMiddlewares.fynapp;
+    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
 
     for (const mwReg of targetMiddlewares) {
       // Check if middleware has a filter function and call it

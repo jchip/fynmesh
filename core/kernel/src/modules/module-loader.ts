@@ -18,7 +18,7 @@ import {
   ok,
   err,
 } from "../errors";
-import { MIDDLEWARE_EXPOSE_PREFIX } from "../util";
+import { MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares } from "../util";
 
 /**
  * Callback type for middleware scanning
@@ -271,14 +271,7 @@ export class ModuleLoader {
   ): FynAppMiddlewareReg | null {
     if (!autoApplyMiddlewares) return null;
 
-    // Check middleware that auto-applies to this FynApp type
-    const isMiddlewareProvider = Object.keys(fynApp.exposes).some(key =>
-      key.startsWith(MIDDLEWARE_EXPOSE_PREFIX)
-    );
-
-    const targetMiddlewares = isMiddlewareProvider
-      ? autoApplyMiddlewares.middleware
-      : autoApplyMiddlewares.fynapp;
+    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
 
     // Find first middleware that can override execution
     for (const mwReg of targetMiddlewares) {

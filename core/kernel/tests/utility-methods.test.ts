@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { getTargetMiddlewares, isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, MIDDLEWARE_EXPORT_PREFIX } from "../src/util";
 import { TestKernel, createTestKernel } from "./fixtures/test-kernel";
 import { createMockFynApp } from "./fixtures/mock-fynapp";
 
@@ -73,6 +74,57 @@ describe("Utility Methods", () => {
       // Modifying one should not affect the other
       runtime1.middlewareContext.set("key", { value: "test" });
       expect(runtime2.middlewareContext.has("key")).toBe(false);
+    });
+  });
+
+  describe("getTargetMiddlewares", () => {
+    it("should return empty array when autoApplyMiddlewares is undefined", () => {
+      const fynApp = createMockFynApp();
+      const result = getTargetMiddlewares(fynApp, undefined);
+      expect(result).toEqual([]);
+    });
+
+    it("should return fynapp list for non-middleware-provider FynApps", () => {
+      const fynApp = createMockFynApp({ exposes: {} });
+      const fynappList = [{ regKey: "mw1" }] as any;
+      const middlewareList = [{ regKey: "mw2" }] as any;
+      const result = getTargetMiddlewares(fynApp, { fynapp: fynappList, middleware: middlewareList });
+      expect(result).toBe(fynappList);
+    });
+
+    it("should return middleware list for middleware-provider FynApps", () => {
+      const fynApp = createMockFynApp({ exposes: { "./middleware/test": {} } as any });
+      const fynappList = [{ regKey: "mw1" }] as any;
+      const middlewareList = [{ regKey: "mw2" }] as any;
+      const result = getTargetMiddlewares(fynApp, { fynapp: fynappList, middleware: middlewareList });
+      expect(result).toBe(middlewareList);
+    });
+  });
+
+  describe("isFynAppMiddlewareProvider", () => {
+    it("should return true when FynApp exposes middleware modules", () => {
+      const fynApp = createMockFynApp({ exposes: { "./middleware/test": {} } as any });
+      expect(isFynAppMiddlewareProvider(fynApp)).toBe(true);
+    });
+
+    it("should return false when FynApp has no middleware exposes", () => {
+      const fynApp = createMockFynApp({ exposes: { "./main": {} } as any });
+      expect(isFynAppMiddlewareProvider(fynApp)).toBe(false);
+    });
+
+    it("should return false when FynApp has empty exposes", () => {
+      const fynApp = createMockFynApp({ exposes: {} });
+      expect(isFynAppMiddlewareProvider(fynApp)).toBe(false);
+    });
+  });
+
+  describe("constants", () => {
+    it("should define MIDDLEWARE_EXPOSE_PREFIX", () => {
+      expect(MIDDLEWARE_EXPOSE_PREFIX).toBe("./middleware");
+    });
+
+    it("should define MIDDLEWARE_EXPORT_PREFIX", () => {
+      expect(MIDDLEWARE_EXPORT_PREFIX).toBe("__middleware__");
     });
   });
 });
