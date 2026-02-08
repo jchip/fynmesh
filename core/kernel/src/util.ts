@@ -99,3 +99,34 @@ export function createMiddlewareCallContext(
     status: status ?? "",
   };
 }
+
+/**
+ * Execute a middleware override for a FynUnit (handles both overrideInitialize and overrideExecute)
+ * @param executionOverride The middleware registration that overrides execution
+ * @param fynUnit The FynUnit being overridden
+ * @param fynApp The FynApp owning the FynUnit
+ * @param runtime The FynUnit runtime
+ * @param kernel The FynMesh kernel
+ */
+export async function executeMiddlewareOverride(
+  executionOverride: FynAppMiddlewareReg,
+  fynUnit: FynUnit,
+  fynApp: FynApp,
+  runtime: FynUnitRuntime,
+  kernel: FynMeshKernel
+): Promise<void> {
+  console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+
+  const context = createMiddlewareCallContext(executionOverride, fynUnit, fynApp, runtime, kernel, {}, "ready");
+
+  if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
+    console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
+    const initResult = await executionOverride.middleware.overrideInitialize(context);
+    console.debug(`🎭 Initialize result:`, initResult);
+  }
+
+  if (executionOverride.middleware.overrideExecute && typeof fynUnit.execute === "function") {
+    console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
+    await executionOverride.middleware.overrideExecute(context);
+  }
+}

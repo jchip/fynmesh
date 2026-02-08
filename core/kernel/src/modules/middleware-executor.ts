@@ -12,7 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
 } from "../types";
-import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext } from "../util";
+import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
@@ -265,20 +265,7 @@ export class MiddlewareExecutor {
     const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
 
     if (executionOverride) {
-      console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
-
-      const overrideContext = createMiddlewareCallContext(executionOverride, fynUnit, fynApp, runtime, ccs[0].kernel, {}, "ready");
-
-      if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
-        console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
-        const initResult = await executionOverride.middleware.overrideInitialize(overrideContext);
-        console.debug(`🎭 Initialize result:`, initResult);
-      }
-
-      if (executionOverride.middleware.overrideExecute && typeof fynUnit.execute === "function") {
-        console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
-        await executionOverride.middleware.overrideExecute(overrideContext);
-      }
+      await executeMiddlewareOverride(executionOverride, fynUnit, fynApp, runtime, ccs[0].kernel);
     } else if (fynUnit.execute) {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
       await fynUnit.execute(runtime);
