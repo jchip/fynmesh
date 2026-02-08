@@ -5,7 +5,7 @@
 
 import { FynEventTarget } from "./event-target";
 import { fynMeshShareScope } from "./share-scope";
-import { urlJoin } from "./util";
+import { urlJoin, MIDDLEWARE_EXPOSE_PREFIX } from "./util";
 import { MiddlewareStateRegistry } from "./middleware-state-registry";
 
 // Import extracted modules
@@ -328,7 +328,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   private async loadMiddlewareModules(fynApp: FynApp): Promise<void> {
     const middlewareScanner = this.createMiddlewareScanner();
     for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
-      if (exposeName.startsWith("./middleware")) {
+      if (exposeName.startsWith(MIDDLEWARE_EXPOSE_PREFIX)) {
         await this.moduleLoader.loadExposeModule(
           fynApp,
           exposeName,
