@@ -22,13 +22,9 @@ export class NodeKernel extends FynMeshKernelCore {
       const fynAppEntry = await import(urlPath);
 
       // Check if already loaded - return existing instance to prevent duplicates
-      // Use name@version as key to support multiple versions of the same package
-      const fynAppName = fynAppEntry.container?.name;
-      const fynAppVersion = fynAppEntry.container?.version;
-      const fynAppKey = fynAppName && fynAppVersion ? `${fynAppName}@${fynAppVersion}` : fynAppName;
-      if (fynAppKey && this.runTime.appsLoaded[fynAppKey]) {
-        console.debug(`✅ FynApp ${fynAppKey} already loaded, returning existing instance`);
-        return this.runTime.appsLoaded[fynAppKey];
+      const existing = this.checkAlreadyLoaded(fynAppEntry);
+      if (existing) {
+        return existing;
       }
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
