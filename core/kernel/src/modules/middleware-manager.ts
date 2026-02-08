@@ -94,7 +94,7 @@ export class MiddlewareManager {
     // Fallback: scan all providers for first available default match
     for (const [key, versionMap] of Object.entries(this.middlewares)) {
       if (key.endsWith(`::${name}`)) {
-        const mwReg = (versionMap as any)["default"];
+        const mwReg = versionMap.default;
         if (mwReg) return mwReg;
       }
     }
