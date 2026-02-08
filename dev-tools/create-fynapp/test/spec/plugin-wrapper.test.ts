@@ -1,8 +1,8 @@
 import {
     newRollupPlugin,
     getPluginMeta,
-    FYNMESH_META
-} from '../../src/rollup-plugin-wrapper';
+    ROLLUP_WRAP_PLUGIN_META
+} from 'rollup-wrap-plugin';
 
 // Mock plugin constructors for testing
 const mockFederationPlugin = (config: any) => ({
@@ -46,8 +46,8 @@ describe('Plugin Wrapper', () => {
             const pluginInstance = wrappedFederation(config);
 
             // Should have metadata attached
-            expect(pluginInstance[FYNMESH_META]).toBeDefined();
-            expect(typeof pluginInstance[FYNMESH_META]).toBe('object');
+            expect(pluginInstance[ROLLUP_WRAP_PLUGIN_META]).toBeDefined();
+            expect(typeof pluginInstance[ROLLUP_WRAP_PLUGIN_META]).toBe('object');
         });
 
         it('should preserve TypeScript type safety', () => {

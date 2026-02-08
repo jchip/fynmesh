@@ -87,8 +87,11 @@
       "**/test/**/*.test.ts"
     ],
     "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
+      "^.+\\.(ts|tsx|js|jsx)$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!rollup-wrap-plugin)"
+    ],
     "moduleNameMapper": {
       "^(\\.\\.?/.*)\\.js$": "$1"
     },
