@@ -13,6 +13,7 @@ import type {
   MiddlewareUseMeta,
 } from "../types";
 import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX } from "../util";
+import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
   KernelErrorCode,
@@ -559,7 +560,7 @@ export class MiddlewareExecutor {
         `🔄 Auto-applying ${mwReg.middleware.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`
       );
 
-      const unit = fynUnit || { async execute() { } };
+      const unit = fynUnit || noOpFynUnit;
       const context: FynAppMiddlewareCallContext = {
         meta: {
           info: {
