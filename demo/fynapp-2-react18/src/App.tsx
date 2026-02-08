@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "esm-react";
 import type { ComponentLibrary } from "./components";
 import type { FynModuleRuntime } from "@fynmesh/kernel";
+import { useSharedCounter } from "../../shared-demo-utils/react-hooks.ts";
 
 interface AppProps {
   appName: string;
@@ -21,100 +22,10 @@ const App: React.FC<AppProps> = ({
   const [inputValue, setInputValue] = React.useState<string>("");
   const [count, setCount] = React.useState<number>(0);
 
-  // Basic counter state for middleware integration
-  const [counter, setCounter] = useState({
-    count: middlewareConfig?.count || 0,
-  });
-
-  // Function to get the shared data object from middleware context or global registry
-  const getSharedDataObject = () => {
-    // First try runtime.middlewareContext (set during middleware setup)
-    if (runtime?.middlewareContext) {
-      const basicCounterData = runtime.middlewareContext.get("basic-counter");
-      if (basicCounterData) return basicCounterData;
-    }
-    // Fallback: check global registry directly (handles late provider loading)
-    const kernel: any = (globalThis as any).fynMeshKernel;
-    const registry = kernel?.getMiddlewareRegistry?.("global");
-    const counterState = registry?.lookup?.("basic-counter");
-    return counterState?.get?.() || null;
-  };
-
-  // Function to read current count from the shared data object
-  const readCountFromSharedData = () => {
-    const sharedData = getSharedDataObject();
-    return sharedData?.config?.count || middlewareConfig?.count || 0;
-  };
-
-  // Set up event listener for counter changes from other apps
-  useEffect(() => {
-    const syncWithSharedData = () => {
-      const sharedCount = readCountFromSharedData();
-      setCounter({ count: sharedCount });
-    };
-
-    // Initial sync
-    syncWithSharedData();
-
-    // Set up event listener for changes from other apps
-    const handleCounterChange = (event: CustomEvent) => {
-      const { count, source } = event.detail;
-      if (source !== runtime?.fynApp?.name) {
-        // Only update if the change came from a different app
-        setCounter({ count });
-        console.debug(
-          `🔄 fynapp-2-react18: Received counter update from ${source}:`,
-          count
-        );
-      }
-    };
-
-    // Track current listener for cleanup
-    let currentEventTarget: EventTarget | null = null;
-
-    const setupCounterListener = () => {
-      const sharedData = getSharedDataObject();
-      if (sharedData?.eventTarget && sharedData.eventTarget !== currentEventTarget) {
-        // Clean up old listener if switching to new eventTarget
-        if (currentEventTarget) {
-          currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
-        }
-        currentEventTarget = sharedData.eventTarget;
-        currentEventTarget.addEventListener("counterChanged", handleCounterChange);
-        // Sync with current value
-        syncWithSharedData();
-        console.debug("✅ fynapp-2-react18: Subscribed to counter events");
-      }
-    };
-
-    // Initial setup
-    setupCounterListener();
-
-    // Listen for MIDDLEWARE_READY to handle late provider loading
-    const kernel: any = (globalThis as any).fynMeshKernel;
-    const kernelEvents: EventTarget | undefined = kernel?.events;
-
-    const handleMiddlewareReady = (event: Event) => {
-      const detail: any = (event as any).detail;
-      if (detail?.name === "basic-counter") {
-        console.debug("🔔 fynapp-2-react18: basic-counter became ready, syncing...");
-        setupCounterListener();
-      }
-    };
-
-    if (kernelEvents) {
-      kernelEvents.addEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
-    }
-
-    return () => {
-      if (currentEventTarget) {
-        currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
-      }
-      if (kernelEvents) {
-        kernelEvents.removeEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
-      }
-    };
-  }, [runtime, middlewareConfig]);
+  // Shared counter hook
+  const { counter, handleIncrement, handleReset } = useSharedCounter(
+    useState, useEffect, runtime, middlewareConfig
+  );
 
   // Destructure the components
   const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
@@ -126,26 +37,7 @@ const App: React.FC<AppProps> = ({
     setTimeout(() => setShowEffect(false), 1000);
   };
 
-  // Basic counter handlers
-  const handleIncrement = () => {
-    const sharedData = getSharedDataObject();
-    if (sharedData?.increment) {
-      const newCount = sharedData.increment(runtime?.fynApp?.name);
-      // Update local state for immediate UI response
-      setCounter({ count: newCount });
-      console.debug("✅ fynapp-2-react18: Counter incremented to:", newCount);
-    }
-  };
 
-  const handleReset = () => {
-    const sharedData = getSharedDataObject();
-    if (sharedData?.reset) {
-      const newCount = sharedData.reset(runtime?.fynApp?.name);
-      // Update local state for immediate UI response
-      setCounter({ count: newCount });
-      console.debug("✅ fynapp-2-react18: Counter reset to:", newCount);
-    }
-  };
 
   return (
     <div style={{ padding: "20px", maxWidth: "768px", margin: "0 auto" }}>

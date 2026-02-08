@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import type { ComponentLibrary } from "./components";
+import { THEME_OPTIONS } from "../../shared-demo-utils/middleware-helpers.ts";
+import { useSharedCounter, useDesignTokens } from "../../shared-demo-utils/react-hooks.ts";
 
 interface AppProps {
   appName: string;
@@ -14,216 +16,23 @@ const App: React.FC<AppProps> = ({
   middlewareConfig,
   runtime,
 }: AppProps) => {
-  // Use local state for reactivity, but sync with middleware context
-  const [counter, setCounter] = useState({
-    count: middlewareConfig?.count || 0,
-  });
+  // Shared counter hook
+  const { counter, handleIncrement, handleReset } = useSharedCounter(
+    useState, useEffect, runtime, middlewareConfig
+  );
 
-  // Theme state management
-  const [currentTheme, setCurrentTheme] = useState("fynmesh-green");
-  const [availableThemes, setAvailableThemes] = useState<string[]>([]);
-  const [applyGlobally, setApplyGlobally] = useState(false);
-  const [acceptGlobally, setAcceptGlobally] = useState(false);
-
-  // Available themes
-  const themeOptions = [
-    { value: "fynmesh-default", label: "Default" },
-    { value: "fynmesh-dark", label: "Dark" },
-    { value: "fynmesh-blue", label: "Blue" },
-    { value: "fynmesh-green", label: "Green" },
-    { value: "fynmesh-purple", label: "Purple" },
-    { value: "fynmesh-sunset", label: "Sunset" },
-    { value: "fynmesh-cyberpunk", label: "Cyberpunk" },
-  ];
-
-  // Function to get the shared data object from middleware context or global registry
-  const getSharedDataObject = () => {
-    // First try runtime.middlewareContext (set during middleware setup)
-    if (runtime?.middlewareContext) {
-      const basicCounterData = runtime.middlewareContext.get("basic-counter");
-      if (basicCounterData) return basicCounterData;
-    }
-    // Fallback: check global registry directly (handles late provider loading)
-    const kernel: any = (globalThis as any).fynMeshKernel;
-    const registry = kernel?.getMiddlewareRegistry?.("global");
-    const counterState = registry?.lookup?.("basic-counter");
-    return counterState?.get?.() || null;
-  };
-
-  // Function to read current count from the shared data object
-  const readCountFromSharedData = () => {
-    const sharedData = getSharedDataObject();
-    return sharedData?.config?.count || middlewareConfig?.count || 0;
-  };
-
-  // Set up event listener for counter changes from other apps
-  useEffect(() => {
-    const syncWithSharedData = () => {
-      const sharedCount = readCountFromSharedData();
-      setCounter({ count: sharedCount });
-    };
-
-    // Initial sync
-    syncWithSharedData();
-
-    // Set up event listener for changes from other apps
-    const handleCounterChange = (event: CustomEvent) => {
-      const { count, source } = event.detail;
-      if (source !== runtime?.fynApp?.name) {
-        // Only update if the change came from a different app
-        setCounter({ count });
-        console.debug(
-          `🔄 fynapp-1-b: Received counter update from ${source}:`,
-          count
-        );
-      }
-    };
-
-    // Track current listener for cleanup
-    let currentEventTarget: EventTarget | null = null;
-
-    const setupCounterListener = () => {
-      const sharedData = getSharedDataObject();
-      if (sharedData?.eventTarget && sharedData.eventTarget !== currentEventTarget) {
-        // Clean up old listener if switching to new eventTarget
-        if (currentEventTarget) {
-          currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
-        }
-        currentEventTarget = sharedData.eventTarget;
-        currentEventTarget.addEventListener("counterChanged", handleCounterChange);
-        // Sync with current value
-        syncWithSharedData();
-        console.debug("✅ fynapp-1-b: Subscribed to counter events");
-      }
-    };
-
-    // Initial setup
-    setupCounterListener();
-
-    // Listen for MIDDLEWARE_READY to handle late provider loading
-    const kernel: any = (globalThis as any).fynMeshKernel;
-    const kernelEvents: EventTarget | undefined = kernel?.events;
-
-    const handleMiddlewareReady = (event: Event) => {
-      const detail: any = (event as any).detail;
-      if (detail?.name === "basic-counter") {
-        console.debug("🔔 fynapp-1-b: basic-counter became ready, syncing...");
-        setupCounterListener();
-      }
-    };
-
-    if (kernelEvents) {
-      kernelEvents.addEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
-    }
-
-    return () => {
-      if (currentEventTarget) {
-        currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
-      }
-      if (kernelEvents) {
-        kernelEvents.removeEventListener("MIDDLEWARE_READY", handleMiddlewareReady);
-      }
-    };
-  }, [runtime, middlewareConfig]);
-
-  // Set up design tokens and theme management
-  useEffect(() => {
-    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
-    if (designTokensData?.api) {
-      const api = designTokensData.api;
-
-      // Initialize current theme
-      const currentTheme = api.getTheme();
-      setCurrentTheme(currentTheme);
-
-      // Initialize accept globally from API (this is shared state)
-      const globalOptIn = api.getGlobalOptIn();
-      setAcceptGlobally(globalOptIn);
-
-      // Initialize apply globally from localStorage (this is local state)
-      const applyGloballyKey = `fynapp-${runtime?.fynApp?.name}-apply-globally`;
-      const savedApplyGlobally = localStorage.getItem(applyGloballyKey);
-      setApplyGlobally(savedApplyGlobally === 'true');
-
-      // Subscribe to theme changes
-      const unsubscribe = api.subscribeToThemeChanges((theme: string, tokens: any, fynAppName?: string) => {
-        // Only update if:
-        // 1. The change is specifically for this app, OR
-        // 2. The change is global AND this app accepts global changes
-        if (fynAppName === runtime?.fynApp?.name || (!fynAppName && api.getGlobalOptIn())) {
-          setCurrentTheme(theme);
-          console.debug(`🎨 fynapp-1-b: Theme changed to ${theme}${fynAppName ? ` for ${fynAppName}` : ' globally'}`);
-        }
-      });
-
-      return unsubscribe;
-    }
-  }, [runtime]);
+  // Design tokens hook
+  const {
+    currentTheme,
+    applyGlobally,
+    acceptGlobally,
+    handleThemeChange,
+    handleApplyGloballyChange,
+    handleAcceptGloballyChange,
+  } = useDesignTokens(useState, useEffect, runtime, "fynmesh-green");
 
   // Destructure the components
   const { Button, Card, Modal, Alert, Badge, Spinner } = components;
-
-  const handleIncrement = () => {
-    const sharedData = getSharedDataObject();
-    if (sharedData?.increment) {
-      const newCount = sharedData.increment(runtime?.fynApp?.name);
-      // Update local state for immediate UI response
-      setCounter({ count: newCount });
-    }
-  };
-
-  const handleReset = () => {
-    const sharedData = getSharedDataObject();
-    if (sharedData?.reset) {
-      const newCount = sharedData.reset(runtime?.fynApp?.name);
-      // Update local state for immediate UI response
-      setCounter({ count: newCount });
-    }
-  };
-
-  // Theme switching function
-  const handleThemeChange = (theme: string) => {
-    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
-    if (designTokensData?.api) {
-      const api = designTokensData.api;
-
-      if (applyGlobally) {
-        // Apply globally
-        api.setTheme(theme, true);
-        console.debug(`🎨 fynapp-1-b: Switching to theme ${theme} globally`);
-
-        // If we're applying globally but not accepting globally (G/L scenario),
-        // we need to apply the theme to ourselves locally as well
-        if (!acceptGlobally) {
-          api.setTheme(theme, false);
-          console.debug(`🎨 fynapp-1-b: Also applying theme ${theme} locally (G/L scenario)`);
-        }
-      } else {
-        // Apply locally only
-        api.setTheme(theme, false);
-        console.debug(`🎨 fynapp-1-b: Switching to theme ${theme} locally`);
-      }
-    }
-  };
-
-  // Handle apply globally toggle
-  const handleApplyGloballyChange = (apply: boolean) => {
-    setApplyGlobally(apply);
-    // Persist to localStorage (this is local state per app)
-    const applyGloballyKey = `fynapp-${runtime?.fynApp?.name}-apply-globally`;
-    localStorage.setItem(applyGloballyKey, apply.toString());
-    console.debug(`🎨 fynapp-1-b: ${apply ? 'Enabled' : 'Disabled'} apply globally`);
-  };
-
-  // Handle accept globally toggle
-  const handleAcceptGloballyChange = (accept: boolean) => {
-    const designTokensData = runtime?.middlewareContext?.get("design-tokens");
-    if (designTokensData?.api) {
-      designTokensData.api.setGlobalOptIn(accept);
-      setAcceptGlobally(accept);
-      console.debug(`🎨 fynapp-1-b: ${accept ? 'Enabled' : 'Disabled'} accept global changes`);
-    }
-  };
 
   // Demo state
   const [modalOpen, setModalOpen] = useState(false);
@@ -258,7 +67,7 @@ const App: React.FC<AppProps> = ({
           </label>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
-          {themeOptions.map((theme) => (
+          {THEME_OPTIONS.map((theme) => (
             <Button
               key={theme.value}
               variant={currentTheme === theme.value ? "primary" : "outline"}
