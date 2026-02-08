@@ -1,4 +1,4 @@
-import type { FynApp, FynAppMiddlewareReg } from "./types";
+import type { FynApp, FynUnit, FynAppMiddlewareReg } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -34,4 +34,29 @@ export function getTargetMiddlewares(
   return isFynAppMiddlewareProvider(fynApp)
     ? autoApplyMiddlewares.middleware
     : autoApplyMiddlewares.fynapp;
+}
+
+/**
+ * Find the first middleware that can override execution for a given FynApp and FynUnit
+ * @param fynApp The FynApp being executed
+ * @param fynUnit The FynUnit being executed
+ * @param autoApplyMiddlewares The categorized auto-apply middleware lists
+ * @returns The middleware reg that can override execution, or null
+ */
+export function findExecutionOverride(
+  fynApp: FynApp,
+  fynUnit: FynUnit,
+  autoApplyMiddlewares?: { fynapp: FynAppMiddlewareReg[]; middleware: FynAppMiddlewareReg[] }
+): FynAppMiddlewareReg | null {
+  if (!autoApplyMiddlewares) return null;
+
+  const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
+
+  for (const mwReg of targetMiddlewares) {
+    if (mwReg.middleware.canOverrideExecution?.(fynApp, fynUnit)) {
+      return mwReg;
+    }
+  }
+
+  return null;
 }

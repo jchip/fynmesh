@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { getTargetMiddlewares, isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, MIDDLEWARE_EXPORT_PREFIX } from "../src/util";
+import { getTargetMiddlewares, isFynAppMiddlewareProvider, findExecutionOverride, MIDDLEWARE_EXPOSE_PREFIX, MIDDLEWARE_EXPORT_PREFIX } from "../src/util";
 import { TestKernel, createTestKernel } from "./fixtures/test-kernel";
 import { createMockFynApp } from "./fixtures/mock-fynapp";
 
@@ -125,6 +125,39 @@ describe("Utility Methods", () => {
 
     it("should define MIDDLEWARE_EXPORT_PREFIX", () => {
       expect(MIDDLEWARE_EXPORT_PREFIX).toBe("__middleware__");
+    });
+  });
+  describe("findExecutionOverride", () => {
+    it("should return null when autoApplyMiddlewares is undefined", () => {
+      const fynApp = createMockFynApp();
+      const fynUnit = { execute: () => {} } as any;
+      expect(findExecutionOverride(fynApp, fynUnit, undefined)).toBeNull();
+    });
+
+    it("should return null when no middleware can override", () => {
+      const fynApp = createMockFynApp({ exposes: {} });
+      const fynUnit = { execute: () => {} } as any;
+      const mwReg = { middleware: { canOverrideExecution: () => false } } as any;
+      const result = findExecutionOverride(fynApp, fynUnit, { fynapp: [mwReg], middleware: [] });
+      expect(result).toBeNull();
+    });
+
+    it("should return the first middleware that can override execution", () => {
+      const fynApp = createMockFynApp({ exposes: {} });
+      const fynUnit = { execute: () => {} } as any;
+      const mwReg1 = { middleware: { canOverrideExecution: () => false } } as any;
+      const mwReg2 = { middleware: { canOverrideExecution: () => true } } as any;
+      const result = findExecutionOverride(fynApp, fynUnit, { fynapp: [mwReg1, mwReg2], middleware: [] });
+      expect(result).toBe(mwReg2);
+    });
+
+    it("should check middleware list for middleware providers", () => {
+      const fynApp = createMockFynApp({ exposes: { "./middleware/test": {} } as any });
+      const fynUnit = { execute: () => {} } as any;
+      const fynappMw = { middleware: { canOverrideExecution: () => true } } as any;
+      const middlewareMw = { middleware: { canOverrideExecution: () => true } } as any;
+      const result = findExecutionOverride(fynApp, fynUnit, { fynapp: [fynappMw], middleware: [middlewareMw] });
+      expect(result).toBe(middlewareMw);
     });
   });
 });

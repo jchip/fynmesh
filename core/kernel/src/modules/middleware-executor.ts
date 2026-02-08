@@ -12,7 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
 } from "../types";
-import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares } from "../util";
+import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
@@ -41,31 +41,6 @@ export class MiddlewareExecutor {
    */
   setMiddlewareReady(fullKey: string, share: any): void {
     this.middlewareReady.set(fullKey, share);
-  }
-
-  /**
-   * Find execution override middleware
-   */
-  private findExecutionOverride(
-    fynApp: FynApp,
-    fynUnit: FynUnit,
-    autoApplyMiddlewares?: {
-      fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
-    }
-  ): FynAppMiddlewareReg | null {
-    if (!autoApplyMiddlewares) return null;
-
-    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
-
-    // Find first middleware that can override execution
-    for (const mwReg of targetMiddlewares) {
-      if (mwReg.middleware.canOverrideExecution?.(fynApp, fynUnit)) {
-        return mwReg;
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -287,7 +262,7 @@ export class MiddlewareExecutor {
     }
 
     // Check for execution override AFTER middleware setup/apply
-    const executionOverride = this.findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
+    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
 
     if (executionOverride) {
       console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
