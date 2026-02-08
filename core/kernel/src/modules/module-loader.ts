@@ -10,7 +10,9 @@ import type {
   FynUnitRuntime,
   FynAppMiddlewareReg,
   FynMeshKernel,
+  KernelTelemetry,
 } from "../types";
+import { noOpTelemetry } from "../kernel-telemetry";
 import {
   ModuleLoadError,
   KernelErrorCode,
@@ -31,6 +33,11 @@ export type MiddlewareScanner = (
 ) => string[];
 
 export class ModuleLoader {
+  protected telemetry: KernelTelemetry;
+
+  constructor(telemetry?: KernelTelemetry) {
+    this.telemetry = telemetry ?? noOpTelemetry;
+  }
 
   /**
    * Load an expose module from a FynApp
@@ -57,6 +64,12 @@ export class ModuleLoader {
           exposeName,
         }
       );
+      this.telemetry.capture({
+        type: "error",
+        name: "expose.not_found",
+        data: { app: fynApp.name, expose: exposeName },
+        error: { message: error.message, stack: error.stack },
+      });
       console.debug(`❌ ${error.message}`);
       return err(error);
     }
@@ -111,6 +124,12 @@ export class ModuleLoader {
           exposeName: middlewarePath,
         }
       );
+      this.telemetry.capture({
+        type: "error",
+        name: "dependency.not_found",
+        data: { package: packageName, path: middlewarePath },
+        error: { message: error.message, stack: error.stack },
+      });
       console.debug(`❌ ${error.message}`);
       return err(error);
     }
@@ -153,6 +172,12 @@ export class ModuleLoader {
 
     // Step 1: Initialize the entry
     fynAppEntry.init();
+
+    this.telemetry.capture({
+      type: "event",
+      name: "fynapp.init",
+      data: { app: container.name, version: container.version },
+    });
 
     console.debug("🚀 Loading FynApp basics for", container.name, container.version);
 
@@ -228,6 +253,12 @@ export class ModuleLoader {
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
+    this.telemetry.capture({
+      type: "event",
+      name: "fynapp.basics_loaded",
+      data: { app: fynApp.name, version: fynApp.version },
+    });
+
     // Record app in runtime registry for observability
     // Use name@version as key to support multiple versions of the same package
     const appKey = `${fynApp.name}@${fynApp.version}`;
@@ -289,6 +320,11 @@ export class ModuleLoader {
 
     if (fynUnit.execute) {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
+      this.telemetry.capture({
+        type: "event",
+        name: "fynunit.execute",
+        data: { app: fynApp.name },
+      });
       const executeResult = await fynUnit.execute(runtime);
 
       // Handle execution result - middleware defines contract, kernel just passes through

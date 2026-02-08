@@ -8,7 +8,9 @@ import type {
   FynAppMiddlewareReg,
   FynApp,
   FynMeshRuntimeData,
+  KernelTelemetry,
 } from "../types";
+import { noOpTelemetry } from "../kernel-telemetry";
 import { MIDDLEWARE_EXPORT_PREFIX } from "../util";
 
 const DummyMiddlewareReg: FynAppMiddlewareReg = {
@@ -26,9 +28,14 @@ export interface AutoApplyMiddlewares {
 }
 
 export class MiddlewareManager {
+  protected telemetry: KernelTelemetry;
   private middlewares: Record<string, MiddlewareVersionMap> = {};
   private autoApplyMiddlewares?: AutoApplyMiddlewares;
   private scannedModules: Set<string> = new Set();
+
+  constructor(telemetry?: KernelTelemetry) {
+    this.telemetry = telemetry ?? noOpTelemetry;
+  }
 
   /**
    * Register a middleware implementation with enhanced error handling
@@ -74,6 +81,12 @@ export class MiddlewareManager {
     } else {
       console.debug(`✅ Registered explicit-use middleware: ${regKey}@${hostFynApp.version}`);
     }
+
+    this.telemetry.capture({
+      type: "event",
+      name: "registered",
+      data: { key: regKey, version: hostFynApp.version, autoApply: autoApplyScope.length > 0 },
+    });
   }
 
   /**
@@ -184,6 +197,12 @@ export class MiddlewareManager {
       mwExports.length > 0 ? "middlewares registered:" : "",
       mwExports.join(", "),
     );
+
+    this.telemetry.capture({
+      type: "event",
+      name: "scan.completed",
+      data: { app: fynApp.name, expose: exposeName, count: mwExports.length },
+    });
 
     return mwExports;
   }

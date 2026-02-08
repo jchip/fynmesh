@@ -7,7 +7,9 @@ import type {
   FynAppManifest,
   RegistryResolver,
   RegistryResolverResult,
+  KernelTelemetry,
 } from "../types";
+import { noOpTelemetry } from "../kernel-telemetry";
 
 export interface ManifestMeta {
   name: string;
@@ -23,11 +25,16 @@ export interface ResolvedManifest {
 }
 
 export class ManifestResolver {
+  protected telemetry: KernelTelemetry;
   private registryResolver?: RegistryResolver;
   private manifestCache: Map<string, FynAppManifest> = new Map();
   private nodeMeta: Map<string, ManifestMeta> = new Map();
   private preloadedEntries: Map<string, number> = new Map();
   private preloadCallback?: (url: string, depth: number) => void;
+
+  constructor(telemetry?: KernelTelemetry) {
+    this.telemetry = telemetry ?? noOpTelemetry;
+  }
 
   /**
    * Install a registry resolver (browser: demo server paths)
@@ -150,6 +157,7 @@ export class ManifestResolver {
    * Resolve and fetch a manifest with caching
    */
   async resolveAndFetch(name: string, range?: string): Promise<ResolvedManifest> {
+    const t0 = Date.now();
     if (!this.registryResolver) {
       throw new Error("No registry resolver configured");
     }
@@ -164,6 +172,8 @@ export class ManifestResolver {
     if (cached) {
       // Fast path: already cached
       this.updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
+      this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+      this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: cached.version || resolvedVersion } });
       return { key: cacheKey, res, manifest: cached };
     }
 
@@ -181,6 +191,8 @@ export class ManifestResolver {
           const key = `${res.name}@${manifest.version || res.version}`;
           this.manifestCache.set(key, manifest);
           this.updateNodeMeta(key, res, manifest);
+          this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+          this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
           return { key, res, manifest };
         }
       }
@@ -204,6 +216,8 @@ export class ManifestResolver {
     const key = `${res.name}@${manifest.version || res.version}`;
     this.manifestCache.set(key, manifest);
     this.updateNodeMeta(key, res, manifest);
+    this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+    this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
     return { key, res, manifest };
   }
 
@@ -308,6 +322,11 @@ export class ManifestResolver {
     }
 
     console.debug('buildGraph completed, nodes:', Array.from(nodes));
+    this.telemetry.capture({
+      type: "event",
+      name: "graph.built",
+      data: { nodes: nodes.size },
+    });
     return { nodes, adj, indegree };
   }
 

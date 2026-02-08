@@ -27,7 +27,10 @@ import type {
   FynUnitRuntime,
   RegistryResolver,
   KernelConfig,
+  KernelTelemetry,
+  TelemetryConfig,
 } from "./types";
+import { KernelTelemetryImpl, noOpTelemetry } from "./kernel-telemetry";
 
 /**
  * Abstract base class for FynMesh kernel implementations
@@ -44,6 +47,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   private globalMiddlewareRegistry = new MiddlewareStateRegistry();
   private regionRegistries: Map<string, MiddlewareStateRegistry> = new Map();
 
+  // Telemetry
+  public telemetry: KernelTelemetry;
+
   // Extracted modules
   public manifestResolver: ManifestResolver;
   public bootstrapCoordinator: BootstrapCoordinator;
@@ -51,19 +57,24 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public moduleLoader: ModuleLoader;
   public middlewareExecutor: MiddlewareExecutor;
 
-  constructor() {
+  constructor(telemetryConfig?: TelemetryConfig) {
     this.events = new FynEventTarget();
     this.runTime = {
       appsLoaded: {},
       middlewares: {},
     };
 
-    // Initialize extracted modules
-    this.manifestResolver = new ManifestResolver();
-    this.bootstrapCoordinator = new BootstrapCoordinator(this.events);
-    this.middlewareManager = new MiddlewareManager();
-    this.moduleLoader = new ModuleLoader();
-    this.middlewareExecutor = new MiddlewareExecutor();
+    // Initialize telemetry
+    this.telemetry = telemetryConfig
+      ? new KernelTelemetryImpl(telemetryConfig)
+      : noOpTelemetry;
+
+    // Initialize extracted modules with scoped telemetry
+    this.manifestResolver = new ManifestResolver(this.telemetry.scope("manifest"));
+    this.bootstrapCoordinator = new BootstrapCoordinator(this.events, undefined, this.telemetry.scope("bootstrap"));
+    this.middlewareManager = new MiddlewareManager(this.telemetry.scope("middleware"));
+    this.moduleLoader = new ModuleLoader(this.telemetry.scope("loader"));
+    this.middlewareExecutor = new MiddlewareExecutor(this.telemetry.scope("executor"));
 
     // Set up event handlers
     this.events.on("MIDDLEWARE_READY", (event: Event) => {
@@ -147,6 +158,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     requests: Array<{ name: string; range?: string }>,
     options?: import("./types").LoadFynAppsOptions
   ): Promise<void> {
+    this.telemetry.capture({ type: "event", name: "load_batch.started", data: { count: requests.length } });
+
     // Preload initial FynApp entry files before building dependency graph
     // This allows the initial batch to start loading in parallel
     const preloadCallback = this.manifestResolver.getPreloadCallback();
@@ -186,6 +199,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       });
       await Promise.all(runners);
     }
+
+    this.telemetry.capture({ type: "event", name: "load_batch.completed" });
   }
 
   /**
@@ -395,6 +410,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return;
     }
 
+    this.telemetry.capture({ type: "event", name: "bootstrap.started", data: { app: fynApp.name, version: fynApp.version } });
+
     try {
       // Load middleware modules for all FynApps
       await this.loadMiddlewareModules(fynApp);
@@ -434,6 +451,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
 
+      this.telemetry.capture({ type: "event", name: "bootstrap.completed", data: { app: fynApp.name, version: fynApp.version } });
+
       // Emit bootstrap complete event
       await this.emitAsync(
         new CustomEvent("FYNAPP_BOOTSTRAPPED", {
@@ -441,6 +460,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
     } catch (error) {
+      this.telemetry.capture({ type: "error", name: "bootstrap.failed", data: { app: fynApp.name }, error: { message: (error as Error).message, stack: (error as Error).stack } });
+
       // Error isolation: Log error but don't crash the kernel
       console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
 
@@ -472,6 +493,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     console.debug(`🛑 Shutting down FynApp ${name}`);
 
+    this.telemetry.capture({ type: "event", name: "shutdown.started", data: { app: name } });
+
     try {
       // Call shutdown on each FynUnit that has it
       for (const exposeName of Object.keys(fynApp.exposes)) {
@@ -492,9 +515,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
 
+      this.telemetry.capture({ type: "event", name: "shutdown.completed", data: { app: fynApp.name, version: fynApp.version } });
+
       console.debug(`✅ FynApp ${fynApp.name}@${fynApp.version} shutdown complete`);
       return true;
     } catch (error) {
+      this.telemetry.capture({ type: "error", name: "shutdown.failed", data: { app: name }, error: { message: (error as Error).message, stack: (error as Error).stack } });
+
       console.error(`❌ Error during shutdown of ${name}:`, error);
       // Still remove from registry even if shutdown fails
       this.removeFromRegistry(fynApp, name);

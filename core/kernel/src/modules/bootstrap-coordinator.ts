@@ -3,8 +3,9 @@
  * Handles FynApp bootstrap serialization and dependency coordination
  */
 
-import type { FynApp } from "../types";
+import type { FynApp, KernelTelemetry } from "../types";
 import type { FynEventTarget } from "../event-target";
+import { noOpTelemetry } from "../kernel-telemetry";
 
 /** Default bootstrap timeout: 30 seconds */
 const DEFAULT_BOOTSTRAP_TIMEOUT = 30000;
@@ -22,12 +23,14 @@ export class BootstrapCoordinator {
   public fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
   public fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
   public events: FynEventTarget;
+  protected telemetry: KernelTelemetry;
 
   /** Bootstrap timeout in milliseconds */
   private timeout: number = DEFAULT_BOOTSTRAP_TIMEOUT;
 
-  constructor(events: FynEventTarget, timeout?: number) {
+  constructor(events: FynEventTarget, timeout?: number, telemetry?: KernelTelemetry) {
     this.events = events;
+    this.telemetry = telemetry ?? noOpTelemetry;
     if (timeout !== undefined) {
       this.timeout = timeout;
     }
@@ -86,6 +89,7 @@ export class BootstrapCoordinator {
     }
     this.bootstrappingApp = fynAppName;
     console.debug(`🔒 ${fynAppName} acquired bootstrap lock`);
+    this.telemetry.capture({ type: "event", name: "lock.acquired", data: { app: fynAppName } });
     return true;
   }
 
@@ -106,6 +110,7 @@ export class BootstrapCoordinator {
       : `waiting for provider dependencies`;
 
     console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
+    this.telemetry.capture({ type: "event", name: "deferred", data: { app: fynApp.name, reason } });
 
     return new Promise<void>((resolve, reject) => {
       const deferred: { fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> } = {
@@ -133,6 +138,14 @@ export class BootstrapCoordinator {
           `⏰ Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}. ` +
           `Skipping this FynApp - the party goes on!`
         );
+
+        // Capture timeout error for telemetry
+        this.telemetry.capture({
+          type: "error",
+          name: "timeout",
+          data: { app: fynApp.name, timeout: this.timeout, reason },
+          error: { message: `Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}` },
+        });
 
         // Emit timeout event for observability
         this.events.dispatchEvent(
@@ -186,6 +199,7 @@ export class BootstrapCoordinator {
     const { name } = event.detail;
 
     console.debug(`✅ FynApp ${name} bootstrap complete, checking deferred bootstraps`);
+    this.telemetry.capture({ type: "event", name: "completed", data: { app: name } });
 
     // Mark this FynApp as bootstrapped
     this.markBootstrapped(name);
@@ -249,6 +263,7 @@ export class BootstrapCoordinator {
   private async handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
     const { name } = event.detail;
     console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
+    this.telemetry.capture({ type: "error", name: "failed", data: { app: name } });
     this.finishBootstrapAndResumeNext();
   }
 
@@ -273,6 +288,7 @@ export class BootstrapCoordinator {
     if (nextIndex >= 0) {
       const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
       console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
+      this.telemetry.capture({ type: "event", name: "resumed", data: { app: next.fynApp.name } });
       next.resolve();
     } else if (this.deferredBootstraps.length > 0) {
       console.debug(`⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`);

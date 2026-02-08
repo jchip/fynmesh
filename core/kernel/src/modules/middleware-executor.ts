@@ -11,7 +11,9 @@ import type {
   FynAppMiddlewareCallContext,
   FynMeshKernel,
   MiddlewareUseMeta,
+  KernelTelemetry,
 } from "../types";
+import { noOpTelemetry } from "../kernel-telemetry";
 import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
@@ -20,8 +22,13 @@ import {
 } from "../errors";
 
 export class MiddlewareExecutor {
+  protected telemetry: KernelTelemetry;
   private middlewareReady: Map<string, any> = new Map();
   private deferInvoke: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] = [];
+
+  constructor(telemetry?: KernelTelemetry) {
+    this.telemetry = telemetry ?? noOpTelemetry;
+  }
 
   private getDeferKey(ccs: FynAppMiddlewareCallContext[]): string {
     return ccs.map((c) => c.reg.fullKey).sort().join("|");
@@ -177,6 +184,11 @@ export class MiddlewareExecutor {
       if (mw.setup) {
         console.debug("🚀 Invoking middleware", reg.regKey, "setup for", fynApp.name, fynApp.version);
         const result = await mw.setup(cc);
+        this.telemetry.capture({
+          type: "event",
+          name: "setup.completed",
+          data: { middleware: reg.regKey, app: fynApp.name },
+        });
         if (result?.status === "ready" && !this.middlewareReady.has(cc.reg.fullKey)) {
           if (signalReady) {
             await signalReady(cc, result?.share);
@@ -257,6 +269,12 @@ export class MiddlewareExecutor {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
       await fynUnit.execute(runtime);
     }
+
+    this.telemetry.capture({
+      type: "event",
+      name: "execute.completed",
+      data: { app: fynApp.name, override: !!executionOverride },
+    });
   }
 
   /**
@@ -278,6 +296,12 @@ export class MiddlewareExecutor {
       return "ready";
     }
 
+    this.telemetry.capture({
+      type: "event",
+      name: "call.started",
+      data: { count: ccs.length, app: ccs[0]?.fynApp?.name },
+    });
+
     this.validateRetryCount(ccs, tries);
 
     // Phase 1: Setup middlewares
@@ -298,6 +322,7 @@ export class MiddlewareExecutor {
     );
 
     if (initDeferStatus === "defer" && !allowDegraded) {
+      this.telemetry.capture({ type: "event", name: "call.deferred", data: { app: fynApp?.name } });
       return "defer";
     }
     if (initDeferStatus === "retry") {
@@ -305,6 +330,7 @@ export class MiddlewareExecutor {
     }
 
     if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options?.skipFynUnit) {
+      this.telemetry.capture({ type: "event", name: "call.deferred", data: { app: fynApp?.name } });
       return "defer";
     }
 
@@ -572,6 +598,15 @@ export class MiddlewareExecutor {
             cause: error instanceof Error ? error : undefined,
           }
         );
+        this.telemetry.capture({
+          type: "error",
+          name: "auto_apply.failed",
+          data: { middleware: mwReg.regKey, app: fynApp.name },
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+        });
         console.error(`❌ ${mwError.message}`);
         errors.push(mwError);
       }

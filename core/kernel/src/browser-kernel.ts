@@ -121,6 +121,7 @@ export class BrowserKernel extends FynMeshKernelCore {
 
     try {
       loadId = loadId || baseUrl;
+      this.telemetry.capture({ type: "event", name: "fynapp.load_started", data: { url: baseUrl } });
       const urlPath = this.buildFynAppUrl(baseUrl);
       console.debug("🚀 Loading FynApp from", urlPath);
       const fynAppEntry = await Federation.import(urlPath);
@@ -133,8 +134,10 @@ export class BrowserKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
+      this.telemetry.capture({ type: "event", name: "fynapp.loaded", data: { app: fynApp.name, version: fynApp.version } });
       return fynApp;
     } catch (err) {
+      this.telemetry.capture({ type: "error", name: "fynapp.load_failed", data: { url: baseUrl }, error: { message: (err as Error).message, stack: (err as Error).stack } });
       console.error(`Failed to load FynApp from ${baseUrl}:`, err);
       return null;
     }

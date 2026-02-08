@@ -500,3 +500,48 @@ export interface Middleware {
   handleInitialize?(context: MiddlewareHandlerContext): Promise<any>;
   handleMain?(context: MiddlewareHandlerContext): Promise<void>;
 }
+
+// --- Telemetry ---
+
+/**
+ * A single telemetry entry captured by the kernel
+ */
+export interface TelemetryEntry {
+  type: "event" | "metric" | "error";
+  name: string;
+  ts: number;
+  data?: Record<string, unknown>;
+  /** For metrics */
+  value?: number;
+  /** Serialized error (not an Error reference) */
+  error?: { message: string; stack?: string };
+}
+
+/**
+ * Kernel telemetry capture interface
+ */
+export interface KernelTelemetry {
+  /** Record a telemetry entry. Timestamp is auto-filled. */
+  capture(entry: Omit<TelemetryEntry, "ts">): void;
+  /** Return a child instance that auto-prepends `prefix.` to all entry names */
+  scope(prefix: string): KernelTelemetry;
+  /** Manually drain the buffer to the transport */
+  flush(): void;
+}
+
+/**
+ * Pluggable transport backend for telemetry
+ */
+export interface TelemetryTransport {
+  send(batch: TelemetryEntry[]): Promise<void>;
+}
+
+/**
+ * Configuration for the telemetry system
+ */
+export interface TelemetryConfig {
+  /** Transport backend. Default: ConsoleTelemetryTransport */
+  transport?: TelemetryTransport;
+  /** Maximum ring buffer size. Default: 500 */
+  maxBufferSize?: number;
+}
