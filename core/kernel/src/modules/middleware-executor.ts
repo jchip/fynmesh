@@ -12,7 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
 } from "../types";
-import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride } from "../util";
+import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
@@ -267,23 +267,7 @@ export class MiddlewareExecutor {
     if (executionOverride) {
       console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
 
-      const overrideContext = {
-        meta: {
-          info: {
-            name: executionOverride.middleware.name,
-            provider: executionOverride.hostFynApp.name,
-            version: executionOverride.hostFynApp.version,
-          },
-          config: {},
-        },
-        fynUnit,
-        fynMod: fynUnit, // deprecated compatibility
-        fynApp,
-        reg: executionOverride,
-        runtime,
-        kernel: ccs[0].kernel,
-        status: "ready" as const,
-      };
+      const overrideContext = createMiddlewareCallContext(executionOverride, fynUnit, fynApp, runtime, ccs[0].kernel, {}, "ready");
 
       if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
         console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
@@ -527,23 +511,7 @@ export class MiddlewareExecutor {
       );
 
       const unit = fynUnit || noOpFynUnit;
-      const context: FynAppMiddlewareCallContext = {
-        meta: {
-          info: {
-            name: mwReg.middleware.name,
-            provider: mwReg.hostFynApp.name,
-            version: mwReg.hostFynApp.version,
-          },
-          config: {},
-        },
-        fynUnit: unit,
-        fynMod: unit, // deprecated compatibility
-        fynApp,
-        reg: mwReg,
-        runtime: createRuntime(),
-        kernel,
-        status: "ready",
-      };
+      const context = createMiddlewareCallContext(mwReg, unit, fynApp, createRuntime(), kernel, {}, "ready");
 
       try {
         if (mwReg.middleware.setup) {

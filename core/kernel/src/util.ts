@@ -1,4 +1,4 @@
-import type { FynApp, FynUnit, FynAppMiddlewareReg } from "./types";
+import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -59,4 +59,43 @@ export function findExecutionOverride(
   }
 
   return null;
+}
+
+/**
+ * Create a middleware call context object
+ * @param mwReg The middleware registration
+ * @param fynUnit The FynUnit being processed
+ * @param fynApp The FynApp owning the FynUnit
+ * @param runtime The FynUnit runtime
+ * @param kernel The FynMesh kernel
+ * @param config Optional config (defaults to {})
+ * @param status Optional status (defaults to "")
+ * @returns A fully-constructed FynAppMiddlewareCallContext
+ */
+export function createMiddlewareCallContext(
+  mwReg: FynAppMiddlewareReg,
+  fynUnit: FynUnit,
+  fynApp: FynApp,
+  runtime: FynUnitRuntime,
+  kernel: FynMeshKernel,
+  config?: any,
+  status?: string
+): FynAppMiddlewareCallContext {
+  return {
+    meta: {
+      info: {
+        name: mwReg.middleware.name,
+        provider: mwReg.hostFynApp.name,
+        version: mwReg.hostFynApp.version,
+      },
+      config: config ?? {},
+    },
+    fynUnit,
+    fynMod: fynUnit, // deprecated compatibility
+    fynApp,
+    reg: mwReg,
+    runtime,
+    kernel,
+    status: status ?? "",
+  };
 }

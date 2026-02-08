@@ -18,7 +18,7 @@ import {
   ok,
   err,
 } from "../errors";
-import { MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride } from "../util";
+import { MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext } from "../util";
 
 /**
  * Callback type for middleware scanning
@@ -278,23 +278,7 @@ export class ModuleLoader {
     if (executionOverride) {
       console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
 
-      const context = {
-        meta: {
-          info: {
-            name: executionOverride.middleware.name,
-            provider: executionOverride.hostFynApp.name,
-            version: executionOverride.hostFynApp.version
-          },
-          config: {}
-        },
-        fynUnit,
-        fynMod: fynUnit, // deprecated compatibility
-        fynApp,
-        reg: executionOverride,
-        runtime,
-        kernel: kernel!,
-        status: "ready",
-      };
+      const context = createMiddlewareCallContext(executionOverride, fynUnit, fynApp, runtime, kernel!, {}, "ready");
 
       // Let middleware handle initialize
       if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
