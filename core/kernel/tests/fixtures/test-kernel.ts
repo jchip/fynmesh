@@ -5,7 +5,8 @@ import { TestMiddlewareExecutor } from "./test-middleware-executor";
 import type {
   RegistryResolver,
   FynAppManifest,
-  RegistryResolverResult
+  RegistryResolverResult,
+  TelemetryConfig
 } from "../../src/types";
 
 /**
@@ -19,11 +20,12 @@ export class TestKernel extends FynMeshKernelCore {
   public shouldFailLoad = false;
   public loadDelay = 0;
 
-  constructor() {
-    super();
+  constructor(telemetryConfig?: TelemetryConfig) {
+    super(telemetryConfig);
     // Replace with test fixtures that expose protected methods
-    this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events);
-    this.middlewareExecutor = new TestMiddlewareExecutor();
+    // Pass scoped telemetry so capture points are active in tests
+    this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events, undefined, this.telemetry.scope("bootstrap"));
+    this.middlewareExecutor = new TestMiddlewareExecutor(this.telemetry.scope("executor"));
   }
 
   async loadFynApp(baseUrl: string, loadId?: string): Promise<import("../../src/types").FynApp | null> {
@@ -182,8 +184,9 @@ export function createTestKernel(options?: {
   registryResolver?: RegistryResolver;
   shouldFailLoad?: boolean;
   loadDelay?: number;
+  telemetryConfig?: TelemetryConfig;
 }): TestKernel {
-  const kernel = new TestKernel();
+  const kernel = new TestKernel(options?.telemetryConfig);
 
   // Initialize runtime
   kernel.initRunTime({
