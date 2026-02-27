@@ -34,7 +34,7 @@ export class NodeKernel extends FynMeshKernelCore {
       this.telemetry.capture({ type: "event", name: "fynapp.loaded", data: { app: fynApp.name, version: fynApp.version } });
       return fynApp;
     } catch (err) {
-      this.telemetry.capture({ type: "error", name: "fynapp.load_failed", data: { url: baseUrl }, error: { message: (err as Error).message, stack: (err as Error).stack } });
+      this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);
       console.error(`Failed to load FynApp from ${baseUrl} in Node.js:`, err);
       return null;
     }

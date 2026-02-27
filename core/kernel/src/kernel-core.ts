@@ -14,6 +14,7 @@ import { BootstrapCoordinator } from "./modules/bootstrap-coordinator";
 import { MiddlewareManager } from "./modules/middleware-manager";
 import { ModuleLoader } from "./modules/module-loader";
 import { MiddlewareExecutor } from "./modules/middleware-executor";
+import { FynAppRegistry } from "./modules/fynapp-registry";
 
 import type {
   FynMeshKernel,
@@ -56,6 +57,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public middlewareManager: MiddlewareManager;
   public moduleLoader: ModuleLoader;
   public middlewareExecutor: MiddlewareExecutor;
+  public fynAppRegistry: FynAppRegistry;
 
   constructor(telemetryConfig?: TelemetryConfig) {
     this.events = new FynEventTarget();
@@ -63,6 +65,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       appsLoaded: {},
       middlewares: {},
     };
+    this.fynAppRegistry = new FynAppRegistry(this.runTime.appsLoaded);
 
     // Initialize telemetry
     this.telemetry = telemetryConfig
@@ -138,11 +141,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     for (const resume of resumes) {
       await this.middlewareExecutor.callMiddlewares(
         resume.callContexts,
-        async (cc, share) => this.signalMiddlewareReady(cc, { share }),
-        (fynAppName, middlewareName, mode) =>
-          this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode),
-        undefined,
-        resume.resumeMode === "middleware_only" ? { skipFynUnit: true } : undefined
+        {
+          signalReady: async (cc, share) => this.signalMiddlewareReady(cc, { share }),
+          providerModeRegistrar: (fynAppName, middlewareName, mode) =>
+            this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode),
+          autoApplyMiddlewares: this.runTime.autoApplyMiddlewares,
+          skipFynUnit: resume.resumeMode === "middleware_only" ? true : undefined,
+        }
       );
     }
 
@@ -244,6 +249,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   initRunTime(data: FynMeshRuntimeData): FynMeshRuntimeData {
     this.runTime = { ...data };
+    this.fynAppRegistry.initialize(this.runTime.appsLoaded);
     this.middlewareManager.initializeFromRuntime(data);
     return this.runTime;
   }
@@ -270,7 +276,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   async loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp> {
     return this.moduleLoader.loadFynAppBasics(
       fynAppEntry,
-      this.runTime.appsLoaded,
+      this.fynAppRegistry,
       this.createMiddlewareScanner()
     );
   }
@@ -283,9 +289,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     const fynAppName = fynAppEntry.container?.name;
     const fynAppVersion = fynAppEntry.container?.version;
     const fynAppKey = fynAppName && fynAppVersion ? `${fynAppName}@${fynAppVersion}` : fynAppName;
-    if (fynAppKey && this.runTime.appsLoaded[fynAppKey]) {
+    if (fynAppKey && this.fynAppRegistry.has(fynAppKey)) {
       console.debug(`✅ FynApp ${fynAppKey} already loaded, returning existing instance`);
-      return this.runTime.appsLoaded[fynAppKey];
+      return this.fynAppRegistry.get(fynAppKey)!;
     }
     return null;
   }
@@ -437,7 +443,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
               await this.moduleLoader.loadMiddlewareFromDependency(
                 packageName,
                 middlewarePath,
-                this.runTime.appsLoaded,
+                this.fynAppRegistry,
                 middlewareScanner
               );
             },
@@ -460,7 +466,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
     } catch (error) {
-      this.telemetry.capture({ type: "error", name: "bootstrap.failed", data: { app: fynApp.name }, error: { message: (error as Error).message, stack: (error as Error).stack } });
+      this.telemetry.captureError("bootstrap.failed", { app: fynApp.name }, error);
 
       // Error isolation: Log error but don't crash the kernel
       console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
@@ -485,7 +491,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * @param name - Can be either "name" or "name@version" format
    */
   async shutdownFynApp(name: string): Promise<boolean> {
-    const fynApp = this.runTime.appsLoaded[name];
+    const fynApp = this.fynAppRegistry.get(name);
     if (!fynApp) {
       console.debug(`⚠️ shutdownFynApp: FynApp "${name}" not found`);
       return false;
@@ -520,7 +526,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       console.debug(`✅ FynApp ${fynApp.name}@${fynApp.version} shutdown complete`);
       return true;
     } catch (error) {
-      this.telemetry.capture({ type: "error", name: "shutdown.failed", data: { app: name }, error: { message: (error as Error).message, stack: (error as Error).stack } });
+      this.telemetry.captureError("shutdown.failed", { app: name }, error);
 
       console.error(`❌ Error during shutdown of ${name}:`, error);
       // Still remove from registry even if shutdown fails
@@ -536,10 +542,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * - the canonical name (fynApp.name)
    */
   private removeFromRegistry(fynApp: FynApp, name: string): void {
-    const versionedKey = `${fynApp.name}@${fynApp.version}`;
-    delete this.runTime.appsLoaded[name];
-    delete this.runTime.appsLoaded[versionedKey];
-    delete this.runTime.appsLoaded[fynApp.name];
+    this.fynAppRegistry.remove(fynApp, name);
   }
 
   /**

@@ -13,6 +13,7 @@ import type {
   KernelTelemetry,
 } from "../types";
 import { noOpTelemetry } from "../kernel-telemetry";
+import { FynAppRegistry } from "./fynapp-registry";
 import {
   ModuleLoadError,
   KernelErrorCode,
@@ -64,12 +65,11 @@ export class ModuleLoader {
           exposeName,
         }
       );
-      this.telemetry.capture({
-        type: "error",
-        name: "expose.not_found",
-        data: { app: fynApp.name, expose: exposeName },
-        error: { message: error.message, stack: error.stack },
-      });
+      this.telemetry.captureError(
+        "expose.not_found",
+        { app: fynApp.name, expose: exposeName },
+        error
+      );
       console.debug(`❌ ${error.message}`);
       return err(error);
     }
@@ -107,13 +107,13 @@ export class ModuleLoader {
   async loadMiddlewareFromDependency(
     packageName: string,
     middlewarePath: string,
-    appsLoaded: Record<string, FynApp>,
+    appsLoaded: FynAppRegistry,
     middlewareScanner?: MiddlewareScanner
   ): Promise<Result<void, ModuleLoadError>> {
     console.debug(`📦 Loading middleware from dependency: ${packageName}/${middlewarePath}`);
 
     // Find the dependency fynapp
-    const dependencyApp = appsLoaded[packageName];
+    const dependencyApp = appsLoaded.get(packageName);
 
     if (!dependencyApp) {
       const error = new ModuleLoadError(
@@ -124,12 +124,11 @@ export class ModuleLoader {
           exposeName: middlewarePath,
         }
       );
-      this.telemetry.capture({
-        type: "error",
-        name: "dependency.not_found",
-        data: { package: packageName, path: middlewarePath },
-        error: { message: error.message, stack: error.stack },
-      });
+      this.telemetry.captureError(
+        "dependency.not_found",
+        { package: packageName, path: middlewarePath },
+        error
+      );
       console.debug(`❌ ${error.message}`);
       return err(error);
     }
@@ -159,7 +158,7 @@ export class ModuleLoader {
    */
   async loadFynAppBasics(
     fynAppEntry: FynAppEntry,
-    appsLoaded: Record<string, FynApp>,
+    appsLoaded: FynAppRegistry,
     middlewareScanner?: MiddlewareScanner
   ): Promise<FynApp> {
     const container = fynAppEntry.container;
@@ -260,11 +259,7 @@ export class ModuleLoader {
     });
 
     // Record app in runtime registry for observability
-    // Use name@version as key to support multiple versions of the same package
-    const appKey = `${fynApp.name}@${fynApp.version}`;
-    appsLoaded[appKey] = fynApp;
-    // Also store by name for backward compatibility and simple lookups
-    appsLoaded[fynApp.name] = fynApp;
+    appsLoaded.add(fynApp);
 
     return fynApp;
   }

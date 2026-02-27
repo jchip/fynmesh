@@ -523,6 +523,8 @@ export interface TelemetryEntry {
 export interface KernelTelemetry {
   /** Record a telemetry entry. Timestamp is auto-filled. */
   capture(entry: Omit<TelemetryEntry, "ts">): void;
+  /** Helper to quickly record an error telemetry entry. */
+  captureError(name: string, data: Record<string, unknown>, error: unknown): void;
   /** Return a child instance that auto-prepends `prefix.` to all entry names */
   scope(prefix: string): KernelTelemetry;
   /** Manually drain the buffer to the transport */

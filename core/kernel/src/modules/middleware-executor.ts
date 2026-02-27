@@ -14,12 +14,22 @@ import type {
   KernelTelemetry,
 } from "../types";
 import { noOpTelemetry } from "../kernel-telemetry";
-import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride } from "../util";
+import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride, parseMiddlewareString } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
   MiddlewareError,
   KernelErrorCode,
 } from "../errors";
+
+export interface MiddlewareExecutionOptions {
+  signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>;
+  providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void;
+  autoApplyMiddlewares?: {
+    fynapp: FynAppMiddlewareReg[];
+    middleware: FynAppMiddlewareReg[];
+  };
+  skipFynUnit?: boolean;
+}
 
 export class MiddlewareExecutor {
   protected telemetry: KernelTelemetry;
@@ -282,13 +292,7 @@ export class MiddlewareExecutor {
    */
   async callMiddlewares(
     ccs: FynAppMiddlewareCallContext[],
-    signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
-    providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
-    autoApplyMiddlewares?: {
-      fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
-    },
-    options?: { skipFynUnit?: boolean },
+    options: MiddlewareExecutionOptions = {},
     tries = 0
   ): Promise<string> {
     if (ccs.length === 0) {
@@ -305,7 +309,7 @@ export class MiddlewareExecutor {
     this.validateRetryCount(ccs, tries);
 
     // Phase 1: Setup middlewares
-    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.setupMiddlewares(ccs, signalReady);
+    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.setupMiddlewares(ccs, options.signalReady);
 
     const fynUnit = ccs[0].fynUnit;
     const fynApp = ccs[0].fynApp;
@@ -313,12 +317,12 @@ export class MiddlewareExecutor {
 
     const postSetupStatus = this.checkDeferCalls(middlewareSetupStatus, ccs);
     if (postSetupStatus === "retry") {
-      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
+      return await this.callMiddlewares(ccs, options, tries + 1);
     }
 
     // Phase 2: Initialize the FynUnit
     const { allowDegraded, initDeferStatus } = await this.initializeFynUnit(
-      ccs, fynUnit, fynApp, runtime, providerModeRegistrar, options?.skipFynUnit
+      ccs, fynUnit, fynApp, runtime, options.providerModeRegistrar, options.skipFynUnit
     );
 
     if (initDeferStatus === "defer" && !allowDegraded) {
@@ -326,10 +330,10 @@ export class MiddlewareExecutor {
       return "defer";
     }
     if (initDeferStatus === "retry") {
-      return await this.callMiddlewares(ccs, signalReady, providerModeRegistrar, autoApplyMiddlewares, options, tries + 1);
+      return await this.callMiddlewares(ccs, options, tries + 1);
     }
 
-    if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options?.skipFynUnit) {
+    if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options.skipFynUnit) {
       this.telemetry.capture({ type: "event", name: "call.deferred", data: { app: fynApp?.name } });
       return "defer";
     }
@@ -337,7 +341,7 @@ export class MiddlewareExecutor {
     // Phase 3: Apply ready middlewares
     await this.applyReadyMiddlewares(ccs, fynApp);
 
-    if (options?.skipFynUnit) {
+    if (options.skipFynUnit) {
       return "ready";
     }
 
@@ -346,65 +350,12 @@ export class MiddlewareExecutor {
     }
 
     // Phase 4: Execute with possible override
-    await this.executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, autoApplyMiddlewares);
+    await this.executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, options.autoApplyMiddlewares);
 
     return "ready";
   }
 
-  /**
-   * Parse middleware string format and create call context
-   * @private
-   */
-  private async parseMiddlewareString(
-    middlewareStr: string,
-    config: unknown,
-    fynUnit: FynUnit,
-    fynApp: FynApp,
-    kernel: FynMeshKernel,
-    runtime: FynUnitRuntime,
-    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
-    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
-  ): Promise<FynAppMiddlewareCallContext | null> {
-    const parts = middlewareStr.trim().split(' ');
 
-    if (parts.length < 3 || parts[0] !== '-FYNAPP_MIDDLEWARE') {
-      return null;
-    }
-
-    const [, packageName, middlewarePath, semver] = parts;
-    const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
-
-    console.debug("🔍 Middleware string - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
-
-    // Try to load middleware from dependency package first
-    if (loadMiddlewareFromDependency) {
-      await loadMiddlewareFromDependency(packageName, middlewarePath);
-    }
-
-    const reg = getMiddleware(middlewareName, packageName);
-    if (reg.regKey === "") {
-      console.debug("❌ No middleware found for", middlewareName, packageName);
-      return null;
-    }
-
-    return {
-      meta: {
-        info: {
-          name: middlewareName,
-          provider: packageName,
-          version: semver || "*"
-        },
-        config: config || {}
-      },
-      fynUnit,
-      fynMod: fynUnit, // deprecated compatibility
-      fynApp,
-      reg,
-      kernel,
-      runtime,
-      status: "",
-    };
-  }
 
   /**
    * Use middleware on FynUnit
@@ -438,7 +389,7 @@ export class MiddlewareExecutor {
 
       // Handle new string format: "-FYNAPP_MIDDLEWARE package-name middleware-path [semver]"
       if (typeof meta === 'string') {
-        cc = await this.parseMiddlewareString(
+        cc = await parseMiddlewareString(
           meta,
           {},
           fynUnit,
@@ -453,7 +404,7 @@ export class MiddlewareExecutor {
 
         // Check for new format with middleware property containing the string
         if ((meta as any).middleware && typeof (meta as any).middleware === 'string') {
-          cc = await this.parseMiddlewareString(
+          cc = await parseMiddlewareString(
             (meta as any).middleware,
             (meta as any).config || {},
             fynUnit,
@@ -497,7 +448,7 @@ export class MiddlewareExecutor {
 
     console.debug("✅ Created", ccs.length, "middleware call contexts");
 
-    return this.callMiddlewares(ccs, undefined, undefined, autoApplyMiddlewares);
+    return this.callMiddlewares(ccs, { autoApplyMiddlewares });
   }
 
   /**
@@ -598,15 +549,11 @@ export class MiddlewareExecutor {
             cause: error instanceof Error ? error : undefined,
           }
         );
-        this.telemetry.capture({
-          type: "error",
-          name: "auto_apply.failed",
-          data: { middleware: mwReg.regKey, app: fynApp.name },
-          error: {
-            message: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-          },
-        });
+        this.telemetry.captureError(
+          "auto_apply.failed",
+          { middleware: mwReg.regKey, app: fynApp.name },
+          error
+        );
         console.error(`❌ ${mwError.message}`);
         errors.push(mwError);
       }

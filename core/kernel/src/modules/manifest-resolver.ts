@@ -10,6 +10,7 @@ import type {
   KernelTelemetry,
 } from "../types";
 import { noOpTelemetry } from "../kernel-telemetry";
+import { getFederation } from "../util";
 
 export interface ManifestMeta {
   name: string;
@@ -182,19 +183,17 @@ export class ManifestResolver {
     // Try to extract embedded manifest from entry file first (zero HTTP overhead)
     // Use Federation.import() to load the SystemJS module and extract the manifest export
     try {
-      const Federation = (globalThis as any).Federation;
-      if (Federation) {
-        const entryUrl = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
-        const entryModule = await Federation.import(entryUrl);
-        if (entryModule && entryModule.__FYNAPP_MANIFEST__) {
-          manifest = entryModule.__FYNAPP_MANIFEST__;
-          const key = `${res.name}@${manifest.version || res.version}`;
-          this.manifestCache.set(key, manifest);
-          this.updateNodeMeta(key, res, manifest);
-          this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-          this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
-          return { key, res, manifest };
-        }
+      const Federation = getFederation();
+      const entryUrl = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
+      const entryModule = await Federation.import(entryUrl);
+      if (entryModule && entryModule.__FYNAPP_MANIFEST__) {
+        manifest = entryModule.__FYNAPP_MANIFEST__;
+        const key = `${res.name}@${manifest.version || res.version}`;
+        this.manifestCache.set(key, manifest);
+        this.updateNodeMeta(key, res, manifest);
+        this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+        this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
+        return { key, res, manifest };
       }
     } catch (embeddedErr) {
       // Entry module doesn't exist or doesn't have embedded manifest, fall back to fetching

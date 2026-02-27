@@ -46,9 +46,20 @@ export class KernelTelemetryImpl implements KernelTelemetry {
     this.buffer.push(full);
   }
 
+  captureError(name: string, data: Record<string, unknown>, error: unknown): void {
+    const err = error instanceof Error ? error : new Error(String(error));
+    this.capture({
+      type: "error",
+      name,
+      data,
+      error: { message: err.message, stack: err.stack },
+    });
+  }
+
   scope(prefix: string): KernelTelemetry {
     return {
       capture: (entry) => this.capture({ ...entry, name: `${prefix}.${entry.name}` }),
+      captureError: (name, data, error) => this.captureError(`${prefix}.${name}`, data, error),
       scope: (sub) => this.scope(`${prefix}.${sub}`),
       flush: () => this.flush(),
     };
@@ -73,6 +84,7 @@ export class KernelTelemetryImpl implements KernelTelemetry {
  */
 export const noOpTelemetry: KernelTelemetry = {
   capture() {},
+  captureError() {},
   scope() { return noOpTelemetry; },
   flush() {},
 };

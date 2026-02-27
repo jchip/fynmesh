@@ -140,12 +140,11 @@ export class BootstrapCoordinator {
         );
 
         // Capture timeout error for telemetry
-        this.telemetry.capture({
-          type: "error",
-          name: "timeout",
-          data: { app: fynApp.name, timeout: this.timeout, reason },
-          error: { message: `Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}` },
-        });
+        this.telemetry.captureError(
+          "timeout",
+          { app: fynApp.name, timeout: this.timeout, reason },
+          new Error(`Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}`)
+        );
 
         // Emit timeout event for observability
         this.events.dispatchEvent(
@@ -263,7 +262,7 @@ export class BootstrapCoordinator {
   private async handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
     const { name } = event.detail;
     console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
-    this.telemetry.capture({ type: "error", name: "failed", data: { app: name } });
+    this.telemetry.captureError("failed", { app: name }, new Error("Bootstrap failed"));
     this.finishBootstrapAndResumeNext();
   }
 

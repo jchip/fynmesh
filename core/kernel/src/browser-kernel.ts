@@ -1,6 +1,7 @@
 import { FynMeshKernelCore } from "./kernel-core";
 import type { FynApp, PreloadStrategy, LoadFynAppsOptions } from "./types";
 import { PreloadPriority } from "./types";
+import { getFederation } from "./util";
 
 /**
  * Browser-specific implementation of FynMesh kernel
@@ -114,10 +115,7 @@ export class BrowserKernel extends FynMeshKernelCore {
    * Returns the loaded FynApp after bootstrapping
    */
   async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
-    const Federation = (globalThis as any).Federation;
-    if (!Federation) {
-      throw new Error("Federation.js is not loaded.");
-    }
+    const Federation = getFederation();
 
     try {
       loadId = loadId || baseUrl;
@@ -137,7 +135,7 @@ export class BrowserKernel extends FynMeshKernelCore {
       this.telemetry.capture({ type: "event", name: "fynapp.loaded", data: { app: fynApp.name, version: fynApp.version } });
       return fynApp;
     } catch (err) {
-      this.telemetry.capture({ type: "error", name: "fynapp.load_failed", data: { url: baseUrl }, error: { message: (err as Error).message, stack: (err as Error).stack } });
+      this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);
       console.error(`Failed to load FynApp from ${baseUrl}:`, err);
       return null;
     }

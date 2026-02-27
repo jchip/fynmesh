@@ -130,3 +130,70 @@ export async function executeMiddlewareOverride(
     await executionOverride.middleware.overrideExecute(context);
   }
 }
+
+/**
+ * Get the global Federation instance safely
+ * @returns The Federation instance
+ * @throws Error if Federation is not loaded
+ */
+export function getFederation(): any {
+  const Federation = (globalThis as any).Federation;
+  if (!Federation) {
+    throw new Error("Federation.js is not loaded.");
+  }
+  return Federation;
+}
+
+/**
+ * Parse middleware string format and create call context
+ */
+export async function parseMiddlewareString(
+  middlewareStr: string,
+  config: unknown,
+  fynUnit: FynUnit,
+  fynApp: FynApp,
+  kernel: FynMeshKernel,
+  runtime: FynUnitRuntime,
+  getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+  loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
+): Promise<FynAppMiddlewareCallContext | null> {
+  const parts = middlewareStr.trim().split(' ');
+
+  if (parts.length < 3 || parts[0] !== '-FYNAPP_MIDDLEWARE') {
+    return null;
+  }
+
+  const [, packageName, middlewarePath, semver] = parts;
+  const middlewareName = middlewarePath.split('/').pop() || middlewarePath;
+
+  console.debug("🔍 Middleware string - package:", packageName, "middleware:", middlewarePath, "semver:", semver || "any");
+
+  // Try to load middleware from dependency package first
+  if (loadMiddlewareFromDependency) {
+    await loadMiddlewareFromDependency(packageName, middlewarePath);
+  }
+
+  const reg = getMiddleware(middlewareName, packageName);
+  if (reg.regKey === "") {
+    console.debug("❌ No middleware found for", middlewareName, packageName);
+    return null;
+  }
+
+  return {
+    meta: {
+      info: {
+        name: middlewareName,
+        provider: packageName,
+        version: semver || "*"
+      },
+      config: config || {}
+    },
+    fynUnit,
+    fynMod: fynUnit, // deprecated compatibility
+    fynApp,
+    reg,
+    kernel,
+    runtime,
+    status: "",
+  };
+}
