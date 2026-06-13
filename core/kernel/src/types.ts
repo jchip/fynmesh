@@ -364,11 +364,24 @@ export interface FynMeshKernel {
   loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp>;
 
   /**
-   * Load a remote fynapp
+   * Load and bootstrap a single remote FynApp.
+   *
+   * Error contract (error isolation):
+   * - Resolves to the loaded `FynApp` on success.
+   * - Resolves to `null` when the per-app load/bootstrap fails (the remote
+   *   entry fails to import, `loadFynAppBasics` rejects, or bootstrap throws).
+   *   Failures are isolated so one bad FynApp does not abort callers loading
+   *   others; the failure is logged and captured via telemetry
+   *   (`fynapp.load_failed`). Note `bootstrapFynApp` additionally isolates its
+   *   own errors internally (emitting `FYNAPP_BOOTSTRAP_FAILED`).
+   * - Rejects (throws) only for environment/precondition errors that make
+   *   loading impossible regardless of the FynApp — e.g. the browser kernel
+   *   throws when the Federation.js runtime is absent. The Node kernel has no
+   *   such precondition and never throws from this method.
    *
    * @param baseUrl - base URL to the fynapp assets
    * @param loadId - id for the load task
-   * @returns the loaded FynApp, or null if loading failed
+   * @returns the loaded FynApp, or null if the per-app load failed
    */
   loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null>;
 
@@ -408,7 +421,18 @@ export interface FynMeshKernel {
   setRegistryResolver(resolver: RegistryResolver): void;
 
   /**
-   * Load one or more FynApps by name/range using manifests and a dependency graph
+   * Load one or more FynApps by name/range using manifests and a dependency graph.
+   *
+   * Error contract:
+   * - Rejects (throws) on structural/configuration errors that prevent the
+   *   batch from being planned — e.g. no registry resolver configured, or a
+   *   dependency graph that cannot be built/resolved.
+   * - Isolates per-app failures: each FynApp is loaded via `loadFynApp`, whose
+   *   `null` result (a failed individual load) does not abort the batch. The
+   *   call resolves once every reachable FynApp has been attempted.
+   *
+   * @param requests - FynApps to load, by name and optional semver range
+   * @param options - batch options (concurrency, preload strategy)
    */
   loadFynAppsByName(
     requests: Array<{ name: string; range?: string }>,

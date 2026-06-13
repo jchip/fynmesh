@@ -111,8 +111,15 @@ export class BrowserKernel extends FynMeshKernelCore {
   }
 
   /**
-   * Load a remote fynapp through federation.js (browser-specific)
-   * Returns the loaded FynApp after bootstrapping
+   * Load a remote FynApp through Federation.js (browser-specific).
+   *
+   * Throws if the Federation.js runtime is absent (an environment precondition,
+   * via `getFederation()` — note this check is intentionally outside the
+   * try/catch below). Once Federation is available, any per-app load failure
+   * (import / basics / bootstrap) is isolated and resolves to `null` rather than
+   * throwing. See `FynMeshKernel.loadFynApp` for the full error contract.
+   *
+   * @returns the loaded FynApp after bootstrapping, or null on load failure
    */
   async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
     const Federation = getFederation();

@@ -157,7 +157,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
-   * Load FynApps by name using manifests and dependency graph
+   * Load FynApps by name using manifests and a dependency graph.
+   *
+   * Throws on structural errors (no registry resolver configured, dependency
+   * graph build failures). Per-app load failures are isolated — a `null` result
+   * from `loadFynApp` does not abort the batch. See
+   * `FynMeshKernel.loadFynAppsByName` for the full error contract.
    */
   async loadFynAppsByName(
     requests: Array<{ name: string; range?: string }>,

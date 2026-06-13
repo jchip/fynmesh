@@ -7,8 +7,14 @@ import type { FynApp } from "./types";
  */
 export class NodeKernel extends FynMeshKernelCore {
   /**
-   * Load a remote fynapp in Node.js environment
-   * Returns the loaded FynApp after bootstrapping
+   * Load a remote FynApp in a Node.js environment.
+   *
+   * Unlike the browser kernel there is no Federation runtime precondition, so
+   * this method never throws: any load failure (dynamic import / basics /
+   * bootstrap) is isolated and resolves to `null`. See
+   * `FynMeshKernel.loadFynApp` for the full error contract.
+   *
+   * @returns the loaded FynApp after bootstrapping, or null on load failure
    */
   async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
     loadId = loadId || baseUrl;
