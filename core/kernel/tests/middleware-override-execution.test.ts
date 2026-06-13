@@ -52,7 +52,7 @@ describe("MiddlewareExecutor degraded execution", () => {
     expect(resumes).toHaveLength(1);
     expect(resumes[0].resumeMode).toBe("middleware_only");
 
-    const second = await executor.callMiddlewares(resumes[0].callContexts, undefined, undefined, undefined, {
+    const second = await executor.callMiddlewares(resumes[0].callContexts, {
       skipFynUnit: true,
     });
     expect(second).toBe("ready");

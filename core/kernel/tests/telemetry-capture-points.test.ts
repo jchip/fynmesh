@@ -7,6 +7,7 @@ import { ManifestResolver } from "../src/modules/manifest-resolver";
 import { BootstrapCoordinator } from "../src/modules/bootstrap-coordinator";
 import { MiddlewareManager } from "../src/modules/middleware-manager";
 import { ModuleLoader } from "../src/modules/module-loader";
+import { FynAppRegistry } from "../src/modules/fynapp-registry";
 import { MiddlewareExecutor } from "../src/modules/middleware-executor";
 import { FynEventTarget } from "../src/event-target";
 
@@ -25,6 +26,10 @@ function createSpyTelemetry(): { telemetry: KernelTelemetry; entries: Array<Omit
     capture(entry) {
       entries.push({ ...entry, name: `${prefix}.${entry.name}` });
     },
+    captureError(name, data, error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      entries.push({ type: "error", name: `${prefix}.${name}`, data, error: { message: err.message, stack: err.stack } });
+    },
     scope(sub) {
       return makeScopedTelemetry(`${prefix}.${sub}`);
     },
@@ -34,6 +39,10 @@ function createSpyTelemetry(): { telemetry: KernelTelemetry; entries: Array<Omit
   const telemetry: KernelTelemetry = {
     capture(entry) {
       entries.push(entry);
+    },
+    captureError(name, data, error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      entries.push({ type: "error", name, data, error: { message: err.message, stack: err.stack } });
     },
     scope(prefix) {
       return makeScopedTelemetry(prefix);
@@ -166,7 +175,7 @@ describe("Telemetry Capture Points", () => {
         get: vi.fn().mockResolvedValue(() => ({ main: { execute: vi.fn() } })),
       };
 
-      await loader.loadFynAppBasics(mockEntry as any, {});
+      await loader.loadFynAppBasics(mockEntry as any, new FynAppRegistry());
 
       const initEvents = findEntries(spy.entries, "fynapp.init");
       expect(initEvents).toHaveLength(1);
@@ -225,7 +234,7 @@ describe("Telemetry Capture Points", () => {
       const result = await loader.loadMiddlewareFromDependency(
         "missing-package",
         "middleware/test",
-        {} // empty appsLoaded
+        new FynAppRegistry() // empty registry
       );
 
       expect(result.success).toBe(false);

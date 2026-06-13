@@ -273,18 +273,23 @@ export class MiddlewareExecutor {
   ): Promise<void> {
     const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
 
+    let didExecute = false;
     if (executionOverride) {
       await executeMiddlewareOverride(executionOverride, fynUnit, fynApp, runtime, kernel);
+      didExecute = true;
     } else if (fynUnit.execute) {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
       await fynUnit.execute(runtime);
+      didExecute = true;
     }
 
-    this.telemetry.capture({
-      type: "event",
-      name: "execute.completed",
-      data: { app: fynApp.name, override: !!executionOverride },
-    });
+    if (didExecute) {
+      this.telemetry.capture({
+        type: "event",
+        name: "execute.completed",
+        data: { app: fynApp.name, override: !!executionOverride },
+      });
+    }
   }
 
   /**
@@ -300,11 +305,13 @@ export class MiddlewareExecutor {
       return "ready";
     }
 
-    this.telemetry.capture({
-      type: "event",
-      name: "call.started",
-      data: { count: ccs.length, app: ccs[0]?.fynApp?.name },
-    });
+    if (tries === 0) {
+      this.telemetry.capture({
+        type: "event",
+        name: "call.started",
+        data: { count: ccs.length, app: ccs[0]?.fynApp?.name },
+      });
+    }
 
     this.validateRetryCount(ccs, tries);
 

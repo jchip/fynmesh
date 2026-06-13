@@ -99,7 +99,7 @@ export class TestKernel extends FynMeshKernelCore {
     // Pass the middleware scanner to delegate to MiddlewareManager
     const scanner = (fa: any, en: string, em: any) =>
       this.middlewareManager.scanAndRegisterMiddleware(fa, en, em);
-    return (this.moduleLoader as any).loadFynAppBasics(entry, (this as any).runTime.appsLoaded, scanner);
+    return (this.moduleLoader as any).loadFynAppBasics(entry, this.fynAppRegistry, scanner);
   }
 
   testUseMiddlewareOnFynModule(fynModule: any, fynApp: any) {
@@ -128,7 +128,7 @@ export class TestKernel extends FynMeshKernelCore {
     // Pass the middleware scanner to delegate to MiddlewareManager
     const scanner = (fa: any, en: string, em: any) =>
       this.middlewareManager.scanAndRegisterMiddleware(fa, en, em);
-    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath, this.runTime.appsLoaded, scanner);
+    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath, this.fynAppRegistry, scanner);
   }
 
   testCleanContainerName(name: string) {

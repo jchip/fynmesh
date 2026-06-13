@@ -155,6 +155,14 @@ export class ManifestResolver {
   }
 
   /**
+   * Emit the resolve.duration metric and resolved event for a completed resolution.
+   */
+  private reportResolved(t0: number, name: string, version: string | undefined): void {
+    this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+    this.telemetry.capture({ type: "event", name: "resolved", data: { name, version } });
+  }
+
+  /**
    * Resolve and fetch a manifest with caching
    */
   async resolveAndFetch(name: string, range?: string): Promise<ResolvedManifest> {
@@ -173,8 +181,7 @@ export class ManifestResolver {
     if (cached) {
       // Fast path: already cached
       this.updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
-      this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-      this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: cached.version || resolvedVersion } });
+      this.reportResolved(t0, name, cached.version || resolvedVersion);
       return { key: cacheKey, res, manifest: cached };
     }
 
@@ -191,8 +198,7 @@ export class ManifestResolver {
         const key = `${res.name}@${manifest.version || res.version}`;
         this.manifestCache.set(key, manifest);
         this.updateNodeMeta(key, res, manifest);
-        this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-        this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
+        this.reportResolved(t0, name, manifest.version || res.version);
         return { key, res, manifest };
       }
     } catch (embeddedErr) {
@@ -215,8 +221,7 @@ export class ManifestResolver {
     const key = `${res.name}@${manifest.version || res.version}`;
     this.manifestCache.set(key, manifest);
     this.updateNodeMeta(key, res, manifest);
-    this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-    this.telemetry.capture({ type: "event", name: "resolved", data: { name, version: manifest.version || res.version } });
+    this.reportResolved(t0, name, manifest.version || res.version);
     return { key, res, manifest };
   }
 

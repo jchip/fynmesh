@@ -69,7 +69,16 @@ export class KernelTelemetryImpl implements KernelTelemetry {
     if (this.buffer.length === 0) return;
 
     const batch = this.buffer.splice(0);
-    this.transport.send(batch);
+    // Fire-and-forget. Call send() synchronously (callers and tests rely on the
+    // timing), but never leak: a synchronous throw is caught here and an async
+    // rejection by .catch.
+    try {
+      void Promise.resolve(this.transport.send(batch)).catch((err) => {
+        console.error("[telemetry] transport.send failed:", err);
+      });
+    } catch (err) {
+      console.error("[telemetry] transport.send failed:", err);
+    }
   }
 
   /** Expose buffer length for testing */

@@ -36,10 +36,9 @@ export class FynAppRegistry {
   }
 
   /**
-   * Check if a FynApp is already loaded by checking its name and name@version key
+   * Check if a FynApp is already loaded by its lookup key (name or name@version)
    */
-  has(name: string, version?: string): boolean {
-    const key = version ? `${name}@${version}` : name;
+  has(key: string): boolean {
     return !!this.appsLoaded[key];
   }
 
@@ -51,20 +50,5 @@ export class FynAppRegistry {
     if (lookupName) delete this.appsLoaded[lookupName];
     delete this.appsLoaded[versionedKey];
     delete this.appsLoaded[fynApp.name];
-  }
-
-  /**
-   * Get all loaded FynApps (unique instances)
-   */
-  getAll(): FynApp[] {
-    const unique = new Set(Object.values(this.appsLoaded));
-    return Array.from(unique);
-  }
-
-  /**
-   * Get the underlying raw state
-   */
-  getRawState(): Record<string, FynApp> {
-    return this.appsLoaded;
   }
 }

@@ -260,9 +260,15 @@ export class BootstrapCoordinator {
    * dependencies are already satisfied.
    */
   private async handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
-    const { name } = event.detail;
+    const { name, error } = event.detail;
     console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
-    this.telemetry.captureError("failed", { app: name }, new Error("Bootstrap failed"));
+    // Only attach an error object when the event actually carries one; fabricating
+    // one here would record a misleading coordinator-local stack and message.
+    if (error) {
+      this.telemetry.captureError("failed", { app: name }, error);
+    } else {
+      this.telemetry.capture({ type: "error", name: "failed", data: { app: name } });
+    }
     this.finishBootstrapAndResumeNext();
   }
 

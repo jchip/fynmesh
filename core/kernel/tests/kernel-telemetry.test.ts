@@ -344,6 +344,45 @@ describe("KernelTelemetry", () => {
   });
 
   // ---------------------------------------------------------------
+  // 7b. Transport failures (flush must never throw or leak)
+  // ---------------------------------------------------------------
+  describe("transport failures", () => {
+    it("flush() should not throw and should log when transport.send throws synchronously", () => {
+      const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const transport: TelemetryTransport = {
+        send: () => {
+          throw new Error("sync boom");
+        },
+      };
+      const telemetry = new KernelTelemetryImpl({ transport });
+      telemetry.capture({ type: "event", name: "x" });
+
+      expect(() => telemetry.flush()).not.toThrow();
+      expect(errSpy).toHaveBeenCalled();
+      expect(telemetry.bufferSize).toBe(0); // batch was still drained
+
+      errSpy.mockRestore();
+    });
+
+    it("flush() should not leak an unhandled rejection when transport.send rejects", async () => {
+      const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const transport: TelemetryTransport = {
+        send: () => Promise.reject(new Error("async boom")),
+      };
+      const telemetry = new KernelTelemetryImpl({ transport });
+      telemetry.capture({ type: "event", name: "x" });
+
+      expect(() => telemetry.flush()).not.toThrow();
+
+      // Let the rejection settle so the .catch handler runs.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(errSpy).toHaveBeenCalled();
+
+      errSpy.mockRestore();
+    });
+  });
+
+  // ---------------------------------------------------------------
   // 8. Default config
   // ---------------------------------------------------------------
   describe("default config", () => {
