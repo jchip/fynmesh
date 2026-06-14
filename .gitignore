@@ -13,3 +13,4 @@ docs-temp
 .temp
 .playwright-mcp
 *.bak
+.config/
