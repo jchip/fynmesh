@@ -1,0 +1,10 @@
+{
+  "name": "shared-demo-utils",
+  "version": "1.0.0",
+  "description": "Shared source utilities and components for FynMesh demo FynApps (consumed via relative imports, bundled by each app)",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@fynmesh/kernel": "^1.0.0"
+  }
+}
