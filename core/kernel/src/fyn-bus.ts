@@ -126,6 +126,7 @@ type FacadeState = {
 export class FynBusRoot {
   private channels = new Map<string, ChannelState>();
   private facades = new Map<string, FynBusFacade>();
+  private kernelFacade?: FynBusFacade;
   private telemetry: KernelTelemetry;
 
   constructor(telemetry?: KernelTelemetry) {
@@ -162,8 +163,12 @@ export class FynBusRoot {
     handler: BusHandler<any>,
     options: SubscribeOptions | undefined,
     once: boolean,
+    onAutoRemove?: () => void,
   ): Unsubscribe {
     const { events } = this.getChannel(channelName);
+    // Fired once() and signal aborts remove the listener without going
+    // through the facade's unsubscribe — the hook lets it drop its tracking
+    options?.signal?.addEventListener("abort", () => onAutoRemove?.(), { once: true });
     const listener = (evt: Event) => {
       const { payload, meta } = (evt as CustomEvent<BusEventDetail>).detail;
       if (!options?.self && meta.source === source) {
@@ -171,6 +176,7 @@ export class FynBusRoot {
       }
       if (once) {
         unsubscribe();
+        onAutoRemove?.();
       }
       try {
         handler(payload, meta);
@@ -196,6 +202,7 @@ export class FynBusRoot {
     topic: string,
     payload: unknown,
     options?: RequestOptions,
+    onParked?: (cancel: () => void) => () => void,
   ): Promise<any> {
     const state = this.getChannel(channelName);
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
@@ -207,6 +214,8 @@ export class FynBusRoot {
 
     const existing = state.handlers.get(topic);
     if (existing) {
+      // In-flight invocations always settle; only PARKED requests are
+      // cancellable by dispose
       return invokeRpcHandler(existing, payload, meta);
     }
 
@@ -218,11 +227,16 @@ export class FynBusRoot {
         state.waiters.set(topic, waiting);
       }
       const set = waiting;
-      const timer = setTimeout(() => {
+      let untrack: (() => void) | undefined;
+      const removeWaiter = () => {
         set.delete(waiter);
-        if (set.size === 0) {
+        if (set.size === 0 && state.waiters.get(topic) === set) {
           state.waiters.delete(topic);
         }
+      };
+      const timer = setTimeout(() => {
+        removeWaiter();
+        untrack?.();
         reject(
           new FynBusError(
             KernelErrorCode.BUS_REQUEST_TIMEOUT,
@@ -233,13 +247,28 @@ export class FynBusRoot {
       }, timeout);
       const waiter = (handler: RpcHandler) => {
         clearTimeout(timer);
+        untrack?.();
         invokeRpcHandler(handler, payload, meta).then(resolve, reject);
       };
       set.add(waiter);
+      if (onParked) {
+        // Dispose of the requester's facade rejects parked requests
+        untrack = onParked(() => {
+          clearTimeout(timer);
+          removeWaiter();
+          reject(
+            new FynBusError(
+              KernelErrorCode.BUS_DISPOSED,
+              `FynBus: request "${topic}" on channel "${channelName}" cancelled — bus for "${source}" was disposed`,
+              { topic, channel: channelName, source },
+            ),
+          );
+        });
+      }
     });
   }
 
-  registerHandler(channelName: string, topic: string, handler: RpcHandler): Unsubscribe {
+  registerHandler(source: string, channelName: string, topic: string, handler: RpcHandler): Unsubscribe {
     const state = this.getChannel(channelName);
     if (state.handlers.has(topic)) {
       throw new FynBusError(
@@ -252,7 +281,7 @@ export class FynBusRoot {
     this.telemetry.capture({
       type: "event",
       name: "handle",
-      data: { topic, channel: channelName },
+      data: { topic, channel: channelName, source },
     });
 
     // Release requests that arrived before the handler
@@ -285,19 +314,41 @@ export class FynBusRoot {
     return facade;
   }
 
-  /** Remove all subscriptions of an app; called by the kernel on shutdown */
+  /**
+   * Remove all subscriptions of an app; called by the kernel on shutdown.
+   * With a version, disposes exactly that facade; without one, disposes
+   * EVERY facade for that app name (bare and all versions).
+   */
   disposeApp(name: string, version?: string): void {
-    const key = version ? `${name}@${version}` : name;
-    const facade = this.facades.get(key);
-    if (facade) {
-      facade.dispose();
-      this.facades.delete(key);
+    if (version) {
+      const key = `${name}@${version}`;
+      const facade = this.facades.get(key);
+      if (facade) {
+        facade.dispose();
+        this.facades.delete(key);
+      }
+      return;
+    }
+    const prefix = `${name}@`;
+    for (const [key, facade] of [...this.facades]) {
+      if (key === name || key.startsWith(prefix)) {
+        facade.dispose();
+        this.facades.delete(key);
+      }
     }
   }
 
-  /** Facade for kernel-side callers (host page, middleware); never disposed */
+  /**
+   * Facade for kernel-side callers (host page, middleware); a singleton so
+   * all kernel-side code shares one subscription tracker. Never disposed —
+   * it is intentionally not in the facades map, so disposeApp("kernel") is
+   * a no-op.
+   */
   forKernel(): FynBus {
-    return new FynBusFacade(this, KERNEL_BUS_SOURCE);
+    if (!this.kernelFacade) {
+      this.kernelFacade = new FynBusFacade(this, KERNEL_BUS_SOURCE);
+    }
+    return this.kernelFacade;
   }
 }
 
@@ -338,9 +389,7 @@ export class FynBusFacade implements FynBus {
     options?: SubscribeOptions,
   ): Unsubscribe {
     this.assertActive();
-    return this.track(
-      this.root.subscribeFrom(this.source, this.channelName, topic, handler, options, false),
-    );
+    return this.subscribe(topic, handler, options, false);
   }
 
   once<T = unknown>(
@@ -349,9 +398,7 @@ export class FynBusFacade implements FynBus {
     options?: SubscribeOptions,
   ): Unsubscribe {
     this.assertActive();
-    return this.track(
-      this.root.subscribeFrom(this.source, this.channelName, topic, handler, options, true),
-    );
+    return this.subscribe(topic, handler, options, true);
   }
 
   request<TRes = unknown, TReq = unknown>(
@@ -360,7 +407,19 @@ export class FynBusFacade implements FynBus {
     options?: RequestOptions,
   ): Promise<TRes> {
     this.assertActive();
-    return this.root.requestFrom(this.source, this.channelName, topic, payload, options);
+    return this.root.requestFrom(
+      this.source,
+      this.channelName,
+      topic,
+      payload,
+      options,
+      // Track parked requests so dispose() rejects them; the returned
+      // untrack drops the canceller once the waiter settles naturally
+      (cancel) => {
+        const tracked = this.track(cancel);
+        return () => this.state.subs.delete(tracked);
+      },
+    );
   }
 
   handle<TReq = unknown, TRes = unknown>(
@@ -368,7 +427,9 @@ export class FynBusFacade implements FynBus {
     handler: RequestHandler<TReq, TRes>,
   ): Unsubscribe {
     this.assertActive();
-    return this.track(this.root.registerHandler(this.channelName, topic, handler as RpcHandler));
+    return this.track(
+      this.root.registerHandler(this.source, this.channelName, topic, handler as RpcHandler),
+    );
   }
 
   channel(name: string): FynBus {
@@ -392,6 +453,32 @@ export class FynBusFacade implements FynBus {
       unsub();
     }
     this.state.subs.clear();
+  }
+
+  private subscribe(
+    topic: string,
+    handler: BusHandler<any>,
+    options: SubscribeOptions | undefined,
+    once: boolean,
+  ): Unsubscribe {
+    let tracked: Unsubscribe;
+    const raw = this.root.subscribeFrom(
+      this.source,
+      this.channelName,
+      topic,
+      handler,
+      options,
+      once,
+      // Auto-removal (fired once / aborted signal) drops the tracking entry
+      () => this.state.subs.delete(tracked),
+    );
+    tracked = this.track(raw);
+    if (options?.signal?.aborted) {
+      // Pre-aborted signal: the listener was never registered and the abort
+      // event won't re-fire — don't keep a tracking entry for it
+      this.state.subs.delete(tracked);
+    }
+    return tracked;
   }
 
   private track(unsub: Unsubscribe): Unsubscribe {

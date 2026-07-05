@@ -105,10 +105,10 @@ describe("FynBus facade dispose edge cases", () => {
     expect(() => solo.emit("x", 1)).not.toThrow();
   });
 
-  it("disposeApp without a version does NOT dispose a facade registered with a version", () => {
-    // NOTE: possible bug — the reverse mismatch: version-less disposeApp("name")
-    // cannot dispose "name@version" facades. Only exact key matches are disposed.
+  it("disposeApp without a version disposes ALL facades for that app name (FYM-140)", () => {
     const versioned = root.forApp("ver-app", "1.0.0");
+    const versioned2 = root.forApp("ver-app", "2.0.0");
+    const bare = root.forApp("ver-app");
     const other = root.forApp("app-b", "1.0.0");
     const handler = vi.fn();
     versioned.on("data", handler);
@@ -116,8 +116,13 @@ describe("FynBus facade dispose edge cases", () => {
     root.disposeApp("ver-app");
 
     other.emit("data", 1);
-    expect(handler).toHaveBeenCalledTimes(1);
-    expect(() => versioned.emit("x", 1)).not.toThrow();
+    expect(handler).not.toHaveBeenCalled();
+    for (const facade of [versioned, versioned2, bare]) {
+      expect(() => facade.emit("x", 1)).toThrow(FynBusError);
+    }
+    // A similarly-prefixed but different app name is untouched
+    const lookalike = root.forApp("ver-application", "1.0.0");
+    expect(() => lookalike.emit("x", 1)).not.toThrow();
   });
 
   it("forApp after disposeApp returns a fresh working facade", () => {
@@ -526,7 +531,8 @@ describe("FynBus telemetry through the kernel", () => {
     const handles = entries.filter((e) => e.name === "bus.handle");
     expect(handles).toHaveLength(1);
     expect(handles[0].type).toBe("event");
-    expect(handles[0].data).toEqual({ topic: "total", channel: "cart" });
+    // FYM-140: handle telemetry includes the provider's identity
+    expect(handles[0].data).toEqual({ topic: "total", channel: "cart", source: "provider" });
   });
 
   it("never produces double-prefixed 'bus.bus.*' entries (FYM-138 regression)", async () => {

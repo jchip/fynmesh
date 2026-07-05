@@ -488,6 +488,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       // Error isolation: Log error but don't crash the kernel
       console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
 
+      // Deafen the half-initialized app: drop its bus subscriptions and
+      // handlers; a later re-bootstrap gets a fresh facade (FYM-140)
+      this.busRoot.disposeApp(fynApp.name, fynApp.version);
+
       // Emit failure event so other systems can react
       await this.emitAsync(
         new CustomEvent("FYNAPP_BOOTSTRAP_FAILED", {

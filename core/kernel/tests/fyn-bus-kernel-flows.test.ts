@@ -629,7 +629,7 @@ describe("FynBus error resilience through bootstrap", () => {
     expect(okSpy).not.toHaveBeenCalled();
   });
 
-  it("subscriptions made before the crash stay live until shutdownFynApp cleans them up", async () => {
+  it("a failed bootstrap deafens the app: its subscriptions are disposed (FYM-140)", async () => {
     const crashSub = vi.fn();
 
     await bootApp(kernel, "crashy-app", {
@@ -639,17 +639,16 @@ describe("FynBus error resilience through bootstrap", () => {
       },
     });
 
-    // NOTE: pinned behavior — a failed bootstrap does NOT dispose the app's bus
-    // facade; subscriptions made before the throw keep receiving messages. Only
-    // shutdownFynApp (or disposeApp) removes them. If failed apps should be
-    // deafened, bootstrapFynApp's catch would need a disposeApp call.
+    // FYM-140: bootstrapFynApp's catch disposes the app's bus facade, so
+    // subscriptions made before the throw receive nothing afterwards
     kernel.bus.emit("crash-topic", "leaked?");
-    expect(crashSub).toHaveBeenCalledTimes(1);
+    expect(crashSub).not.toHaveBeenCalled();
 
-    // loadFynAppBasics registered the app, so shutdown can find and clean it
+    // loadFynAppBasics registered the app, so shutdown still finds it and
+    // the (already-disposed) bus cleanup is a safe no-op
     await expect(kernel.shutdownFynApp("crashy-app")).resolves.toBe(true);
     kernel.bus.emit("crash-topic", "after-shutdown");
-    expect(crashSub).toHaveBeenCalledTimes(1);
+    expect(crashSub).not.toHaveBeenCalled();
   });
 
   it("a failing bootstrap releases the lock so a concurrently deferred app still bootstraps and its bus works", async () => {

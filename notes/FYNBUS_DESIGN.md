@@ -98,12 +98,16 @@ interface FynBus {
   `runtime.middlewareContext`). Same interface, plus platform behavior:
   - stamps `meta.source` with the app's name — callers cannot forge or forget it;
   - tracks every subscription/handler the app registers and removes them all on
-    `FYNAPP_SHUTDOWN` (ties into FYM-1 lifecycle work);
+    `FYNAPP_SHUTDOWN` — and on **bootstrap failure**, so a crashed app is deaf
+    (ties into FYM-1 lifecycle work);
   - filters out the app's own emits unless `{ self: true }` — this replaces the
     hand-rolled `detail.source !== appName` checks in today's demos.
 
 Code that only has the kernel handle (middleware, host page) uses `kernel.bus`
-directly; `meta.source` is then `"kernel"`.
+directly; `meta.source` is then `"kernel"`. The kernel facade is a singleton
+(`forKernel()` always returns the same instance) and is never disposed.
+`FynBusRoot.disposeApp(name)` without a version disposes every facade for that
+app name; with a version it disposes exactly that one.
 
 ## Semantics
 
@@ -114,6 +118,8 @@ directly; `meta.source` is then `"kernel"`.
   is not an error.
 - Handler errors are isolated: one throwing handler neither stops delivery to the
   others nor throws from `emit` (native `EventTarget` behavior).
+- Subscribing the same handler function twice runs it once per subscription
+  (emitter semantics — no `addEventListener`-style same-callback dedupe).
 - No delivery to subscribers added *during* an emit of that same emit (native
   `EventTarget` behavior); they receive subsequent emits.
 - `on`/`once` return an `Unsubscribe`; `options.signal` abort also unsubscribes.
@@ -130,6 +136,10 @@ directly; `meta.source` is then `"kernel"`.
   would make every caller re-implement retry.
 - Handler return values (sync or Promise) resolve the request; a throwing/rejecting
   handler rejects the request with that error.
+- Disposing the requester's facade rejects its **parked** requests with
+  `BUS_DISPOSED` (a shut-down app gets a rejection, not a zombie resolution);
+  requests whose handler is already invoking still settle — promises cannot be
+  revoked mid-flight.
 - RPC does **not** ride on `EventTarget` — listeners can't return values and
   multi-listener dispatch is the wrong shape. It's a plain
   `Map<topic, handler>` plus a pending-waiter list per topic, behind the same facade.

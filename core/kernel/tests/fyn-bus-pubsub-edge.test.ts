@@ -454,16 +454,14 @@ describe("FynBus pub/sub edge cases", () => {
       });
     });
 
-    it("filters between two separate forKernel() facades (filtering is by source name, not instance)", () => {
-      // Documented actual behavior: forKernel() returns a NEW facade per call,
-      // but every kernel facade stamps source "kernel", and self-filtering
-      // compares source names. So two distinct kernel-side facades cannot hear
-      // each other without { self: true } — e.g. host page and middleware both
-      // using their own forKernel() handle.
+    it("forKernel() is a singleton facade; kernel emits are self-filtered unless { self: true } (FYM-140)", () => {
+      // forKernel() returns the SAME cached facade on every call, so all
+      // kernel-side code shares one subscription tracker and one source
+      // identity — its own emits are filtered like any other facade's.
       const root = new FynBusRoot();
       const kb1 = root.forKernel();
       const kb2 = root.forKernel();
-      expect(kb1).not.toBe(kb2);
+      expect(kb1).toBe(kb2);
 
       const deaf = vi.fn();
       const withSelf = vi.fn();

@@ -460,32 +460,36 @@ describe("FynBus RPC edge cases", () => {
   });
 
   describe("dispose during pending", () => {
-    it("resolves a parked request even after the requester's facade is disposed", async () => {
-      // NOTE: pinning current behavior — dispose() only removes tracked
-      // subscriptions/handlers; parked request waiters are NOT tracked by the
-      // facade, so a request issued before dispose still resolves when a
-      // handler appears. Possible design gap (a disposed app still receives an
-      // RPC response), but promises have no cancellation so this may be intended.
+    it("rejects a parked request with BUS_DISPOSED when the requester's facade is disposed (FYM-140)", async () => {
       const pending = consumer.request("late-svc", 3);
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_DISPOSED,
+        context: expect.objectContaining({ topic: "late-svc", source: "consumer" }),
+      });
 
       root.disposeApp("consumer", "1.0.0");
-      provider.handle("late-svc", (n: any) => n * 7);
+      await assertion;
 
-      await expect(pending).resolves.toBe(21);
+      // The dead waiter is gone: a handler registering later gets NO call
+      // for the cancelled request, and fresh requests work normally
+      const handler = vi.fn((n: any) => n * 7);
+      provider.handle("late-svc", handler);
+      expect(handler).not.toHaveBeenCalled();
+      await expect(root.forApp("consumer2", "1.0.0").request("late-svc", 2)).resolves.toBe(14);
     });
 
-    it("a parked request still times out after the requester's facade is disposed", async () => {
+    it("a parked request whose requester is disposed does not also fire its timeout", async () => {
       vi.useFakeTimers();
 
       const pending = consumer.request("gone", 1, { timeout: 40 });
       const assertion = expect(pending).rejects.toMatchObject({
-        code: KernelErrorCode.BUS_REQUEST_TIMEOUT,
-        context: expect.objectContaining({ source: "consumer" }),
+        code: KernelErrorCode.BUS_DISPOSED,
       });
 
       root.disposeApp("consumer", "1.0.0");
-      await vi.advanceTimersByTimeAsync(40);
       await assertion;
+      // Timer was cleared by the cancellation — advancing is a no-op
+      await vi.advanceTimersByTimeAsync(40);
     });
 
     it("delivers the response when the provider is disposed while its async handler is in flight", async () => {
@@ -527,20 +531,17 @@ describe("FynBus RPC edge cases", () => {
       tProvider.channel("cart").handle("total", () => 99);
       await tConsumer.channel("cart").request("total");
 
+      // FYM-140: "handle" telemetry records the provider's identity too
       expect(telemetry.captured).toContainEqual({
         type: "event",
         name: "handle",
-        data: { topic: "total", channel: "cart" },
+        data: { topic: "total", channel: "cart", source: "provider" },
       });
       expect(telemetry.captured).toContainEqual({
         type: "event",
         name: "request",
         data: { topic: "total", channel: "cart", source: "consumer" },
       });
-      // Pin: "handle" telemetry does not record which app registered the
-      // handler (no source field) — registerHandler is not given the source.
-      const handleEntry = telemetry.captured.find((e: any) => e.name === "handle");
-      expect(handleEntry.data).not.toHaveProperty("source");
     });
 
     it('captures "request" at call time even when the request parks', async () => {

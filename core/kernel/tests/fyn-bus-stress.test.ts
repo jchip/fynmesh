@@ -123,7 +123,7 @@ describe("FynBus stress: churn and leak invariants", () => {
     await expect(root.forApp("consumer", "1.0.0").request("job-0")).resolves.toBe("fresh");
   });
 
-  it("heavy fired-once() traffic: stale subs entries persist (accepted quirk) but dispose releases everything and a fresh facade works", () => {
+  it("heavy fired-once() traffic: tracking entries are auto-removed on fire (FYM-140); dispose and fresh facade work", () => {
     const N = 2000;
     const root = new FynBusRoot();
     const app = root.forApp("once-heavy", "1.0.0");
@@ -138,9 +138,8 @@ describe("FynBus stress: churn and leak invariants", () => {
     emitter.emit("burst", 1);
     expect(delivered).toBe(N);
 
-    // Accepted quirk: the fired once() listeners are gone from the event
-    // target, but their tracked unsubs stay in state.subs until dispose.
-    expect(subsOf(app).size).toBe(N);
+    // FYM-140: fired once() subscriptions drop their tracking entries too
+    expect(subsOf(app).size).toBe(0);
 
     // No ghost deliveries — the listeners really were consumed
     emitter.emit("burst", 2);
@@ -159,7 +158,7 @@ describe("FynBus stress: churn and leak invariants", () => {
     expect(received).toEqual([3]);
   });
 
-  it("mass AbortSignal aborts: no deliveries, stale subs until dispose (accepted quirk), clean fresh facade", () => {
+  it("mass AbortSignal aborts: no deliveries, tracking entries auto-removed (FYM-140), clean fresh facade", () => {
     const N = 2000;
     const root = new FynBusRoot();
     const app = root.forApp("abort-heavy", "1.0.0");
@@ -185,8 +184,8 @@ describe("FynBus stress: churn and leak invariants", () => {
     emitter.emit("sig", 1);
     expect(delivered).toBe(0);
 
-    // Accepted quirk: aborted subscriptions leave stale tracked entries
-    expect(subsOf(app).size).toBe(N);
+    // FYM-140: aborted subscriptions drop their tracking entries
+    expect(subsOf(app).size).toBe(0);
 
     root.disposeApp("abort-heavy", "1.0.0");
     expect(subsOf(app).size).toBe(0);
