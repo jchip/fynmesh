@@ -82,6 +82,8 @@ export interface MiddlewareUseMeta<ConfigT> {
 export type FynUnitRuntime = {
   fynApp: FynApp;
   middlewareContext: Map<string, Record<string, any>>;
+  /** Inter-FynApp messaging, stamped with this FynApp as source (FYM-2) */
+  bus?: import("./fyn-bus").FynBus;
   [key: string]: any;
 };
 
@@ -308,6 +310,8 @@ export type RegistryResolver = (
 export interface FynMeshKernel {
   /** emitter of kernel events */
   events: FynAppEventTarget;
+  /** inter-FynApp messaging bus (see notes/FYNBUS_DESIGN.md) */
+  bus: import("./fyn-bus").FynBus;
   /** kernel version */
   version: string;
   /**

@@ -35,9 +35,14 @@ export type MiddlewareScanner = (
 
 export class ModuleLoader {
   protected telemetry: KernelTelemetry;
+  protected busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus;
 
-  constructor(telemetry?: KernelTelemetry) {
+  constructor(
+    telemetry?: KernelTelemetry,
+    busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus
+  ) {
     this.telemetry = telemetry ?? noOpTelemetry;
+    this.busProvider = busProvider;
   }
 
   /**
@@ -274,6 +279,7 @@ export class ModuleLoader {
       // Reuse the FynApp's middlewareContext to maintain consistency
       // This is critical for deferred loading scenarios where middlewares are resumed
       middlewareContext: fynApp.middlewareContext || new Map<string, Record<string, any>>(),
+      bus: this.busProvider?.(fynApp),
     };
   }
 

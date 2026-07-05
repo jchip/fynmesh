@@ -30,6 +30,12 @@ export enum KernelErrorCode {
   // Federation Errors (5xxx)
   FEDERATION_NOT_LOADED = 5001,
   FEDERATION_ENTRY_FAILED = 5002,
+
+  // FynBus Errors (6xxx)
+  BUS_DISPOSED = 6001,
+  BUS_INVALID_CHANNEL = 6002,
+  BUS_HANDLER_EXISTS = 6003,
+  BUS_REQUEST_TIMEOUT = 6004,
 }
 
 /**
@@ -194,6 +200,20 @@ export class FederationError extends KernelError {
       cause: options?.cause,
     });
     this.name = "FederationError";
+  }
+}
+
+/**
+ * Error for FynBus messaging failures
+ */
+export class FynBusError extends KernelError {
+  constructor(
+    code: KernelErrorCode,
+    message: string,
+    context?: Record<string, unknown>
+  ) {
+    super(code, message, { context });
+    this.name = "FynBusError";
   }
 }
 

@@ -7,6 +7,7 @@ import { FynEventTarget } from "./event-target";
 import { fynMeshShareScope } from "./share-scope";
 import { urlJoin, MIDDLEWARE_EXPOSE_PREFIX } from "./util";
 import { MiddlewareStateRegistry } from "./middleware-state-registry";
+import { FynBusRoot, type FynBus } from "./fyn-bus";
 
 // Import extracted modules
 import { ManifestResolver } from "./modules/manifest-resolver";
@@ -42,6 +43,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public readonly version: string = "1.0.0";
   public readonly shareScopeName: string = fynMeshShareScope;
 
+  /** Inter-FynApp messaging (see notes/FYNBUS_DESIGN.md) */
+  public readonly bus: FynBus;
+  protected busRoot: FynBusRoot;
+
   protected runTime: FynMeshRuntimeData;
 
   // Middleware state registries
@@ -72,11 +77,18 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       ? new KernelTelemetryImpl(telemetryConfig)
       : noOpTelemetry;
 
+    // Initialize FynBus (separate from this.events, which stays lifecycle-only)
+    this.busRoot = new FynBusRoot(this.telemetry.scope("bus"));
+    this.bus = this.busRoot.forKernel();
+
     // Initialize extracted modules with scoped telemetry
     this.manifestResolver = new ManifestResolver(this.telemetry.scope("manifest"));
     this.bootstrapCoordinator = new BootstrapCoordinator(this.events, undefined, this.telemetry.scope("bootstrap"));
     this.middlewareManager = new MiddlewareManager(this.telemetry.scope("middleware"));
-    this.moduleLoader = new ModuleLoader(this.telemetry.scope("loader"));
+    this.moduleLoader = new ModuleLoader(
+      this.telemetry.scope("loader"),
+      (fynApp) => this.busRoot.forApp(fynApp.name, fynApp.version),
+    );
     this.middlewareExecutor = new MiddlewareExecutor(this.telemetry.scope("executor"));
 
     // Set up event handlers
@@ -519,6 +531,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       // Remove from registry (both versioned and unversioned keys)
       this.removeFromRegistry(fynApp, name);
 
+      // Remove all of the app's bus subscriptions
+      this.busRoot.disposeApp(fynApp.name, fynApp.version);
+
       // Emit shutdown event
       await this.emitAsync(
         new CustomEvent("FYNAPP_SHUTDOWN", {
@@ -534,8 +549,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       this.telemetry.captureError("shutdown.failed", { app: name }, error);
 
       console.error(`❌ Error during shutdown of ${name}:`, error);
-      // Still remove from registry even if shutdown fails
+      // Still remove from registry and clean up bus even if shutdown fails
       this.removeFromRegistry(fynApp, name);
+      this.busRoot.disposeApp(fynApp.name, fynApp.version);
       return false;
     }
   }
