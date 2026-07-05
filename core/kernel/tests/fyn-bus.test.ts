@@ -141,7 +141,7 @@ describe("FynBus pub/sub", () => {
     expect(() => appA.emit("boom", 1)).not.toThrow();
     expect(good).toHaveBeenCalledTimes(1);
     expect(telemetry.errors).toHaveLength(1);
-    expect(telemetry.errors[0].name).toBe("bus.handler");
+    expect(telemetry.errors[0].name).toBe("handler");
 
     consoleSpy.mockRestore();
   });
@@ -209,7 +209,7 @@ describe("FynBus pub/sub", () => {
 
     expect(telemetry.captured).toContainEqual({
       type: "event",
-      name: "bus.emit",
+      name: "emit",
       data: { topic: "update", channel: "cart", source: "app-a" },
     });
   });

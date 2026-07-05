@@ -143,9 +143,10 @@ export class FynBusRoot {
 
   emitFrom(source: string, channelName: string, topic: string, payload: unknown): void {
     const meta: FynBusMeta = { topic, source, channel: channelName };
+    // Unprefixed name by convention: the kernel passes telemetry.scope("bus")
     this.telemetry.capture({
       type: "event",
-      name: "bus.emit",
+      name: "emit",
       data: { topic, channel: channelName, source },
     });
     const detail: BusEventDetail = { payload, meta };
@@ -176,7 +177,7 @@ export class FynBusRoot {
         // the others, nor make emit() throw at the sender
         console.error(`FynBus: handler error on topic "${topic}"`, error);
         this.telemetry.captureError(
-          "bus.handler",
+          "handler",
           { topic, channel: channelName, subscriber: source },
           error,
         );
@@ -198,7 +199,7 @@ export class FynBusRoot {
     const meta: FynBusMeta = { topic, source, channel: channelName };
     this.telemetry.capture({
       type: "event",
-      name: "bus.request",
+      name: "request",
       data: { topic, channel: channelName, source },
     });
 
@@ -248,7 +249,7 @@ export class FynBusRoot {
     state.handlers.set(topic, handler);
     this.telemetry.capture({
       type: "event",
-      name: "bus.handle",
+      name: "handle",
       data: { topic, channel: channelName },
     });
 
