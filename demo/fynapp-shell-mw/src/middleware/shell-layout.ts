@@ -1043,6 +1043,15 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
       // Try to load the component module (this will load it if it exists)
       try {
+        // Probing a missing expose via entry.get() fetches a non-existent URL
+        // and logs a 404 network error in the console — consult the fynapp's
+        // declared exposes first (FYM-146). Entries with no manifest or
+        // expose map still get probed.
+        const container = (fynApp.entry as any)?.container;
+        const exposes = container?.__FYNAPP_MANIFEST__?.exposes ?? container?.$E;
+        if (exposes && !exposes["./component"]) {
+          throw new Error("./component not exposed");
+        }
         const componentModule = await fynApp.entry.get('./component');
         const componentExport = componentModule();
 
