@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { ComponentLibrary } from "./components";
 import { THEME_OPTIONS } from "../../shared-demo-utils/middleware-helpers.ts";
 import { useSharedCounter, useDesignTokens } from "../../shared-demo-utils/react-hooks.ts";
+import { useFynBusChat, DEMO_CHAT_TOPIC, GET_STATUS_TOPIC } from "../../shared-demo-utils/fynbus-hooks.ts";
 import "./app-layout.css";
 
 interface AppProps {
@@ -34,6 +35,20 @@ const App: React.FC<AppProps> = ({
 
   // Destructure the components
   const { Button, Card, Input, Badge, Spinner } = components;
+
+  // FynBus chat hook (pub/sub demo)
+  const {
+    messages: busMessages,
+    sendMessage: sendBusMessage,
+    busAvailable,
+  } = useFynBusChat(useState, useEffect, runtime);
+  const [busText, setBusText] = useState("");
+
+  const handleBusSend = () => {
+    if (sendBusMessage(busText)) {
+      setBusText("");
+    }
+  };
 
   // Demo state
   const [inputValue, setInputValue] = useState("");
@@ -176,6 +191,57 @@ const App: React.FC<AppProps> = ({
             </Button>
           </div>
         </div>
+      </Card>
+
+      {/* FynBus Demo (FYM-18) */}
+      <Card title="🚌 FynBus" className="card-spacious section">
+        {busAvailable ? (
+          <>
+            <div className="flex items-end gap-3 mb-3 max-w-md">
+              <Input
+                label={`Send on "${DEMO_CHAT_TOPIC}"`}
+                placeholder="Message other fynapps..."
+                value={busText}
+                onChange={(e: any) => setBusText(e.target.value)}
+              />
+              <Button onClick={handleBusSend} variant="primary" size="medium">
+                Send
+              </Button>
+            </div>
+            <div className="text-sm text-gray-600 mb-3">
+              Received messages (own emits are filtered by the bus):
+            </div>
+            {busMessages.length === 0 ? (
+              <div className="text-sm text-gray-600" style={{ fontStyle: "italic" }}>
+                No messages yet — send one from another fynapp.
+              </div>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {busMessages.map((message, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 text-sm"
+                    style={{ padding: "4px 0" }}
+                  >
+                    <Badge variant="primary">{message.source}</Badge>
+                    <span>{message.text}</span>
+                    <span className="text-gray-600" style={{ fontSize: "12px" }}>
+                      {message.at}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="text-sm text-gray-600" style={{ marginTop: "12px" }}>
+              This app also answers <code>bus.request("{GET_STATUS_TOPIC}")</code> from
+              other fynapps.
+            </div>
+          </>
+        ) : (
+          <div className="text-sm text-gray-600">
+            FynBus not available (runtime.bus is undefined).
+          </div>
+        )}
       </Card>
 
       {/* Counter Display and Controls - Moved to bottom */}

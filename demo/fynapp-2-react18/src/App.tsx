@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "esm-react";
 import type { ComponentLibrary } from "./components";
 import type { FynModuleRuntime } from "@fynmesh/kernel";
 import { useSharedCounter } from "../../shared-demo-utils/react-hooks.ts";
+import {
+  useFynBusChat,
+  useFynBusRequest,
+  DEMO_CHAT_TOPIC,
+  GET_STATUS_TOPIC,
+} from "../../shared-demo-utils/fynbus-hooks.ts";
 
 interface AppProps {
   appName: string;
@@ -26,6 +32,23 @@ const App: React.FC<AppProps> = ({
   const { counter, handleIncrement, handleReset } = useSharedCounter(
     useState, useEffect, runtime, middlewareConfig
   );
+
+  // FynBus hooks (pub/sub chat + request/response demo)
+  const {
+    messages: busMessages,
+    sendMessage: sendBusMessage,
+    busAvailable,
+  } = useFynBusChat(useState, useEffect, runtime);
+  const [busText, setBusText] = React.useState<string>("");
+  const { requestState, response, sendRequest } = useFynBusRequest(
+    useState, runtime
+  );
+
+  const handleBusSend = () => {
+    if (sendBusMessage(busText)) {
+      setBusText("");
+    }
+  };
 
   // Destructure the components
   const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
@@ -81,6 +104,104 @@ const App: React.FC<AppProps> = ({
           </div>
         </Card>
       )}
+
+      {/* FynBus Demo (FYM-18) */}
+      <Card title="🚌 FynBus" style={{ marginBottom: "16px" }}>
+        <div style={{ padding: "15px" }}>
+          {busAvailable ? (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: "12px",
+                  marginBottom: "12px",
+                }}
+              >
+                <Input
+                  label={`Send on "${DEMO_CHAT_TOPIC}"`}
+                  placeholder="Message other fynapps..."
+                  value={busText}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setBusText(e.target.value)
+                  }
+                />
+                <Button variant="primary" onClick={handleBusSend}>
+                  Send
+                </Button>
+              </div>
+              <div style={{ fontSize: "14px", color: "#6c757d", marginBottom: "8px" }}>
+                Received messages (own emits are filtered by the bus):
+              </div>
+              {busMessages.length === 0 ? (
+                <div style={{ fontSize: "14px", color: "#6c757d", fontStyle: "italic" }}>
+                  No messages yet — send one from another fynapp.
+                </div>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {busMessages.map((message, index) => (
+                    <li
+                      key={index}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "4px 0",
+                        fontSize: "14px",
+                      }}
+                    >
+                      <Badge variant="primary">{message.source}</Badge>
+                      <span>{message.text}</span>
+                      <span style={{ fontSize: "12px", color: "#6c757d" }}>
+                        {message.at}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  marginTop: "16px",
+                  paddingTop: "12px",
+                  borderTop: "1px solid #dee2e6",
+                }}
+              >
+                <Button
+                  variant="outline"
+                  onClick={sendRequest}
+                  disabled={requestState === "pending"}
+                >
+                  Request status
+                </Button>
+                <span style={{ fontSize: "14px" }}>
+                  {requestState === "idle" && (
+                    <span style={{ color: "#6c757d" }}>
+                      Calls <code>bus.request("{GET_STATUS_TOPIC}")</code> — answered by
+                      fynapp-1
+                    </span>
+                  )}
+                  {requestState === "pending" && (
+                    <span style={{ color: "#6c757d" }}>Waiting for response…</span>
+                  )}
+                  {requestState === "done" && (
+                    <code>{JSON.stringify(response)}</code>
+                  )}
+                  {requestState === "error" && (
+                    <span style={{ color: "#dc3545" }}>Error: {String(response)}</span>
+                  )}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: "14px", color: "#6c757d" }}>
+              FynBus not available (runtime.bus is undefined).
+            </div>
+          )}
+        </div>
+      </Card>
 
       <Alert variant="info" style={{ marginBottom: "16px" }}>
         Component counter: {count}

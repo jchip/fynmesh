@@ -15,6 +15,12 @@ interface AppImports {
   preloadComponents: () => Promise<any>;
   /** Dynamically imports the App component */
   importApp: () => Promise<{ default: any }>;
+  /**
+   * Optional FynBus wiring called during execute (FYM-18), e.g. registering
+   * bus.handle() responders. Kept per-app so fynapp-1 and fynapp-1-b don't
+   * both register the same single-responder topic.
+   */
+  setupBus?: (runtime: FynUnitRuntime) => void;
 }
 
 /**
@@ -36,6 +42,9 @@ export function createMiddlewareUser(config: FynApp1Config, imports: AppImports)
 
     async execute(runtime: FynUnitRuntime): Promise<ComponentFactoryResult | SelfManagedResult | NoRenderResult | void> {
       console.debug(`\u{1F680} ${config.appName} initializing with middleware support`);
+
+      // FynBus wiring (FYM-18) - registered here alongside app setup, not in a React render
+      imports.setupBus?.(runtime);
 
       const shellMiddleware = runtime.middlewareContext.get("shell-layout");
       const isShellManaged = shellMiddleware?.isShellManaged;
