@@ -262,6 +262,174 @@ describe("FynBus pub/sub", () => {
   });
 });
 
+describe("FynBus request/response", () => {
+  let root: FynBusRoot;
+
+  beforeEach(() => {
+    root = new FynBusRoot();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("resolves with a sync handler's return value", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.handle("sum", (payload: any) => payload.a + payload.b);
+
+    await expect(consumer.request("sum", { a: 2, b: 3 })).resolves.toBe(5);
+  });
+
+  it("resolves with an async handler's value", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.handle("fetch", async () => "data");
+
+    await expect(consumer.request("fetch")).resolves.toBe("data");
+  });
+
+  it("passes the requester's meta to the handler", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+    const seen: any[] = [];
+
+    provider.handle("who", (_payload, meta) => {
+      seen.push(meta);
+      return "ok";
+    });
+    await consumer.request("who", null);
+
+    expect(seen).toEqual([{ topic: "who", source: "consumer", channel: "" }]);
+  });
+
+  it("rejects when the handler throws synchronously", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.handle("boom", () => {
+      throw new Error("handler failed");
+    });
+
+    await expect(consumer.request("boom")).rejects.toThrow("handler failed");
+  });
+
+  it("rejects when the handler returns a rejected promise", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.handle("boom", async () => {
+      throw new Error("async fail");
+    });
+
+    await expect(consumer.request("boom")).rejects.toThrow("async fail");
+  });
+
+  it("throws BUS_HANDLER_EXISTS on duplicate handle for the same topic", () => {
+    const provider = root.forApp("provider", "1.0.0");
+    provider.handle("dup", () => 1);
+
+    expect(() => root.forApp("other", "1.0.0").handle("dup", () => 2)).toThrowError(
+      expect.objectContaining({ code: KernelErrorCode.BUS_HANDLER_EXISTS }),
+    );
+  });
+
+  it("frees the topic when the handler unsubscribes", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    const unsub = provider.handle("job", () => "v1");
+    unsub();
+    provider.handle("job", () => "v2");
+
+    await expect(consumer.request("job")).resolves.toBe("v2");
+  });
+
+  it("parks a request until a late handler registers", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    const pending = consumer.request("late", 21);
+    provider.handle("late", (n: any) => n * 2);
+
+    await expect(pending).resolves.toBe(42);
+  });
+
+  it("releases all parked requests when the handler appears", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    const p1 = consumer.request("late", 1);
+    const p2 = consumer.request("late", 2);
+    provider.handle("late", (n: any) => n * 10);
+
+    await expect(Promise.all([p1, p2])).resolves.toEqual([10, 20]);
+  });
+
+  it("rejects with BUS_REQUEST_TIMEOUT when no handler appears", async () => {
+    vi.useFakeTimers();
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    const pending = consumer.request("nobody", null);
+    const assertion = expect(pending).rejects.toMatchObject({
+      code: KernelErrorCode.BUS_REQUEST_TIMEOUT,
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await assertion;
+  });
+
+  it("honors a custom timeout", async () => {
+    vi.useFakeTimers();
+    const consumer = root.forApp("consumer", "1.0.0");
+    const onRejected = vi.fn();
+
+    consumer.request("nobody", null, { timeout: 50 }).catch(onRejected);
+    await vi.advanceTimersByTimeAsync(49);
+    expect(onRejected).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onRejected).toHaveBeenCalledTimes(1);
+  });
+
+  it("scopes handlers per channel", async () => {
+    vi.useFakeTimers();
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.channel("cart").handle("total", () => 99);
+
+    await expect(consumer.channel("cart").request("total")).resolves.toBe(99);
+
+    const rootRequest = consumer.request("total", null, { timeout: 10 });
+    const assertion = expect(rootRequest).rejects.toMatchObject({
+      code: KernelErrorCode.BUS_REQUEST_TIMEOUT,
+    });
+    await vi.advanceTimersByTimeAsync(10);
+    await assertion;
+  });
+
+  it("unregisters an app's handlers on dispose", async () => {
+    const provider = root.forApp("provider", "1.0.0");
+    const consumer = root.forApp("consumer", "1.0.0");
+
+    provider.handle("job", () => "old");
+    root.disposeApp("provider", "1.0.0");
+
+    // Topic is free again for another provider
+    root.forApp("provider2", "1.0.0").handle("job", () => "new");
+    await expect(consumer.request("job")).resolves.toBe("new");
+  });
+
+  it("throws BUS_DISPOSED for request/handle on a disposed facade", () => {
+    const app = root.forApp("app-a", "1.0.0");
+    root.disposeApp("app-a", "1.0.0");
+
+    expect(() => app.request("x")).toThrow(FynBusError);
+    expect(() => app.handle("x", () => 1)).toThrow(FynBusError);
+  });
+});
+
 describe("FynBus kernel integration", () => {
   class TestKernel extends FynMeshKernelCore {
     async loadFynApp(): Promise<FynApp | null> {

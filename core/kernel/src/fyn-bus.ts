@@ -38,6 +38,19 @@ export interface SubscribeOptions {
   signal?: AbortSignal;
 }
 
+export interface RequestOptions {
+  /** ms to wait for a handler to appear before rejecting. Default 10s. */
+  timeout?: number;
+}
+
+/** FynApps load independently; requests wait this long for a late handler */
+export const DEFAULT_REQUEST_TIMEOUT = 10_000;
+
+export type RequestHandler<TReq = unknown, TRes = unknown> = (
+  payload: TReq,
+  meta: FynBusMeta,
+) => TRes | Promise<TRes>;
+
 /**
  * Messaging API available to FynApps as `runtime.bus` and to kernel-side
  * code as `kernel.bus`.
@@ -57,15 +70,48 @@ export interface FynBus {
     handler: BusHandler<T>,
     options?: SubscribeOptions,
   ): Unsubscribe;
+  /**
+   * Send a request; resolves with the handler's response, rejects with the
+   * handler's error. Waits up to options.timeout for a handler to appear
+   * (late-loading FynApps are normal), then rejects with BUS_REQUEST_TIMEOUT.
+   */
+  request<TRes = unknown, TReq = unknown>(
+    topic: string,
+    payload?: TReq,
+    options?: RequestOptions,
+  ): Promise<TRes>;
+  /**
+   * Register the single responder for a topic. A second handle() on the same
+   * topic throws BUS_HANDLER_EXISTS; the returned unsubscribe frees the topic.
+   */
+  handle<TReq = unknown, TRes = unknown>(
+    topic: string,
+    handler: RequestHandler<TReq, TRes>,
+  ): Unsubscribe;
   /** Scoped view: topics on a named channel are invisible to other channels */
   channel(name: string): FynBus;
 }
 
 type BusEventDetail = { payload: unknown; meta: FynBusMeta };
 
+type RpcHandler = RequestHandler<any, any>;
+
 type ChannelState = {
   events: FynEventTarget;
+  /** RPC: exactly one handler per topic */
+  handlers: Map<string, RpcHandler>;
+  /** Requests parked until a handler registers (cleared by timeout) */
+  waiters: Map<string, Set<(handler: RpcHandler) => void>>;
 };
+
+/** Async wrapper so a synchronously-throwing handler becomes a rejection */
+async function invokeRpcHandler(
+  handler: RpcHandler,
+  payload: unknown,
+  meta: FynBusMeta,
+): Promise<any> {
+  return handler(payload, meta);
+}
 
 /** Subscription tracking shared between an app facade and its channel views */
 type FacadeState = {
@@ -89,7 +135,7 @@ export class FynBusRoot {
   private getChannel(name: string): ChannelState {
     let state = this.channels.get(name);
     if (!state) {
-      state = { events: new FynEventTarget() };
+      state = { events: new FynEventTarget(), handlers: new Map(), waiters: new Map() };
       this.channels.set(name, state);
     }
     return state;
@@ -139,6 +185,87 @@ export class FynBusRoot {
     const unsubscribe = () => events.removeEventListener(topic, listener);
     events.addEventListener(topic, listener, { signal: options?.signal });
     return unsubscribe;
+  }
+
+  requestFrom(
+    source: string,
+    channelName: string,
+    topic: string,
+    payload: unknown,
+    options?: RequestOptions,
+  ): Promise<any> {
+    const state = this.getChannel(channelName);
+    const meta: FynBusMeta = { topic, source, channel: channelName };
+    this.telemetry.capture({
+      type: "event",
+      name: "bus.request",
+      data: { topic, channel: channelName, source },
+    });
+
+    const existing = state.handlers.get(topic);
+    if (existing) {
+      return invokeRpcHandler(existing, payload, meta);
+    }
+
+    const timeout = options?.timeout ?? DEFAULT_REQUEST_TIMEOUT;
+    return new Promise((resolve, reject) => {
+      let waiting = state.waiters.get(topic);
+      if (!waiting) {
+        waiting = new Set();
+        state.waiters.set(topic, waiting);
+      }
+      const set = waiting;
+      const timer = setTimeout(() => {
+        set.delete(waiter);
+        if (set.size === 0) {
+          state.waiters.delete(topic);
+        }
+        reject(
+          new FynBusError(
+            KernelErrorCode.BUS_REQUEST_TIMEOUT,
+            `FynBus: request "${topic}" on channel "${channelName}" timed out after ${timeout}ms waiting for a handler`,
+            { topic, channel: channelName, source, timeout },
+          ),
+        );
+      }, timeout);
+      const waiter = (handler: RpcHandler) => {
+        clearTimeout(timer);
+        invokeRpcHandler(handler, payload, meta).then(resolve, reject);
+      };
+      set.add(waiter);
+    });
+  }
+
+  registerHandler(channelName: string, topic: string, handler: RpcHandler): Unsubscribe {
+    const state = this.getChannel(channelName);
+    if (state.handlers.has(topic)) {
+      throw new FynBusError(
+        KernelErrorCode.BUS_HANDLER_EXISTS,
+        `FynBus: a handler is already registered for topic "${topic}" on channel "${channelName}"`,
+        { topic, channel: channelName },
+      );
+    }
+    state.handlers.set(topic, handler);
+    this.telemetry.capture({
+      type: "event",
+      name: "bus.handle",
+      data: { topic, channel: channelName },
+    });
+
+    // Release requests that arrived before the handler
+    const waiting = state.waiters.get(topic);
+    if (waiting) {
+      state.waiters.delete(topic);
+      for (const waiter of waiting) {
+        waiter(handler);
+      }
+    }
+
+    return () => {
+      if (state.handlers.get(topic) === handler) {
+        state.handlers.delete(topic);
+      }
+    };
   }
 
   /**
@@ -222,6 +349,23 @@ export class FynBusFacade implements FynBus {
     return this.track(
       this.root.subscribeFrom(this.source, this.channelName, topic, handler, options, true),
     );
+  }
+
+  request<TRes = unknown, TReq = unknown>(
+    topic: string,
+    payload?: TReq,
+    options?: RequestOptions,
+  ): Promise<TRes> {
+    this.assertActive();
+    return this.root.requestFrom(this.source, this.channelName, topic, payload, options);
+  }
+
+  handle<TReq = unknown, TRes = unknown>(
+    topic: string,
+    handler: RequestHandler<TReq, TRes>,
+  ): Unsubscribe {
+    this.assertActive();
+    return this.track(this.root.registerHandler(this.channelName, topic, handler as RpcHandler));
   }
 
   channel(name: string): FynBus {
