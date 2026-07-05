@@ -260,6 +260,8 @@ const App: React.FC<AppProps> = ({ appName }) => {
           paginationPageSizeSelector={[50, 100, 200, 500]}
           animateRows={true}
           enableCellTextSelection={true}
+          alwaysShowVerticalScroll={true}
+          alwaysShowHorizontalScroll={true}
         />
       </div>
 

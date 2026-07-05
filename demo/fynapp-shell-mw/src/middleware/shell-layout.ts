@@ -351,6 +351,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
           display: flex;
           flex-direction: column;
           background: #ffffff;
+          min-height: 0;
         }
         .fynapp-header {
           display: flex;
@@ -363,7 +364,10 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         }
         .fynapp-render-target {
           flex: 1;
-          overflow: auto;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 0;
         }
       </style>
       <div class="shell-layout">

@@ -31,8 +31,7 @@ export default [
       }),
       newRollupPlugin(commonjs)(),
       newRollupPlugin(postcss)(),
-      // Use setupFederationPlugins directly to configure React 18
-      // AG Grid React 33.x was built with React 18 JSX runtime
+      // Use setupFederationPlugins directly to configure React 19
       ...setupFederationPlugins({
         name: "fynapp-ag-grid",
         shareScope: fynmeshShareScope,
@@ -40,16 +39,15 @@ export default [
           "./component": "./src/component.ts",
         },
         shared: {
-          // React 18 for AG Grid compatibility
           "esm-react": {
             import: false,
             singleton: false,
-            semver: "^18.0.0",
+            semver: "^19.0.0",
           },
           "esm-react-dom": {
             import: false,
             singleton: false,
-            semver: "^18.0.0",
+            semver: "^19.0.0",
           },
           "esm-ag-grid": {
             import: false,
@@ -61,7 +59,7 @@ export default [
             singleton: true,
             semver: "^33.0.0",
             requiredVersion: {
-              "esm-react": "^18.0.0",
+              "esm-react": "^19.0.0",
               "esm-ag-grid": "^33.0.0",
             },
           },
@@ -69,7 +67,7 @@ export default [
         // shared-providers to declare which libraries provide the shared modules
         sharedProviders: {
           "fynapp-react-lib": {
-            semver: "^18.0.0",
+            semver: "^19.0.0",
             provides: ["esm-react", "esm-react-dom"],
           },
           "fynapp-ag-grid-lib": {
