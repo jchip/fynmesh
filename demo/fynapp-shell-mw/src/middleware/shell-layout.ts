@@ -1047,8 +1047,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         // and logs a 404 network error in the console — consult the fynapp's
         // declared exposes first (FYM-146). Entries with no manifest or
         // expose map still get probed.
-        const container = (fynApp.entry as any)?.container;
-        const exposes = container?.__FYNAPP_MANIFEST__?.exposes ?? container?.$E;
+        const fedContainer = (fynApp.entry as any)?.container;
+        const exposes = fedContainer?.__FYNAPP_MANIFEST__?.exposes ?? fedContainer?.$E;
         if (exposes && !exposes["./component"]) {
           throw new Error("./component not exposed");
         }
