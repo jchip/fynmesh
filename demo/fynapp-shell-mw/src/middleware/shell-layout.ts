@@ -1102,8 +1102,15 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
             runtime: fynAppRuntime
           });
 
-          // Use FynApp's ReactDOM to create root and render
-          const root = ReactDOM.createRoot(container);
+          // Reuse existing root or create new one — apply() and overrideExecute()
+          // both land here for the same container during one bootstrap, and a
+          // second createRoot on the same container makes the two React trees
+          // fight over the same DOM nodes (FYM-145)
+          let root = this.reactRoots.get(fynApp.name);
+          if (!root) {
+            root = ReactDOM.createRoot(container);
+            this.reactRoots.set(fynApp.name, root);
+          }
           root.render(element);
 
           console.log(`✅ Component rendered for ${fynApp.name}`);
