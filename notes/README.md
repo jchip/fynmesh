@@ -33,6 +33,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`KERNEL_PRINCIPAL_REVIEW.md`](./KERNEL_PRINCIPAL_REVIEW.md) | Principal-engineer review of kernel risks (FYM-66/FYM-77)    |
 | [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md) | KernelTelemetry runtime-observability design (FYM-49/53/54)  |
 | [`SHARED_STATE_ARCHITECTURE.md`](./SHARED_STATE_ARCHITECTURE.md) | Design analysis for middleware shared state across FynApps |
+| [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)                   | FynBus inter-FynApp messaging design (FYM-13, epic FYM-2)      |
 
 Stale or superseded docs should be moved into `notes/archive/`.
 
