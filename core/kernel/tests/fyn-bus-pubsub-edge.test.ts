@@ -184,22 +184,26 @@ describe("FynBus pub/sub edge cases", () => {
       expect(order).toEqual(["b", "d"]);
     });
 
-    it("shares one meta object per emit: a mutating subscriber is visible to later ones", () => {
-      // Documented actual behavior (same-realm, by-reference messaging): the
-      // meta object is created once per emit and handed to every subscriber.
-      // A subscriber that mutates it leaks the mutation downstream.
+    it("freezes the shared meta object so a tampering subscriber cannot poison later ones", () => {
+      // One meta object is created per emit and shared across subscribers,
+      // but it is frozen: platform-stamped identity must not be tamperable.
+      // The mutation attempt throws in strict mode; the bus isolates it.
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const { appA, appB, appC } = createParties();
       const metas: FynBusMeta[] = [];
 
       appB.on("meta-share", (_p, meta) => {
         (meta as any).tampered = true;
-        metas.push(meta);
       });
       appC.on("meta-share", (_p, meta) => metas.push(meta));
       appA.emit("meta-share", 1);
 
-      expect(metas[0]).toBe(metas[1]);
-      expect((metas[1] as any).tampered).toBe(true);
+      expect(metas).toHaveLength(1);
+      expect(Object.isFrozen(metas[0])).toBe(true);
+      expect((metas[0] as any).tampered).toBeUndefined();
+      expect(metas[0]).toEqual({ topic: "meta-share", source: "app-a", channel: "" });
+
+      consoleSpy.mockRestore();
     });
   });
 

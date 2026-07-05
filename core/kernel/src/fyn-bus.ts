@@ -142,7 +142,9 @@ export class FynBusRoot {
   }
 
   emitFrom(source: string, channelName: string, topic: string, payload: unknown): void {
-    const meta: FynBusMeta = { topic, source, channel: channelName };
+    // Frozen: meta is shared across subscribers and platform-stamped identity
+    // must not be tamperable by one of them
+    const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
     // Unprefixed name by convention: the kernel passes telemetry.scope("bus")
     this.telemetry.capture({
       type: "event",
@@ -196,7 +198,7 @@ export class FynBusRoot {
     options?: RequestOptions,
   ): Promise<any> {
     const state = this.getChannel(channelName);
-    const meta: FynBusMeta = { topic, source, channel: channelName };
+    const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
     this.telemetry.capture({
       type: "event",
       name: "request",
