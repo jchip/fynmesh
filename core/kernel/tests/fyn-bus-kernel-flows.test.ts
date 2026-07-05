@@ -377,8 +377,9 @@ describe("FynBus in middleware call contexts", () => {
     expect(applyBuses).toEqual([deferredCC!.runtime.bus]);
     expect(execRuntimes[0].bus).toBe(deferredCC!.runtime.bus);
     expect(execRuntimes[0].share).toEqual({ token: "abc" });
-    // (existing behavior: initialize runs on the deferred pass AND again on resume)
-    expect(initialize).toHaveBeenCalledTimes(2);
+    // FYM-144: initialize is a one-time declaration — it ran on the deferred
+    // pass and is NOT re-run on resume (same runtime object)
+    expect(initialize).toHaveBeenCalledTimes(1);
 
     // The emit from inside the resumed execute reached the kernel-side subscriber
     expect(resumedSpy).toHaveBeenCalledWith(

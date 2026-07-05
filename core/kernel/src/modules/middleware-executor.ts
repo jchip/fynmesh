@@ -35,6 +35,9 @@ export class MiddlewareExecutor {
   protected telemetry: KernelTelemetry;
   private middlewareReady: Map<string, any> = new Map();
   private deferInvoke: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] = [];
+  /** Runtimes whose unit.initialize already ran — a deferred group resumes
+   * with the same runtime and must not re-run it (FYM-144) */
+  private initializedRuntimes = new WeakSet<FynUnitRuntime>();
 
   constructor(telemetry?: KernelTelemetry) {
     this.telemetry = telemetry ?? noOpTelemetry;
@@ -235,8 +238,14 @@ export class MiddlewareExecutor {
       return { allowDegraded: false, initDeferStatus: "ready" };
     }
 
+    // initialize is a one-time declaration per unit runtime (FYM-144)
+    if (this.initializedRuntimes.has(runtime)) {
+      return { allowDegraded: false, initDeferStatus: "ready" };
+    }
+
     console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
     const result: any = await fynUnit.initialize(runtime);
+    this.initializedRuntimes.add(runtime);
     const allowDegraded = Boolean(result?.deferOk);
 
     if (result?.mode && providerModeRegistrar) {
