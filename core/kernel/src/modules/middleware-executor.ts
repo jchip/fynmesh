@@ -208,6 +208,11 @@ export class MiddlewareExecutor {
           middlewareSetupStatus = "defer";
           hasDeferredMiddleware = true;
         }
+        // A ready signal (sent by setup itself or by us above) populates the
+        // ready map and refreshes deferred contexts, but not this in-flight
+        // cc — refresh it so this first pass's applyReadyMiddlewares and
+        // runtime.share see the readiness (FYM-143)
+        this.checkSingleMiddlewareReady(cc);
       }
     }
 

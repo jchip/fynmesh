@@ -280,12 +280,11 @@ describe("FynBus in middleware call contexts", () => {
       { topic: "mw-ping", source: KERNEL_BUS_SOURCE, channel: "" },
     );
 
-    // NOTE: possible bug — on the very first pass, a middleware whose setup
-    // signals ready and returns { status: "ready" } never gets apply() called:
-    // cc.status is only refreshed from the ready-map BEFORE setup runs, so the
-    // just-readied middleware is skipped by applyReadyMiddlewares. Later apps
-    // using the same middleware DO get apply() (next test pins that).
-    expect(apply).not.toHaveBeenCalled();
+    // FYM-143: a middleware whose setup signals ready and returns
+    // { status: "ready" } gets apply() on this same first pass — the in-flight
+    // cc is refreshed from the ready map right after the signal lands.
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(setupCCs[0].status).toBe("ready");
   });
 
   it("cc.runtime.bus works inside middleware apply for the next app using an already-ready middleware", async () => {
@@ -314,13 +313,20 @@ describe("FynBus in middleware call contexts", () => {
       useMiddleware(meta, { execute: (rt: FynUnitRuntime) => void execRuntimes.push(rt) }),
     );
 
-    expect(apply).toHaveBeenCalledTimes(1);
-    expect(applyCCs[0].fynApp.name).toBe("mw-user-two");
+    // FYM-143: apply runs for BOTH apps — the first pass no longer skips it
+    expect(apply).toHaveBeenCalledTimes(2);
+    expect(applyCCs.map((cc) => cc.fynApp.name)).toEqual(["mw-user-one", "mw-user-two"]);
     // apply saw the same per-app facade the unit executed with
-    expect(applyCCs[0].runtime.bus).toBe(execRuntimes[0].bus);
-    // and its emit was delivered, stamped with the consuming app as source
-    expect(appliedSpy).toHaveBeenCalledTimes(1);
-    expect(appliedSpy).toHaveBeenCalledWith(
+    expect(applyCCs[1].runtime.bus).toBe(execRuntimes[0].bus);
+    // and each apply's emit was delivered, stamped with its consuming app as source
+    expect(appliedSpy).toHaveBeenCalledTimes(2);
+    expect(appliedSpy).toHaveBeenNthCalledWith(
+      1,
+      { app: "mw-user-one" },
+      { topic: "mw-applied", source: "mw-user-one", channel: "" },
+    );
+    expect(appliedSpy).toHaveBeenNthCalledWith(
+      2,
       { app: "mw-user-two" },
       { topic: "mw-applied", source: "mw-user-two", channel: "" },
     );
