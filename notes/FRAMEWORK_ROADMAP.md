@@ -34,12 +34,13 @@ FynMesh has solid foundations:
 
 - ✅ `shutdown()` lifecycle hook on FynUnit
 - ✅ `shutdownFynApp(name)` kernel method with `FYNAPP_SHUTDOWN` event
+- ✅ `suspend()` / `resume()` hooks + `suspendFynApp`/`resumeFynApp` with `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED` (FYM-7)
+- ✅ Mount tracking — kernel-side lifecycle state (`getFynAppState`/`listFynAppStates`) (FYM-5)
+- ✅ Per-FynApp error boundary — failed bootstraps recorded as observable `failed` state, siblings unaffected (FYM-6)
 
 **Remaining**:
 
-- `suspend()` / `resume()` for background FynApps
 - Hot module replacement (HMR) support
-- Error boundary per FynApp (isolate failures)
 
 **Current FynUnit lifecycle**:
 
@@ -50,9 +51,8 @@ interface FynUnit {
   ): Promise<{ status: string; mode?: string }>;
   execute(runtime: FynUnitRuntime): Promise<any>;
   shutdown?(runtime: FynUnitRuntime): Promise<void> | void; // ✅ IMPLEMENTED
-  // Future:
-  // suspend?(runtime: FynUnitRuntime): Promise<void>;
-  // resume?(runtime: FynUnitRuntime): Promise<void>;
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;  // ✅ IMPLEMENTED (FYM-7)
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;   // ✅ IMPLEMENTED (FYM-7)
 }
 ```
 
@@ -60,8 +60,8 @@ interface FynUnit {
 
 - ✅ `shutdownFynApp(name)` - calls shutdown() and removes from registry
 - ✅ `FYNAPP_SHUTDOWN` event emitted on shutdown
-- Track mounted FynApps (future)
-- Error boundaries with recovery options (future)
+- ✅ Mount tracking via `FynAppLifecycle` (bootstrapping → mounted → suspended, plus failed) (FYM-5)
+- ✅ Per-app error boundary records failed state without aborting other apps (FYM-6)
 
 ---
 
@@ -213,14 +213,16 @@ FynMesh Kernel (Core)
 
 ## Milestone Structure
 
-### Milestone 1: Lifecycle Hooks (In Progress)
+### Milestone 1: Lifecycle Hooks (HMR remaining)
 
 - ✅ Add `shutdown()` to FynUnit interface
 - ✅ Add `shutdownFynApp(name)` to kernel
 - ✅ Emit `FYNAPP_SHUTDOWN` event
-- Implement mount tracking in kernel
-- Add error boundary per FynApp
+- ✅ Implement mount tracking in kernel (FYM-5)
+- ✅ Add error boundary per FynApp (FYM-6)
+- ✅ Add `suspend()`/`resume()` (FYM-7)
 - Demo: FynApp that properly cleans up subscriptions
+- HMR support (deferred)
 
 ### Milestone 2: FynBus Communication ✅ Complete
 

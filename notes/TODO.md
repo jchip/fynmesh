@@ -25,9 +25,9 @@
 - [x] Add `shutdown()` lifecycle hook to FynUnit interface
 - [x] Add `shutdownFynApp()` to kernel with `FYNAPP_SHUTDOWN` event
 - [x] Lifecycle events (`FYNAPP_BOOTSTRAPPED`, `FYNAPP_BOOTSTRAP_FAILED`, `FYNAPP_BOOTSTRAP_TIMEOUT`, `FYNAPP_SHUTDOWN`)
-- [ ] Add `suspend()` / `resume()` for background FynApps
-- [ ] Implement mount tracking in kernel
-- [ ] Add error boundary per FynApp (isolate failures)
+- [x] Add `suspend()` / `resume()` for background FynApps (FYM-7; `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED`)
+- [x] Implement mount tracking in kernel (FYM-5; `getFynAppState`/`listFynAppStates`)
+- [x] Add error boundary per FynApp (isolate failures) (FYM-6; failed state recorded, siblings unaffected)
 - [ ] HMR support for development
 
 ### 2. **Inter-FynApp Communication (FynBus)** ✅ Shipped (epic FYM-2, FYM-13–18)
