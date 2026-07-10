@@ -25,6 +25,7 @@ import type {
   FynApp,
   FynAppEntry,
   FynAppState,
+  FynAppStatus,
   FynUnit,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
@@ -576,6 +577,82 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       // Still remove from registry and clean up bus even if shutdown fails
       this.removeFromRegistry(fynApp, name);
       this.busRoot.disposeApp(fynApp.name, fynApp.version);
+      return false;
+    }
+  }
+
+  /**
+   * Suspend a mounted FynApp (only mounted -> suspended is valid).
+   */
+  async suspendFynApp(name: string): Promise<boolean> {
+    return this.transitionLifecycle(name, {
+      from: "mounted",
+      to: "suspended",
+      hook: "suspend",
+      event: "FYNAPP_SUSPENDED",
+    });
+  }
+
+  /**
+   * Resume a suspended FynApp (only suspended -> mounted is valid).
+   */
+  async resumeFynApp(name: string): Promise<boolean> {
+    return this.transitionLifecycle(name, {
+      from: "suspended",
+      to: "mounted",
+      hook: "resume",
+      event: "FYNAPP_RESUMED",
+    });
+  }
+
+  /**
+   * Shared suspend/resume machinery: guard the current lifecycle status, call
+   * the given FynUnit hook on each expose that implements it, update state, and
+   * emit the lifecycle event. Returns false (no-op) on invalid transitions.
+   */
+  private async transitionLifecycle(
+    name: string,
+    opts: { from: FynAppStatus; to: FynAppStatus; hook: "suspend" | "resume"; event: string },
+  ): Promise<boolean> {
+    const fynApp = this.fynAppRegistry.get(name);
+    if (!fynApp) {
+      console.debug(`⚠️ ${opts.hook}FynApp: FynApp "${name}" not found`);
+      return false;
+    }
+
+    const state = this.fynAppLifecycle.get(fynApp.name, fynApp.version);
+    if (state?.status !== opts.from) {
+      console.debug(
+        `⚠️ ${opts.hook}FynApp: "${name}" is ${state?.status ?? "untracked"}, expected ${opts.from}`,
+      );
+      return false;
+    }
+
+    this.telemetry.capture({ type: "event", name: `${opts.hook}.started`, data: { app: fynApp.name, version: fynApp.version } });
+
+    try {
+      for (const exposeName of Object.keys(fynApp.exposes)) {
+        const fynUnit = fynApp.exposes[exposeName]?.main;
+        const fn = fynUnit?.[opts.hook];
+        if (typeof fn === "function") {
+          const runtime = this.moduleLoader.createFynUnitRuntime(fynApp);
+          await fn.call(fynUnit, runtime);
+        }
+      }
+
+      this.fynAppLifecycle.set(fynApp.name, fynApp.version, opts.to);
+
+      await this.emitAsync(
+        new CustomEvent(opts.event, {
+          detail: { name: fynApp.name, version: fynApp.version },
+        })
+      );
+
+      this.telemetry.capture({ type: "event", name: `${opts.hook}.completed`, data: { app: fynApp.name, version: fynApp.version } });
+      return true;
+    } catch (error) {
+      this.telemetry.captureError(`${opts.hook}.failed`, { app: name }, error);
+      console.error(`❌ Error during ${opts.hook} of ${name}:`, error);
       return false;
     }
   }

@@ -209,3 +209,73 @@ describe("kernel per-FynApp error boundary (FYM-6)", () => {
     expect(kernel.getFynAppState("crashy")).toBeUndefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// suspend / resume
+// ---------------------------------------------------------------------------
+
+describe("kernel suspend/resume (FYM-7)", () => {
+  let kernel: FlowTestKernel;
+
+  beforeEach(() => {
+    kernel = createKernel();
+  });
+
+  it("suspends a mounted app: calls suspend(), sets suspended, emits event", async () => {
+    const suspend = vi.fn();
+    const suspendedEvt = vi.fn();
+    kernel.events.on("FYNAPP_SUSPENDED", suspendedEvt);
+
+    await bootApp(kernel, "nav", { execute: vi.fn(), suspend });
+
+    await expect(kernel.suspendFynApp("nav")).resolves.toBe(true);
+    expect(suspend).toHaveBeenCalledTimes(1);
+    expect(kernel.getFynAppState("nav")?.status).toBe("suspended");
+    expect((suspendedEvt.mock.calls[0][0] as CustomEvent).detail.name).toBe("nav");
+  });
+
+  it("resumes a suspended app: calls resume(), sets mounted, emits event", async () => {
+    const resume = vi.fn();
+    const resumedEvt = vi.fn();
+    kernel.events.on("FYNAPP_RESUMED", resumedEvt);
+
+    await bootApp(kernel, "nav", { execute: vi.fn(), resume });
+    await kernel.suspendFynApp("nav");
+
+    await expect(kernel.resumeFynApp("nav")).resolves.toBe(true);
+    expect(resume).toHaveBeenCalledTimes(1);
+    expect(kernel.getFynAppState("nav")?.status).toBe("mounted");
+    expect((resumedEvt.mock.calls[0][0] as CustomEvent).detail.name).toBe("nav");
+  });
+
+  it("transitions state even when the FynUnit has no suspend/resume hooks", async () => {
+    await bootApp(kernel, "plain", { execute: vi.fn() });
+
+    await expect(kernel.suspendFynApp("plain")).resolves.toBe(true);
+    expect(kernel.getFynAppState("plain")?.status).toBe("suspended");
+    await expect(kernel.resumeFynApp("plain")).resolves.toBe(true);
+    expect(kernel.getFynAppState("plain")?.status).toBe("mounted");
+  });
+
+  it("rejects invalid transitions without calling hooks", async () => {
+    const suspend = vi.fn();
+    const resume = vi.fn();
+    await bootApp(kernel, "nav", { execute: vi.fn(), suspend, resume });
+
+    // cannot resume a mounted app
+    await expect(kernel.resumeFynApp("nav")).resolves.toBe(false);
+    expect(resume).not.toHaveBeenCalled();
+    expect(kernel.getFynAppState("nav")?.status).toBe("mounted");
+
+    // cannot suspend twice
+    await kernel.suspendFynApp("nav");
+    expect(suspend).toHaveBeenCalledTimes(1);
+    await expect(kernel.suspendFynApp("nav")).resolves.toBe(false);
+    expect(suspend).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns false for an unknown app", async () => {
+    await expect(kernel.suspendFynApp("ghost")).resolves.toBe(false);
+    await expect(kernel.resumeFynApp("ghost")).resolves.toBe(false);
+  });
+});

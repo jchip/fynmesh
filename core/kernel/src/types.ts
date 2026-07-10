@@ -126,6 +126,10 @@ export interface FynUnit {
   execute(runtime: FynUnitRuntime): Promise<any> | any;
   /** Graceful shutdown - called when FynApp is being unloaded. Clean up resources here. */
   shutdown?(runtime: FynUnitRuntime): Promise<void> | void;
+  /** Pause a mounted FynApp running in the background (e.g. stop timers, unsubscribe). Kept in the registry; resume() restores it. */
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;
+  /** Resume a suspended FynApp. */
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;
   [key: string]: any;
 }
 
@@ -443,6 +447,26 @@ export interface FynMeshKernel {
    * suspended, or failed).
    */
   listFynAppStates(): FynAppState[];
+
+  /**
+   * Suspend a mounted FynApp: calls suspend() on each of its FynUnits, marks it
+   * `suspended`, and emits `FYNAPP_SUSPENDED`. Only a `mounted` app can be
+   * suspended. The kernel does not touch the DOM — each FynUnit decides what to
+   * pause.
+   *
+   * @param name - "name" or "name@version"
+   * @returns true if the app was suspended, false if not found or not mounted
+   */
+  suspendFynApp(name: string): Promise<boolean>;
+
+  /**
+   * Resume a suspended FynApp: calls resume() on each of its FynUnits, marks it
+   * `mounted`, and emits `FYNAPP_RESUMED`. Only a `suspended` app can be resumed.
+   *
+   * @param name - "name" or "name@version"
+   * @returns true if the app was resumed, false if not found or not suspended
+   */
+  resumeFynApp(name: string): Promise<boolean>;
 
   /**
    * Send an event to the kernel
