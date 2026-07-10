@@ -16,6 +16,7 @@ import { MiddlewareManager } from "./modules/middleware-manager";
 import { ModuleLoader } from "./modules/module-loader";
 import { MiddlewareExecutor } from "./modules/middleware-executor";
 import { FynAppRegistry } from "./modules/fynapp-registry";
+import { FynAppLifecycle } from "./modules/fynapp-lifecycle";
 
 import type {
   FynMeshKernel,
@@ -23,6 +24,7 @@ import type {
   FynMeshRuntimeData,
   FynApp,
   FynAppEntry,
+  FynAppState,
   FynUnit,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
@@ -63,6 +65,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   public moduleLoader: ModuleLoader;
   public middlewareExecutor: MiddlewareExecutor;
   public fynAppRegistry: FynAppRegistry;
+  public fynAppLifecycle: FynAppLifecycle;
 
   constructor(telemetryConfig?: TelemetryConfig) {
     this.events = new FynEventTarget();
@@ -71,6 +74,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       middlewares: {},
     };
     this.fynAppRegistry = new FynAppRegistry(this.runTime.appsLoaded);
+    this.fynAppLifecycle = new FynAppLifecycle();
 
     // Initialize telemetry
     this.telemetry = telemetryConfig
@@ -428,6 +432,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * Bootstrap a fynapp
    */
   async bootstrapFynApp(fynApp: FynApp): Promise<void> {
+    // Mount tracking: record that bootstrap is in progress (may be deferred
+    // by the readiness check while waiting on provider FynApps).
+    this.fynAppLifecycle.set(fynApp.name, fynApp.version, "bootstrapping");
+
     // Check readiness and acquire lock
     if (!await this.checkBootstrapReadiness(fynApp)) {
       return;
@@ -473,6 +481,9 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       }
 
       console.debug("✅ FynApp bootstrapped", fynApp.name, fynApp.version);
+
+      // Mount tracking: bootstrap succeeded — app is now mounted/running.
+      this.fynAppLifecycle.set(fynApp.name, fynApp.version, "mounted");
 
       this.telemetry.capture({ type: "event", name: "bootstrap.completed", data: { app: fynApp.name, version: fynApp.version } });
 
@@ -522,6 +533,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     this.telemetry.capture({ type: "event", name: "shutdown.started", data: { app: name } });
 
+    // Mount tracking: mark the transient shutdown state so shutdown() hooks that
+    // query state see it; removeFromRegistry() then stops tracking the app.
+    this.fynAppLifecycle.set(fynApp.name, fynApp.version, "shutdown");
+
     try {
       // Call shutdown on each FynUnit that has it
       for (const exposeName of Object.keys(fynApp.exposes)) {
@@ -568,6 +583,21 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   private removeFromRegistry(fynApp: FynApp, name: string): void {
     this.fynAppRegistry.remove(fynApp, name);
+    this.fynAppLifecycle.remove(fynApp.name, fynApp.version);
+  }
+
+  /**
+   * Get the current lifecycle state of a FynApp (mount tracking).
+   */
+  getFynAppState(name: string): FynAppState | undefined {
+    return this.fynAppLifecycle.find(name);
+  }
+
+  /**
+   * List the lifecycle state of every tracked FynApp.
+   */
+  listFynAppStates(): FynAppState[] {
+    return this.fynAppLifecycle.list();
   }
 
   /**

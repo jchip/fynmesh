@@ -161,6 +161,31 @@ export type FynApp = FynAppInfo & {
   middlewareContext: Map<string, Record<string, any>>;
 };
 
+/**
+ * Kernel-side lifecycle status of a mounted FynApp (see FynAppLifecycle).
+ * - `bootstrapping` — bootstrap started (may be deferred waiting on providers)
+ * - `mounted` — bootstrap completed; FynUnits are running
+ * - `suspended` — suspend() called; app is paused in the background
+ * - `failed` — bootstrap threw; app is isolated but recorded (error boundary)
+ * - `shutdown` — transient state during shutdownFynApp before the entry is removed
+ */
+export type FynAppStatus = "bootstrapping" | "mounted" | "suspended" | "failed" | "shutdown";
+
+/**
+ * A snapshot of a FynApp's kernel-side lifecycle state.
+ */
+export type FynAppState = {
+  name: string;
+  version: string;
+  status: FynAppStatus;
+  /** Present only when status is `failed`. */
+  error?: unknown;
+  /** Timestamp of the last status change. */
+  updatedAt: number;
+  /** Timestamp when the app first reached `mounted`. */
+  mountedAt?: number;
+};
+
 export type FynAppMiddlewareCallContext = {
   meta: MiddlewareUseMeta<unknown>;
   fynUnit: FynUnit;
@@ -403,6 +428,21 @@ export interface FynMeshKernel {
    * @returns true if FynApp was found and shutdown, false otherwise
    */
   shutdownFynApp(name: string): Promise<boolean>;
+
+  /**
+   * Get the current lifecycle state of a FynApp (mount tracking).
+   *
+   * @param name - "name" or "name@version"; a bare name resolves to the most
+   *   recently updated version when several are tracked
+   * @returns the lifecycle state, or undefined if the FynApp is not tracked
+   */
+  getFynAppState(name: string): FynAppState | undefined;
+
+  /**
+   * List the lifecycle state of every tracked FynApp (bootstrapping, mounted,
+   * suspended, or failed).
+   */
+  listFynAppStates(): FynAppState[];
 
   /**
    * Send an event to the kernel
