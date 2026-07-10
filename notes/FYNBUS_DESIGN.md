@@ -70,7 +70,8 @@ interface SubscribeOptions {
 }
 
 interface RequestOptions {
-  timeout?: number;      // ms; default 10_000
+  timeout?: number;      // ms to wait for a handler to appear; default 10_000
+  signal?: AbortSignal;  // stop waiting; rejects with BUS_REQUEST_ABORTED
 }
 
 interface FynBus {
@@ -136,10 +137,16 @@ app name; with a version it disposes exactly that one.
   would make every caller re-implement retry.
 - Handler return values (sync or Promise) resolve the request; a throwing/rejecting
   handler rejects the request with that error.
-- Disposing the requester's facade rejects its **parked** requests with
-  `BUS_DISPOSED` (a shut-down app gets a rejection, not a zombie resolution);
-  requests whose handler is already invoking still settle — promises cannot be
-  revoked mid-flight.
+- Disposing the requester's facade rejects its pending requests with
+  `BUS_DISPOSED` — parked **and** in-flight (a shut-down app gets a rejection,
+  not a zombie resolution). A handler that is already invoking always runs to
+  completion — its side effects happen; only the requester's wait ends and the
+  result is discarded.
+- `options.signal` (AbortSignal) stops the wait the same way at any point,
+  rejecting with `BUS_REQUEST_ABORTED` and the signal's reason as the error
+  `cause` (non-Error reasons are wrapped). A pre-aborted signal rejects without
+  parking or invoking. Note `timeout` covers only the wait-for-handler phase;
+  for a full response deadline pass `signal: AbortSignal.timeout(ms)`.
 - RPC does **not** ride on `EventTarget` — listeners can't return values and
   multi-listener dispatch is the wrong shape. It's a plain
   `Map<topic, handler>` plus a pending-waiter list per topic, behind the same facade.

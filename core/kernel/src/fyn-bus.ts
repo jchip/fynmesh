@@ -41,6 +41,13 @@ export interface SubscribeOptions {
 export interface RequestOptions {
   /** ms to wait for a handler to appear before rejecting. Default 10s. */
   timeout?: number;
+  /**
+   * Stop waiting for the response: rejects with BUS_REQUEST_ABORTED, the
+   * signal's reason as cause. Does NOT cancel an already-invoking handler —
+   * it runs to completion and its result is discarded. Compose with
+   * AbortSignal.timeout(ms) for a full response deadline.
+   */
+  signal?: AbortSignal;
 }
 
 /** FynApps load independently; requests wait this long for a late handler */
@@ -74,6 +81,8 @@ export interface FynBus {
    * Send a request; resolves with the handler's response, rejects with the
    * handler's error. Waits up to options.timeout for a handler to appear
    * (late-loading FynApps are normal), then rejects with BUS_REQUEST_TIMEOUT.
+   * options.signal stops the wait at any point (BUS_REQUEST_ABORTED); an
+   * already-invoking handler still runs, its result discarded.
    */
   request<TRes = unknown, TReq = unknown>(
     topic: string,
@@ -209,7 +218,7 @@ export class FynBusRoot {
     topic: string,
     payload: unknown,
     options?: RequestOptions,
-    onParked?: (cancel: () => void) => () => void,
+    onCancel?: (cancel: () => void) => () => void,
   ): Promise<any> {
     const state = this.getChannel(channelName);
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
@@ -219,59 +228,108 @@ export class FynBusRoot {
       data: { topic, channel: channelName, source },
     });
 
-    const existing = state.handlers.get(topic);
-    if (existing) {
-      // In-flight invocations always settle; only PARKED requests are
-      // cancellable by dispose
-      return invokeRpcHandler(existing, payload, meta);
-    }
-
-    const timeout = options?.timeout ?? DEFAULT_REQUEST_TIMEOUT;
+    const signal = options?.signal;
     return new Promise((resolve, reject) => {
+      const abortError = () =>
+        new FynBusError(
+          KernelErrorCode.BUS_REQUEST_ABORTED,
+          `FynBus: request "${topic}" on channel "${channelName}" aborted by caller`,
+          { topic, channel: channelName, source },
+          signal?.reason,
+        );
+      if (signal?.aborted) {
+        // Mirrors fetch(): a dead signal rejects before parking or invoking
+        reject(abortError());
+        return;
+      }
+
+      let done = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let removeWaiter: (() => void) | undefined;
+      let removeAbort: (() => void) | undefined;
+      let untrack: (() => void) | undefined;
+      // Detach every hook exactly once, then settle; a late competing
+      // settle (e.g. the handler's result after an abort) is dropped
+      const settle = (finish: () => void) => {
+        if (done) {
+          return;
+        }
+        done = true;
+        if (timer !== undefined) {
+          clearTimeout(timer);
+        }
+        removeWaiter?.();
+        removeAbort?.();
+        untrack?.();
+        finish();
+      };
+
+      // Once invoking, the handler always runs to completion — abort and
+      // dispose only stop the requester from waiting (result discarded).
+      // The park timer stops here: timeout covers only the wait for a handler.
+      const invoke = (handler: RpcHandler) => {
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          timer = undefined;
+        }
+        invokeRpcHandler(handler, payload, meta).then(
+          (value) => settle(() => resolve(value)),
+          (error) => settle(() => reject(error)),
+        );
+      };
+
+      if (signal) {
+        const onAbort = () => settle(() => reject(abortError()));
+        signal.addEventListener("abort", onAbort, { once: true });
+        removeAbort = () => signal.removeEventListener("abort", onAbort);
+      }
+      if (onCancel) {
+        // Dispose of the requester's facade stops the wait, parked or in-flight
+        untrack = onCancel(() =>
+          settle(() =>
+            reject(
+              new FynBusError(
+                KernelErrorCode.BUS_DISPOSED,
+                `FynBus: request "${topic}" on channel "${channelName}" cancelled — bus for "${source}" was disposed`,
+                { topic, channel: channelName, source },
+              ),
+            ),
+          ),
+        );
+      }
+
+      const existing = state.handlers.get(topic);
+      if (existing) {
+        invoke(existing);
+        return;
+      }
+
       let waiting = state.waiters.get(topic);
       if (!waiting) {
         waiting = new Set();
         state.waiters.set(topic, waiting);
       }
       const set = waiting;
-      let untrack: (() => void) | undefined;
-      const removeWaiter = () => {
+      const waiter = (handler: RpcHandler) => invoke(handler);
+      removeWaiter = () => {
         set.delete(waiter);
         if (set.size === 0 && state.waiters.get(topic) === set) {
           state.waiters.delete(topic);
         }
       };
-      const timer = setTimeout(() => {
-        removeWaiter();
-        untrack?.();
-        reject(
-          new FynBusError(
-            KernelErrorCode.BUS_REQUEST_TIMEOUT,
-            `FynBus: request "${topic}" on channel "${channelName}" timed out after ${timeout}ms waiting for a handler`,
-            { topic, channel: channelName, source, timeout },
+      const timeout = options?.timeout ?? DEFAULT_REQUEST_TIMEOUT;
+      timer = setTimeout(() => {
+        settle(() =>
+          reject(
+            new FynBusError(
+              KernelErrorCode.BUS_REQUEST_TIMEOUT,
+              `FynBus: request "${topic}" on channel "${channelName}" timed out after ${timeout}ms waiting for a handler`,
+              { topic, channel: channelName, source, timeout },
+            ),
           ),
         );
       }, timeout);
-      const waiter = (handler: RpcHandler) => {
-        clearTimeout(timer);
-        untrack?.();
-        invokeRpcHandler(handler, payload, meta).then(resolve, reject);
-      };
       set.add(waiter);
-      if (onParked) {
-        // Dispose of the requester's facade rejects parked requests
-        untrack = onParked(() => {
-          clearTimeout(timer);
-          removeWaiter();
-          reject(
-            new FynBusError(
-              KernelErrorCode.BUS_DISPOSED,
-              `FynBus: request "${topic}" on channel "${channelName}" cancelled — bus for "${source}" was disposed`,
-              { topic, channel: channelName, source },
-            ),
-          );
-        });
-      }
     });
   }
 
@@ -420,8 +478,8 @@ export class FynBusFacade implements FynBus {
       topic,
       payload,
       options,
-      // Track parked requests so dispose() rejects them; the returned
-      // untrack drops the canceller once the waiter settles naturally
+      // Track the request so dispose() stops its wait (parked or in-flight);
+      // the returned untrack drops the canceller once the request settles
       (cancel) => {
         const tracked = this.track(cancel);
         return () => this.state.subs.delete(tracked);

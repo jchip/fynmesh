@@ -507,6 +507,33 @@ describe("FynBus RPC edge cases", () => {
       await expect(pending).resolves.toBe("done");
     });
 
+    it("rejects an in-flight request with BUS_DISPOSED when the REQUESTER is disposed (FYM-150)", async () => {
+      const d = deferred<string>();
+      let completed = false;
+      provider.handle("work", async () => {
+        const v = await d.promise;
+        completed = true;
+        return v;
+      });
+
+      const pending = consumer.request("work");
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_DISPOSED,
+        context: expect.objectContaining({ topic: "work", source: "consumer" }),
+      });
+
+      root.disposeApp("consumer", "1.0.0");
+      await assertion;
+
+      // Dispose stopped the wait but did NOT cancel the handler — it runs
+      // to completion and its result is discarded
+      expect(completed).toBe(false);
+      d.resolve("done");
+      await d.promise;
+      await new Promise((r) => setTimeout(r, 0));
+      expect(completed).toBe(true);
+    });
+
     it("throws BUS_DISPOSED for request/handle on a disposed facade's channel view", () => {
       const app = root.forApp("app-a", "1.0.0");
       const cart = app.channel("cart");
@@ -518,6 +545,160 @@ describe("FynBus RPC edge cases", () => {
       expect(() => cart.handle("x", () => 1)).toThrowError(
         expect.objectContaining({ code: KernelErrorCode.BUS_DISPOSED }),
       );
+    });
+  });
+
+  describe("request abort via options.signal (FYM-150)", () => {
+    it("rejects a parked request with BUS_REQUEST_ABORTED on abort and frees the waiter", async () => {
+      const ac = new AbortController();
+      const pending = consumer.request("late-svc", 3, { signal: ac.signal });
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_REQUEST_ABORTED,
+        context: expect.objectContaining({ topic: "late-svc", source: "consumer" }),
+      });
+
+      ac.abort();
+      await assertion;
+
+      // The aborted waiter is gone: a later handler gets NO call for it,
+      // and fresh requests work normally
+      const handler = vi.fn((n: any) => n * 7);
+      provider.handle("late-svc", handler);
+      expect(handler).not.toHaveBeenCalled();
+      await expect(consumer.request("late-svc", 2)).resolves.toBe(14);
+    });
+
+    it("an aborted parked request does not also fire its timeout", async () => {
+      vi.useFakeTimers();
+
+      const ac = new AbortController();
+      const pending = consumer.request("gone", 1, { timeout: 40, signal: ac.signal });
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_REQUEST_ABORTED,
+      });
+
+      ac.abort();
+      await assertion;
+      // Timer was cleared by the abort — advancing is a no-op
+      await vi.advanceTimersByTimeAsync(40);
+    });
+
+    it("aborting one parked request leaves other waiters on the same topic parked", async () => {
+      const ac = new AbortController();
+      const aborted = consumer.request("shared", "a", { signal: ac.signal });
+      const kept = consumer.request("shared", "b");
+
+      ac.abort();
+      await expect(aborted).rejects.toMatchObject({ code: KernelErrorCode.BUS_REQUEST_ABORTED });
+
+      provider.handle("shared", (v: any) => `ok:${v}`);
+      await expect(kept).resolves.toBe("ok:b");
+    });
+
+    it("stops waiting on an in-flight handler: rejects, handler still completes, result discarded", async () => {
+      const d = deferred<string>();
+      let completed = false;
+      provider.handle("slow", async () => {
+        const v = await d.promise;
+        completed = true;
+        return v;
+      });
+
+      const ac = new AbortController();
+      const pending = consumer.request("slow", undefined, { signal: ac.signal });
+      ac.abort();
+      await expect(pending).rejects.toMatchObject({ code: KernelErrorCode.BUS_REQUEST_ABORTED });
+
+      // Abort did not cancel the handler — it still runs to completion
+      expect(completed).toBe(false);
+      d.resolve("late");
+      await d.promise;
+      await new Promise((r) => setTimeout(r, 0));
+      expect(completed).toBe(true);
+    });
+
+    it("a pre-aborted signal rejects without invoking a registered handler", async () => {
+      const handler = vi.fn(() => "never");
+      provider.handle("ready", handler);
+      const ac = new AbortController();
+      ac.abort();
+
+      await expect(consumer.request("ready", 1, { signal: ac.signal })).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_REQUEST_ABORTED,
+      });
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("a pre-aborted signal rejects without parking a waiter", async () => {
+      const ac = new AbortController();
+      ac.abort();
+
+      await expect(consumer.request("nobody", 1, { signal: ac.signal })).rejects.toMatchObject({
+        code: KernelErrorCode.BUS_REQUEST_ABORTED,
+      });
+
+      // Nothing was parked: a later handler gets no call for it
+      const handler = vi.fn(() => "x");
+      provider.handle("nobody", handler);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("carries an Error abort reason through as the rejection's cause", async () => {
+      const ac = new AbortController();
+      const reason = new Error("user navigated away");
+      const pending = consumer.request("why", 1, { signal: ac.signal });
+      ac.abort(reason);
+
+      const error = await pending.catch((e) => e);
+      expect(error).toBeInstanceOf(FynBusError);
+      expect(error.code).toBe(KernelErrorCode.BUS_REQUEST_ABORTED);
+      expect(error.cause).toBe(reason);
+    });
+
+    it("wraps a non-Error abort reason so the cause chain stays Errors", async () => {
+      const ac = new AbortController();
+      const pending = consumer.request("why-str", 1, { signal: ac.signal });
+      ac.abort("just because");
+
+      const error = await pending.catch((e) => e);
+      expect(error.code).toBe(KernelErrorCode.BUS_REQUEST_ABORTED);
+      expect(error.cause).toBeInstanceOf(Error);
+      expect((error.cause as Error).message).toBe("just because");
+    });
+
+    it("abort after the request settled is a no-op", async () => {
+      provider.handle("fast", (n: any) => n + 1);
+      const ac = new AbortController();
+
+      await expect(consumer.request("fast", 1, { signal: ac.signal })).resolves.toBe(2);
+      expect(() => ac.abort()).not.toThrow();
+    });
+
+    it("removes its abort hook from the signal once the request settles", async () => {
+      provider.handle("hooked", () => "ok");
+      const ac = new AbortController();
+      const addSpy = vi.spyOn(ac.signal, "addEventListener");
+      const removeSpy = vi.spyOn(ac.signal, "removeEventListener");
+
+      await expect(consumer.request("hooked", 1, { signal: ac.signal })).resolves.toBe("ok");
+
+      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      expect(added).toHaveLength(1);
+      expect(removed).toContain(added[0]);
+    });
+
+    it("composes with AbortSignal.timeout() as a full response deadline", async () => {
+      const d = deferred<string>();
+      provider.handle("hung", () => d.promise);
+
+      const error = await consumer
+        .request("hung", 1, { signal: AbortSignal.timeout(20) })
+        .catch((e) => e);
+
+      expect(error.code).toBe(KernelErrorCode.BUS_REQUEST_ABORTED);
+      expect((error.cause as Error).name).toBe("TimeoutError");
+      d.resolve("too late");
     });
   });
 

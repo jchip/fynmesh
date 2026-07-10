@@ -36,6 +36,7 @@ export enum KernelErrorCode {
   BUS_INVALID_CHANNEL = 6002,
   BUS_HANDLER_EXISTS = 6003,
   BUS_REQUEST_TIMEOUT = 6004,
+  BUS_REQUEST_ABORTED = 6005,
 }
 
 /**
@@ -206,13 +207,34 @@ export class FederationError extends KernelError {
 /**
  * Error for FynBus messaging failures
  */
+/**
+ * Error or close enough to chain as a cause. Duck-typed rather than
+ * `instanceof Error`: an AbortSignal reason may be a DOMException from
+ * another realm (jsdom, iframe), where instanceof fails.
+ */
+function isErrorLike(value: unknown): value is Error {
+  return (
+    value instanceof Error ||
+    (typeof value === "object" &&
+      value !== null &&
+      typeof (value as { name?: unknown }).name === "string" &&
+      typeof (value as { message?: unknown }).message === "string")
+  );
+}
+
 export class FynBusError extends KernelError {
   constructor(
     code: KernelErrorCode,
     message: string,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
+    cause?: unknown
   ) {
-    super(code, message, { context });
+    super(code, message, {
+      context,
+      // KernelError chains Error causes; an AbortSignal reason can be any
+      // value, so non-Error reasons are wrapped to keep the chain intact
+      cause: cause === undefined || isErrorLike(cause) ? cause : new Error(String(cause)),
+    });
     this.name = "FynBusError";
   }
 }

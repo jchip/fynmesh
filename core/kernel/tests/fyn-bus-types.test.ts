@@ -174,6 +174,6 @@ describe("FynBus type contracts", () => {
     >();
     expectTypeOf<Parameters<BusHandler>[0]>().toBeUnknown();
     expectTypeOf<SubscribeOptions>().toEqualTypeOf<{ self?: boolean; signal?: AbortSignal }>();
-    expectTypeOf<RequestOptions>().toEqualTypeOf<{ timeout?: number }>();
+    expectTypeOf<RequestOptions>().toEqualTypeOf<{ timeout?: number; signal?: AbortSignal }>();
   });
 });
