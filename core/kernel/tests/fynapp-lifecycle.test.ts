@@ -153,3 +153,59 @@ describe("kernel mount tracking (FYM-5)", () => {
     expect(kernel.listFynAppStates()).toHaveLength(2);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Per-FynApp error boundary
+// ---------------------------------------------------------------------------
+
+describe("kernel per-FynApp error boundary (FYM-6)", () => {
+  let kernel: FlowTestKernel;
+
+  beforeEach(() => {
+    kernel = createKernel();
+  });
+
+  it("records a throwing bootstrap as a failed state with the error retained", async () => {
+    const boom = new Error("execute boom");
+
+    // bootstrap isolates the failure and does not throw
+    await expect(
+      bootApp(kernel, "crashy", {
+        execute() {
+          throw boom;
+        },
+      }),
+    ).resolves.toBeDefined();
+
+    const state = kernel.getFynAppState("crashy");
+    expect(state?.status).toBe("failed");
+    expect(state?.error).toBe(boom);
+  });
+
+  it("isolates a failed app so a sibling still mounts", async () => {
+    const okExecute = vi.fn();
+
+    await bootApp(kernel, "fail-app", {
+      execute() {
+        throw new Error("first app boom");
+      },
+    });
+    await bootApp(kernel, "ok-app", { execute: okExecute });
+
+    expect(kernel.getFynAppState("fail-app")?.status).toBe("failed");
+    expect(kernel.getFynAppState("ok-app")?.status).toBe("mounted");
+    expect(okExecute).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the failed error once the app is shut down", async () => {
+    await bootApp(kernel, "crashy", {
+      execute() {
+        throw new Error("boom");
+      },
+    });
+    expect(kernel.getFynAppState("crashy")?.status).toBe("failed");
+
+    await kernel.shutdownFynApp("crashy");
+    expect(kernel.getFynAppState("crashy")).toBeUndefined();
+  });
+});

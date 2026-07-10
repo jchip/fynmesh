@@ -496,6 +496,11 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     } catch (error) {
       this.telemetry.captureError("bootstrap.failed", { app: fynApp.name }, error);
 
+      // Per-FynApp error boundary: record the failure as observable state
+      // (queryable via getFynAppState) while keeping the app in the registry and
+      // letting other FynApps continue below.
+      this.fynAppLifecycle.set(fynApp.name, fynApp.version, "failed", error);
+
       // Error isolation: Log error but don't crash the kernel
       console.error(`❌ Bootstrap failed for ${fynApp.name}:`, error);
 
