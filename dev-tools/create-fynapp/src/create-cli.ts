@@ -6,11 +6,9 @@ import { exec as execCb } from "child_process";
 import AveAzul from "aveazul";
 import { generateApp } from "./generator";
 import { promptForMissingInfo } from "./prompts";
-import { ConfigManager } from "./config";
 import { fileExists } from "./utils";
 
 const exec = AveAzul.promisify(execCb);
-const configManager = new ConfigManager();
 
 export async function main() {
     const nixClap = new NixClap();
@@ -103,30 +101,6 @@ async function createNewApp(opts) {
                 });
         }
 
-        // Create and save configuration
-        await configManager.createConfig(targetDir, {
-            name: config.name,
-            framework: config.framework,
-            version: "1.0.0",
-            created: new Date().toISOString(),
-            lastUpdated: new Date().toISOString(),
-            components: config.components || [],
-            dependencies: {},
-            devDependencies: {},
-            buildOptions: {
-                minify: true,
-                sourceMaps: true,
-                externals: []
-            },
-            deployTargets: {},
-            federation: {
-                name: config.name,
-                shareScope: "fynmesh",
-                exposedModules: {},
-                sharedDependencies: {}
-            }
-        });
-
         return config;
     })
         .then((config) => {
@@ -138,13 +112,13 @@ Your FynApp has been created in: demo/${config.dir || config.name}
 
 Next steps:
   cd demo/${config.dir || config.name}
-  npm start
+  fyn install
+  cfa build          # Build the FynApp
+  cfa validate       # Build + verify the federation output
 
-For ongoing development, use the 'cfa' command:
-  cd demo/${config.dir || config.name}    # Navigate to your FynApp
-  cfa build -w                            # Build with watch mode
-  cfa update                              # Update dependencies
-  cfa config                              # Manage configuration
+To modify this FynApp (add middleware, change rendering, migrate to a new
+kernel API), hand it to an LLM coding agent — see the contract and guide in
+create-fynapp/agent/ (CONTRACT.md, GUIDE.md) and examples/ for patterns.
 `);
         })
         .catch((error) => {

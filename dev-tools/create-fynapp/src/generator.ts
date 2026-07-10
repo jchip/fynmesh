@@ -109,7 +109,7 @@ async function createPackageJson(templateDir: string, config: GeneratorConfig): 
  * Creates rollup.config.mjs for the new FynApp
  */
 async function createRollupConfig(templateDir: string, config: GeneratorConfig): Promise<void> {
-    const templatePath = path.join(templateDir, "rollup.config.mjs.template");
+    const templatePath = path.join(templateDir, "rollup.config.ts.template");
 
     try {
         let content = await readFile(templatePath, "utf-8");
@@ -121,10 +121,10 @@ async function createRollupConfig(templateDir: string, config: GeneratorConfig):
             .replace(/\{\{framework\}\}/g, config.framework);
 
         // Write the file
-        await writeFile(path.join(config.targetDir, "rollup.config.mjs"), content);
-        console.log("✅ Created rollup.config.mjs");
+        await writeFile(path.join(config.targetDir, "rollup.config.ts"), content);
+        console.log("✅ Created rollup.config.ts");
     } catch (error) {
-        console.error("Error creating rollup.config.mjs:", error);
+        console.error("Error creating rollup.config.ts:", error);
         throw error;
     }
 }

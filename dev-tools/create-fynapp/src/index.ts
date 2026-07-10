@@ -1,14 +1,18 @@
 // Export core functionality for programmatic use
 export { generateApp } from "./generator.js";
 export { promptForMissingInfo } from "./prompts.js";
-export { ConfigManager } from "./config.js";
 export { fileExists } from "./utils.js";
 export { buildFynApp } from "./builder.js";
-export { updateDependencies } from "./updater.js";
+export { validateFynApp, runValidation } from "./validate-fynapp.js";
+export type { ValidateResult } from "./validate-fynapp.js";
+export { installSkills, runInstallSkills } from "./install-skills.js";
 
-// Export configuration types and utilities
-export type { FynAppConfigOptions } from "./config-ast.js";
-export { RollupConfigManager } from "./config-ast.js";
+// NOTE: `src/fynapp-contract.ts` is the type-anchor to @fynmesh/kernel. It is
+// intentionally NOT re-exported here: this index is imported by every FynApp's
+// rollup.config at build-config load time, and it must not drag the kernel
+// (a runtime dep) into that path. The anchor still lives under src/ so it is
+// typechecked on every build — that is all the drift alarm needs. Agents import
+// FynApp types directly from "@fynmesh/kernel" (see agent/CONTRACT.md).
 
 // Export rollup config factory
 export { createFynAppRollupConfig } from "./rollup-config-factory.ts";

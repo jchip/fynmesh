@@ -28,7 +28,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | ---------------------------------------------------------- | --------------------------------------------------------------- |
 | [`FRAMEWORK_ROADMAP.md`](./FRAMEWORK_ROADMAP.md)           | Demo-ready → production-ready roadmap; framework gaps            |
 | [`TODO.md`](./TODO.md)                                     | Development roadmap / completed-vs-pending checklist            |
-| [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Complete guide to creating a FynApp (copy-paste ready)         |
+| [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Pointer → canonical FynApp docs in `dev-tools/create-fynapp/agent/` |
 | [`DEMO.md`](./DEMO.md)                                     | Demo quick reference: live URLs and local commands             |
 | [`KERNEL_PRINCIPAL_REVIEW.md`](./KERNEL_PRINCIPAL_REVIEW.md) | Principal-engineer review of kernel risks (FYM-66/FYM-77)    |
 | [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md) | KernelTelemetry runtime-observability design (FYM-49/53/54)  |
