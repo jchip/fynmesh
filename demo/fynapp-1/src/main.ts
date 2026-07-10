@@ -1,4 +1,4 @@
-import type { FynUnitRuntime } from "@fynmesh/kernel";
+import type { FynBus, FynUnitRuntime } from "@fynmesh/kernel";
 import type { FynApp1Config } from "../../shared-demo-utils/fynapp-1-shared/types.ts";
 import { createMain } from "../../shared-demo-utils/fynapp-1-shared/shared-main.ts";
 import { GET_STATUS_TOPIC } from "../../shared-demo-utils/fynbus-hooks.ts";
@@ -29,8 +29,10 @@ const config: FynApp1Config = {
 
 // FynBus demo (FYM-18): this app is THE responder for "get-status".
 // handle() throws on duplicate registration, so guard against execute
-// being called more than once.
-let statusHandlerRegistered = false;
+// being called more than once — keyed by facade instance, because a
+// re-bootstrap after shutdown gets a fresh facade whose handler must be
+// registered again (the old one died with the disposed facade).
+let statusHandlerBus: FynBus | undefined;
 
 export const main = createMain(config, {
   preloadComponents: async () => {
@@ -39,14 +41,14 @@ export const main = createMain(config, {
   },
   importApp: () => import("./App"),
   setupBus: (runtime: FynUnitRuntime) => {
-    if (!runtime.bus || statusHandlerRegistered) {
+    if (!runtime.bus || statusHandlerBus === runtime.bus) {
       return;
     }
-    statusHandlerRegistered = true;
     runtime.bus.handle(GET_STATUS_TOPIC, () => ({
       app: runtime.fynApp.name,
       time: new Date().toISOString(),
     }));
+    statusHandlerBus = runtime.bus;
     console.debug(
       `\u{1F68C} ${runtime.fynApp.name}: FynBus handler registered for "${GET_STATUS_TOPIC}"`
     );
