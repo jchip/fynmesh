@@ -166,9 +166,11 @@ export class FynBusRoot {
     onAutoRemove?: () => void,
   ): Unsubscribe {
     const { events } = this.getChannel(channelName);
+    const signal = options?.signal;
     // Fired once() and signal aborts remove the listener without going
     // through the facade's unsubscribe — the hook lets it drop its tracking
-    options?.signal?.addEventListener("abort", () => onAutoRemove?.(), { once: true });
+    const onAbort = () => onAutoRemove?.();
+    signal?.addEventListener("abort", onAbort, { once: true });
     const listener = (evt: Event) => {
       const { payload, meta } = (evt as CustomEvent<BusEventDetail>).detail;
       if (!options?.self && meta.source === source) {
@@ -191,8 +193,13 @@ export class FynBusRoot {
         );
       }
     };
-    const unsubscribe = () => events.removeEventListener(topic, listener);
-    events.addEventListener(topic, listener, { signal: options?.signal });
+    const unsubscribe = () => {
+      // Drop the abort hook too — a long-lived signal shared across many
+      // subscribe/unsubscribe cycles must not accumulate stale listeners
+      signal?.removeEventListener("abort", onAbort);
+      events.removeEventListener(topic, listener);
+    };
+    events.addEventListener(topic, listener, { signal });
     return unsubscribe;
   }
 

@@ -432,6 +432,62 @@ describe("FynBus pub/sub edge cases", () => {
       expect(handler).not.toHaveBeenCalled();
       expect(() => unsub()).not.toThrow(); // returned unsubscribe stays harmless
     });
+
+    it("removes its abort hook from the signal on manual unsubscribe", () => {
+      const { appB } = createParties();
+      const ac = new AbortController();
+      const addSpy = vi.spyOn(ac.signal, "addEventListener");
+      const removeSpy = vi.spyOn(ac.signal, "removeEventListener");
+
+      const unsub = appB.on("hook-cleanup", vi.fn(), { signal: ac.signal });
+      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      expect(added).toHaveLength(1);
+
+      unsub();
+      const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      expect(removed).toContain(added[0]);
+    });
+
+    it("does not accumulate abort hooks on a signal shared across subscribe/unsubscribe churn", () => {
+      const { appB } = createParties();
+      const ac = new AbortController();
+      const addSpy = vi.spyOn(ac.signal, "addEventListener");
+      const removeSpy = vi.spyOn(ac.signal, "removeEventListener");
+
+      for (let i = 0; i < 100; i++) {
+        const unsub = appB.on(`churn-${i % 5}`, vi.fn(), { signal: ac.signal });
+        unsub();
+      }
+
+      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      expect(added).toHaveLength(100);
+      for (const hook of added) {
+        expect(removed).toContain(hook);
+      }
+    });
+
+    it("drops the abort hook when a once() fires and when the facade is disposed", () => {
+      const root = new FynBusRoot();
+      const appA = root.forApp("app-a", "1.0.0");
+      const appB = root.forApp("app-b", "1.0.0");
+      const ac = new AbortController();
+      const addSpy = vi.spyOn(ac.signal, "addEventListener");
+      const removeSpy = vi.spyOn(ac.signal, "removeEventListener");
+
+      appB.once("one-shot", vi.fn(), { signal: ac.signal });
+      appA.emit("one-shot", 1); // fired once() unsubscribes itself
+
+      appB.on("kept", vi.fn(), { signal: ac.signal });
+      root.disposeApp("app-b", "1.0.0"); // dispose unsubscribes the rest
+
+      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      expect(added).toHaveLength(2);
+      for (const hook of added) {
+        expect(removed).toContain(hook);
+      }
+    });
   });
 
   describe("self-filtering edges", () => {
