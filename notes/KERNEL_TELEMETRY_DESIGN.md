@@ -1,6 +1,6 @@
 # Kernel Telemetry Design
 
-**Status**: Draft
+**Status**: Implemented — `core/kernel/src/kernel-telemetry.ts` (wired in `kernel-core.ts`)
 **Epic**: FYM-49 (Kernel Observability & Logging Infrastructure)
 **Tickets**: FYM-53, FYM-54
 
@@ -50,14 +50,18 @@ interface TelemetryEntry {
 ```typescript
 interface KernelTelemetry {
   capture(entry: Omit<TelemetryEntry, "ts">): void;
+  captureError(name: string, data: Record<string, unknown>, error: unknown): void;
   scope(prefix: string): KernelTelemetry;
   flush(): void;
 }
 ```
 
 - `capture()` — records an entry. Timestamp is auto-filled. Fire and forget.
+- `captureError(name, data, error)` — convenience wrapper for `type: "error"` entries; serializes the `error` so no `Error` reference is retained.
 - `scope(prefix)` — returns a child instance that auto-prepends `prefix.` to all entry names.
 - `flush()` — manually drains the buffer to the transport.
+
+A `noOpTelemetry` singleton implementing this interface is provided for tests / telemetry-disabled use.
 
 ### TelemetryTransport
 
@@ -98,6 +102,7 @@ The `scope()` implementation is trivial:
 scope(prefix: string): KernelTelemetry {
   return {
     capture: (entry) => this.capture({ ...entry, name: `${prefix}.${entry.name}` }),
+    captureError: (name, data, error) => this.captureError(`${prefix}.${name}`, data, error),
     scope: (sub) => this.scope(`${prefix}.${sub}`),
     flush: () => this.flush(),
   };

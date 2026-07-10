@@ -12,6 +12,8 @@
 - [x] Shell layout middleware with multi-region support
 - [x] React Context middleware
 - [x] Design tokens middleware
+- [x] Runtime telemetry & observability (KernelTelemetry: ring buffer, scopes, transports)
+- [x] FynBus inter-FynApp messaging (pub/sub + request/response + channels)
 
 ---
 
@@ -28,15 +30,15 @@
 - [ ] Add error boundary per FynApp (isolate failures)
 - [ ] HMR support for development
 
-### 2. **Inter-FynApp Communication (FynBus)** ⭐ Priority 2
-**Pain Point:** FynApps can only communicate via middleware context (indirect)
+### 2. **Inter-FynApp Communication (FynBus)** ✅ Shipped (epic FYM-2, FYM-13–18)
+**Was:** FynApps could only communicate via middleware context (indirect). Now via `core/kernel/src/fyn-bus.ts` (design: [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)).
 
-- [ ] Design FynBus event bus API
-- [ ] Implement pub/sub messaging (emit, on, once)
-- [ ] Add request/response pattern (RPC-like)
-- [ ] Channel scoping and namespacing
-- [ ] Type safety for events
-- [ ] Demo: Two FynApps communicating via events
+- [x] Design FynBus event bus API
+- [x] Implement pub/sub messaging (emit, on, once)
+- [x] Add request/response pattern (RPC-like)
+- [x] Channel scoping and namespacing
+- [x] Type safety for events (generic type params; runtime typed contracts/schemas parked as FYM-17)
+- [x] Demo: Two FynApps communicating via events (`demo/fynapp-1`, `shared-demo-utils/fynbus-hooks.ts`)
 
 ### 3. **Developer Experience & Tooling** ⭐ Priority 3
 

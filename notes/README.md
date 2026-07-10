@@ -31,9 +31,16 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Pointer → canonical FynApp docs in `dev-tools/create-fynapp/agent/` |
 | [`DEMO.md`](./DEMO.md)                                     | Demo quick reference: live URLs and local commands             |
 | [`KERNEL_PRINCIPAL_REVIEW.md`](./KERNEL_PRINCIPAL_REVIEW.md) | Principal-engineer review of kernel risks (FYM-66/FYM-77)    |
-| [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md) | KernelTelemetry runtime-observability design (FYM-49/53/54)  |
-| [`SHARED_STATE_ARCHITECTURE.md`](./SHARED_STATE_ARCHITECTURE.md) | Design analysis for middleware shared state across FynApps |
-| [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)                   | FynBus inter-FynApp messaging design (FYM-13, epic FYM-2)      |
+| [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md) | KernelTelemetry runtime-observability design (FYM-49/53/54) — implemented |
+| [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)                   | FynBus inter-FynApp messaging design (FYM-13, epic FYM-2) — implemented |
+
+### Archived (`notes/archive/`)
+
+Historical docs whose decisions have shipped; kept for rationale, not current-state.
+
+| File                                                       | What it covers                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------------------- |
+| [`archive/SHARED_STATE_ARCHITECTURE.md`](./archive/SHARED_STATE_ARCHITECTURE.md) | Design analysis behind the shipped middleware shared-state registry |
 
 Stale or superseded docs should be moved into `notes/archive/`.
 

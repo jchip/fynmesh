@@ -21,7 +21,7 @@ fyn bootstrap && fyn start
 - http://localhost:3000/demo.html
 - http://localhost:3000/shell.html
 
-Clean Demo build: `fyn clean:demo`
+Production build: `fyn build-prod` · Clean Demo build: `fyn clean:demo`
 
 ## FynApps
 
@@ -36,6 +36,8 @@ Clean Demo build: `fyn clean:demo`
 | fynapp-6-react     | React 19  | Dashboard UI          |
 | fynapp-7-solid     | Solid.js  |                       |
 | fynapp-8-svelte    | Svelte    |                       |
+| fynapp-ag-grid     | React 19  | AG Grid enterprise data grid (heavy-bundle / lazy-load demo) |
+| fynapp-notes       | React 19  | Notes app             |
 | fynapp-sidebar     | React 19  | Shell navigation      |
 | fynapp-x1-v1       | React 18  | Shared widgets v1.0   |
 | fynapp-x1-v2       | React 19  | Shared widgets v2.0   |
@@ -50,6 +52,7 @@ Clean Demo build: `fyn clean:demo`
 | fynapp-shell-mw         | Middleware | Shell layout/dynamic loading      |
 | fynapp-react-18         | Library    | Exports React 18                  |
 | fynapp-react-19         | Library    | Exports React 19                  |
+| fynapp-ag-grid-lib      | Library    | Exports AG Grid (esm-ag-grid)     |
 
 ## Middleware Demo
 
@@ -58,7 +61,7 @@ Clean Demo build: `fyn clean:demo`
 - Theme management (light/dark, localStorage persistence)
 - User state (authentication, sessionStorage)
 
-See middleware config example in `demo/fynapp-1/src/config.ts`.
+See middleware config example in `demo/fynapp-1/src/main.ts`.
 
 ## Full Documentation
 
@@ -72,9 +75,11 @@ See [demo/demo-server/README.md](../demo/demo-server/README.md) for:
 
 ---
 
-## Future: Large React Apps for Demo
+## Large-App Demos (heavy bundles → lazy-load story)
 
-Ideas for creating a FynApp with MB-sized JavaScript bundles to demonstrate lazy loading benefits.
+**Shipped:** ✅ **AG Grid** (~3-5MB) as `fynapp-ag-grid` + `fynapp-ag-grid-lib` — enterprise data grid demonstrating heavy apps as federated micro-frontends.
+
+Remaining ideas for further heavy-bundle demos:
 
 | App/Library           | Bundle Size | Why It's Interesting                                                         |
 | --------------------- | ----------- | ---------------------------------------------------------------------------- |
@@ -82,9 +87,8 @@ Ideas for creating a FynApp with MB-sized JavaScript bundles to demonstrate lazy
 | **Excalidraw**        | ~3-5MB      | Whiteboard/drawing app - very visual and interactive                         |
 | **React Three Fiber** | ~2-4MB      | 3D graphics with Three.js - impressive demos                                 |
 | **React Flow**        | ~1-2MB      | Node-based diagrams/flowcharts                                               |
-| **AG Grid**           | ~3-5MB      | Enterprise data grid with all features                                       |
 
-**Recommendation: Monaco Editor** - Shows heavy apps work as micro frontends, perfect lazy loading demo, recognizable (VS Code).
+**Next recommendation: Monaco Editor** - Shows heavy apps work as micro frontends, perfect lazy loading demo, recognizable (VS Code).
 
 **Other Ideas:**
 

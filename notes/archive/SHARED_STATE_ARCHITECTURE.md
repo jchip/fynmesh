@@ -1,5 +1,11 @@
 # Shared State Architecture - Design Analysis
 
+> **Archived (2026-07):** The recommended hybrid shipped — see `observable-state.ts` and
+> `middleware-state-registry.ts` in `core/kernel/src`, exposed via
+> `kernel.getMiddlewareRegistry("global" | { region })`. This doc is retained as the
+> historical rationale (a survey of seven candidate patterns) behind that decision and the
+> registry = state / bus = messages boundary; it no longer describes pending work.
+
 **Problem:** How should middleware share state across multiple FynApps that can join/leave at any time?
 
 ---

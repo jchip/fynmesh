@@ -4,6 +4,11 @@
 **Date:** 2025-12-25
 **Reviewer:** AI Agent
 
+> **Update (2026-07):** Findings 1, 5, 7, and 9 have since been resolved (see per-finding
+> ✅ notes and the Issue Tracking Summary). Findings 2, 4, 6, and 8 remain open. Line
+> references below predate the split of the kernel into `core/kernel/src/modules/` and may
+> be off; the findings themselves still point at the right code.
+
 ## Executive Summary
 
 The kernel architecture is well-designed with clear modular separation. The composition pattern (5 extracted modules) provides good testability and maintainability. However, there are several areas requiring attention for production readiness.
@@ -30,6 +35,7 @@ The kernel architecture is well-designed with clear modular separation. The comp
 
 **Severity:** Medium
 **Tracked by:** FYM-60
+**Status:** ✅ Resolved — string-indexed access removed; `browser-kernel.ts` now exposes a public `tryPreload()`.
 
 **Finding:** Private fields accessed via string indexing, bypassing TypeScript access control.
 
@@ -120,6 +126,7 @@ interface FederationProvider {
 
 **Severity:** Medium
 **Tracked by:** FYM-49, FYM-53, FYM-54, FYM-55
+**Status:** ✅ Resolved — structured runtime observability shipped as `KernelTelemetry` (`kernel-telemetry.ts`), scoped per module. Emoji `console.debug` is intentionally retained as a separate dev-time concern (stripped in prod builds); see [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md).
 
 **Finding:** All logging uses `console.*` with emoji prefixes:
 ```typescript
@@ -179,6 +186,7 @@ appsLoaded[fynApp.name] = fynApp;   // name (overwrites previous version!)
 
 **Severity:** Medium
 **Tracked by:** FYM-71
+**Status:** ✅ Resolved — `fynApp.middlewareContext` is no longer dead; it is now read/reused in `module-loader.ts`.
 
 **Finding:** Two separate middleware context stores:
 - `fynApp.middlewareContext` - per-app, created in `loadFynAppBasics`
@@ -218,6 +226,7 @@ No validation that `manifestUrl` matches expected format.
 
 **Severity:** Low
 **Tracked by:** FYM-61
+**Status:** ✅ Resolved — `@deprecated` JSDoc added to the aliases (`types.ts`, `module-loader.ts`, `middleware-executor.ts`).
 
 **Finding:** Deprecated aliases without removal timeline:
 - `FynModuleRuntime = FynUnitRuntime` (types.ts:91)
@@ -240,15 +249,15 @@ export type FynModuleRuntime = FynUnitRuntime;
 
 | Finding | Existing Issue | Status |
 |---------|----------------|--------|
-| String-indexed private access | FYM-60 | Open |
-| Error handling policy | FYM-59, FYM-72 | Open |
+| String-indexed private access | FYM-60 | ✅ Resolved |
+| Error handling policy | FYM-59, FYM-72 | Partial — FYM-72 contract documented; `loadFynApp` still returns null (FYM-59 open) |
 | Platform abstraction | FYM-70, FYM-62 | Open |
-| KernelLogger interface | FYM-53, FYM-54, FYM-55 | Open |
-| Observability epic | FYM-49 | Open |
-| Middleware context ownership | FYM-71 | Open |
+| KernelLogger interface → telemetry | FYM-53, FYM-54, FYM-55 | ✅ Resolved (as KernelTelemetry) |
+| Observability epic | FYM-49 | ✅ Resolved |
+| Middleware context ownership | FYM-71 | ✅ Resolved |
 | Manifest validation | FYM-65 | Open |
-| Deprecation timeline | FYM-61 | Open |
-| **Version selection/dual-key** | **NEW** | To file |
+| Deprecation timeline | FYM-61 | ✅ Resolved |
+| **Version selection/dual-key** | **NEW** | Open |
 
 ---
 

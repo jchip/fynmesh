@@ -14,11 +14,13 @@ FynMesh has solid foundations:
 - Multi-framework support (React, Vue, Marko, Preact, Solid, Svelte)
 - Multi-version module support
 - Error reporting with KernelError hierarchy
+- Runtime telemetry & observability (KernelTelemetry — ring buffer, scopes, transports)
+- Inter-FynApp messaging via FynBus (pub/sub + request/response + channels)
 
 ## Key Pain Points
 
-1. **Missing lifecycle hooks** - No cleanup/unmount, no hot reload, limited error recovery
-2. **FynApps can't communicate** - No event bus, messaging, or contracts between FynApps
+1. **Partial lifecycle hooks** - `shutdown()` shipped; still no suspend/resume, hot reload, or per-app error boundary
+2. ~~**FynApps can't communicate**~~ - ✅ Resolved by FynBus (see Section 2)
 
 ---
 
@@ -63,42 +65,35 @@ interface FynUnit {
 
 ---
 
-### 2. Inter-FynApp Communication (Priority 2 - Pain Point)
+### 2. Inter-FynApp Communication (FynBus) ✅ Shipped
 
-**Current state**: FynApps can only communicate via middleware context (indirect)
+**Delivered** (epic FYM-2, FYM-13–18) as `core/kernel/src/fyn-bus.ts`, wired at
+`kernel-core.ts` (`new FynBusRoot(...)`). Full design in [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md).
 
-**Needed**:
-
-- Event bus for pub/sub messaging
-- Typed event contracts
-- Request/response pattern (RPC-like)
-- Broadcast vs targeted messaging
-
-**Proposed API**:
+**Shipped API** (per-app facade `runtime.bus`):
 
 ```typescript
-// Available via kernel or middleware
 interface FynBus {
-  // Pub/sub
-  emit(event: string, payload?: any): void;
-  on(event: string, handler: (payload) => void): unsubscribe;
-  once(event: string, handler: (payload) => void): unsubscribe;
+  // Pub/sub — sender identity is platform-stamped, not self-reported
+  emit<T>(topic: string, payload?: T): void;
+  on<T>(topic: string, handler: (payload: T, meta) => void): () => void;
+  once<T>(topic: string, handler: (payload: T, meta) => void): () => void;
 
-  // Request/response
-  request<T>(channel: string, payload?: any): Promise<T>;
-  handle<T>(channel: string, handler: (payload) => T | Promise<T>): unsubscribe;
+  // Request/response — late-handler wait + timeout
+  request<TRes, TReq>(topic: string, payload?: TReq, opts?): Promise<TRes>;
+  handle<TReq, TRes>(topic: string, handler): () => void; // single responder
 
   // Scoped
-  channel(name: string): ScopedBus;
+  channel(name: string): FynBus;
 }
 ```
 
-**Design considerations**:
+**Resolved design questions**:
 
-- Kernel-level vs middleware-level
-- Type safety for events (TypeScript generics, schemas)
-- Event namespacing/scoping
-- Dead letter handling (unhandled events)
+- Kernel-level, built on the existing `FynEventTarget` — zero new deps.
+- Generic type params for compile-time safety; runtime typed contracts parked (FYM-17).
+- Channel scoping/namespacing via `channel()`.
+- Subscriptions auto-cleaned on FynApp shutdown; ephemeral (no replay for late joiners — state belongs in `MiddlewareStateRegistry`).
 
 ---
 
@@ -168,22 +163,18 @@ cfa lint                   # Lint/format
 
 ### 4. Performance & Optimization (Priority 4)
 
-**Current state**: Preloading exists, route-based preload started
+**Current state**: Depth-based entry preloading with priorities shipped
+(`PreloadStrategy`/`PreloadPriority` in `browser-kernel.ts`, `setPreloadCallback` in
+`kernel-core.ts`); manifest preload hints (`shared-providers`, `import-exposed`, `requires`) shipped.
 
-**Needed**:
+**Remaining**:
 
 - Intelligent preloading based on user behavior
 - Bundle caching strategies
-- Lazy region loading (load FynApp only when region visible)
+- Lazy region loading (load FynApp only when region visible — IntersectionObserver)
 - Federation chunk sharing optimization
-- Performance metrics collection
-
-**Proposed enhancements**:
-
-- `preload` hints in manifest
-- Intersection observer for lazy regions
+- Performance metrics collection / performance events for monitoring
 - Shared chunk analysis tooling
-- Performance events for monitoring
 
 ---
 
@@ -203,10 +194,14 @@ FynMesh Kernel (Core)
 │   ├── Cleanup coordination
 │   └── Error boundaries
 │
-├── NEW: FynBus (Inter-FynApp Communication)
+├── FynBus (Inter-FynApp Communication) ✅ shipped
 │   ├── Event pub/sub
 │   ├── Request/response
 │   └── Channel scoping
+│
+├── Telemetry (KernelTelemetry) ✅ shipped
+│   ├── Ring buffer + scopes
+│   └── Pluggable transports
 │
 └── NEW: DevTools Integration
     ├── HMR support
@@ -227,13 +222,13 @@ FynMesh Kernel (Core)
 - Add error boundary per FynApp
 - Demo: FynApp that properly cleans up subscriptions
 
-### Milestone 2: FynBus Communication
+### Milestone 2: FynBus Communication ✅ Complete
 
-- Design event bus API
-- Implement kernel-level FynBus
-- Add pub/sub messaging
-- Add request/response pattern
-- Demo: Two FynApps communicating via events
+- ✅ Design event bus API
+- ✅ Implement kernel-level FynBus
+- ✅ Add pub/sub messaging
+- ✅ Add request/response pattern
+- ✅ Demo: Two FynApps communicating via events
 
 ### Milestone 3: create-fynapp & Dev Experience
 
@@ -282,15 +277,9 @@ FynMesh Kernel (Core)
 - `core/kernel/design/` - Architecture docs
 - `demo/fynapp-shell-mw/` - Complex middleware example
 
-  Project Stats:
-  | Metric | Value |
-  |----------------|-------|
-  | Total Issues | 48 |
-  | Epics | 8 |
-  | Tasks | 40 |
-  | Ready to Start | 48 |
-
-  Epics Summary:
+  Epic structure (initial planning snapshot — live status lives in the `fyntacks`
+  tracker under project **FynMesh**, not here). Epics FYM-1 (partial) and FYM-2
+  (complete) have shipped work; the rest remain as planned below.
   | ID | Epic | Tasks |
   |-------|----------------------|----------------------|
   | FYM-1 | FynApp Lifecycle | 4 (FYM-9 to FYM-12) |

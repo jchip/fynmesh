@@ -7,7 +7,7 @@ Status: **draft — pending review** · Epic: FYM-2 · Implements: FYM-14 (pub/s
 FynApps today never talk to each other directly. All cross-app interaction is
 **middleware-mediated state sharing**: a middleware `provide()`s an object into the
 `MiddlewareStateRegistry`, drops it into each app's `middlewareContext`, and apps
-mutate/observe that shared object (see `SHARED_STATE_ARCHITECTURE.md`). That works
+mutate/observe that shared object (see `archive/SHARED_STATE_ARCHITECTURE.md`). That works
 well for *state*, but there is no sanctioned primitive for *messages*:
 
 - No way for app A to tell app B "the user clicked checkout" without a middleware
@@ -33,7 +33,7 @@ FynBus is the sanctioned messaging API. The roadmap sketch
 
 - **Not a state store.** Late joiners do not see past messages. Anything a late
   joiner must observe belongs in `MiddlewareStateRegistry` + `ObservableState`.
-  This keeps the line drawn in `SHARED_STATE_ARCHITECTURE.md`: registry = state,
+  This keeps the line drawn in `archive/SHARED_STATE_ARCHITECTURE.md`: registry = state,
   bus = ephemeral messages/commands.
 - No event replay / sticky events in v1 (revisit only with a concrete use case).
 - No cross-tab / cross-frame / network transport — in-page, same-realm only.
