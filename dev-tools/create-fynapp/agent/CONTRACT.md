@@ -115,20 +115,21 @@ export default createFynAppRollupConfig({
 
 `createFynAppRollupConfig` (`../src/rollup-config-factory.ts`) assembles, in
 fixed order: dummy-entry → node-resolve → `extraPlugins` → federation → react
-alias (react framework only) → `extraPluginsAfter` → typescript → minify (prod).
+demo alias (only with `reactPackages: "esm-adapters"`) → `extraPluginsAfter` →
+typescript → minify (prod).
 It always emits SystemJS output to `dist/` with share scope `fynmesh`, input
 `[fynappDummyEntryName, fynappEntryFilename]`.
 
-**What the federation helper guarantees** (`../src/index.ts`):
-- For React (`setupReactFederationPlugins`), `exposes` always includes
-  `"./main": "./src/main.ts"`. The generic `setupFederationPlugins` (used by
-  `framework: "vanilla"` and other non-React frameworks) does **not** inject it —
-  add `"./main": "./src/main.ts"` to `exposes` yourself, or the app exposes
-  nothing and won't load.
-- React frameworks share `esm-react` / `esm-react-dom` (`import: false` →
-  *consumed*, not bundled) and alias `react`→`esm-react`,
-  `react-dom`→`esm-react-dom`. That's why source `import React from "react"` but
-  `package.json` depends on `esm-react` (not `react`).
+**What the federation configuration guarantees** (`../src/index.ts`):
+- For React, the preferred factory always includes `"./main": "./src/main.ts"`.
+  The generic low-level `setupFederationPlugins` does **not** inject it — add
+  `"./main": "./src/main.ts"` to `exposes` yourself.
+- React frameworks consume `react`, `react-dom`, and `react-dom/client` as
+  singleton shared packages. Source and `package.json` use those standard public
+  packages directly.
+- Repository demos that intentionally use the local ESM adapters opt in with
+  `reactPackages: "esm-adapters"`. The low-level `setupReactFederationPlugins`
+  and `setupReactAliasPlugins` helpers exist for that demo mode.
 - `renderDynamicImport` enables the `import(..., { with: { type: "fynapp-middleware" } })`
   syntax used by consumers (§4).
 - `enrichManifest` + `emitFederationMeta` produce `dist/fynapp.manifest.json`.
@@ -275,14 +276,14 @@ is just `export {};` (because `./main` is always exposed).
     "@fynmesh/kernel": "^1.0.0", "create-fynapp": "^1.0.0",
     "rollup": "^4.9.1", "rollup-plugin-federation": "^1.0.0",
     "rollup-wrap-plugin": "^1.0.0", "typescript": "^5.2.2"
-    // React apps also: esm-react, esm-react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
+    // React apps also: react, react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
   }
 }
 ```
-React apps depend on `esm-react`/`esm-react-dom` — **not** `react`/`react-dom`.
+React apps depend on the standard public `react`/`react-dom` packages.
 
 `tsconfig.json`: ESNext/ES2020 module, `moduleResolution: "bundler"`,
-`jsx: "react"` (classic — `esm-react` has no `/jsx-runtime`), `declaration: true`,
+`jsx: "react"`, `declaration: true`,
 `include: ["src/**/*"]`. Copy an existing app's `tsconfig.json`.
 
 ---

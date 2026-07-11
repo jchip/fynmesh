@@ -3,6 +3,7 @@ import { createFynAppRollupConfig } from "create-fynapp";
 export default createFynAppRollupConfig({
   name: "fynapp-design-tokens",
   framework: "react",
+  reactPackages: "esm-adapters",
   typescript: true,
   external: [],
   exposes: {

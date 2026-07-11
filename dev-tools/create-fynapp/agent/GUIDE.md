@@ -93,7 +93,7 @@ The loop:
 - Consume a middleware → `useMiddleware` + `middlewareContext.get` (CONTRACT §4).
 - Provide a middleware → `__middleware__` export + `setup`/`apply` (CONTRACT §6);
   add the `./middleware/*` expose to `rollup.config.ts` (CONTRACT §3).
-- Add a dependency → `package.json` (trivial); React libs use `esm-react` family.
+- Add a dependency → `package.json` (trivial); React apps use public `react`/`react-dom`.
 
 ---
 
@@ -107,7 +107,7 @@ The loop:
 | `setupFynAppOutputConfig()` | Standard `dist/` SystemJS output |
 | `setupDummyEntryPlugins()` | Virtual entry federation requires |
 | `setupReactFederationPlugins(cfg)` / `setupFederationPlugins(cfg)` | Federation + manifest |
-| `setupReactAliasPlugins()` | `react` → `esm-react` |
+| `setupReactAliasPlugins()` | Local-demo alias: `react` → `esm-react` |
 | `setupMinifyPlugins()` | Terser (production only) |
 | `fynappDummyEntryName`, `fynappEntryFilename`, `env` | Constants for the low-level form |
 | `checkFynApp`, `runCheck` | Programmatic output check (what `cfa check` calls) |

@@ -42,8 +42,9 @@ are `dev-tools/create-fynapp/...`). Curated examples live in the
 
 ## Guardrails
 - Match the app's existing style; don't refactor unrelated code.
-- React apps import `react`/`react-dom` in source but depend on
-  `esm-react`/`esm-react-dom` (aliased at build) — don't add `react` to deps.
+- React apps import and depend on the public `react`/`react-dom` packages.
+  Repository demos may explicitly opt into local ESM adapters; don't copy that
+  demo-only setting into public scaffolds.
 - `FynModule`/`FynModuleRuntime` are deprecated aliases; use `FynUnit`/`FynUnitRuntime`.
 - If a change needs a kernel API that doesn't exist yet, stop and surface it —
   don't invent kernel methods.

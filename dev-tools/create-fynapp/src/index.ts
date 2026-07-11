@@ -121,8 +121,9 @@ export function setupDummyEntryPlugins() {
 }
 
 /**
- * Setup plugins to alias React and React DOM to the esm-react and esm-react-dom packages.
- * @returns Rollup plugins to alias React and React DOM to the esm-react and esm-react-dom packages.
+ * Setup aliases for the repository-local React ESM demo adapters.
+ * Public scaffolds use standard react/react-dom packages instead.
+ * @returns Rollup plugins that alias React imports to the local demo adapters.
  */
 export function setupReactAliasPlugins() {
   return [
@@ -145,7 +146,8 @@ export function setupMinifyPlugins(config = {}) {
 }
 
 /**
- * Setup plugins to configure the federation plugin.
+ * Setup federation for the repository-local React ESM demo adapters.
+ * Public scaffolds use standard React sharing through createFynAppRollupConfig.
  * @param config - The configuration for the federation plugin.
  * @returns Rollup plugins to configure the federation plugin.
  */

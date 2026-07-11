@@ -5,6 +5,7 @@ import { createFynAppRollupConfig } from "create-fynapp";
 export default createFynAppRollupConfig({
   name: "fynapp-6-react",
   framework: "react",
+  reactPackages: "esm-adapters",
   typescript: true,
   exposes: {},
   extraPlugins: [newRollupPlugin(postcss)()],

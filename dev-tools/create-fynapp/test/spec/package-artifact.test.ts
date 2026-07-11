@@ -25,6 +25,10 @@ describe("published package artifact", () => {
     const mainTemplate = fs.readFileSync(path.join(templateDir, "src/main.ts.template"), "utf-8");
 
     expect(templatePkg.devDependencies).not.toHaveProperty("fynapp-shell-mw");
+    expect(templatePkg.devDependencies).not.toHaveProperty("esm-react");
+    expect(templatePkg.devDependencies).not.toHaveProperty("esm-react-dom");
+    expect(templatePkg.devDependencies.react).toBe("^19.1.0");
+    expect(templatePkg.devDependencies["react-dom"]).toBe("^19.1.0");
     expect(mainTemplate).not.toContain('from "fynapp-shell-mw/');
   });
 
