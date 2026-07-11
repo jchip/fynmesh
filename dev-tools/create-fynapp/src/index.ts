@@ -1,8 +1,11 @@
 // Export core functionality for programmatic use
 export { generateApp } from "./generator.js";
+export type { GeneratorConfig } from "./generator.js";
 export { promptForMissingInfo } from "./prompts.js";
+export type { AppConfig } from "./prompts.js";
 export { fileExists } from "./utils.js";
 export { buildFynApp } from "./builder.js";
+export type { BuildOptions } from "./builder.js";
 export { validateFynApp, runValidation } from "./validate-fynapp.js";
 export type { ValidateResult } from "./validate-fynapp.js";
 export { installSkills, runInstallSkills } from "./install-skills.js";

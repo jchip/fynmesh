@@ -22,7 +22,7 @@ async function fileExists(filePath: string): Promise<boolean> {
     }
 }
 
-interface GeneratorConfig extends AppConfig {
+export interface GeneratorConfig extends AppConfig {
     targetDir: string;
     rootDir: string;
 }

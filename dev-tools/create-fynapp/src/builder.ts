@@ -3,7 +3,7 @@ import { exec as execCb } from "child_process";
 
 const exec = promisify(execCb);
 
-interface BuildOptions {
+export interface BuildOptions {
     watch?: boolean;
     minify?: boolean;
 }
