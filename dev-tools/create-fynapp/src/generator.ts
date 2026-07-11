@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import AveAzul from "aveazul";
 import type { AppConfig } from "./prompts.js";
+import { assertSupportedFramework } from "./frameworks.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -44,6 +45,7 @@ function toPascalCase(str: string): string {
  * Creates a FynApp from templates based on the configuration
  */
 export async function generateApp(config: GeneratorConfig): Promise<void> {
+    assertSupportedFramework(config.framework);
     console.log(`\nCreating a new ${config.framework} FynApp in ${config.targetDir}...`);
 
     // Create src directory

@@ -1,4 +1,5 @@
 import inquirer from "inquirer";
+import { assertSupportedFramework, supportedFrameworks } from "./frameworks.js";
 
 export interface AppConfig {
     name: string;
@@ -12,6 +13,10 @@ export interface AppConfig {
  * Prompts the user for any information not provided via command line args
  */
 export async function promptForMissingInfo(args: any): Promise<AppConfig> {
+    if (args.framework) {
+        assertSupportedFramework(args.framework);
+    }
+
     const questions = [];
 
     // Ask for app name if not provided
@@ -39,13 +44,10 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             type: "list",
             name: "framework",
             message: "Which framework would you like to use?",
-            choices: [
-                { name: "React", value: "react" },
-                { name: "Vue", value: "vue" },
-                { name: "Preact", value: "preact" },
-                { name: "Solid", value: "solid" },
-                { name: "Marko", value: "marko" }
-            ]
+            choices: supportedFrameworks.map((framework) => ({
+                name: framework[0].toUpperCase() + framework.slice(1),
+                value: framework,
+            }))
         });
     }
 

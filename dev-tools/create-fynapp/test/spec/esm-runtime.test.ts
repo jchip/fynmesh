@@ -66,6 +66,35 @@ describe("published ESM runtime", () => {
     }
   });
 
+  it("rejects an unsupported framework before creating its target", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-framework-"));
+    const targetDir = path.join(tmpRoot, "demo", "vue-app");
+
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [
+          path.join(distDir, "create-cli.js"),
+          "--name",
+          "vue-app",
+          "--framework",
+          "vue",
+          "--dir",
+          "vue-app",
+          "--skip-install",
+        ],
+        { cwd: tmpRoot, input: "\n", encoding: "utf8", timeout: 5_000 },
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("Unsupported framework: vue");
+      expect(fs.existsSync(targetDir)).toBe(false);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
   it("generates from the built package's bundled templates", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-dist-gen-"));
     const targetDir = path.join(tmpRoot, "demo", "built-app");

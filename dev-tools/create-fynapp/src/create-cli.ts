@@ -9,6 +9,7 @@ import { promptForMissingInfo } from "./prompts.js";
 import { fileExists } from "./utils.js";
 import { runFynCommand } from "./run-fyn.js";
 import { getCommandOptions } from "./cli-options.js";
+import { supportedFrameworks } from "./frameworks.js";
 
 export async function main() {
     const nixClap = new NixClap({ defaultCommand: "create" });
@@ -21,17 +22,10 @@ export async function main() {
             required: false,
         },
         framework: {
-            desc: "Framework to use (react, vue, preact, solid, marko)",
+            desc: `Framework to use (${supportedFrameworks.join(", ")})`,
             alias: "f",
             args: "< string>",
             required: false,
-            validate: (value) => {
-                const validFrameworks = ["react", "vue", "preact", "solid", "marko"];
-                if (!validFrameworks.includes(value)) {
-                    throw new Error(`Framework must be one of: ${validFrameworks.join(", ")}`);
-                }
-                return value;
-            }
         },
         dir: {
             desc: "Target directory (relative to demo/)",
