@@ -1,5 +1,10 @@
 import inquirer from "inquirer";
 import { assertSupportedFramework, supportedFrameworks } from "./frameworks.js";
+import {
+    assertValidCreationValues,
+    validateAppName,
+    validateDirectoryName,
+} from "./app-config.js";
 
 export interface AppConfig {
     name: string;
@@ -13,6 +18,14 @@ export interface AppConfig {
  * Prompts the user for any information not provided via command line args
  */
 export async function promptForMissingInfo(args: any): Promise<AppConfig> {
+    if (args.name) {
+        const result = validateAppName(args.name);
+        if (result !== true) throw new Error(result);
+    }
+    if (args.dir) {
+        const result = validateDirectoryName(args.dir);
+        if (result !== true) throw new Error(result);
+    }
     if (args.framework) {
         assertSupportedFramework(args.framework);
     }
@@ -26,15 +39,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             name: "name",
             message: "What would you like to name your FynApp?",
             default: "fynapp-new",
-            validate: (input: string) => {
-                if (!input.trim()) {
-                    return "App name cannot be empty";
-                }
-                if (!/^[a-z0-9-]+$/.test(input)) {
-                    return "App name can only contain lowercase letters, numbers, and hyphens";
-                }
-                return true;
-            }
+            validate: validateAppName
         });
     }
 
@@ -58,15 +63,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             name: "dir",
             message: "Directory name to create (relative to demo/)",
             default: (answers: any) => answers.name || args.name,
-            validate: (input: string) => {
-                if (!input.trim()) {
-                    return "Directory name cannot be empty";
-                }
-                if (!/^[a-z0-9-]+$/.test(input)) {
-                    return "Directory name can only contain lowercase letters, numbers, and hyphens";
-                }
-                return true;
-            }
+            validate: validateDirectoryName
         });
     }
 
@@ -88,11 +85,13 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
     const answers = await inquirer.prompt(questions);
 
     // Combine command line args with prompted answers
-    return {
+    const config = {
         name: args.name || answers.name,
         framework: args.framework || answers.framework,
         dir: args.dir || answers.dir,
         skipInstall: args["skip-install"] || false,
         components: answers.components || []
     };
+    assertValidCreationValues(config.name, config.dir);
+    return config;
 }

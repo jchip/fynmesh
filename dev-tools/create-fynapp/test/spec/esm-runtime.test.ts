@@ -7,6 +7,15 @@ import { buildPackage, distDir, packageDir, runBuiltGenerator } from "../helpers
 describe("published ESM runtime", () => {
   beforeAll(buildPackage);
 
+  function runCreate(cwd: string, args: string[]) {
+    return spawnSync(process.execPath, [path.join(distDir, "create-cli.js"), ...args], {
+      cwd,
+      input: "\n",
+      encoding: "utf8",
+      timeout: 5_000,
+    });
+  }
+
   it.each(["create-cli.js", "cfa.js"])("loads the %s bin", (bin) => {
     const result = spawnSync(process.execPath, [path.join(distDir, bin), "--help"], {
       cwd: packageDir,
@@ -92,6 +101,78 @@ describe("published ESM runtime", () => {
       expect(fs.existsSync(targetDir)).toBe(false);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an invalid direct app name before writing files", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-name-"));
+    try {
+      const result = runCreate(tmpRoot, [
+        "--name",
+        "Bad_Name",
+        "--framework",
+        "react",
+        "--dir",
+        "valid-dir",
+        "--skip-install",
+      ]);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        "App name can only contain lowercase letters, numbers, and hyphens",
+      );
+      expect(fs.existsSync(path.join(tmpRoot, "demo"))).toBe(false);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a direct directory traversal before writing files", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-traversal-"));
+    try {
+      const result = runCreate(tmpRoot, [
+        "--name",
+        "safe-app",
+        "--framework",
+        "react",
+        "--dir",
+        "../escape",
+        "--skip-install",
+      ]);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        "Directory name can only contain lowercase letters, numbers, and hyphens",
+      );
+      expect(fs.existsSync(path.join(tmpRoot, "escape"))).toBe(false);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects an existing target symlink outside demo", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-symlink-"));
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-outside-"));
+    fs.mkdirSync(path.join(tmpRoot, "demo"));
+    fs.symlinkSync(outsideDir, path.join(tmpRoot, "demo", "safe-app"));
+
+    try {
+      const result = runCreate(tmpRoot, [
+        "--name",
+        "safe-app",
+        "--framework",
+        "react",
+        "--dir",
+        "safe-app",
+        "--skip-install",
+      ]);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("Target directory must stay inside");
+      expect(fs.readdirSync(outsideDir)).toHaveLength(0);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+      fs.rmSync(outsideDir, { recursive: true, force: true });
     }
   });
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
-import path from "path";
 import { pathToFileURL } from "url";
 import { promises as fsPromises, realpathSync } from "fs";
 import AveAzul from "aveazul";
@@ -10,6 +9,7 @@ import { fileExists } from "./utils.js";
 import { runFynCommand } from "./run-fyn.js";
 import { getCommandOptions } from "./cli-options.js";
 import { supportedFrameworks } from "./frameworks.js";
+import { resolveTargetDir } from "./app-config.js";
 
 export async function main() {
     const nixClap = new NixClap({ defaultCommand: "create" });
@@ -63,8 +63,7 @@ async function createNewApp(opts) {
 
         // Set up paths
         const rootDir = process.cwd();
-        const demoDir = path.join(rootDir, "demo");
-        const targetDir = path.join(demoDir, config.dir || config.name);
+        const targetDir = resolveTargetDir(rootDir, config.dir || config.name);
 
         // Check if directory already exists
         if (await fileExists(targetDir)) {
