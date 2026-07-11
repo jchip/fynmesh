@@ -1,8 +1,11 @@
 import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import AveAzul from "aveazul";
-import { AppConfig } from "./prompts";
+import type { AppConfig } from "./prompts.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Use fs.promises directly - cleaner than promisifying
 const readFile = fsPromises.readFile;

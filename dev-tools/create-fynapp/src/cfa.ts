@@ -2,9 +2,9 @@
 import { NixClap } from "nix-clap";
 import path from "path";
 import fs from "fs";
-import { buildFynApp } from "./builder";
-import { runCheck } from "./check-fynapp.ts";
-import { runInstallSkills } from "./install-skills.ts";
+import { buildFynApp } from "./builder.js";
+import { runCheck } from "./check-fynapp.js";
+import { runInstallSkills } from "./install-skills.js";
 
 export async function main() {
     const nixClap = new NixClap();

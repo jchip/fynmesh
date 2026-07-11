@@ -3,9 +3,9 @@ import { NixClap } from "nix-clap";
 import path from "path";
 import { promises as fsPromises } from "fs";
 import AveAzul from "aveazul";
-import { generateApp } from "./generator";
-import { promptForMissingInfo } from "./prompts";
-import { fileExists } from "./utils";
+import { generateApp } from "./generator.js";
+import { promptForMissingInfo } from "./prompts.js";
+import { fileExists } from "./utils.js";
 import { runFynCommand } from "./run-fyn.js";
 
 export async function main() {
