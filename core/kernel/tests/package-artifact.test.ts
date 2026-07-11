@@ -9,4 +9,9 @@ describe("published package artifact", () => {
     expect(pkg.dependencies["federation-js"]).toBe("^1.0.0");
     expect(pkg.devDependencies["federation-js"]).toBeUndefined();
   });
+
+  it("does not advertise CommonJS without a CommonJS artifact", () => {
+    expect(pkg.type).toBe("module");
+    expect(pkg.exports["."]).not.toHaveProperty("require");
+  });
 });
