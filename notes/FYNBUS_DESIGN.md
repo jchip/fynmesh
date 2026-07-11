@@ -87,7 +87,7 @@ interface FynBus {
     handler: (payload: TReq, meta: FynBusMeta) => TRes | Promise<TRes>
   ): Unsubscribe;
 
-  // scoping (flat, one level; foundation for FYM-16)
+  // scoping (flat, one level; FYM-16)
   channel(name: string): FynBus;
 }
 ```
@@ -156,7 +156,8 @@ app name; with a version it disposes exactly that one.
 - `channel(name)` returns a scoped `FynBus` view: topics on channel `"cart"` are
   invisible to the root bus and to other channels.
 - Channel names are flat (one level). Calling `channel()` on a scoped bus resolves
-  from the root, not nested — nesting can come with FYM-16 if ever needed.
+  from the root, not nested. FYM-16's recorded channel-isolation scope is complete;
+  richer nested semantics would require a separately scoped ticket.
 - Internally: one `ChannelState { events: FynEventTarget, handlers: Map }` per
   name, created lazily, held by the root `FynBus`. The root bus is itself the
   `""` channel.
@@ -220,7 +221,7 @@ FynMeshKernel
 | FYM-14  | `FynBusRoot` + channels + emit/on/once + per-app facade + cleanup  |
 | FYM-15  | request/handle, waiter list, timeout                                |
 | FYM-18  | two-app demo page                                                   |
-| FYM-16  | (parked) richer channel scoping/namespacing                         |
+| FYM-16  | flat channel scoping/isolation (delivered with FYM-14)              |
 | FYM-17  | (parked) typed event contracts                                      |
 
 Existing demos and middleware are untouched. Whether basic-counter or

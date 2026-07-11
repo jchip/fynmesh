@@ -34,13 +34,13 @@ FynMesh has solid foundations:
 
 - ✅ `shutdown()` lifecycle hook on FynUnit
 - ✅ `shutdownFynApp(name)` kernel method with `FYNAPP_SHUTDOWN` event
-- ✅ `suspend()` / `resume()` hooks + `suspendFynApp`/`resumeFynApp` with `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED` (FYM-7)
-- ✅ Mount tracking — kernel-side lifecycle state (`getFynAppState`/`listFynAppStates`) (FYM-5)
-- ✅ Per-FynApp error boundary — failed bootstraps recorded as observable `failed` state, siblings unaffected (FYM-6)
+- ✅ `suspend()` / `resume()` hooks + `suspendFynApp`/`resumeFynApp` with `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED` (FYM-9)
+- ✅ Mount tracking — kernel-side lifecycle state (`getFynAppState`/`listFynAppStates`) (FYM-10)
+- ✅ Per-FynApp error boundary — failed bootstraps recorded as observable `failed` state, siblings unaffected (FYM-11)
 
-**Remaining**:
+**Declined**:
 
-- Hot module replacement (HMR) support
+- Hot module replacement (FYM-12; intentionally out of scope)
 
 **Current FynUnit lifecycle**:
 
@@ -51,8 +51,8 @@ interface FynUnit {
   ): Promise<{ status: string; mode?: string }>;
   execute(runtime: FynUnitRuntime): Promise<any>;
   shutdown?(runtime: FynUnitRuntime): Promise<void> | void; // ✅ IMPLEMENTED
-  suspend?(runtime: FynUnitRuntime): Promise<void> | void;  // ✅ IMPLEMENTED (FYM-7)
-  resume?(runtime: FynUnitRuntime): Promise<void> | void;   // ✅ IMPLEMENTED (FYM-7)
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;  // ✅ IMPLEMENTED (FYM-9)
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;   // ✅ IMPLEMENTED (FYM-9)
 }
 ```
 
@@ -60,8 +60,8 @@ interface FynUnit {
 
 - ✅ `shutdownFynApp(name)` - calls shutdown() and removes from registry
 - ✅ `FYNAPP_SHUTDOWN` event emitted on shutdown
-- ✅ Mount tracking via `FynAppLifecycle` (bootstrapping → mounted → suspended, plus failed) (FYM-5)
-- ✅ Per-app error boundary records failed state without aborting other apps (FYM-6)
+- ✅ Mount tracking via `FynAppLifecycle` (bootstrapping → mounted → suspended, plus failed) (FYM-10)
+- ✅ Per-app error boundary records failed state without aborting other apps (FYM-11)
 
 ---
 
@@ -91,7 +91,7 @@ interface FynBus {
 **Resolved design questions**:
 
 - Kernel-level, built on the existing `FynEventTarget` — zero new deps.
-- Generic type params for compile-time safety; runtime typed contracts parked (FYM-17).
+- Per-call generic type params provide local compile-time safety; shared topic contracts remain parked (FYM-17).
 - Channel scoping/namespacing via `channel()`.
 - Subscriptions auto-cleaned on FynApp shutdown; ephemeral (no replay for late joiners — state belongs in `MiddlewareStateRegistry`).
 
@@ -213,16 +213,16 @@ FynMesh Kernel (Core)
 
 ## Milestone Structure
 
-### Milestone 1: Lifecycle Hooks (HMR remaining)
+### Milestone 1: Lifecycle Hooks ✅ Complete (HMR declined)
 
 - ✅ Add `shutdown()` to FynUnit interface
 - ✅ Add `shutdownFynApp(name)` to kernel
 - ✅ Emit `FYNAPP_SHUTDOWN` event
-- ✅ Implement mount tracking in kernel (FYM-5)
-- ✅ Add error boundary per FynApp (FYM-6)
-- ✅ Add `suspend()`/`resume()` (FYM-7)
+- ✅ Implement mount tracking in kernel (FYM-10)
+- ✅ Add error boundary per FynApp (FYM-11)
+- ✅ Add `suspend()`/`resume()` (FYM-9)
 - Demo: FynApp that properly cleans up subscriptions
-- HMR support (deferred)
+- HMR support (FYM-12; won't do)
 
 ### Milestone 2: FynBus Communication ✅ Complete
 

@@ -25,10 +25,10 @@
 - [x] Add `shutdown()` lifecycle hook to FynUnit interface
 - [x] Add `shutdownFynApp()` to kernel with `FYNAPP_SHUTDOWN` event
 - [x] Lifecycle events (`FYNAPP_BOOTSTRAPPED`, `FYNAPP_BOOTSTRAP_FAILED`, `FYNAPP_BOOTSTRAP_TIMEOUT`, `FYNAPP_SHUTDOWN`)
-- [x] Add `suspend()` / `resume()` for background FynApps (FYM-7; `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED`)
-- [x] Implement mount tracking in kernel (FYM-5; `getFynAppState`/`listFynAppStates`)
-- [x] Add error boundary per FynApp (isolate failures) (FYM-6; failed state recorded, siblings unaffected)
-- [ ] HMR support for development (deferred; intentionally out of scope)
+- [x] Add `suspend()` / `resume()` for background FynApps (FYM-9; `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED`)
+- [x] Implement mount tracking in kernel (FYM-10; `getFynAppState`/`listFynAppStates`)
+- [x] Add error boundary per FynApp (isolate failures) (FYM-11; failed state recorded, siblings unaffected)
+- [ ] HMR support for development (FYM-12; won't do—intentionally out of scope)
 
 ### 2. **Inter-FynApp Communication (FynBus)** ✅ Shipped (epic FYM-2, FYM-13–18)
 **Was:** FynApps could only communicate via middleware context (indirect). Now via `core/kernel/src/fyn-bus.ts` (design: [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)).
@@ -36,8 +36,8 @@
 - [x] Design FynBus event bus API
 - [x] Implement pub/sub messaging (emit, on, once)
 - [x] Add request/response pattern (RPC-like)
-- [x] Channel scoping and namespacing
-- [x] Type safety for events (generic type params; runtime typed contracts/schemas parked as FYM-17)
+- [x] Channel scoping and namespacing (FYM-16; flat channel isolation)
+- [x] Per-call generic payload types (shared topic contracts remain open as FYM-17)
 - [x] Demo: Two FynApps communicating via events (`demo/fynapp-1`, `shared-demo-utils/fynbus-hooks.ts`)
 
 ### 3. **Developer Experience & Tooling** ⭐ Priority 3

@@ -1,11 +1,11 @@
 /**
- * FynApp lifecycle: mount tracking, error boundary, suspend/resume (epic FYM-4)
+ * FynApp lifecycle: mount tracking, error boundary, suspend/resume (epic FYM-1)
  *
- * - FYM-5: FynAppLifecycle module + kernel mount tracking (bootstrapping ->
+ * - FYM-10: FynAppLifecycle module + kernel mount tracking (bootstrapping ->
  *   mounted, removed on shutdown; getFynAppState / listFynAppStates).
- * - FYM-6: per-FynApp error boundary — a throwing bootstrap is recorded as a
+ * - FYM-11: per-FynApp error boundary — a throwing bootstrap is recorded as a
  *   `failed` state and does not stop sibling apps.
- * - FYM-7: suspend()/resume() FynUnit hooks + suspendFynApp/resumeFynApp.
+ * - FYM-9: suspend()/resume() FynUnit hooks + suspendFynApp/resumeFynApp.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FynMeshKernelCore } from "../src/kernel-core.js";
@@ -58,7 +58,7 @@ async function bootApp(
 // FynAppLifecycle module (unit)
 // ---------------------------------------------------------------------------
 
-describe("FynAppLifecycle module (FYM-5)", () => {
+describe("FynAppLifecycle module (FYM-10)", () => {
   let lc: FynAppLifecycle;
 
   beforeEach(() => {
@@ -117,7 +117,7 @@ describe("FynAppLifecycle module (FYM-5)", () => {
 // Mount tracking through the real kernel
 // ---------------------------------------------------------------------------
 
-describe("kernel mount tracking (FYM-5)", () => {
+describe("kernel mount tracking (FYM-10)", () => {
   let kernel: FlowTestKernel;
 
   beforeEach(() => {
@@ -158,7 +158,7 @@ describe("kernel mount tracking (FYM-5)", () => {
 // Per-FynApp error boundary
 // ---------------------------------------------------------------------------
 
-describe("kernel per-FynApp error boundary (FYM-6)", () => {
+describe("kernel per-FynApp error boundary (FYM-11)", () => {
   let kernel: FlowTestKernel;
 
   beforeEach(() => {
@@ -214,7 +214,7 @@ describe("kernel per-FynApp error boundary (FYM-6)", () => {
 // suspend / resume
 // ---------------------------------------------------------------------------
 
-describe("kernel suspend/resume (FYM-7)", () => {
+describe("kernel suspend/resume (FYM-9)", () => {
   let kernel: FlowTestKernel;
 
   beforeEach(() => {
