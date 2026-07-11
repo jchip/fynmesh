@@ -23,11 +23,15 @@ From the monorepo root:
 
 ```bash
 create-fynapp --name my-fynapp --framework react
-# options: --name/-n, --framework/-f (react|vue|preact|solid|marko),
+# options: --name/-n, --framework/-f (react),
 #          --dir/-d (relative to demo/), --skip-install
 ```
 
-This scaffolds `demo/my-fynapp/` from static templates: `package.json`,
+The release CLI scaffolds React only. Other framework demos and build-helper
+settings are references for manually authored apps; additional static templates
+remain roadmap work.
+
+This scaffolds `demo/my-fynapp/` from static React templates: `package.json`,
 `tsconfig.json`, `rollup.config.ts` (the `createFynAppRollupConfig` factory
 form), and a starter `src/`. It does **not** reason about your code — it just
 stamps out a known-good skeleton that already conforms to

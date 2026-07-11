@@ -1,111 +1,103 @@
 # FynApp CLI Tools
 
-This package provides two command-line tools for working with FynApps:
+`create-fynapp` provides two commands:
 
-1. `create-fynapp` - For creating new FynApps
-2. `cfa` - For ongoing FynApp development and maintenance
+- `create-fynapp` creates a React FynApp under a repository's `demo/` directory.
+- `cfa` builds and checks an existing FynApp or installs the bundled coding-agent skills.
 
 ## Installation
 
-To install the tools globally:
+Install the released commands globally with fyn:
+
+```bash
+fyn global add create-fynapp
+```
+
+If the commands are not on `PATH`, run `fyn global setup-path` and follow its
+shell instructions.
+
+To work on this package in the FynMesh monorepo:
 
 ```bash
 cd dev-tools/create-fynapp
-npm run install-cfa
+fyn install
+fyn run build
 ```
 
-## Usage
+## Create a FynApp
 
-### Creating a New FynApp
-
-Create a new FynApp using either of these methods:
+Run the command from the FynMesh repository root. The target is always created
+under `demo/`.
 
 ```bash
-# Using the create-fynapp command
 create-fynapp --name my-app --framework react
-
-# Or using npm create
-npm create fynapp -- --name my-app --framework react
 ```
 
+The release scaffold supports React. Other framework demos and low-level build
+configuration exist in FynMesh, but their generator templates are roadmap work.
+
 Options:
-- `--name, -n`: Name for the new FynApp
-- `--framework, -f`: Framework to use (react, vue, preact, solid, marko)
-- `--dir, -d`: Target directory (relative to demo/)
-- `--skip-install`: Skip dependency installation
 
-### Ongoing Development with cfa
+- `--name, -n <string>`: package and federation name.
+- `--framework, -f <string>`: `react`.
+- `--dir, -d <string>`: directory relative to `demo/` (defaults to the name).
+- `--skip-install`: create files without running `fyn install`.
 
-The `cfa` command provides several subcommands for working with existing FynApps. Navigate to your FynApp directory and run commands from there:
+The command creates `package.json`, `tsconfig.json`, `rollup.config.ts`, and
+starter source files. Register a new demo app separately as described in
+[`agent/GUIDE.md`](./agent/GUIDE.md).
 
-#### Build a FynApp
+## Work with an existing FynApp
+
+Run `cfa` from the FynApp directory, or pass `--dir`.
+
+### Build
 
 ```bash
-# Navigate to your FynApp directory
-cd path/to/your/fynapp
-
-# Run the build command
 cfa build
+cfa build --watch
+cfa build --dir demo/my-app
 ```
 
 Options:
-- `--dir, -d`: Target directory (defaults to current directory)
-- `--watch, -w`: Watch mode - rebuild on changes
-- `--minify, -m`: Minify output
 
-#### Update Dependencies
+- `--dir, -d <string>`: target directory (defaults to the current directory).
+- `--watch, -w`: rebuild when source files change.
+- `--minify, -m`: enable minified output.
 
-```bash
-# In your FynApp directory
-cfa update
-```
-
-Options:
-- `--dir, -d`: Target directory (defaults to current directory)
-- `--check-only`: Only check for updates, don't update
-
-#### Manage Configuration
+### Check build output
 
 ```bash
-# View configuration
-cfa config
-
-# Extract configuration from files
-cfa config -a extract
-
-# Set a configuration value
-cfa config -a set -k buildOptions.minify -v true
+cfa check
+cfa check --no-build
 ```
 
-Options:
-- `--dir, -d`: Target directory (defaults to current directory)
-- `--action, -a`: Action to perform (view, extract, set)
-- `--key, -k`: Configuration key (for set action)
-- `--value, -v`: Configuration value (for set action)
+`cfa check` builds with the local Rollup binary, then checks for
+`dist/fynapp-entry.js` and a parseable `dist/fynapp.manifest.json` with the
+required identity and `./main` expose. `--no-build` checks an existing
+`dist/`.
 
-## Development & Testing
-
-### Running Tests
+### Install coding-agent skills
 
 ```bash
-# Run Jest test suite
-fyn jest-test
-
-# Run manual AST config manager test
-node test-utils/test-ast.js
+cfa install-skills
+cfa install-skills --dir path/to/project
+cfa install-skills --force
 ```
 
-### Test Utils
+This opt-in command copies the bundled `fynapp-modify` and
+`fynapp-migrate-kernel` skills into `<project>/.claude/skills/`.
 
-The `test-utils/` directory contains manual testing scripts and utilities:
+## Authoring references
 
-- **`test-ast.js`** - Manual test for AST-based configuration management
-- **`README.md`** - Documentation for test utilities
+- [FynApp guide](./agent/GUIDE.md)
+- [FynApp contract](./agent/CONTRACT.md)
+- [Kernel migration playbook](./agent/MIGRATION.md)
+- [Curated examples](./examples/README.md)
 
-### AST Config Manager
+## Development checks
 
-The project includes an AST-based configuration management system for programmatically modifying rollup federation configs while preserving formatting and comments.
-
-## Configuration
-
-FynApp configurations are stored in `~/.fynmesh/fynapps/` for persistent management across sessions.
+```bash
+fyn run build
+fyn run jest-test
+```

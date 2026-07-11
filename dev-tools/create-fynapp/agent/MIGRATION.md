@@ -13,9 +13,10 @@ is compiled on every build, so renamed or removed anchored members produce a
 mechanical signal:
 
 ```bash
-cd dev-tools/create-fynapp
-node_modules/.bin/tsc --build tsconfig.lib.json   # rebuild kernel types first if needed
-fyn build                                          # compiles fynapp-contract.ts
+cd core/kernel
+nvx tsc --build tsconfig.lib.json
+cd ../../dev-tools/create-fynapp
+fyn run build                                      # compiles fynapp-contract.ts
 ```
 
 If an anchored kernel type or member is renamed or removed,
@@ -29,10 +30,10 @@ Do this whenever `core/kernel` ships an API change:
 
 1. **Rebuild kernel types** so consumers see the new surface:
    ```bash
-   cd core/kernel && node_modules/.bin/tsc --build tsconfig.lib.json
+   cd core/kernel && nvx tsc --build tsconfig.lib.json
    ```
 2. **Reconcile the anchor & contract.** In `dev-tools/create-fynapp`, run
-   `fyn build`. Fix `src/fynapp-contract.ts` to match the new kernel API, then
+   `fyn run build`. Fix `src/fynapp-contract.ts` to match the new kernel API, then
    update [`CONTRACT.md`](./CONTRACT.md) prose and any affected [`../examples/`](../examples)
    so all three agree. Add an entry to the changelog below.
 3. **Migrate each FynApp.** For every app under `demo/` (and any external
