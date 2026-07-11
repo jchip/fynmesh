@@ -7,8 +7,10 @@ into alignment.
 
 ## How drift is detected
 
-`../src/fynapp-contract.ts` re-exports the exact kernel types the contract
-depends on and is compiled on every build. So the first signal is mechanical:
+`../src/fynapp-contract.ts` re-exports the kernel types the contract depends on
+and uses `Pick` aliases to anchor the documented lifecycle/runtime members. It
+is compiled on every build, so renamed or removed anchored members produce a
+mechanical signal:
 
 ```bash
 cd dev-tools/create-fynapp
@@ -16,10 +18,10 @@ node_modules/.bin/tsc --build tsconfig.lib.json   # rebuild kernel types first i
 fyn build                                          # compiles fynapp-contract.ts
 ```
 
-If a kernel type was renamed, removed, or reshaped, `fynapp-contract.ts` fails to
-compile — pointing you straight at what changed. A clean build means the *names
-and shapes* the contract anchors to still exist (it does not prove semantics
-unchanged — read the kernel changelog too).
+If an anchored kernel type or member is renamed or removed,
+`fynapp-contract.ts` fails to compile. It does not detect newly added members or
+behavioral changes, so a clean build is only the first step; review the kernel
+API changes and changelog too.
 
 ## Procedure
 
@@ -57,6 +59,8 @@ Do this whenever `core/kernel` ships an API change:
   `CONTRACT.md` and add an example; apps need no change unless they opt in.
 - **Behavioral change with same types** → the build stays green; rely on the
   changelog + `fyn start` runtime checks, not the compiler.
+- **New type member** → the build also stays green until that member is added to
+  the appropriate `Pick` alias; reconcile the contract and anchor together.
 
 ---
 
@@ -81,6 +85,8 @@ first. Use the template.
   `MiddlewareUseMeta`, `MiddlewareInfo`, `FynAppMiddleware`,
   `FynAppMiddlewareCallContext`, plus values `useMiddleware`, `noOpFynUnit`
   (see `src/fynapp-contract.ts`).
+- **Anchored members:** `FynUnit` lifecycle (`initialize`, `execute`, `shutdown`,
+  `suspend`, `resume`) and `FynUnitRuntime` (`fynApp`, `middlewareContext`, `bus`).
 - **Known deprecated aliases** (still compile; don't use in new code):
   `FynModule`, `FynModuleRuntime`, `noOpMiddlewareUser`, `cc.fynMod`.
 - **Known stale sources to ignore:** `core/kernel/examples/simple-usage.ts`;

@@ -1,10 +1,11 @@
 # The FynApp Contract
 
 **Audience: LLM coding agents modifying an existing FynApp.** This is the
-authoritative, verifiable contract for what a FynApp *is*. Every type here is
-anchored in `@fynmesh/kernel` and mirrored by `../src/fynapp-contract.ts`, which
-is compiled on every build — if the kernel API drifts from this document, that
-file stops compiling. When you change a FynApp, conform to this contract and
+authoritative, verifiable contract for what a FynApp *is*. The kernel types and
+selected lifecycle/runtime members described here are anchored by
+`../src/fynapp-contract.ts`, which is compiled on every build. Additive and
+behavioral changes still require a kernel API review. When you change a FynApp,
+conform to this contract and
 then **verify** with `cfa validate` (see §8).
 
 > Scope note: creating a *new* FynApp is a static, mechanical operation — run the
@@ -41,7 +42,7 @@ There is **no** `"fynapp"` field in `package.json`; identity lives in
 
 ## 2. The `FynUnit` contract — what `src/main.ts` exports
 
-Source: `@fynmesh/kernel` → `core/kernel/src/types.ts:119`.
+Source: `@fynmesh/kernel` → `core/kernel/src/types.ts:121`.
 
 ```ts
 export interface FynUnit {
@@ -51,6 +52,8 @@ export interface FynUnit {
     | { status: string; mode?: string };
   execute(runtime: FynUnitRuntime): Promise<any> | any;   // ONLY required method
   shutdown?(runtime: FynUnitRuntime): Promise<void> | void;
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;
   [key: string]: any;
 }
 ```
@@ -60,6 +63,8 @@ export interface FynUnit {
 | `initialize(runtime)` | first, before middleware applies | `{ status: "ready" \| "defer", mode?, deferOk? }` |
 | `execute(runtime)` | after middleware is ready | a render result (see §5) |
 | `shutdown(runtime)` | on unload | `void` — clean up (unmount, remove listeners) |
+| `suspend(runtime)` | when a mounted app is paused | `void` — pause timers/subscriptions |
+| `resume(runtime)` | when a suspended app is restored | `void` — resume paused work |
 
 `main` may be a **class instance** implementing `FynUnit`, a **plain object**
 with at least `execute`, or the return value of **`useMiddleware([...], unit)`**.
@@ -76,13 +81,19 @@ A bare function export is also accepted (kernel wraps it as `{ execute: fn }`).
 export type FynUnitRuntime = {
   fynApp: FynApp;                                     // { name, version, packageName, entry, exposes, … }
   middlewareContext: Map<string, Record<string, any>>; // read consumed middleware here
+  bus?: FynBus;                                       // inter-FynApp messaging
   [key: string]: any;
 };
 ```
 
-⚠️ The runtime object contains **only** `fynApp` and `middlewareContext`. There
-is **no `runtime.kernel`** (some design docs claim otherwise — they are wrong).
-To reach the kernel from a FynUnit, use `globalThis.fynMeshKernel`.
+`runtime.bus` is the optional per-app messaging facade. It supports ephemeral
+`emit`/`on`/`once`, request-response with `request`/`handle`, and isolated named
+channels. Subscriptions return an unsubscribe function; release it from
+`shutdown` or `suspend` as appropriate. State that late-loading apps must observe
+belongs in the middleware state registry, not the bus.
+
+There is **no `runtime.kernel`**. To reach the kernel from a FynUnit, use
+`globalThis.fynMeshKernel`.
 
 ---
 

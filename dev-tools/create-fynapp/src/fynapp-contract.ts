@@ -1,16 +1,15 @@
 /**
  * FynApp authoring contract — the type-anchored source of truth.
  *
- * This module re-exports, under stable author-facing names, exactly the
- * `@fynmesh/kernel` types a FynApp (and its middleware) must implement. It is
- * NOT new abstraction — it is a *contract surface*.
+ * This module re-exports the `@fynmesh/kernel` types a FynApp (and its
+ * middleware) must implement. It is NOT a new abstraction — it is a contract
+ * surface.
  *
  * WHY THIS FILE EXISTS: it is compiled as part of `create-fynapp`'s normal
- * build (`tsc`). If the kernel renames, removes, or changes the shape of any
- * type below, this file fails to compile — an automatic, zero-cost alarm that
- * the FynApp contract has drifted. When that happens, follow
- * `agent/MIGRATION.md`: update this file + `agent/CONTRACT.md`, then migrate
- * the fynapps.
+ * build (`tsc`). The Pick aliases below also anchor the lifecycle and runtime
+ * members described in `agent/CONTRACT.md`, so renaming or removing one fails
+ * the build. TypeScript cannot flag newly added members; review kernel API
+ * changes for additions and semantics as described in `agent/MIGRATION.md`.
  *
  * The prose contract an LLM agent reads is `agent/CONTRACT.md`; this file is
  * what keeps that prose honest.
@@ -43,6 +42,10 @@ export type {
 };
 
 export { useMiddleware, noOpFynUnit };
+
+/** Kernel members explicitly covered by the authoring contract. */
+export type FynUnitRuntimeContract = Pick<FynUnitRuntime, "fynApp" | "middlewareContext" | "bus">;
+export type FynUnitLifecycleContract = Pick<FynUnit, "initialize" | "execute" | "shutdown" | "suspend" | "resume">;
 
 /**
  * The shape a FynApp's entry module (`src/main.ts`) must export as `main`.
