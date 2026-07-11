@@ -22,4 +22,13 @@ describe("published package artifact", () => {
     expect(rollupConfig).toContain('input: "src/index.ts"');
     expect(rollupConfig).toContain('file: "dist/index.js"');
   });
+
+  it("keeps the development error overlay out of the production browser entry", () => {
+    const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
+
+    expect(rollupConfig).toContain('input: "src/browser-dev.ts"');
+    expect(rollupConfig).toContain('file: "dist/fynmesh-browser-kernel.dev.js"');
+    expect(rollupConfig).toContain('input: "src/browser.ts"');
+    expect(rollupConfig).toContain('file: "dist/fynmesh-browser-kernel.min.js"');
+  });
 });

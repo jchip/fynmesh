@@ -28,7 +28,7 @@
 - [x] Add `suspend()` / `resume()` for background FynApps (FYM-7; `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED`)
 - [x] Implement mount tracking in kernel (FYM-5; `getFynAppState`/`listFynAppStates`)
 - [x] Add error boundary per FynApp (isolate failures) (FYM-6; failed state recorded, siblings unaffected)
-- [ ] HMR support for development
+- [ ] HMR support for development (deferred; intentionally out of scope)
 
 ### 2. **Inter-FynApp Communication (FynBus)** ✅ Shipped (epic FYM-2, FYM-13–18)
 **Was:** FynApps could only communicate via middleware context (indirect). Now via `core/kernel/src/fyn-bus.ts` (design: [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)).
@@ -53,7 +53,7 @@
 #### DevTools & Debugging
 - [ ] Dev overlay showing FynApp boundaries and names
 - [ ] Console integration (prefix logs with FynApp name)
-- [ ] Error overlay with stack traces
+- [x] Error overlay with stack traces (FYM-29; development browser bundle)
 
 #### Chrome Extension
 - [ ] FynApp Panel (list loaded FynApps with status)
