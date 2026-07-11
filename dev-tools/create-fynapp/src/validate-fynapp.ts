@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { spawn } from "child_process";
-import { fynappEntryFilename } from "./index.ts";
+import { fynappEntryFilename } from "./constants.js";
 
 /**
  * Result of validating a FynApp.
@@ -67,15 +67,27 @@ export async function validateFynApp(
     return { ok: false, errors: [`No package.json in ${appDir} — not a FynApp.`], warnings };
   }
 
+  let pkg: any;
+  try {
+    pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+  } catch (e: any) {
+    return { ok: false, errors: [`package.json does not parse: ${e.message}`], warnings };
+  }
+
+  if (!pkg.name) errors.push("package.json is missing `name`");
+  if (!pkg.version) errors.push("package.json is missing `version`");
+  if (errors.length > 0) return { ok: false, errors, warnings };
+
+  const distDir = path.join(appDir, "dist");
   if (build) {
     try {
+      fs.rmSync(distDir, { recursive: true, force: true });
       await buildWithRollup(appDir);
     } catch (e: any) {
       return { ok: false, errors: [`Build failed: ${e.message}`], warnings };
     }
   }
 
-  const distDir = path.join(appDir, "dist");
   const entryPath = path.join(distDir, fynappEntryFilename);
   const manifestPath = path.join(distDir, "fynapp.manifest.json");
 
@@ -94,7 +106,17 @@ export async function validateFynApp(
     }
     if (manifest) {
       if (!manifest.name) errors.push("manifest is missing `name`");
+      else if (manifest.name !== pkg.name) {
+        errors.push(
+          `manifest name ${JSON.stringify(manifest.name)} does not match package.json name ${JSON.stringify(pkg.name)}`,
+        );
+      }
       if (!manifest.version) errors.push("manifest is missing `version`");
+      else if (manifest.version !== pkg.version) {
+        errors.push(
+          `manifest version ${JSON.stringify(manifest.version)} does not match package.json version ${JSON.stringify(pkg.version)}`,
+        );
+      }
       if (!manifest.exposes || !manifest.exposes["./main"]) {
         errors.push('manifest.exposes is missing the required "./main" module');
       }

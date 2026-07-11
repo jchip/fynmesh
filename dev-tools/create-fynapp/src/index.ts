@@ -20,6 +20,11 @@ export { installSkills, runInstallSkills } from "./install-skills.js";
 // Export rollup config factory
 export { createFynAppRollupConfig } from "./rollup-config-factory.ts";
 export type { FynAppRollupConfigOptions } from "./rollup-config-factory.ts";
+export {
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  fynmeshShareScope,
+} from "./constants.js";
 
 import process from "node:process";
 import virtual from "@rollup/plugin-virtual";
@@ -50,6 +55,11 @@ import type {
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
 import { RollupOptions, ModuleFormat } from "rollup";
+import {
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  fynmeshShareScope,
+} from "./constants.js";
 
 /**
  * Enhanced FynApp manifest with comprehensive dependency information
@@ -81,22 +91,6 @@ export type FynAppManifest = {
 
 export const env = process.env.NODE_ENV || "development";
 export const isProduction = env === "production";
-
-/**
- * Rollup needs at least one entry to get the build started.  We use a virtual entry
- * to satisfy this requirement.  The dummy entry is not used.
- */
-export const fynappDummyEntryName = "fynapp-dummy-entry";
-/**
- * The filename of the entry point for the fynapp's module federation bundle.
- * This is the file that will be used by the fynmesh to load the fynapp.
- */
-export const fynappEntryFilename = "fynapp-entry.js";
-/**
- * The module federation share scope for the fynmesh.  This is the scope that will be used to share
- * modules between the fynmesh and the fynapps.
- */
-export const fynmeshShareScope = "fynmesh";
 
 export function setupFynAppOutputConfig(
   format: ModuleFormat = "systemjs",
