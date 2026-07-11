@@ -6,10 +6,10 @@ Date: 2026-07-10 (America/Los_Angeles)
 
 - Repository: `/Users/joel.chen/dev/fynmesh`
 - Package: `dev-tools/create-fynapp`
-- Working branch: `codex/create-fynapp-release`
-- Base branch: `main` at `cf7558c`
-- Branch status: clean, 29 ticket-prefixed commits ahead of `main`
-- Merge/push status: not merged and not pushed
+- Working branch: `main`
+- Integration: merge commit `bd4b828` preserves main parent `8974d47` and release parent `6c36c21`
+- Branch status: clean after the local main integration
+- Merge/push status: merged locally into `main`; not pushed
 - Task project: `fynmesh-create-fynapp` (`CFA` prefix)
 - Epic: `CFA-1`; public-release prerequisites are tracked by `CFA-20`, `CFA-25`, `CFA-33`,
   and `CFA-34`
