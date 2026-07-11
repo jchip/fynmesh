@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
 import path from "path";
+import { pathToFileURL } from "url";
 import fs from "fs";
 import { buildFynApp } from "./builder.js";
 import { runCheck } from "./check-fynapp.js";
@@ -115,7 +116,7 @@ async function installSkillsCommand(opts) {
 }
 
 // Run main if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
     main().catch((err) => {
         console.error(`Error: ${err.message}`);
         process.exit(1);

@@ -17,6 +17,27 @@ describe("published ESM runtime", () => {
     expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
   });
 
+  it.each(["create-cli.js", "cfa.js"])("executes the %s bin from a URL-sensitive path", (bin) => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-url-path-"));
+    const copiedPackage = path.join(tmpRoot, "create fynapp#100%");
+    fs.mkdirSync(copiedPackage);
+    fs.cpSync(distDir, path.join(copiedPackage, "dist"), { recursive: true });
+    fs.writeFileSync(path.join(copiedPackage, "package.json"), JSON.stringify({ type: "module" }));
+    fs.symlinkSync(path.join(packageDir, "node_modules"), path.join(copiedPackage, "node_modules"));
+
+    try {
+      const result = spawnSync(process.execPath, [path.join(copiedPackage, "dist", bin), "--help"], {
+        cwd: copiedPackage,
+        encoding: "utf8",
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("Usage:");
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
   it("honors cfa validate --no-build and --dir", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-no-build-"));
     const appDir = path.join(tmpRoot, "app");

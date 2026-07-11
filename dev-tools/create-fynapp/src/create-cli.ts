@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
 import path from "path";
-import { promises as fsPromises } from "fs";
+import { pathToFileURL } from "url";
+import { promises as fsPromises, realpathSync } from "fs";
 import AveAzul from "aveazul";
 import { generateApp } from "./generator.js";
 import { promptForMissingInfo } from "./prompts.js";
@@ -125,7 +126,7 @@ create-fynapp/agent/ (CONTRACT.md, GUIDE.md) and examples/ for patterns.
 }
 
 // Run main if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
     main().catch((err) => {
         console.error(`Error: ${err.message}`);
         process.exit(1);
