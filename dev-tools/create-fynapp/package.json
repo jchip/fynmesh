@@ -30,7 +30,6 @@
     "src",
     "templates",
     "agent",
-    "examples",
     "skills"
   ],
   "keywords": [
