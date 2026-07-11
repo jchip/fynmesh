@@ -8,9 +8,10 @@ description: Modify an existing FynApp — change rendering, add/consume/author 
 FynApps are micro-frontends loaded by the fynmesh kernel. Modifying one requires
 understanding its code, so it's your job — there is no code-mod for it.
 
-The contract, guide, and examples ship inside the installed `create-fynapp`
-package (paths below are `node_modules/create-fynapp/...`; in the fynmesh
-monorepo itself they are `dev-tools/create-fynapp/...`).
+The contract and guide ship inside the installed `create-fynapp` package (paths
+below are `node_modules/create-fynapp/...`; in the fynmesh monorepo itself they
+are `dev-tools/create-fynapp/...`). Curated examples live in the
+[FynMesh repository](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples).
 
 ## Do this
 
@@ -20,7 +21,7 @@ monorepo itself they are `dev-tools/create-fynapp/...`).
    render results, package/tsconfig shape). Fuller guide:
    `node_modules/create-fynapp/agent/GUIDE.md`.
 
-2. **Copy the closest pattern** from `node_modules/create-fynapp/examples/`:
+2. **Copy the closest pattern** from the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples):
    `react-minimal`, `middleware-consumer`, `middleware-provider`, `vanilla`.
 
 3. **Make a surgical edit.** Touch only what the request needs. `src/main.ts`
@@ -30,9 +31,9 @@ monorepo itself they are `dev-tools/create-fynapp/...`).
    use `globalThis.fynMeshKernel`. Adding an exposed module or dependency is a
    trivial edit to `rollup.config.ts` / `package.json`.
 
-4. **Verify — required before you call it done:**
+4. **Check — required before you call it done:**
    ```bash
-   cd <fynapp> && cfa validate
+   cd <fynapp> && cfa check
    ```
    (builds via rollup + checks `dist/fynapp-entry.js` and a valid
    `dist/fynapp.manifest.json` exposing `./main`; `--no-build` checks an existing
@@ -41,8 +42,9 @@ monorepo itself they are `dev-tools/create-fynapp/...`).
 
 ## Guardrails
 - Match the app's existing style; don't refactor unrelated code.
-- React apps import `react`/`react-dom` in source but depend on
-  `esm-react`/`esm-react-dom` (aliased at build) — don't add `react` to deps.
+- React apps import and depend on the public `react`/`react-dom` packages.
+  Repository demos may explicitly opt into local ESM adapters; don't copy that
+  demo-only setting into public scaffolds.
 - `FynModule`/`FynModuleRuntime` are deprecated aliases; use `FynUnit`/`FynUnitRuntime`.
 - If a change needs a kernel API that doesn't exist yet, stop and surface it —
   don't invent kernel methods.

@@ -33,6 +33,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "fynapp-design-tokens": "^1.0.0",
     "fynapp-react-lib": "^19.0.0"
   }
 }

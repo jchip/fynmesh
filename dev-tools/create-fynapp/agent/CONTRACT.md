@@ -1,11 +1,11 @@
 # The FynApp Contract
 
 **Audience: LLM coding agents modifying an existing FynApp.** This is the
-authoritative, verifiable contract for what a FynApp *is*. Every type here is
-anchored in `@fynmesh/kernel` and mirrored by `../src/fynapp-contract.ts`, which
-is compiled on every build — if the kernel API drifts from this document, that
-file stops compiling. When you change a FynApp, conform to this contract and
-then **verify** with `cfa validate` (see §8).
+authoritative, type-anchored contract for what a FynApp *is*. The kernel types and
+selected lifecycle/runtime members described here are anchored by
+`../src/fynapp-contract.ts`, which is compiled on every build. Additive and
+behavioral changes still require a kernel API review. When you change a FynApp,
+conform to this contract and then run `cfa check` (see §8).
 
 > Scope note: creating a *new* FynApp is a static, mechanical operation — run the
 > `create-fynapp` CLI (see `GUIDE.md`). This document is for *modifying* an
@@ -41,7 +41,7 @@ There is **no** `"fynapp"` field in `package.json`; identity lives in
 
 ## 2. The `FynUnit` contract — what `src/main.ts` exports
 
-Source: `@fynmesh/kernel` → `core/kernel/src/types.ts:119`.
+Source: `@fynmesh/kernel` → `core/kernel/src/types.ts:121`.
 
 ```ts
 export interface FynUnit {
@@ -51,6 +51,8 @@ export interface FynUnit {
     | { status: string; mode?: string };
   execute(runtime: FynUnitRuntime): Promise<any> | any;   // ONLY required method
   shutdown?(runtime: FynUnitRuntime): Promise<void> | void;
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;
   [key: string]: any;
 }
 ```
@@ -60,6 +62,8 @@ export interface FynUnit {
 | `initialize(runtime)` | first, before middleware applies | `{ status: "ready" \| "defer", mode?, deferOk? }` |
 | `execute(runtime)` | after middleware is ready | a render result (see §5) |
 | `shutdown(runtime)` | on unload | `void` — clean up (unmount, remove listeners) |
+| `suspend(runtime)` | when a mounted app is paused | `void` — pause timers/subscriptions |
+| `resume(runtime)` | when a suspended app is restored | `void` — resume paused work |
 
 `main` may be a **class instance** implementing `FynUnit`, a **plain object**
 with at least `execute`, or the return value of **`useMiddleware([...], unit)`**.
@@ -76,13 +80,19 @@ A bare function export is also accepted (kernel wraps it as `{ execute: fn }`).
 export type FynUnitRuntime = {
   fynApp: FynApp;                                     // { name, version, packageName, entry, exposes, … }
   middlewareContext: Map<string, Record<string, any>>; // read consumed middleware here
+  bus?: FynBus;                                       // inter-FynApp messaging
   [key: string]: any;
 };
 ```
 
-⚠️ The runtime object contains **only** `fynApp` and `middlewareContext`. There
-is **no `runtime.kernel`** (some design docs claim otherwise — they are wrong).
-To reach the kernel from a FynUnit, use `globalThis.fynMeshKernel`.
+`runtime.bus` is the optional per-app messaging facade. It supports ephemeral
+`emit`/`on`/`once`, request-response with `request`/`handle`, and isolated named
+channels. Subscriptions return an unsubscribe function; release it from
+`shutdown` or `suspend` as appropriate. State that late-loading apps must observe
+belongs in the middleware state registry, not the bus.
+
+There is **no `runtime.kernel`**. To reach the kernel from a FynUnit, use
+`globalThis.fynMeshKernel`.
 
 ---
 
@@ -105,20 +115,21 @@ export default createFynAppRollupConfig({
 
 `createFynAppRollupConfig` (`../src/rollup-config-factory.ts`) assembles, in
 fixed order: dummy-entry → node-resolve → `extraPlugins` → federation → react
-alias (react framework only) → `extraPluginsAfter` → typescript → minify (prod).
+demo alias (only with `reactPackages: "esm-adapters"`) → `extraPluginsAfter` →
+typescript → minify (prod).
 It always emits SystemJS output to `dist/` with share scope `fynmesh`, input
 `[fynappDummyEntryName, fynappEntryFilename]`.
 
-**What the federation helper guarantees** (`../src/index.ts`):
-- For React (`setupReactFederationPlugins`), `exposes` always includes
-  `"./main": "./src/main.ts"`. The generic `setupFederationPlugins` (used by
-  `framework: "vanilla"` and other non-React frameworks) does **not** inject it —
-  add `"./main": "./src/main.ts"` to `exposes` yourself, or the app exposes
-  nothing and won't load.
-- React frameworks share `esm-react` / `esm-react-dom` (`import: false` →
-  *consumed*, not bundled) and alias `react`→`esm-react`,
-  `react-dom`→`esm-react-dom`. That's why source `import React from "react"` but
-  `package.json` depends on `esm-react` (not `react`).
+**What the federation configuration guarantees** (`../src/index.ts`):
+- For React, the preferred factory always includes `"./main": "./src/main.ts"`.
+  The generic low-level `setupFederationPlugins` does **not** inject it — add
+  `"./main": "./src/main.ts"` to `exposes` yourself.
+- React frameworks consume `react`, `react-dom`, and `react-dom/client` as
+  singleton shared packages. Source and `package.json` use those standard public
+  packages directly.
+- Repository demos that intentionally use the local ESM adapters opt in with
+  `reactPackages: "esm-adapters"`. The low-level `setupReactFederationPlugins`
+  and `setupReactAliasPlugins` helpers exist for that demo mode.
 - `renderDynamicImport` enables the `import(..., { with: { type: "fynapp-middleware" } })`
   syntax used by consumers (§4).
 - `enrichManifest` + `emitFederationMeta` produce `dist/fynapp.manifest.json`.
@@ -215,7 +226,7 @@ export type FynAppMiddleware = {
 ```
 
 Phases:
-1. **`setup(cc)`** — one-time per consuming FynApp. Validate `cc.meta.config`.
+1. **`setup(cc)`** — one-time per consuming FynApp. Check `cc.meta.config`.
    Return `{ status: "ready" }`, or `{ status: "defer" }` to postpone the
    consumer's `execute` until readiness is signalled. Signal readiness for
    deferred flows with `await cc.kernel.signalMiddlewareReady(cc, { name, status: "ready" })`.
@@ -265,27 +276,27 @@ is just `export {};` (because `./main` is always exposed).
     "@fynmesh/kernel": "^1.0.0", "create-fynapp": "^1.0.0",
     "rollup": "^4.9.1", "rollup-plugin-federation": "^1.0.0",
     "rollup-wrap-plugin": "^1.0.0", "typescript": "^5.2.2"
-    // React apps also: esm-react, esm-react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
+    // React apps also: react, react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
   }
 }
 ```
-React apps depend on `esm-react`/`esm-react-dom` — **not** `react`/`react-dom`.
+React apps depend on the standard public `react`/`react-dom` packages.
 
 `tsconfig.json`: ESNext/ES2020 module, `moduleResolution: "bundler"`,
-`jsx: "react"` (classic — `esm-react` has no `/jsx-runtime`), `declaration: true`,
+`jsx: "react"`, `declaration: true`,
 `include: ["src/**/*"]`. Copy an existing app's `tsconfig.json`.
 
 ---
 
-## 8. Verify (always, after any change)
+## 8. Check (always, after any change)
 
 ```bash
-cd <fynapp> && cfa validate      # builds via rollup + checks the federation output
+cd <fynapp> && cfa check      # builds via rollup + checks the federation output
 ```
 
-`cfa validate` (implemented in `../src/validate-fynapp.ts`) builds the app and
+`cfa check` (implemented in `../src/check-fynapp.ts`) builds the app and
 asserts `dist/fynapp-entry.js` and a parseable `dist/fynapp.manifest.json` with
-`name`, `version`, and the `./main` expose. Use `cfa validate --no-build` to check
+`name`, `version`, and the `./main` expose. Use `cfa check --no-build` to check
 an existing `dist/`. A change is not done until this passes.
 
 ---

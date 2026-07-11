@@ -1,10 +1,13 @@
 // Export core functionality for programmatic use
 export { generateApp } from "./generator.js";
+export type { GeneratorConfig } from "./generator.js";
 export { promptForMissingInfo } from "./prompts.js";
+export type { AppConfig } from "./prompts.js";
 export { fileExists } from "./utils.js";
 export { buildFynApp } from "./builder.js";
-export { validateFynApp, runValidation } from "./validate-fynapp.js";
-export type { ValidateResult } from "./validate-fynapp.js";
+export type { BuildOptions } from "./builder.js";
+export { checkFynApp, runCheck } from "./check-fynapp.js";
+export type { CheckResult } from "./check-fynapp.js";
 export { installSkills, runInstallSkills } from "./install-skills.js";
 
 // NOTE: `src/fynapp-contract.ts` is the type-anchor to @fynmesh/kernel. It is
@@ -17,6 +20,11 @@ export { installSkills, runInstallSkills } from "./install-skills.js";
 // Export rollup config factory
 export { createFynAppRollupConfig } from "./rollup-config-factory.ts";
 export type { FynAppRollupConfigOptions } from "./rollup-config-factory.ts";
+export {
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  fynmeshShareScope,
+} from "./constants.js";
 
 import process from "node:process";
 import virtual from "@rollup/plugin-virtual";
@@ -44,10 +52,14 @@ import type {
   SharedConfig,
   FederationInfo,
 } from "rollup-plugin-federation";
-import { DependencyAnalyzer } from "rollup-plugin-federation";
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
 import { RollupOptions, ModuleFormat } from "rollup";
+import {
+  fynappDummyEntryName,
+  fynappEntryFilename,
+  fynmeshShareScope,
+} from "./constants.js";
 
 /**
  * Enhanced FynApp manifest with comprehensive dependency information
@@ -80,22 +92,6 @@ export type FynAppManifest = {
 export const env = process.env.NODE_ENV || "development";
 export const isProduction = env === "production";
 
-/**
- * Rollup needs at least one entry to get the build started.  We use a virtual entry
- * to satisfy this requirement.  The dummy entry is not used.
- */
-export const fynappDummyEntryName = "fynapp-dummy-entry";
-/**
- * The filename of the entry point for the fynapp's module federation bundle.
- * This is the file that will be used by the fynmesh to load the fynapp.
- */
-export const fynappEntryFilename = "fynapp-entry.js";
-/**
- * The module federation share scope for the fynmesh.  This is the scope that will be used to share
- * modules between the fynmesh and the fynapps.
- */
-export const fynmeshShareScope = "fynmesh";
-
 export function setupFynAppOutputConfig(
   format: ModuleFormat = "systemjs",
   sourceMap = true,
@@ -125,8 +121,9 @@ export function setupDummyEntryPlugins() {
 }
 
 /**
- * Setup plugins to alias React and React DOM to the esm-react and esm-react-dom packages.
- * @returns Rollup plugins to alias React and React DOM to the esm-react and esm-react-dom packages.
+ * Setup aliases for the repository-local React ESM demo adapters.
+ * Public scaffolds use standard react/react-dom packages instead.
+ * @returns Rollup plugins that alias React imports to the local demo adapters.
  */
 export function setupReactAliasPlugins() {
   return [
@@ -149,7 +146,8 @@ export function setupMinifyPlugins(config = {}) {
 }
 
 /**
- * Setup plugins to configure the federation plugin.
+ * Setup federation for the repository-local React ESM demo adapters.
+ * Public scaffolds use standard React sharing through createFynAppRollupConfig.
  * @param config - The configuration for the federation plugin.
  * @returns Rollup plugins to configure the federation plugin.
  */
@@ -282,7 +280,7 @@ export function setupFederationPlugins(
  * ```
  */
 export function createEnrichManifest() {
-  return async (baseManifest: any, runtime: FederationRuntime, context: any) => {
+  return async (baseManifest: any, _runtime: FederationRuntime, _context: any) => {
     const cwd = process.cwd();
 
     debug("enrichManifest - dynamicImports count:", baseManifest.dynamicImports?.length);
@@ -577,7 +575,6 @@ async function generateFynAppManifest(
   context?: any,
   bundle?: any,
 ): Promise<FynAppManifest> {
-  const analyzer = new DependencyAnalyzer({}, "");
   const cwd = process.cwd();
 
   // Build exposes with final chunk information if context and bundle are available

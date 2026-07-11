@@ -3,6 +3,7 @@ import { createFynAppRollupConfig } from "create-fynapp";
 export default createFynAppRollupConfig({
   name: "fynapp-shell-mw",
   framework: "react",
+  reactPackages: "esm-adapters",
   typescript: true,
   debugging: true,
   external: [],

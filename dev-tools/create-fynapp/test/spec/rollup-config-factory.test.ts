@@ -84,13 +84,13 @@ describe('createFynAppRollupConfig', () => {
     expect(output.sourcemap).toBe(true);
   });
 
-  it('should add react externals by default for react framework', () => {
+  it('should add public react externals by default for react framework', () => {
     const config = createFynAppRollupConfig({
       name: 'test-app',
       framework: 'react',
     });
 
-    expect(config[0].external).toEqual(['esm-react', 'esm-react-dom']);
+    expect(config[0].external).toEqual(['react', 'react-dom', 'react-dom/client']);
   });
 
   it('should add react externals for react18 framework', () => {
@@ -99,7 +99,7 @@ describe('createFynAppRollupConfig', () => {
       framework: 'react18',
     });
 
-    expect(config[0].external).toEqual(['esm-react', 'esm-react-dom']);
+    expect(config[0].external).toEqual(['react', 'react-dom', 'react-dom/client']);
   });
 
   it('should add empty externals by default for vanilla framework', () => {
@@ -162,7 +162,7 @@ describe('createFynAppRollupConfig', () => {
     expect(tsPlugin).toBeUndefined();
   });
 
-  it('should include react alias plugin for react framework', () => {
+  it('should not include the demo react alias plugin for react framework', () => {
     const config = createFynAppRollupConfig({
       name: 'test-app',
       framework: 'react',
@@ -170,7 +170,7 @@ describe('createFynAppRollupConfig', () => {
 
     const plugins = config[0].plugins as any[];
     const aliasPlugin = plugins.find((p: any) => p?.name === 'alias');
-    expect(aliasPlugin).toBeDefined();
+    expect(aliasPlugin).toBeUndefined();
   });
 
   it('should not include react alias plugin for vanilla framework', () => {
@@ -228,6 +228,41 @@ describe('createFynAppRollupConfig', () => {
     expect(fedPlugin).toBeDefined();
   });
 
+  it('should consume standard React packages through federation', () => {
+    const config = createFynAppRollupConfig({
+      name: 'test-app',
+      framework: 'react',
+    });
+
+    const plugins = config[0].plugins as any[];
+    const fedPlugin = plugins.find((p: any) => p?.name === 'federation');
+
+    expect(fedPlugin?.shared?.react).toMatchObject({ import: false, singleton: true });
+    expect(fedPlugin?.shared?.['react-dom']).toMatchObject({ import: false, singleton: true });
+    expect(fedPlugin?.shared?.['react-dom/client']).toMatchObject({
+      import: false,
+      singleton: true,
+    });
+    expect(fedPlugin?.shared?.['esm-react']).toBeUndefined();
+    expect(fedPlugin?.shared?.['esm-react-dom']).toBeUndefined();
+  });
+
+  it('should preserve ESM adapters as an explicit local-demo option', () => {
+    const config = createFynAppRollupConfig({
+      name: 'test-app',
+      framework: 'react',
+      reactPackages: 'esm-adapters',
+    });
+
+    expect(config[0].external).toEqual(['esm-react', 'esm-react-dom']);
+
+    const plugins = config[0].plugins as any[];
+    const fedPlugin = plugins.find((p: any) => p?.name === 'federation');
+    expect(fedPlugin?.shared?.['esm-react']).toBeDefined();
+    expect(fedPlugin?.shared?.['esm-react-dom']).toBeDefined();
+    expect(plugins.find((p: any) => p?.name === 'alias')).toBeDefined();
+  });
+
   it('should place extraPlugins before federation plugin', () => {
     const customPlugin = { name: 'custom-before' } as any;
     const config = createFynAppRollupConfig({
@@ -241,7 +276,7 @@ describe('createFynAppRollupConfig', () => {
     expect(customIdx).toBeLessThan(fedIdx);
   });
 
-  it('should place extraPluginsAfter after federation and react alias plugins', () => {
+  it('should place extraPluginsAfter after federation plugins', () => {
     const customPlugin = { name: 'custom-after' } as any;
     const config = createFynAppRollupConfig({
       name: 'test-app',
@@ -251,8 +286,8 @@ describe('createFynAppRollupConfig', () => {
 
     const plugins = config[0].plugins as any[];
     const afterIdx = plugins.findIndex((p: any) => p?.name === 'custom-after');
-    const aliasIdx = plugins.findIndex((p: any) => p?.name === 'alias');
-    expect(afterIdx).toBeGreaterThan(aliasIdx);
+    const federationIdx = plugins.findIndex((p: any) => p?.name === 'federation');
+    expect(afterIdx).toBeGreaterThan(federationIdx);
   });
 
   it('should default framework to react', () => {
@@ -261,12 +296,12 @@ describe('createFynAppRollupConfig', () => {
     });
 
     // React framework should produce react externals
-    expect(config[0].external).toEqual(['esm-react', 'esm-react-dom']);
+    expect(config[0].external).toEqual(['react', 'react-dom', 'react-dom/client']);
 
-    // And should include alias plugin (react alias)
+    // Demo-only aliasing is opt-in through the low-level helper.
     const plugins = config[0].plugins as any[];
     const aliasPlugin = plugins.find((p: any) => p?.name === 'alias');
-    expect(aliasPlugin).toBeDefined();
+    expect(aliasPlugin).toBeUndefined();
   });
 
   it('should use vanilla federation for non-react frameworks', () => {
@@ -278,8 +313,8 @@ describe('createFynAppRollupConfig', () => {
     const plugins = config[0].plugins as any[];
     const fedPlugin = plugins.find((p: any) => p?.name === 'federation');
     expect(fedPlugin).toBeDefined();
-    // Vanilla federation should not have default esm-react in shared
-    expect(fedPlugin?.shared?.['esm-react']).toBeUndefined();
+    // Vanilla federation should not have default React packages in shared.
+    expect(fedPlugin?.shared?.react).toBeUndefined();
   });
 
   it('should pass entry options to federation plugins', () => {

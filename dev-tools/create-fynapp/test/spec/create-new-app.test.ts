@@ -1,10 +1,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { generateApp } from '../../src/generator';
+import { buildPackage, runBuiltGenerator } from '../helpers/built-package';
 
 /**
- * Verifies the STATIC scaffolder produces a skeleton that conforms to the
+ * Checks that the STATIC scaffolder produces a skeleton that conforms to the
  * current FynApp contract (rollup.config.ts + the createFynAppRollupConfig
  * factory form). The old AST "smart detection" (RollupConfigManager) was
  * removed — creation is now a plain template copy.
@@ -13,16 +13,17 @@ describe('create-fynapp static generator', () => {
     let tmpRoot: string;
     let targetDir: string;
 
-    beforeAll(async () => {
+    beforeAll(() => {
+        buildPackage();
         tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'cfa-gen-'));
         targetDir = path.join(tmpRoot, 'demo', 'test-fynapp');
         fs.mkdirSync(targetDir, { recursive: true });
-        await generateApp({
+        runBuiltGenerator({
             name: 'test-fynapp',
             framework: 'react',
             targetDir,
             rootDir: tmpRoot,
-        } as any);
+        });
     });
 
     afterAll(() => {

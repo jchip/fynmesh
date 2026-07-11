@@ -1,6 +1,5 @@
 import { useMiddleware } from "@fynmesh/kernel";
 import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
-import type { SelfManagedResult, ComponentFactoryResult } from "fynapp-shell-mw/middleware/shell-layout";
 import React from "react";
 import ReactDOMClient from "react-dom/client";
 import App from "./App";
@@ -30,7 +29,7 @@ class {{appNamePascal}}Unit implements FynUnit {
   /**
    * Execute - render the React app
    */
-  async execute(runtime: FynUnitRuntime): Promise<SelfManagedResult | ComponentFactoryResult> {
+  async execute(runtime: FynUnitRuntime) {
     console.debug(`🚀 ${runtime.fynApp.name} executing`);
 
     // Check if shell middleware is managing this execution

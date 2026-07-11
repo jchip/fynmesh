@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
 import path from "path";
+import { pathToFileURL } from "url";
 import fs from "fs";
-import { buildFynApp } from "./builder";
-import { runValidation } from "./validate-fynapp.ts";
-import { runInstallSkills } from "./install-skills.ts";
+import { buildFynApp } from "./builder.js";
+import { runCheck } from "./check-fynapp.js";
+import { runInstallSkills } from "./install-skills.js";
+import { getCommandOptions } from "./cli-options.js";
 
 export async function main() {
     const nixClap = new NixClap();
@@ -26,27 +28,28 @@ export async function main() {
                 watch: {
                     desc: "Watch mode - rebuild on changes",
                     alias: "w",
-                    args: "< boolean>",
+                    argDefault: "false",
                 },
                 minify: {
                     desc: "Minify output",
                     alias: "m",
-                    args: "< boolean>",
+                    argDefault: "true",
                 }
             },
-            exec: buildCommand
+            exec: (command, commandNodes) =>
+                buildCommand(getCommandOptions(command, commandNodes))
         },
-        validate: {
-            desc: "Build a FynApp and verify its federation output (entry + manifest)",
+        check: {
+            desc: "Build a FynApp and check its federation output (entry + manifest)",
             options: {
                 ...baseOptions,
-                "no-build": {
-                    desc: "Validate the existing dist/ without rebuilding",
-                    flag: true,
-                    default: false,
+                build: {
+                    desc: "Build before checking the federation output",
+                    argDefault: "true",
                 }
             },
-            exec: validateCommand
+            exec: (command, commandNodes) =>
+                checkCommand(getCommandOptions(command, commandNodes))
         },
         "install-skills": {
             desc: "Install the bundled Claude Code skills into <dir>/.claude/skills",
@@ -55,11 +58,11 @@ export async function main() {
                 force: {
                     desc: "Overwrite existing skills of the same name",
                     alias: "f",
-                    flag: true,
-                    default: false,
+                    argDefault: "false",
                 }
             },
-            exec: installSkillsCommand
+            exec: (command, commandNodes) =>
+                installSkillsCommand(getCommandOptions(command, commandNodes))
         }
     };
 
@@ -96,9 +99,9 @@ async function buildCommand(opts) {
     });
 }
 
-async function validateCommand(opts) {
+async function checkCommand(opts) {
     const targetDir = resolveAppDir(opts);
-    const result = await runValidation(targetDir, { build: !opts["no-build"] });
+    const result = await runCheck(targetDir, { build: opts.build });
     if (!result.ok) {
         process.exit(1);
     }
@@ -113,7 +116,7 @@ async function installSkillsCommand(opts) {
 }
 
 // Run main if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
     main().catch((err) => {
         console.error(`Error: ${err.message}`);
         process.exit(1);

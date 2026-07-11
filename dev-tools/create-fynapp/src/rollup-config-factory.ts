@@ -24,6 +24,8 @@ export interface FynAppRollupConfigOptions {
   name: string;
   /** Framework type - determines federation style and default plugins */
   framework?: "react" | "react18" | "solid" | "vue" | "marko" | "preact" | "svelte" | "vanilla";
+  /** React package strategy. The ESM adapters are for repository-local demos only. */
+  reactPackages?: "standard" | "esm-adapters";
   /** Module federation exposes map */
   exposes?: Record<string, string>;
   /** Module federation shared dependencies */
@@ -55,7 +57,7 @@ export interface FynAppRollupConfigOptions {
  * - Dummy entry plugins
  * - Node resolve plugin
  * - Federation plugins (React or vanilla variant)
- * - React alias plugins (for React framework)
+ * - Optional local-demo React aliases
  * - TypeScript plugin (when typescript option is set)
  * - Minify plugins (in production)
  *
@@ -92,6 +94,7 @@ export function createFynAppRollupConfig(options: FynAppRollupConfigOptions): Ro
   const {
     name,
     framework = "react",
+    reactPackages = "standard",
     exposes = {},
     shared = {},
     external,
@@ -103,9 +106,16 @@ export function createFynAppRollupConfig(options: FynAppRollupConfigOptions): Ro
   } = options;
 
   const isReactFramework = framework === "react" || framework === "react18";
+  const useEsmReactAdapters = isReactFramework && reactPackages === "esm-adapters";
 
   // Determine externals
-  const resolvedExternal = external ?? (isReactFramework ? ["esm-react", "esm-react-dom"] : []);
+  const resolvedExternal =
+    external ??
+    (isReactFramework
+      ? useEsmReactAdapters
+        ? ["esm-react", "esm-react-dom"]
+        : ["react", "react-dom", "react-dom/client"]
+      : []);
 
   // Build resolve plugin options
   const resolveOptions: Record<string, any> = {
@@ -126,14 +136,33 @@ export function createFynAppRollupConfig(options: FynAppRollupConfigOptions): Ro
 
     // 4. Federation plugins
     ...(isReactFramework
-      ? setupReactFederationPlugins({
-          name,
-          exposes,
-          shared,
-          entry,
-          debugging,
-          ...federationOptions,
-        })
+      ? useEsmReactAdapters
+        ? setupReactFederationPlugins({
+            name,
+            exposes,
+            shared,
+            entry,
+            debugging,
+            ...federationOptions,
+          })
+        : setupFederationPlugins({
+            name,
+            entry,
+            debugging,
+            ...federationOptions,
+            exposes: {
+              "./main": "./src/main.ts",
+              ...exposes,
+              ...federationOptions.exposes,
+            },
+            shared: {
+              react: { import: false, singleton: true, semver: "^19.0.0" },
+              "react-dom": { import: false, singleton: true, semver: "^19.0.0" },
+              "react-dom/client": { import: false, singleton: true, semver: "^19.0.0" },
+              ...shared,
+              ...federationOptions.shared,
+            },
+          })
       : setupFederationPlugins({
           name,
           exposes,
@@ -143,8 +172,8 @@ export function createFynAppRollupConfig(options: FynAppRollupConfigOptions): Ro
           ...federationOptions,
         })),
 
-    // 5. React alias plugins (only for React framework)
-    ...(isReactFramework ? setupReactAliasPlugins() : []),
+    // 5. Repository-local demo aliases
+    ...(useEsmReactAdapters ? setupReactAliasPlugins() : []),
 
     // 6. Extra plugins after federation (alias overrides, etc.)
     ...extraPluginsAfter,

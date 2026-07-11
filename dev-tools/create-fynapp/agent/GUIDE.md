@@ -5,7 +5,7 @@ This package supports two distinct workflows. Pick the right one.
 | You want to… | Do this |
 |--------------|---------|
 | **Create a new FynApp** | Run the static `create-fynapp` CLI (§1). Mechanical, no code understanding needed. |
-| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from [`../examples/`](../examples), then `cfa validate` (§2). |
+| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples), then `cfa check` (§2). |
 | **Update FynApps to a changed kernel API** | Follow [`MIGRATION.md`](./MIGRATION.md). |
 
 > **Claude Code skills (opt-in).** This package bundles two skills under
@@ -23,11 +23,15 @@ From the monorepo root:
 
 ```bash
 create-fynapp --name my-fynapp --framework react
-# options: --name/-n, --framework/-f (react|vue|preact|solid|marko),
+# options: --name/-n, --framework/-f (react),
 #          --dir/-d (relative to demo/), --skip-install
 ```
 
-This scaffolds `demo/my-fynapp/` from static templates: `package.json`,
+The release CLI scaffolds React only. Other framework demos and build-helper
+settings are references for manually authored apps; additional static templates
+remain roadmap work.
+
+This scaffolds `demo/my-fynapp/` from static React templates: `package.json`,
 `tsconfig.json`, `rollup.config.ts` (the `createFynAppRollupConfig` factory
 form), and a starter `src/`. It does **not** reason about your code — it just
 stamps out a known-good skeleton that already conforms to
@@ -64,7 +68,7 @@ The loop:
 1. **Read the contract.** [`CONTRACT.md`](./CONTRACT.md) is authoritative for the
    `FynUnit` lifecycle, `rollup.config.ts`, middleware consume/provide, render
    results, and package/tsconfig shape.
-2. **Copy a pattern.** Find the closest match in [`../examples/`](../examples):
+2. **Copy a pattern.** Find the closest match in the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples):
    - `react-minimal` — standalone React app.
    - `middleware-consumer` — consume another app's middleware.
    - `middleware-provider` — author a middleware.
@@ -73,11 +77,11 @@ The loop:
    are the fuller, real-world versions.
 3. **Make the surgical edit** to `src/` (and, if adding an exposed module or a
    dependency, the *trivial* config edits to `rollup.config.ts` / `package.json`).
-4. **Verify** — the change is not done until this passes:
+4. **Check** — the change is not done until this passes:
    ```bash
-   cd demo/<fynapp> && cfa validate
+   cd demo/<fynapp> && cfa check
    ```
-   `cfa validate` builds via rollup and checks the federation output
+   `cfa check` builds via rollup and checks the federation output
    (`dist/fynapp-entry.js` + a valid `dist/fynapp.manifest.json` exposing
    `./main`). Use `--no-build` to check an existing `dist/`.
 5. If the app renders UI, also load it in the demo (`fyn start`) to confirm
@@ -89,7 +93,7 @@ The loop:
 - Consume a middleware → `useMiddleware` + `middlewareContext.get` (CONTRACT §4).
 - Provide a middleware → `__middleware__` export + `setup`/`apply` (CONTRACT §6);
   add the `./middleware/*` expose to `rollup.config.ts` (CONTRACT §3).
-- Add a dependency → `package.json` (trivial); React libs use `esm-react` family.
+- Add a dependency → `package.json` (trivial); React apps use public `react`/`react-dom`.
 
 ---
 
@@ -103,9 +107,9 @@ The loop:
 | `setupFynAppOutputConfig()` | Standard `dist/` SystemJS output |
 | `setupDummyEntryPlugins()` | Virtual entry federation requires |
 | `setupReactFederationPlugins(cfg)` / `setupFederationPlugins(cfg)` | Federation + manifest |
-| `setupReactAliasPlugins()` | `react` → `esm-react` |
+| `setupReactAliasPlugins()` | Local-demo alias: `react` → `esm-react` |
 | `setupMinifyPlugins()` | Terser (production only) |
 | `fynappDummyEntryName`, `fynappEntryFilename`, `env` | Constants for the low-level form |
-| `validateFynApp`, `runValidation` | Programmatic validation (what `cfa validate` calls) |
+| `checkFynApp`, `runCheck` | Programmatic output check (what `cfa check` calls) |
 
 Debug the build with `DEBUG=create-fynapp`.

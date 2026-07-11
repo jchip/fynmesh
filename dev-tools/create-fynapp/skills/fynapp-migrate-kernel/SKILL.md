@@ -19,11 +19,11 @@ The full playbook and its changelog ship in the installed package at
    package: `tsc --build tsconfig.lib.json`).
 2. **Reconcile the anchor + contract:** in the `create-fynapp` package run its
    build. Fix `src/fynapp-contract.ts` to match the new API, then update
-   `agent/CONTRACT.md` prose and any affected `examples/`. Add a changelog entry
+   `agent/CONTRACT.md` prose and any affected [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples). Add a changelog entry
    to `agent/MIGRATION.md`.
 3. **Migrate each FynApp** per the changelog entry, conforming to
    `agent/CONTRACT.md`. Smallest conforming edit wins.
-4. **Validate each:** `cd <fynapp> && cfa validate`.
+4. **Check each:** `cd <fynapp> && cfa check`.
 5. **Full rebuild / run** to catch cross-app/federation breakage a compiler
    can't see (in the fynmesh monorepo: `fyn bootstrap && fyn start`).
 

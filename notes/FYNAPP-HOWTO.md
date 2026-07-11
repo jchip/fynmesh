@@ -15,5 +15,5 @@
 (`.claude/skills/`) drive these workflows.
 
 **Create quickly:** `create-fynapp --name my-fynapp --framework react`, then
-register it in the demo server (see the GUIDE). **Verify any change** with
-`cd demo/<fynapp> && cfa validate`.
+register it in the demo server (see the GUIDE). **Check any change** with
+`cd demo/<fynapp> && cfa check`.
