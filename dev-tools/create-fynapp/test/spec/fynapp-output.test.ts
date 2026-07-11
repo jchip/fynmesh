@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { checkFynApp } from "../../src/check-fynapp";
 import { fynappEntryFilename } from "../../src/constants";
-import { validateFynApp } from "../../src/validate-fynapp";
 
 function writeOutput(appDir: string, name = "sample-app", version = "1.0.0") {
   const distDir = path.join(appDir, "dist");
@@ -35,7 +35,7 @@ describe("FynApp output checks", () => {
     fs.writeFileSync(rollup, "#!/bin/sh\nexit 0\n");
     fs.chmodSync(rollup, 0o755);
 
-    const result = await validateFynApp(appDir);
+    const result = await checkFynApp(appDir);
 
     expect(result.ok).toBe(false);
     expect(result.errors).toContain(`Missing federation entry: dist/${fynappEntryFilename}`);
@@ -45,7 +45,7 @@ describe("FynApp output checks", () => {
   it("matches manifest identity and version to package.json", async () => {
     writeOutput(appDir, "other-app", "2.0.0");
 
-    const result = await validateFynApp(appDir, { build: false });
+    const result = await checkFynApp(appDir, { build: false });
 
     expect(result.ok).toBe(false);
     expect(result.errors).toContain(
@@ -60,7 +60,7 @@ describe("FynApp output checks", () => {
     fs.writeFileSync(path.join(appDir, "package.json"), "{");
     writeOutput(appDir);
 
-    const result = await validateFynApp(appDir, { build: false });
+    const result = await checkFynApp(appDir, { build: false });
 
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain("package.json does not parse");
