@@ -2,13 +2,11 @@
 import { NixClap } from "nix-clap";
 import path from "path";
 import { promises as fsPromises } from "fs";
-import { exec as execCb } from "child_process";
 import AveAzul from "aveazul";
 import { generateApp } from "./generator";
 import { promptForMissingInfo } from "./prompts";
 import { fileExists } from "./utils";
-
-const exec = AveAzul.promisify(execCb);
+import { runFynCommand } from "./run-fyn.js";
 
 export async function main() {
     const nixClap = new NixClap();
@@ -92,12 +90,12 @@ async function createNewApp(opts) {
 
         // Install dependencies if not skipped
         if (!config.skipInstall) {
-            await AveAzul.resolve(exec("npm install", { cwd: targetDir }))
-                .tap(() => console.log("📦 Installing dependencies..."))
+            console.log("📦 Installing dependencies...");
+            await AveAzul.resolve(runFynCommand(targetDir, ["install"]))
                 .timeout(120000, "Dependency installation timed out after 2 minutes")
                 .catch((error) => {
                     console.warn("⚠️  Dependency installation failed:", error.message);
-                    console.log("You can install dependencies manually by running 'npm install' in the project directory.");
+                    console.log("You can install dependencies manually by running 'fyn install' in the project directory.");
                 });
         }
 
