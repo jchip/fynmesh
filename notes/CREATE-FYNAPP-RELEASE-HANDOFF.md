@@ -8,13 +8,15 @@ Date: 2026-07-10 (America/Los_Angeles)
 - Package: `dev-tools/create-fynapp`
 - Working branch: `codex/create-fynapp-release`
 - Base branch: `main` at `cf7558c`
-- Branch status: clean, 19 ticket-prefixed commits ahead of `main`
+- Branch status: clean, 27 ticket-prefixed commits ahead of `main`
 - Merge/push status: not merged and not pushed
 - Task project: `fynmesh-create-fynapp` (`CFA` prefix)
-- Epic: `CFA-1`, blocked only by `CFA-20` and `CFA-25`
+- Epic: `CFA-1`; public-release prerequisites are tracked by `CFA-20`, `CFA-25`, and
+  `CFA-33` through `CFA-35`
 
-The implementation and package checks are complete. Release readiness still requires an external
-dependency source and an owner decision about distribution metadata.
+The owner selected public npm distribution for FynMesh framework packages. Repository-local setup
+and package checks pass. Public release readiness still requires approved legal metadata, npm
+publisher access, and release gates/publication for the dependency packages listed below.
 
 ## Delivered changes
 
@@ -32,6 +34,7 @@ dependency source and an owner decision about distribution metadata.
 - Direct and prompted names/directories share format inspections.
 - Target paths must remain under `demo/`; existing symlink escapes are rejected.
 - The inert component-selection prompt and configuration field were removed.
+- The React template no longer depends on the repository-only `fynapp-shell-mw` demo package.
 
 ### Output integrity and contracts
 
@@ -52,6 +55,11 @@ dependency source and an owner decision about distribution metadata.
 - TypeDoc was upgraded for the resolved TypeScript version.
 - Public configuration types are exported and included in generated API documentation.
 - README and workflow documentation describe only supported commands and `fyn` flows.
+- `install-cfa` uses `fyn` for build and global installation.
+- Packaged guidance links curated examples at their durable repository location rather than paths
+  excluded from the artifact.
+- `@fynmesh/kernel` installs its public declaration dependency, advertises only ESM, and exposes a
+  bundled root entrypoint that loads under plain Node.
 
 ## Commit ledger
 
@@ -76,6 +84,13 @@ dependency source and an owner decision about distribution metadata.
 | CFA-22 | `70aaf3b` | Use inspection terms for create inputs |
 | CFA-23 | `47101bc` | Exercise the renamed built `check` command |
 | CFA-24 | `fecb4a2` | Publish only supported React templates |
+| CFA-26 | `1b28a10` | Document the release handoff |
+| CFA-27 | `d20c0c1` | Use `fyn` for global CLI installation |
+| CFA-28 | `d7834e6` | Remove the demo dependency from the React template |
+| CFA-29 | `ccb72a2` | Install the kernel declaration dependency |
+| CFA-30 | `e997a79` | Remove the false CommonJS kernel export |
+| CFA-31 | `f0df4d1` | Bundle the kernel public entrypoint |
+| CFA-32 | `20d5371` | Fix packaged example references |
 
 Audit tickets `CFA-2`, `CFA-3`, and `CFA-4` were completed and closed before implementation.
 
@@ -87,7 +102,12 @@ The final combined prepublish run completed successfully:
   - TypeScript build passed.
   - TypeDoc generated HTML without TypeDoc diagnostics.
   - ESLint passed.
-  - Jest coverage run passed: 16 suites, 73 tests.
+  - Jest coverage run passed: 16 suites, 76 tests.
+- `@fynmesh/kernel` build and artifact checks passed.
+  - The public `dist/index.js` loaded under plain Node.
+  - Vitest passed: 38 files, 575 tests.
+- Root `fyn bootstrap` completed using the existing `rollup-federation` checkout without cloning or
+  fetching it. Bootstrap-generated changes to 27 unrelated demo/misc lockfiles were discarded.
 - Built-artifact regressions executed both bins with plain Node.
 - Noninteractive React creation, unsupported-framework rejection, malformed-name rejection,
   traversal rejection, symlink-escape rejection, and `cfa check --no-build` passed.
@@ -96,35 +116,32 @@ The final combined prepublish run completed successfully:
   did not contain examples, `.temp` data, Vue templates, or generic templates.
 - `git diff --check` passed during each ticket integration.
 
-### Environment caveat
+### Environment state
 
-The final prepublish run occurred in the integration worktree using the refreshed dependency tree
-created while updating `fyn-lock.yaml`. The branch is now checked out directly in `fynmesh`, but
-its existing `dev-tools/create-fynapp/node_modules` predates the new ESLint and TypeDoc entries.
-Refresh dependencies after resolving `CFA-20`, then rerun the gate from the direct checkout.
+The direct checkout's `create-fynapp` dependencies were refreshed with `fyn install`; no lockfile
+change resulted. The direct-checkout prepublish gate passes. Root bootstrap reports global `fyn`
+2.1.3 while fynpo uses internal fyn 2.1.1, which rewrites unrelated lockfiles; inspect and discard
+that churn unless a dependency change intentionally requires it.
 
 ## Remaining blockers
 
 ### CFA-20: rollup-plugin-federation source and publication
 
 `create-fynapp` depends on `rollup-plugin-federation@^1.0.0` and maps it locally to
-`../../rollup-federation/rollup-plugin-federation`. The co-located repository is absent and ignored
-by `fynmesh`.
+`../../rollup-federation/rollup-plugin-federation`. The co-located ignored repository is present,
+clean, and sufficient for repository-local bootstrap/build work.
 
 Observed state:
 
-- Root scripts expect to clone `https://github.com/jchip/rollup-federation.git`.
-- HTTPS access requests credentials.
-- Standard and configured `github.com-jchip` SSH identities report repository not found.
-- The configured package registry returns 404 for `rollup-plugin-federation`.
-- An installed copy exists under `node_modules`, but it is `UNLICENSED`; do not vendor it by
-  inference or treat installed output as authoritative source.
+- The checkout's origin is the GitLab `jchip/rollup-federation` repository.
+- Root bootstrap uses the existing checkout without cloning or fetching and completes successfully.
+- The public npm registry returns 404 for `rollup-plugin-federation`.
+- Its package declares `UNLICENSED`, has blank public metadata, and lacks a package-local license and
+  a deterministic clean-source pack/publish gate.
 
-Continuation requires one of these owner-provided outcomes:
-
-1. Restore/provide the correct source repository and update `clone-fed` if its URL changed.
-2. Publish `rollup-plugin-federation@1.x` to the registry consumers will use.
-3. Provide another approved, durable package source.
+The owner selected public npm distribution. `CFA-20` now requires preparing and publishing an
+approved `rollup-plugin-federation@1.x` artifact before downstream consumers can install
+`create-fynapp`. Publication itself remains unauthorized by this handoff.
 
 ### CFA-25: release policy and package metadata
 
@@ -132,28 +149,38 @@ Continuation requires one of these owner-provided outcomes:
 repository URL, and author fields. The repository root contains Apache-2.0, but the package's
 explicit `UNLICENSED` value must not be silently overridden.
 
-An owner must choose either:
+Public release mode is selected. An owner still must supply the exact SPDX license, author, and
+homepage and approve repository metadata. Repository evidence supports
+`git+https://github.com/jchip/fynmesh.git` with directory `dev-tools/create-fynapp`, but the explicit
+`UNLICENSED` value must not be changed by inference. Each separately published package also needs
+its approved package-local license text.
 
-1. Private/internal release: retain `UNLICENSED` and provide any required private registry
-   metadata.
-2. Public release: approve the package license and canonical repository, homepage, and author
-   values.
+### Framework dependency release gates
+
+- `CFA-33`: prepare `federation-js` for public npm before `@fynmesh/kernel`.
+- `CFA-34`: prepare `rollup-wrap-plugin` for public npm before `create-fynapp`.
+- `CFA-35`: complete legal/artifact gates for `esm-react` and `esm-react-dom`; publish `esm-react`
+  first. React-derived sources require an owner/legal decision about the correct upstream license
+  and notices.
+- All intended framework package names checked during this continuation returned 404 from the
+  public npm registry. Publisher access, name/scope ownership, and release provenance policy remain
+  external prerequisites.
 
 ## Continuation sequence
 
-1. Resolve `CFA-25` and commit the approved package metadata with a `CFA-25:` prefix.
-2. Resolve `CFA-20` by restoring or publishing `rollup-plugin-federation`; update source/registry
-   references only if the owner supplies the authoritative location.
-3. From the repository root, run the documented federation/bootstrap setup in tmux. A normal clean
-   setup is `fyn bootstrap`, which invokes `fyn install-federation`.
-4. From `dev-tools/create-fynapp`, refresh dependencies with `fyn install` and inspect any
-   `fyn-lock.yaml` changes before committing.
-5. Rerun `fyn run prepublishOnly` and the artifact dry-run inspection.
+1. Obtain the exact owner/legal values for `CFA-25` and the dependency packages.
+2. Prepare leaf packages and their clean artifact gates: `federation-js`,
+   `rollup-plugin-federation`, `rollup-wrap-plugin`, and `esm-react`.
+3. After their dependencies are public, prepare `@fynmesh/kernel` and `esm-react-dom`.
+4. Publish `create-fynapp` only after its runtime dependencies and every generated-template
+   dependency are public and a clean generated-app install/build passes without local overrides.
+5. Rerun root `fyn bootstrap`, both package gates, artifact dry runs, and the clean downstream smoke
+   check; inspect and discard unrelated lockfile churn.
 6. Confirm `git status --short` is clean and review `git diff main...HEAD`.
-7. Close `CFA-20` and `CFA-25`, then close `CFA-1` only when both blockers and all release checks
+7. Close the release-preparation tickets and `CFA-1` only when all public prerequisites and checks
    are complete.
 8. Merge and push according to the owner's requested branch workflow. Do not publish, version, or
-   tag as part of this handoff unless separately authorized.
+   tag unless separately authorized.
 
 ## Integration cautions
 
@@ -177,6 +204,9 @@ The original audit and implementation summaries are in ignored scratch storage:
 - `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-package-audit.md`
 - `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-cli-fixes.md`
 - `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-release-doc-fixes.md`
+- `/Users/joel.chen/dev/fynmesh/.temp/subagent-cfa20.md`
+- `/Users/joel.chen/dev/fynmesh/.temp/subagent-cfa25.md`
+- `/Users/joel.chen/dev/fynmesh/.temp/subagent-release-actions.md`
 
 Those files are supplemental; this handoff is the durable continuation source in `fynmesh`.
 
