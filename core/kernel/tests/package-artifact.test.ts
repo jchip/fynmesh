@@ -14,4 +14,12 @@ describe("published package artifact", () => {
     expect(pkg.type).toBe("module");
     expect(pkg.exports["."]).not.toHaveProperty("require");
   });
+
+  it("builds the public ESM entrypoint as a bundle", () => {
+    const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
+
+    expect(pkg.exports["."].import).toBe("./dist/index.js");
+    expect(rollupConfig).toContain('input: "src/index.ts"');
+    expect(rollupConfig).toContain('file: "dist/index.js"');
+  });
 });
