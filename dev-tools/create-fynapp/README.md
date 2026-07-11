@@ -93,7 +93,7 @@ This opt-in command copies the bundled `fynapp-modify` and
 - [FynApp guide](./agent/GUIDE.md)
 - [FynApp contract](./agent/CONTRACT.md)
 - [Kernel migration playbook](./agent/MIGRATION.md)
-- [Curated examples](./examples/README.md)
+- [Curated examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples)
 
 ## Development checks
 

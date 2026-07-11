@@ -34,7 +34,7 @@ Do this whenever `core/kernel` ships an API change:
    ```
 2. **Reconcile the anchor & contract.** In `dev-tools/create-fynapp`, run
    `fyn run build`. Fix `src/fynapp-contract.ts` to match the new kernel API, then
-   update [`CONTRACT.md`](./CONTRACT.md) prose and any affected [`../examples/`](../examples)
+   update [`CONTRACT.md`](./CONTRACT.md) prose and any affected [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples)
    so all three agree. Add an entry to the changelog below.
 3. **Migrate each FynApp.** For every app under `demo/` (and any external
    FynApps), apply the change per the changelog entry, following CONTRACT.md.

@@ -5,7 +5,7 @@ This package supports two distinct workflows. Pick the right one.
 | You want to… | Do this |
 |--------------|---------|
 | **Create a new FynApp** | Run the static `create-fynapp` CLI (§1). Mechanical, no code understanding needed. |
-| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from [`../examples/`](../examples), then `cfa check` (§2). |
+| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples), then `cfa check` (§2). |
 | **Update FynApps to a changed kernel API** | Follow [`MIGRATION.md`](./MIGRATION.md). |
 
 > **Claude Code skills (opt-in).** This package bundles two skills under
@@ -68,7 +68,7 @@ The loop:
 1. **Read the contract.** [`CONTRACT.md`](./CONTRACT.md) is authoritative for the
    `FynUnit` lifecycle, `rollup.config.ts`, middleware consume/provide, render
    results, and package/tsconfig shape.
-2. **Copy a pattern.** Find the closest match in [`../examples/`](../examples):
+2. **Copy a pattern.** Find the closest match in the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples):
    - `react-minimal` — standalone React app.
    - `middleware-consumer` — consume another app's middleware.
    - `middleware-provider` — author a middleware.

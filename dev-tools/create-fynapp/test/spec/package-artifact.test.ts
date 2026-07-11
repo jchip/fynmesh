@@ -27,4 +27,20 @@ describe("published package artifact", () => {
     expect(templatePkg.devDependencies).not.toHaveProperty("fynapp-shell-mw");
     expect(mainTemplate).not.toContain('from "fynapp-shell-mw/');
   });
+
+  it("does not link packaged guidance to excluded examples", () => {
+    const guidance = [
+      "README.md",
+      "agent/GUIDE.md",
+      "agent/MIGRATION.md",
+      "skills/fynapp-modify/SKILL.md",
+      "skills/fynapp-migrate-kernel/SKILL.md",
+    ].map((file) => fs.readFileSync(path.join(packageDir, file), "utf-8"));
+
+    for (const content of guidance) {
+      expect(content).not.toMatch(
+        /node_modules\/create-fynapp\/examples|\]\(\.\.?\/examples\/?(?:README\.md)?\)/
+      );
+    }
+  });
 });

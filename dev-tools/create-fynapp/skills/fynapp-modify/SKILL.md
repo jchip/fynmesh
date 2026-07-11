@@ -8,9 +8,10 @@ description: Modify an existing FynApp — change rendering, add/consume/author 
 FynApps are micro-frontends loaded by the fynmesh kernel. Modifying one requires
 understanding its code, so it's your job — there is no code-mod for it.
 
-The contract, guide, and examples ship inside the installed `create-fynapp`
-package (paths below are `node_modules/create-fynapp/...`; in the fynmesh
-monorepo itself they are `dev-tools/create-fynapp/...`).
+The contract and guide ship inside the installed `create-fynapp` package (paths
+below are `node_modules/create-fynapp/...`; in the fynmesh monorepo itself they
+are `dev-tools/create-fynapp/...`). Curated examples live in the
+[FynMesh repository](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples).
 
 ## Do this
 
@@ -20,7 +21,7 @@ monorepo itself they are `dev-tools/create-fynapp/...`).
    render results, package/tsconfig shape). Fuller guide:
    `node_modules/create-fynapp/agent/GUIDE.md`.
 
-2. **Copy the closest pattern** from `node_modules/create-fynapp/examples/`:
+2. **Copy the closest pattern** from the [FynMesh examples](https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp/examples):
    `react-minimal`, `middleware-consumer`, `middleware-provider`, `vanilla`.
 
 3. **Make a surgical edit.** Touch only what the request needs. `src/main.ts`
