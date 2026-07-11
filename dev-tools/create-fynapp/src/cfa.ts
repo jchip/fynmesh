@@ -3,7 +3,7 @@ import { NixClap } from "nix-clap";
 import path from "path";
 import fs from "fs";
 import { buildFynApp } from "./builder";
-import { runValidation } from "./validate-fynapp.ts";
+import { runCheck } from "./check-fynapp.ts";
 import { runInstallSkills } from "./install-skills.ts";
 
 export async function main() {
@@ -36,17 +36,17 @@ export async function main() {
             },
             exec: buildCommand
         },
-        validate: {
-            desc: "Build a FynApp and verify its federation output (entry + manifest)",
+        check: {
+            desc: "Build a FynApp and check its federation output (entry + manifest)",
             options: {
                 ...baseOptions,
                 "no-build": {
-                    desc: "Validate the existing dist/ without rebuilding",
+                    desc: "Check the existing dist/ without rebuilding",
                     flag: true,
                     default: false,
                 }
             },
-            exec: validateCommand
+            exec: checkCommand
         },
         "install-skills": {
             desc: "Install the bundled Claude Code skills into <dir>/.claude/skills",
@@ -96,9 +96,9 @@ async function buildCommand(opts) {
     });
 }
 
-async function validateCommand(opts) {
+async function checkCommand(opts) {
     const targetDir = resolveAppDir(opts);
-    const result = await runValidation(targetDir, { build: !opts["no-build"] });
+    const result = await runCheck(targetDir, { build: !opts["no-build"] });
     if (!result.ok) {
         process.exit(1);
     }

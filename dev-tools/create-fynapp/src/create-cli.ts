@@ -112,7 +112,7 @@ Next steps:
   cd demo/${config.dir || config.name}
   fyn install
   cfa build          # Build the FynApp
-  cfa validate       # Build + verify the federation output
+  cfa check          # Build + check the federation output
 
 To modify this FynApp (add middleware, change rendering, migrate to a new
 kernel API), hand it to an LLM coding agent — see the contract and guide in

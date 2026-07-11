@@ -6,8 +6,8 @@ export type { AppConfig } from "./prompts.js";
 export { fileExists } from "./utils.js";
 export { buildFynApp } from "./builder.js";
 export type { BuildOptions } from "./builder.js";
-export { validateFynApp, runValidation } from "./validate-fynapp.js";
-export type { ValidateResult } from "./validate-fynapp.js";
+export { checkFynApp, runCheck } from "./check-fynapp.js";
+export type { CheckResult } from "./check-fynapp.js";
 export { installSkills, runInstallSkills } from "./install-skills.js";
 
 // NOTE: `src/fynapp-contract.ts` is the type-anchor to @fynmesh/kernel. It is

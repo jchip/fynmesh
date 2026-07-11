@@ -1,12 +1,11 @@
 # The FynApp Contract
 
 **Audience: LLM coding agents modifying an existing FynApp.** This is the
-authoritative, verifiable contract for what a FynApp *is*. The kernel types and
+authoritative, type-anchored contract for what a FynApp *is*. The kernel types and
 selected lifecycle/runtime members described here are anchored by
 `../src/fynapp-contract.ts`, which is compiled on every build. Additive and
 behavioral changes still require a kernel API review. When you change a FynApp,
-conform to this contract and
-then **verify** with `cfa validate` (see §8).
+conform to this contract and then run `cfa check` (see §8).
 
 > Scope note: creating a *new* FynApp is a static, mechanical operation — run the
 > `create-fynapp` CLI (see `GUIDE.md`). This document is for *modifying* an
@@ -226,7 +225,7 @@ export type FynAppMiddleware = {
 ```
 
 Phases:
-1. **`setup(cc)`** — one-time per consuming FynApp. Validate `cc.meta.config`.
+1. **`setup(cc)`** — one-time per consuming FynApp. Check `cc.meta.config`.
    Return `{ status: "ready" }`, or `{ status: "defer" }` to postpone the
    consumer's `execute` until readiness is signalled. Signal readiness for
    deferred flows with `await cc.kernel.signalMiddlewareReady(cc, { name, status: "ready" })`.
@@ -288,15 +287,15 @@ React apps depend on `esm-react`/`esm-react-dom` — **not** `react`/`react-dom`
 
 ---
 
-## 8. Verify (always, after any change)
+## 8. Check (always, after any change)
 
 ```bash
-cd <fynapp> && cfa validate      # builds via rollup + checks the federation output
+cd <fynapp> && cfa check      # builds via rollup + checks the federation output
 ```
 
-`cfa validate` (implemented in `../src/validate-fynapp.ts`) builds the app and
+`cfa check` (implemented in `../src/check-fynapp.ts`) builds the app and
 asserts `dist/fynapp-entry.js` and a parseable `dist/fynapp.manifest.json` with
-`name`, `version`, and the `./main` expose. Use `cfa validate --no-build` to check
+`name`, `version`, and the `./main` expose. Use `cfa check --no-build` to check
 an existing `dist/`. A change is not done until this passes.
 
 ---

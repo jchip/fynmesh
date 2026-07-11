@@ -4,7 +4,7 @@ import path from 'path';
 import { generateApp } from '../../src/generator';
 
 /**
- * Verifies the STATIC scaffolder produces a skeleton that conforms to the
+ * Checks that the STATIC scaffolder produces a skeleton that conforms to the
  * current FynApp contract (rollup.config.ts + the createFynAppRollupConfig
  * factory form). The old AST "smart detection" (RollupConfigManager) was
  * removed — creation is now a plain template copy.

@@ -30,9 +30,9 @@ monorepo itself they are `dev-tools/create-fynapp/...`).
    use `globalThis.fynMeshKernel`. Adding an exposed module or dependency is a
    trivial edit to `rollup.config.ts` / `package.json`.
 
-4. **Verify — required before you call it done:**
+4. **Check — required before you call it done:**
    ```bash
-   cd <fynapp> && cfa validate
+   cd <fynapp> && cfa check
    ```
    (builds via rollup + checks `dist/fynapp-entry.js` and a valid
    `dist/fynapp.manifest.json` exposing `./main`; `--no-build` checks an existing

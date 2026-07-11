@@ -5,7 +5,7 @@ This package supports two distinct workflows. Pick the right one.
 | You want to… | Do this |
 |--------------|---------|
 | **Create a new FynApp** | Run the static `create-fynapp` CLI (§1). Mechanical, no code understanding needed. |
-| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from [`../examples/`](../examples), then `cfa validate` (§2). |
+| **Modify an existing FynApp** | You're a coding agent — follow [`CONTRACT.md`](./CONTRACT.md), copy from [`../examples/`](../examples), then `cfa check` (§2). |
 | **Update FynApps to a changed kernel API** | Follow [`MIGRATION.md`](./MIGRATION.md). |
 
 > **Claude Code skills (opt-in).** This package bundles two skills under
@@ -73,11 +73,11 @@ The loop:
    are the fuller, real-world versions.
 3. **Make the surgical edit** to `src/` (and, if adding an exposed module or a
    dependency, the *trivial* config edits to `rollup.config.ts` / `package.json`).
-4. **Verify** — the change is not done until this passes:
+4. **Check** — the change is not done until this passes:
    ```bash
-   cd demo/<fynapp> && cfa validate
+   cd demo/<fynapp> && cfa check
    ```
-   `cfa validate` builds via rollup and checks the federation output
+   `cfa check` builds via rollup and checks the federation output
    (`dist/fynapp-entry.js` + a valid `dist/fynapp.manifest.json` exposing
    `./main`). Use `--no-build` to check an existing `dist/`.
 5. If the app renders UI, also load it in the demo (`fyn start`) to confirm
@@ -106,6 +106,6 @@ The loop:
 | `setupReactAliasPlugins()` | `react` → `esm-react` |
 | `setupMinifyPlugins()` | Terser (production only) |
 | `fynappDummyEntryName`, `fynappEntryFilename`, `env` | Constants for the low-level form |
-| `validateFynApp`, `runValidation` | Programmatic validation (what `cfa validate` calls) |
+| `checkFynApp`, `runCheck` | Programmatic output check (what `cfa check` calls) |
 
 Debug the build with `DEBUG=create-fynapp`.

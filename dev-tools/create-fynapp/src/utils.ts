@@ -106,7 +106,7 @@ export async function copyFilesWithProgress(
 }
 
 /**
- * Validate multiple files exist with AveAzul's some utility
+ * Check that multiple files exist with AveAzul's some utility
  */
 export async function validateRequiredFiles(
     filePaths: string[],

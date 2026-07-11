@@ -4,9 +4,9 @@ import { spawn } from "child_process";
 import { fynappEntryFilename } from "./constants.js";
 
 /**
- * Result of validating a FynApp.
+ * Result of checking a FynApp.
  */
-export interface ValidateResult {
+export interface CheckResult {
   ok: boolean;
   errors: string[];
   warnings: string[];
@@ -48,16 +48,16 @@ function buildWithRollup(appDir: string): Promise<void> {
 }
 
 /**
- * Validate that a directory is a well-formed FynApp: it builds and emits the
+ * Check that a directory is a well-formed FynApp: it builds and emits the
  * federation entry + a manifest declaring name/version and the `./main` expose.
  *
- * This is the check an LLM coding agent runs to VERIFY an edit — it exercises
- * the real build and inspects the runtime contract, not just types.
+ * This is the check an LLM coding agent runs after an edit. It exercises the
+ * real build and inspects the runtime contract, not just types.
  */
-export async function validateFynApp(
+export async function checkFynApp(
   appDir: string,
   options: { build?: boolean } = {},
-): Promise<ValidateResult> {
+): Promise<CheckResult> {
   const { build = true } = options;
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -127,21 +127,21 @@ export async function validateFynApp(
 }
 
 /**
- * Run validation and print a human-readable report. Returns the result.
+ * Run the check and print a human-readable report. Returns the result.
  */
-export async function runValidation(
+export async function runCheck(
   appDir: string,
   options: { build?: boolean } = {},
-): Promise<ValidateResult> {
+): Promise<CheckResult> {
   const name = path.basename(appDir);
-  console.log(`\n🔎 Validating FynApp: ${name}`);
-  const result = await validateFynApp(appDir, options);
+  console.log(`\n🔎 Checking FynApp: ${name}`);
+  const result = await checkFynApp(appDir, options);
 
   for (const w of result.warnings) console.warn(`  ⚠️  ${w}`);
   if (result.ok) {
     console.log(`  ✅ ${name} is a valid FynApp (entry + manifest + ./main expose present).`);
   } else {
-    console.error(`  ❌ ${name} failed validation:`);
+    console.error(`  ❌ ${name} failed the check:`);
     for (const e of result.errors) console.error(`     - ${e}`);
   }
   return result;

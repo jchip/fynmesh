@@ -40,9 +40,9 @@ Do this whenever `core/kernel` ships an API change:
    Prefer the smallest edit that conforms. Typical changes: renamed
    type/method, new/changed `initialize` return fields, changed middleware
    phase signatures, new required lifecycle handling.
-4. **Validate each app**:
+4. **Check each app**:
    ```bash
-   cd demo/<fynapp> && cfa validate
+   cd demo/<fynapp> && cfa check
    ```
 5. **Full rebuild** from the repo root to catch cross-app/federation breakage:
    ```bash

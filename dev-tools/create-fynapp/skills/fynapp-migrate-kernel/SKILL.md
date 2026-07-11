@@ -23,7 +23,7 @@ The full playbook and its changelog ship in the installed package at
    to `agent/MIGRATION.md`.
 3. **Migrate each FynApp** per the changelog entry, conforming to
    `agent/CONTRACT.md`. Smallest conforming edit wins.
-4. **Validate each:** `cd <fynapp> && cfa validate`.
+4. **Check each:** `cd <fynapp> && cfa check`.
 5. **Full rebuild / run** to catch cross-app/federation breakage a compiler
    can't see (in the fynmesh monorepo: `fyn bootstrap && fyn start`).
 
