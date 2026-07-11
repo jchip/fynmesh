@@ -176,6 +176,34 @@ describe("published ESM runtime", () => {
     }
   });
 
+  it("creates a fully specified app without reading stdin", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-noninteractive-"));
+    const targetDir = path.join(tmpRoot, "demo", "test-app");
+
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [
+          path.join(distDir, "create-cli.js"),
+          "--name",
+          "test-app",
+          "--framework",
+          "react",
+          "--dir",
+          "test-app",
+          "--skip-install",
+        ],
+        { cwd: tmpRoot, encoding: "utf8", timeout: 2_000 },
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(0);
+      expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
   it("generates from the built package's bundled templates", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-dist-gen-"));
     const targetDir = path.join(tmpRoot, "demo", "built-app");

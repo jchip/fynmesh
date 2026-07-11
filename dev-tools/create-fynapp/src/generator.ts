@@ -191,11 +191,6 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
                     .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
                     .replace(/\{\{framework\}\}/g, config.framework);
 
-                // Handle component inclusion based on selected components
-                if (content.includes("{{#if counter}}") && config.components) {
-                    content = processComponentInclusion(content, config.components);
-                }
-
                 // Write the processed file
                 await writeFile(targetFilePath.replace(".template", ""), content);
                 return `✅ Created ${targetFilePath.replace(".template", "").split("/").pop()}`;
@@ -210,57 +205,4 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
             console.error("❌ Error creating source files:", error.message);
             throw error;
         });
-}
-
-/**
- * Process conditional component inclusion
- */
-function processComponentInclusion(content: string, components: string[]): string {
-    // Handle counter component
-    content = processComponentSection(content, "counter", components.includes("counter"));
-
-    // Handle stats component
-    content = processComponentSection(content, "stats", components.includes("stats"));
-
-    // Handle chart component
-    content = processComponentSection(content, "chart", components.includes("chart"));
-
-    // Handle projects component
-    content = processComponentSection(content, "projects", components.includes("projects"));
-
-    // Handle settings component
-    content = processComponentSection(content, "settings", components.includes("settings"));
-
-    return content;
-}
-
-/**
- * Process a single component section in the template
- */
-function processComponentSection(content: string, componentName: string, include: boolean): string {
-    const startTag = `{{#if ${componentName}}}`;
-    const endTag = `{{/if ${componentName}}}`;
-
-    let result = content;
-    let startIndex = result.indexOf(startTag);
-
-    while (startIndex !== -1) {
-        const endIndex = result.indexOf(endTag, startIndex);
-
-        if (endIndex === -1) {
-            break; // Malformed template
-        }
-
-        const beforeSection = result.substring(0, startIndex);
-        const section = result.substring(startIndex + startTag.length, endIndex);
-        const afterSection = result.substring(endIndex + endTag.length);
-
-        result = include
-            ? beforeSection + section + afterSection
-            : beforeSection + afterSection;
-
-        startIndex = result.indexOf(startTag);
-    }
-
-    return result;
 }

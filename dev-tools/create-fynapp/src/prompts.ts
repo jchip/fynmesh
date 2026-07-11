@@ -11,7 +11,6 @@ export interface AppConfig {
     framework: string;
     dir?: string;
     skipInstall?: boolean;
-    components?: string[];
 }
 
 /**
@@ -67,22 +66,8 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
         });
     }
 
-    // Ask for components to include
-    questions.push({
-        type: "checkbox",
-        name: "components",
-        message: "Which components would you like to include?",
-        choices: [
-            { name: "Counter", value: "counter", checked: true },
-            { name: "Stats Cards", value: "stats", checked: true },
-            { name: "Chart", value: "chart" },
-            { name: "Projects Table", value: "projects" },
-            { name: "Settings", value: "settings" }
-        ]
-    });
-
     // Get answers to questions
-    const answers = await inquirer.prompt(questions);
+    const answers = questions.length > 0 ? await inquirer.prompt(questions) : {};
 
     // Combine command line args with prompted answers
     const config = {
@@ -90,7 +75,6 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
         framework: args.framework || answers.framework,
         dir: args.dir || answers.dir,
         skipInstall: args["skip-install"] || false,
-        components: answers.components || []
     };
     assertValidCreationValues(config.name, config.dir);
     return config;
