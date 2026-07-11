@@ -8,15 +8,16 @@ Date: 2026-07-10 (America/Los_Angeles)
 - Package: `dev-tools/create-fynapp`
 - Working branch: `codex/create-fynapp-release`
 - Base branch: `main` at `cf7558c`
-- Branch status: clean, 27 ticket-prefixed commits ahead of `main`
+- Branch status: clean, 29 ticket-prefixed commits ahead of `main`
 - Merge/push status: not merged and not pushed
 - Task project: `fynmesh-create-fynapp` (`CFA` prefix)
-- Epic: `CFA-1`; public-release prerequisites are tracked by `CFA-20`, `CFA-25`, and
-  `CFA-33` through `CFA-35`
+- Epic: `CFA-1`; public-release prerequisites are tracked by `CFA-20`, `CFA-25`, `CFA-33`,
+  and `CFA-34`
 
-The owner selected public npm distribution for FynMesh framework packages. Repository-local setup
-and package checks pass. Public release readiness still requires approved legal metadata, npm
-publisher access, and release gates/publication for the dependency packages listed below.
+The owner selected public npm distribution for core FynMesh framework packages only. Local sample
+and demo packages remain unpublished. Repository-local setup and package checks pass. Public release
+readiness still requires approved legal metadata, npm publisher access, and release
+gates/publication for the core dependency packages listed below.
 
 ## Delivered changes
 
@@ -35,6 +36,8 @@ publisher access, and release gates/publication for the dependency packages list
 - Target paths must remain under `demo/`; existing symlink escapes are rejected.
 - The inert component-selection prompt and configuration field were removed.
 - The React template no longer depends on the repository-only `fynapp-shell-mw` demo package.
+- Public React scaffolds use standard `react`/`react-dom`; repository demos explicitly opt into the
+  local `esm-react` adapters.
 
 ### Output integrity and contracts
 
@@ -91,6 +94,8 @@ publisher access, and release gates/publication for the dependency packages list
 | CFA-30 | `e997a79` | Remove the false CommonJS kernel export |
 | CFA-31 | `f0df4d1` | Bundle the kernel public entrypoint |
 | CFA-32 | `20d5371` | Fix packaged example references |
+| CFA-36 | `cf50ce6` | Refresh the public release handoff |
+| CFA-37 | `3edbeee` | Keep demo React adapters out of public scaffolds |
 
 Audit tickets `CFA-2`, `CFA-3`, and `CFA-4` were completed and closed before implementation.
 
@@ -102,7 +107,7 @@ The final combined prepublish run completed successfully:
   - TypeScript build passed.
   - TypeDoc generated HTML without TypeDoc diagnostics.
   - ESLint passed.
-  - Jest coverage run passed: 16 suites, 76 tests.
+  - Jest coverage run passed: 16 suites, 78 tests.
 - `@fynmesh/kernel` build and artifact checks passed.
   - The public `dist/index.js` loaded under plain Node.
   - Vitest passed: 38 files, 575 tests.
@@ -159,19 +164,18 @@ its approved package-local license text.
 
 - `CFA-33`: prepare `federation-js` for public npm before `@fynmesh/kernel`.
 - `CFA-34`: prepare `rollup-wrap-plugin` for public npm before `create-fynapp`.
-- `CFA-35`: complete legal/artifact gates for `esm-react` and `esm-react-dom`; publish `esm-react`
-  first. React-derived sources require an owner/legal decision about the correct upstream license
-  and notices.
-- All intended framework package names checked during this continuation returned 404 from the
-  public npm registry. Publisher access, name/scope ownership, and release provenance policy remain
-  external prerequisites.
+- `CFA-35` is `wont_do`: `esm-react` and `esm-react-dom` are local demo packages, not public release
+  prerequisites. `fynapp-shell-mw` is also demo-only.
+- Core package names checked during this continuation returned 404 from the public npm registry.
+  Publisher access, name/scope ownership, and release provenance policy remain external
+  prerequisites.
 
 ## Continuation sequence
 
 1. Obtain the exact owner/legal values for `CFA-25` and the dependency packages.
-2. Prepare leaf packages and their clean artifact gates: `federation-js`,
-   `rollup-plugin-federation`, `rollup-wrap-plugin`, and `esm-react`.
-3. After their dependencies are public, prepare `@fynmesh/kernel` and `esm-react-dom`.
+2. Prepare the core leaf packages and their clean artifact gates: `federation-js`,
+   `rollup-plugin-federation`, and `rollup-wrap-plugin`.
+3. After `federation-js` is public, prepare `@fynmesh/kernel`.
 4. Publish `create-fynapp` only after its runtime dependencies and every generated-template
    dependency are public and a clean generated-app install/build passes without local overrides.
 5. Rerun root `fyn bootstrap`, both package gates, artifact dry runs, and the clean downstream smoke
