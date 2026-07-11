@@ -17,6 +17,34 @@ describe("published ESM runtime", () => {
     expect(result.stderr).not.toContain("ERR_MODULE_NOT_FOUND");
   });
 
+  it("honors cfa validate --no-build and --dir", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-no-build-"));
+    const appDir = path.join(tmpRoot, "app");
+    fs.mkdirSync(path.join(appDir, "dist"), { recursive: true });
+    fs.writeFileSync(
+      path.join(appDir, "package.json"),
+      JSON.stringify({ name: "test-app", version: "1.0.0" }),
+    );
+    fs.writeFileSync(path.join(appDir, "dist", "fynapp-entry.js"), "");
+    fs.writeFileSync(
+      path.join(appDir, "dist", "fynapp.manifest.json"),
+      JSON.stringify({ name: "test-app", version: "1.0.0", exposes: { "./main": {} } }),
+    );
+
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [path.join(distDir, "cfa.js"), "validate", "--dir", appDir, "--no-build"],
+        { cwd: packageDir, encoding: "utf8", timeout: 5_000 },
+      );
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(0);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
   it("generates from the built package's bundled templates", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-dist-gen-"));
     const targetDir = path.join(tmpRoot, "demo", "built-app");

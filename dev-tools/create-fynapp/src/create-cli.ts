@@ -7,9 +7,10 @@ import { generateApp } from "./generator.js";
 import { promptForMissingInfo } from "./prompts.js";
 import { fileExists } from "./utils.js";
 import { runFynCommand } from "./run-fyn.js";
+import { getCommandOptions } from "./cli-options.js";
 
 export async function main() {
-    const nixClap = new NixClap();
+    const nixClap = new NixClap({ defaultCommand: "create" });
 
     const cliOptions = {
         name: {
@@ -39,16 +40,14 @@ export async function main() {
         },
         "skip-install": {
             desc: "Skip dependency installation",
-            flag: true,
-            default: false,
+            argDefault: "false",
         },
     };
 
-    nixClap.init({}, {
-        _: {
+    nixClap.init(cliOptions, {
+        create: {
             desc: "Create a new FynApp",
-            options: cliOptions,
-            exec: createNewApp
+            exec: (command, commands) => createNewApp(getCommandOptions(command, commands))
         }
     });
 
