@@ -1,9 +1,9 @@
 import inquirer from "inquirer";
 import { assertSupportedFramework, supportedFrameworks } from "./frameworks.js";
 import {
-    assertValidCreationValues,
-    validateAppName,
-    validateDirectoryName,
+    assertCreationValuesAllowed,
+    checkAppName,
+    checkDirectoryName,
 } from "./app-config.js";
 
 export interface AppConfig {
@@ -18,11 +18,11 @@ export interface AppConfig {
  */
 export async function promptForMissingInfo(args: any): Promise<AppConfig> {
     if (args.name) {
-        const result = validateAppName(args.name);
+        const result = checkAppName(args.name);
         if (result !== true) throw new Error(result);
     }
     if (args.dir) {
-        const result = validateDirectoryName(args.dir);
+        const result = checkDirectoryName(args.dir);
         if (result !== true) throw new Error(result);
     }
     if (args.framework) {
@@ -38,7 +38,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             name: "name",
             message: "What would you like to name your FynApp?",
             default: "fynapp-new",
-            validate: validateAppName
+            validate: checkAppName
         });
     }
 
@@ -62,7 +62,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             name: "dir",
             message: "Directory name to create (relative to demo/)",
             default: (answers: any) => answers.name || args.name,
-            validate: validateDirectoryName
+            validate: checkDirectoryName
         });
     }
 
@@ -76,6 +76,6 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
         dir: args.dir || answers.dir,
         skipInstall: args["skip-install"] || false,
     };
-    assertValidCreationValues(config.name, config.dir);
+    assertCreationValuesAllowed(config.name, config.dir);
     return config;
 }

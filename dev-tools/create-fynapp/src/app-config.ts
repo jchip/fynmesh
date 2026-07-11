@@ -3,7 +3,7 @@ import path from "path";
 
 const identifierPattern = /^[a-z0-9-]+$/;
 
-function validateIdentifier(value: string, label: string): true | string {
+function checkIdentifier(value: string, label: string): true | string {
   if (!value.trim()) {
     return `${label} cannot be empty`;
   }
@@ -13,16 +13,16 @@ function validateIdentifier(value: string, label: string): true | string {
   return true;
 }
 
-export function validateAppName(value: string): true | string {
-  return validateIdentifier(value, "App name");
+export function checkAppName(value: string): true | string {
+  return checkIdentifier(value, "App name");
 }
 
-export function validateDirectoryName(value: string): true | string {
-  return validateIdentifier(value, "Directory name");
+export function checkDirectoryName(value: string): true | string {
+  return checkIdentifier(value, "Directory name");
 }
 
-export function assertValidCreationValues(name: string, dir: string): void {
-  for (const result of [validateAppName(name), validateDirectoryName(dir)]) {
+export function assertCreationValuesAllowed(name: string, dir: string): void {
+  for (const result of [checkAppName(name), checkDirectoryName(dir)]) {
     if (result !== true) {
       throw new Error(result);
     }
