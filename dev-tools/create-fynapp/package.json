@@ -28,7 +28,7 @@
     "dist",
     "lib",
     "src",
-    "templates",
+    "templates/react",
     "agent",
     "skills"
   ],
