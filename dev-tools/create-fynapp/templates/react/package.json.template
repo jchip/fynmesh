@@ -24,7 +24,6 @@
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
-    "fynapp-shell-mw": "^1.0.0",
     "postcss": "^8.5.3",
     "rollup": "^4.9.1",
     "rollup-plugin-federation": "^1.0.0",
