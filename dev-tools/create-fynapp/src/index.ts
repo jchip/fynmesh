@@ -44,7 +44,6 @@ import type {
   SharedConfig,
   FederationInfo,
 } from "rollup-plugin-federation";
-import { DependencyAnalyzer } from "rollup-plugin-federation";
 import { resolve } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
 import { RollupOptions, ModuleFormat } from "rollup";
@@ -282,7 +281,7 @@ export function setupFederationPlugins(
  * ```
  */
 export function createEnrichManifest() {
-  return async (baseManifest: any, runtime: FederationRuntime, context: any) => {
+  return async (baseManifest: any, _runtime: FederationRuntime, _context: any) => {
     const cwd = process.cwd();
 
     debug("enrichManifest - dynamicImports count:", baseManifest.dynamicImports?.length);
@@ -577,7 +576,6 @@ async function generateFynAppManifest(
   context?: any,
   bundle?: any,
 ): Promise<FynAppManifest> {
-  const analyzer = new DependencyAnalyzer({}, "");
   const cwd = process.cwd();
 
   // Build exposes with final chunk information if context and bundle are available

@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { promisify } from "util";
 import { exec as execCb } from "child_process";
 
