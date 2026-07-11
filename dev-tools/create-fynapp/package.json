@@ -21,7 +21,7 @@
     "prepublishOnly": "xrun --serial [[build, docs], xarc/check]",
     "docs": "xrun xarc/docs",
     "coverage": "xrun xarc/test-cov",
-    "install-cfa": "npm run build && npm install -g ."
+    "install-cfa": "fyn run build && fyn global add ."
   },
   "author": "",
   "files": [

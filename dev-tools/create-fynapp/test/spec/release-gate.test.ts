@@ -24,4 +24,10 @@ describe("release gate configuration", () => {
 
     expect(pkg.devDependencies.typedoc).toBe("^0.28.7");
   });
+
+  it("uses fyn for the global install script", () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(packageDir, "package.json"), "utf-8"));
+
+    expect(pkg.scripts["install-cfa"]).toBe("fyn run build && fyn global add .");
+  });
 });
