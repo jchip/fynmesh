@@ -47,7 +47,7 @@ describe("published ESM runtime", () => {
     }
   });
 
-  it("honors cfa validate --no-build and --dir", () => {
+  it("honors cfa check --no-build and --dir", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-no-build-"));
     const appDir = path.join(tmpRoot, "app");
     fs.mkdirSync(path.join(appDir, "dist"), { recursive: true });
@@ -64,7 +64,7 @@ describe("published ESM runtime", () => {
     try {
       const result = spawnSync(
         process.execPath,
-        [path.join(distDir, "cfa.js"), "validate", "--dir", appDir, "--no-build"],
+        [path.join(distDir, "cfa.js"), "check", "--dir", appDir, "--no-build"],
         { cwd: packageDir, encoding: "utf8", timeout: 5_000 },
       );
 
