@@ -57,7 +57,7 @@ load({
     },
 
     "gh-publish": {
-        desc: "Publish demo site to gh-pages branch",
+        desc: "Deploy demo site to Cloudflare Pages via the gh-pages branch",
         task: () => {
             // Generate timestamp in MM/DD/YYYY HH:MM format
             const now = new Date();
@@ -67,22 +67,27 @@ load({
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const timestamp = `${month}/${day}/${year} ${hours}:${minutes}`;
-            
+
+            // gh-pages is a disposable branch: always latest main + a built docs/
+            // commit on top, force-pushed. Cloudflare Pages serves the docs/ dir.
             return serial([
-                // Step 1: Build demo site in main branch to .temp/docs directory
-                "build-demo-site",
-                // Step 2: Switch to gh-pages branch
+                // Step 1: Build demo site (on main) to .temp/docs
                 //         (.temp/docs persists because .temp is in .gitignore)
-                exec("git checkout gh-pages"),
-                // Step 3: Delete old docs directory from gh-pages
+                "build-demo-site",
+                // Step 2: Hard reset gh-pages to latest main (creates or resets it)
+                exec("git checkout -B gh-pages main"),
+                // Step 3: Drop the freshly built docs onto the tree
                 exec("rm -rf ../../docs"),
-                // Step 4: Move the freshly built docs from .temp/docs to docs
                 exec("mv ../../.temp/docs ../../docs"),
-                // Step 5: Force add docs directory (it's in .gitignore on main)
+                // Step 4: Force add docs directory (it's in .gitignore on main)
                 exec("git add -f ../../docs"),
-                // Step 6: Commit the changes with timestamp
-                exec(`git commit -m "update demo site to gh pages ${timestamp}"`)
-                // Note: User must manually run 'git push' after this
+                // Step 5: Commit the built docs with a timestamp
+                exec(`git commit -m "build demo site ${timestamp}"`),
+                // Step 6: Force push — triggers a Cloudflare Pages deploy
+                exec("git push --force origin gh-pages"),
+                // Step 7: Return to a clean main
+                exec("git checkout -f main"),
+                exec("rm -rf ../../docs")
             ])
         }
     }

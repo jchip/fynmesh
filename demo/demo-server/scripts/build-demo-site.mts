@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 interface BuildDemoSiteOptions {
     /** Enable verbose logging */
     verbose?: boolean;
-    /** Path prefix for deployment (e.g., "/fynmesh/" for GitHub Pages) */
+    /** Path prefix for deployment (e.g., "/" for the custom domain root) */
     pathPrefix?: string;
     /** Output directory for built files */
     outputDir?: string;
@@ -210,7 +210,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(shellOutputPath, shellHtml);
         log("📄 Generated: " + shellOutputPath);
 
-        // Copy all required static assets for GitHub Pages (skip index.html since we build it directly)
+        // Copy all required static assets (skip index.html since we build it directly)
         log("📁 Copying static assets...");
 
         // Copy static files from public directory
@@ -241,13 +241,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             }
         });
 
-        // Copy CNAME file for custom domain (GitHub Pages)
-        const cnameSource = path.join(__dirname, "../CNAME");
-        if (existsSync(cnameSource)) {
-            const cnameDest = path.join(outputDir, "CNAME");
-            writeFileSync(cnameDest, readFileSync(cnameSource));
-            log(`📄 Copied: CNAME (custom domain: ${readFileSync(cnameSource, 'utf-8').trim()})`);
-        }
+        // Note: no CNAME file — Cloudflare Pages configures the custom domain
+        // (www.fynetiq.com) in its dashboard, so a CNAME file is not used.
 
         // Copy Google verification file
         const googleVerifySource = path.join(__dirname, "../googlee9bcb5713536aa25.html");

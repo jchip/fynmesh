@@ -1,11 +1,11 @@
 # FynMesh Demo Server
 
-The demo server provides local development and GitHub Pages deployment for the FynMesh micro-frontend demo.
+The demo server provides local development and Cloudflare Pages deployment for the FynMesh micro-frontend demo.
 
 ## Table of Contents
 
 - [Local Development](#local-development)
-- [GitHub Pages Deployment](#github-pages-deployment)
+- [Cloudflare Pages Deployment](#cloudflare-pages-deployment)
 - [Build Scripts](#build-scripts)
 - [Project Structure](#project-structure)
 
@@ -68,21 +68,24 @@ Interactive shell middleware demo with:
 - **Status Tracking**: Shows loaded FynApps count and individual load status
 - **Footer Info**: Current FynApp name, version, kernel version, middleware count
 
-## GitHub Pages Deployment
+## Cloudflare Pages Deployment
 
-The demo site is deployed to GitHub Pages using a **manual workflow** with the `gh-pages` branch.
+The demo site is deployed to **Cloudflare Pages**, which is connected to this repo's
+`gh-pages` branch and serves the `/docs` directory. Cloudflare runs **no build** — it
+publishes `docs/` as-is on every push to `gh-pages`.
 
 ### Deployment Architecture
 
-- **Branch**: `gh-pages` (separate from `main`)
-- **Output Directory**: `/docs` (at repository root)
+- **Branch**: `gh-pages` — a **disposable** branch that is always the latest `main`
+  plus one built `docs/` commit on top. It is **force-pushed** on every deploy, so it
+  never accumulates history.
+- **Output Directory**: `/docs` (at repository root) — Cloudflare Pages build output setting.
+- **Cloudflare build config**: build command empty, build output `docs`, root directory empty.
 - **Base Path**: Auto-detected at runtime
   - `https://www.fynetiq.com/` → `/` (custom domain, root path)
-  - `https://jchip.github.io/fynmesh/` → `/fynmesh/` (GitHub Pages, subdirectory)
-- **Live URLs**: 
-  - Custom Domain: https://www.fynetiq.com/
-  - GitHub Pages: https://jchip.github.io/fynmesh/
-- **Custom Domain**: Configured via CNAME file
+  - `*.github.io/fynmesh/` → `/fynmesh/` (subdirectory, if ever served from GitHub Pages)
+- **Live URL**: https://www.fynetiq.com/
+- **Custom Domain**: Configured in the Cloudflare Pages dashboard (no `CNAME` file).
 
 #### Path Prefix Auto-Detection
 
@@ -92,7 +95,7 @@ The demo site automatically detects the correct path prefix based on the domain:
 - **GitHub Pages** (`*.github.io`): Extracts repo name from pathname (e.g., `/fynmesh/`)
 - **Fallback**: Uses build-time configured path prefix
 
-This allows the same build to work on both the custom domain and GitHub Pages URL without rebuilding.
+This allows the same build to work on multiple hosts without rebuilding.
 
 ### Deployment Steps
 
@@ -117,35 +120,22 @@ cd demo/demo-server
 xrun gh-publish
 ```
 
-**What `gh-publish` does:**
+**What `gh-publish` does** (one-command deploy):
 
-1. **Builds the demo site in `main` branch** using `build-demo-site` task
-   - Renders HTML templates with production settings
-   - Copies all FynApp `dist/` directories to `../../.temp/docs/`
-   - Copies static assets (system.js, sw.js, etc.)
-   - Copies dependencies (kernel, federation-js, spectre.css)
-   - Uses `.temp/docs` to avoid conflicts with git-tracked `docs/` on `gh-pages`
+1. **Builds the demo site** using `build-demo-site` to `../../.temp/docs/`
+   (`.temp` is gitignored, so it survives the branch switch).
+2. **Hard resets `gh-pages` to latest `main`**: `git checkout -B gh-pages main`.
+3. **Drops the built docs onto the tree**: `rm -rf ../../docs` then
+   `mv ../../.temp/docs ../../docs`.
+4. **Commits**: `git add -f ../../docs` (docs is gitignored on `main`) then commits
+   with an auto-generated `build demo site MM/DD/YYYY HH:MM` message.
+5. **Force pushes**: `git push --force origin gh-pages` — this triggers the Cloudflare
+   Pages deploy.
+6. **Returns to a clean `main`**: `git checkout -f main` and removes the local `docs/`.
 
-2. **Switches to `gh-pages` branch**: `git checkout gh-pages`
-   - `.temp/docs` persists because `.temp` is in `.gitignore`
+There is no separate `git push` step — the task force-pushes for you.
 
-3. **Replaces old docs**: 
-   - Deletes old `docs/` directory: `rm -rf ../../docs`
-   - Moves new build: `mv ../../.temp/docs ../../docs`
-
-4. **Commits changes**: 
-   - Force adds docs directory with `git add -f ../../docs` (needed because it's gitignored on `main`)
-   - Commits with message "update demo site to gh pages MM/DD/YYYY HH:MM" (timestamp auto-generated)
-
-#### 3. Push to GitHub
-
-```bash
-git push
-```
-
-This pushes the `gh-pages` branch to GitHub, which triggers GitHub Pages to update the live site.
-
-### Manual Deployment Workflow
+### Deployment Workflow
 
 ```bash
 # Complete deployment workflow (must start on main branch)
@@ -157,30 +147,24 @@ git checkout main
 # 1. Build all packages in production mode
 NODE_ENV=production fyn bootstrap
 
-# 2. Build demo site and switch to gh-pages branch with docs
+# 2. Build demo site, reset gh-pages to main, commit docs, and force push
 cd demo/demo-server
 xrun gh-publish
 
-# 3. Push to GitHub (you'll be on gh-pages branch after step 2)
-git push
-
-# 4. Switch back to main branch for development
-git checkout main
+# gh-publish leaves you back on main — no manual push needed.
 ```
+
+### Deploy-Only Files
+
+Any files that must ship to the deployed site but aren't part of the demo build (e.g.
+verification files) live under `demo/demo-server/` on `main` and are copied into `docs/`
+by `build-demo-site.mts`. Currently this is the Google site-verification file. Cloudflare
+Pages headers/redirects (`_headers`, `_redirects`) would go here too if ever needed.
 
 ### Deployment History
 
-You can view deployment history by checking the `gh-pages` branch:
-
-```bash
-git checkout gh-pages
-git log
-```
-
-Example commits:
-- `update demo site to gh pages 10/22/2025 21:02`
-- `update demo site to gh pages 08/04/2025 21:27`
-- `Update CNAME`
+Because `gh-pages` is force-pushed, it holds only the latest deploy on top of `main`;
+it is not a running history. Track deploys from `main` instead.
 
 ## Build Scripts
 
@@ -211,24 +195,24 @@ xrun build-templates
 - **Script**: `scripts/build-templates.mts`
 
 #### `build-demo-site`
-Builds the complete demo site for **GitHub Pages** deployment.
+Builds the complete demo site for **Cloudflare Pages** deployment.
 
 ```bash
 xrun build-demo-site
 ```
 
 - **Output**: `../../.temp/docs/` (temporary build location)
-- **Path Prefix**: `/fynmesh/` (GitHub Pages subdirectory path, auto-detected at runtime)
+- **Path Prefix**: `/` (base path; the runtime auto-detects per host)
 - **Includes**:
   - Rendered HTML templates
   - All FynApp `dist/` directories
   - Static assets (system.js, sw.js, sw-utils.js)
   - Dependencies (kernel, federation-js, spectre.css)
-  - CNAME file (for custom domain: `www.fynetiq.com`)
+  - Google site-verification file
 - **Script**: `scripts/build-demo-site.mts`
 
 #### `gh-publish`
-Complete GitHub Pages deployment workflow.
+Complete Cloudflare Pages deployment workflow (one command).
 
 **Prerequisites**: Must be run from `main` branch.
 
@@ -237,24 +221,22 @@ xrun gh-publish
 ```
 
 **Steps executed:**
-1. `build-demo-site` - Build demo site in `main` branch to `../../.temp/docs/`
-2. `git checkout gh-pages` - Switch to deployment branch (`.temp/docs` persists)
-3. `rm -rf ../../docs` - Remove old docs from `gh-pages`
-4. `mv ../../.temp/docs ../../docs` - Move freshly built docs to final location
-5. `git add -f ../../docs` - Force add docs directory (requires -f because it's gitignored on `main`)
-6. `git commit -m "update demo site to gh pages MM/DD/YYYY HH:MM"` - Commit with auto-generated timestamp
+1. `build-demo-site` - Build demo site to `../../.temp/docs/` (`.temp` is gitignored, so it persists across the branch switch)
+2. `git checkout -B gh-pages main` - Hard reset `gh-pages` to latest `main` (creates it if missing)
+3. `rm -rf ../../docs` + `mv ../../.temp/docs ../../docs` - Drop the fresh build onto the tree
+4. `git add -f ../../docs` - Force add docs directory (requires -f because it's gitignored on `main`)
+5. `git commit -m "build demo site MM/DD/YYYY HH:MM"` - Commit with auto-generated timestamp
+6. `git push --force origin gh-pages` - Force push, which triggers the Cloudflare Pages deploy
+7. `git checkout -f main` + `rm -rf ../../docs` - Return to a clean `main`
 
 **After running this:**
-- You will be on `gh-pages` branch
-- You must manually `git push` to deploy
-- Switch back to `main` with `git checkout main`
+- You are back on `main`; the deploy has been pushed. No manual `git push` needed.
 
 **Why `.temp/docs` is used:**
 - `docs/` is in `.gitignore` to keep it out of the `main` branch
-- But `gh-pages` has `docs/` committed (using `-f` flag)
-- When switching branches, git restores tracked files from the target branch
-- So switching to `gh-pages` would overwrite a fresh build with the old committed version
-- Building to `.temp/docs` (which is also gitignored) preserves the fresh build during branch switch
+- `build-demo-site` runs while on `main`, so it builds into `.temp/docs` (also gitignored)
+- `git checkout -B gh-pages main` then resets the branch without disturbing `.temp/docs`
+- The fresh build is moved into place on `gh-pages` and force-committed with `-f`
 
 ## Project Structure
 
@@ -265,7 +247,7 @@ demo/demo-server/
 │   └── proxy.ts             # Redbird proxy configuration
 ├── scripts/
 │   ├── build-templates.mts  # Local development template builder
-│   └── build-demo-site.mts  # GitHub Pages site builder
+│   └── build-demo-site.mts  # Cloudflare Pages site builder
 ├── templates/
 │   ├── pages/
 │   │   └── index.html       # Main page template (Nunjucks)
@@ -282,12 +264,11 @@ demo/demo-server/
 │   └── sw-utils.js          # Service Worker utilities
 ├── dist/                    # Compiled TypeScript output
 ├── xrun-tasks.ts           # Custom build tasks
-├── CNAME                   # Custom domain for GitHub Pages (www.fynetiq.com)
+├── CNAME                   # Legacy GitHub Pages domain file (not deployed to Cloudflare)
 └── package.json            # Package configuration
 
-../../docs/                  # GitHub Pages output (gh-pages branch)
+../../docs/                  # Cloudflare Pages output (gh-pages branch, force-pushed)
 ├── index.html              # Built demo site
-├── CNAME                   # Custom domain configuration
 ├── fynapp-*/dist/          # All FynApp bundles
 ├── kernel/dist/            # FynMesh kernel
 ├── federation-js/dist/     # Module federation runtime
@@ -312,7 +293,7 @@ Both build scripts provide the same template data structure:
 {
   title: "FynMesh Micro Frontend Demo",
   isProduction: boolean,
-  pathPrefix: string,  // "/" for local, "/" for GitHub Pages
+  pathPrefix: string,  // "/" base path; runtime auto-detects per host
   features: {
     "react-18": true,
     "react-19": true,
@@ -378,15 +359,16 @@ If you encounter `EPERM` errors during local development:
 - Kill processes with `kill PID`
 - The dev server uses ports 3000 (HTTP) and 3443 (HTTPS)
 
-### GitHub Pages Not Updating
+### Cloudflare Pages Not Updating
 
-1. Verify push succeeded:
+1. Verify the force push succeeded:
    ```bash
-   git log --oneline -5
+   git log origin/gh-pages --oneline -3
    ```
 
-2. Check GitHub repository Settings → Pages
-3. Wait a few minutes for GitHub Pages to rebuild
+2. Check the deployment in the Cloudflare Pages dashboard (Deployments tab). Confirm the
+   Production branch is `gh-pages` and the build output directory is `docs`.
+3. Wait a minute for the Cloudflare deploy to finish
 4. Clear browser cache and reload
 
 ## See Also
