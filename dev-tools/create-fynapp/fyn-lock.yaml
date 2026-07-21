@@ -475,6 +475,7 @@ $pkg:
   $: local
   _: ../../core/kernel
   dependencies:
+   federation-js: ^1.0.0
    tslib: ^2.6.2
 '@gerrit0/mini-shiki':
  _latest: 3.23.0
@@ -2370,6 +2371,13 @@ fb-watchman:
   _: 'https://registry.npmjs.org/fb-watchman/-/fb-watchman-2.0.2.tgz'
   dependencies:
    bser: 2.1.1
+federation-js:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../../rollup-federation/federation-js: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  $: local
+  _: ../../rollup-federation/federation-js
 file-entry-cache:
  _latest: 11.1.5
  _:
