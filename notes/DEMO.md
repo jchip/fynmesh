@@ -4,9 +4,9 @@
 
 | URL                                | Description           |
 | ---------------------------------- | --------------------- |
-| https://www.fynetiq.com/           | Landing page          |
-| https://www.fynetiq.com/demo.html  | All FynApps demo      |
-| https://www.fynetiq.com/shell.html | Shell middleware demo |
+| https://www.lm360.ai/           | Landing page          |
+| https://www.lm360.ai/demo.html  | All FynApps demo      |
+| https://www.lm360.ai/shell.html | Shell middleware demo |
 
 Alternative: https://jchip.github.io/fynmesh/
 
