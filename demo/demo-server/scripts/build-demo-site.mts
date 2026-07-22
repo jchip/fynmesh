@@ -269,6 +269,10 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-6-react", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-7-solid", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-8-svelte", basePath: path.join(__dirname, "../..") },
+            // sidebar-selectable apps + AG Grid shared library dependency
+            { name: "fynapp-ag-grid", basePath: path.join(__dirname, "../..") },
+            { name: "fynapp-ag-grid-lib", basePath: path.join(__dirname, "../..") },
+            { name: "fynapp-notes", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-x1-v1", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-x1-v2", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-react-18", basePath: path.join(__dirname, "../..") },
