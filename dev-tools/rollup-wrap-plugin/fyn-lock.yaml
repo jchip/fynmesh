@@ -1,0 +1,32 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg:
+ dev:
+  '@types/node': ^24.0.10
+  typescript: ^5.8.3
+'@types/node':
+ _latest: 24.0.10
+ _:
+  ^24.0.10: 24.0.10
+ 24.0.10:
+  top: 1
+  $: sha512-ENHwaH+JIRTDIEEbDK6QSQntAYGtbvdDXnMXnZaZ6k13Du1dPMmprkEHIL7ok2Wl2aZevetwTAb5S+7yIF+enA==
+  _: 'https://registry.npmjs.org/@types/node/-/node-24.0.10.tgz'
+  dependencies:
+   undici-types: ~7.8.0
+typescript:
+ _latest: 5.8.3
+ _:
+  ^5.8.3: 5.8.3
+ 5.8.3:
+  top: 1
+  $: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
+  _: 'https://registry.npmjs.org/typescript/-/typescript-5.8.3.tgz'
+undici-types:
+ _latest: 7.11.0
+ _:
+  ~7.8.0: 7.8.0
+ 7.8.0:
+  $: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==
+  _: 'https://registry.npmjs.org/undici-types/-/undici-types-7.8.0.tgz'

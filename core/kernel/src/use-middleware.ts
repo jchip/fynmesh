@@ -1,38 +1,56 @@
-/**
- * info about a middleware marked for usage
- */
-export type MiddlewareInfo = {
-  /** npm package that provided the middleware */
-  pkg: string;
-  /** name of the middleware */
-  middleware: string;
-};
+import type { MiddlewareUseMeta, FynUnit } from "./types.ts";
 
 /**
- * contains information about a user application
- * that wants to use a middleware
- */
-export type MiddlewareUsage<ConfigT = any, UserT = unknown> = {
-  /** info about the middleware */
-  __middlewareInfo: MiddlewareInfo;
-  /** configuration for the middleware */
-  config: ConfigT;
-  /** user code that uses the middleware */
-  user: UserT;
-};
-
-/**
- * mark some user code for middleware usage
+ * Attach middleware metadata to a FynUnit
  *
- * @param info Information about the middleware
- * @param config Configuration for the middleware
- * @param user User code that uses the middleware
- * @returns A middleware usage object
+ * @param meta Middleware metadata (single or array)
+ * @param unit The FynUnit to attach middleware to
+ * @returns The same unit with __middlewareMeta attached
+ *
+ * @example
+ * ```typescript
+ * export const main = useMiddleware(
+ *   [
+ *     { middleware: import('pkg/middleware'), config: { theme: 'dark' } },
+ *   ],
+ *   {
+ *     execute(runtime) { return { type: 'component', component: MyComponent }; }
+ *   }
+ * );
+ * ```
  */
-export const useMiddleware = <ConfigT, UserT = unknown>(
-  info: MiddlewareInfo,
-  config: ConfigT,
-  user: UserT
-): MiddlewareUsage<ConfigT> => {
-  return { __middlewareInfo: info, config, user };
+export const useMiddleware = <UnitT extends FynUnit = FynUnit>(
+  meta: MiddlewareUseMeta<unknown> | MiddlewareUseMeta<unknown>[],
+  unit: UnitT,
+): UnitT => {
+  unit.__middlewareMeta = ([] as MiddlewareUseMeta<unknown>[]).concat(meta);
+  return unit;
 };
+
+/**
+ * A no-op FynUnit for middleware-only usage patterns
+ */
+export const noOpFynUnit: FynUnit = {
+  initialize: () => ({ status: "ready" }),
+  execute: () => { },
+};
+
+/**
+ * @deprecated Use noOpFynUnit instead
+ */
+export const noOpMiddlewareUser = noOpFynUnit;
+
+// example usage of useMiddleware
+/*
+export const main = useMiddleware(
+  {
+    info: {
+      name: "react-context",
+      version: "^1.0.0",
+      provider: "fynapp-react-lib",
+    },
+    config: { theme: "light" },
+  },
+  noOpMiddlewareUser,
+);
+*/

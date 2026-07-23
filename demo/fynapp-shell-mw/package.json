@@ -1,0 +1,32 @@
+{
+  "name": "fynapp-shell-mw",
+  "version": "1.0.0",
+  "description": "FynMesh Shell Middleware Provider - Dynamic FynApp loading and layout management",
+  "type": "module",
+  "main": "dist/fynapp-entry.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fynmesh",
+    "microfrontend",
+    "shell",
+    "middleware",
+    "layout"
+  ],
+  "dependencies": {
+    "@fynmesh/kernel": "^1.0.0",
+    "create-fynapp": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rollup": "^4.9.4",
+    "rollup-plugin-federation": "^1.0.0",
+    "typescript": "^5.3.3"
+  }
+}

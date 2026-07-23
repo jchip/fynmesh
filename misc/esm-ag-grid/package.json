@@ -1,0 +1,26 @@
+{
+  "name": "esm-ag-grid",
+  "version": "33.3.2",
+  "description": "ESM wrapper for ag-grid-community",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    "production": "./dist/ag-grid.production.js",
+    "development": "./dist/ag-grid.development.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "ag-grid-community": "^33.3.2",
+    "rollup": "^4.40.2"
+  }
+}

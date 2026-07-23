@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FynMesh Micro Frontend Demo{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynMesh - Enterprise micro frontend framework for building scalable web applications. Module Federation with Rollup, supporting React, Vue, Preact, Solid, Svelte, and Marko micro frontends.">
+    <meta name="keywords" content="micro frontend, microfrontend, micro-frontend, micro frontend framework, module federation, micro frontend architecture, react micro frontend, vue micro frontend, independent deployment, shared dependencies, enterprise frontend, javascript framework, rollup, systemjs">
+    <meta name="author" content="FynMesh">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.lm360.ai/">
+    <meta property="og:title" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta property="og:description" content="Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.">
+    <meta property="og:image" content="https://www.lm360.ai/favicon.ico">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.lm360.ai/">
+    <meta name="twitter:title" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta name="twitter:description" content="Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.">
+    <meta name="twitter:image" content="https://www.lm360.ai/favicon.ico">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.lm360.ai/{% block canonical_path %}{% endblock %}">
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "FynMesh",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "description": "Enterprise micro frontend framework for building scalable applications with Module Federation. Support for React, Vue, Preact, Solid, Svelte, and Marko.",
+        "url": "https://www.lm360.ai/",
+        "author": {
+            "@type": "Organization",
+            "name": "FynMesh",
+            "url": "https://www.lm360.ai/"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "keywords": "micro frontend, microfrontend, module federation, react, vue, preact, solid, svelte, marko, javascript framework, web framework, independent deployment, shared dependencies, enterprise architecture"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "FynMesh",
+        "url": "https://www.lm360.ai/",
+        "description": "Enterprise micro frontend framework with Module Federation support",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://github.com/jchip/fynmesh/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    {% block schema_extra %}{% endblock %}
+
+    <!-- CSS Stylesheets -->
+    {% if isProduction %}
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.min.css">
+    {% else %}
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.css">
+    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.css">
+    {% endif %}
+    {% block styles %}{% endblock %}
+    {% block scripts_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}body-gradient{% endblock %}" style="min-height: 100vh;">
+    {% block content %}{% endblock %}
+    {% block scripts_body %}{% endblock %}
+</body>
+</html>

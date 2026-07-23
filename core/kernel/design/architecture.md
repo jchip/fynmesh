@@ -1,257 +1,372 @@
-# fynmesh
+# FynMesh Architecture
 
-`fynmesh` is a microfrontend web framework built on top of the concept Module Federation and rollup.
+FynMesh is a large enterprise scale web application framework with Module Federation & Micro Frontends, enabling modular, scalable applications through independently deployable microfrontends (FynApps).
 
-## Overview
+## Core Principles
 
-The framework is designed to enable a modular, scalable approach to building web applications by breaking them down into independently deployable microfrontends (fynapps). This architecture promotes:
+- **Independent Development**: Teams develop and deploy FynApps autonomously
+- **Shared Dependencies**: Efficient sharing of common libraries and utilities
+- **Federation-First**: Built on proven Module Federation technology
+- **ES Modules Only**: Modern module system for clean, standardized interfaces
+- **Type Safety**: Full type safety and modern language features
+- **Automatic Dependencies**: Build-time detection and runtime resolution
+- **Middleware System**: Standardized way to share functionality across FynApps
 
-- Independent development and deployment of frontend modules
-- Shared dependencies and runtime code splitting
-- Consistent development experience across teams
-- Flexible composition of UI components
+## System Components
 
-## Major Components
+### The Kernel
 
-### 1. The Kernel
+The kernel orchestrates the entire FynMesh ecosystem with unified APIs across browser and Node.js environments.
 
-The kernel is the core runtime that:
+**Core Responsibilities:**
+- **Lifecycle Management**: FynApp loading, initialization, and bootstrap coordination
+- **Federation Integration**: Interface with Module Federation containers and shared scopes
+- **Dependency Resolution**: Ensure proper load order based on FynApp dependencies
+- **Platform Abstraction**: Unified API across environments
+- **Runtime Coordination**: Manage shared services and inter-FynApp communication
+- **Middleware Management**: Automatic discovery, registration, and lifecycle management of middleware
 
-- Manages the lifecycle of fynapps
-- Handles module federation and loading
-- Provides shared services and utilities
-- Coordinates communication between fynapps
+**Platform Implementations:**
+- **Browser Kernel**: DOM-based loading and client-side federation
+- **Node Kernel**: Server-side rendering and federation support
 
-Key responsibilities:
+### Middleware System
 
-- Loading and initializing fynapps
-- Managing shared dependencies
-- Providing runtime configuration
-- Handling cross-fynapp communication
+The middleware system provides a standardized way for FynApps to share functionality through a kernel-managed registry.
 
-### 2. fynapp
+**Key Features:**
+- **Automatic Discovery**: Middleware are automatically detected and registered
+- **Lifecycle Management**: Setup, apply, and execution phases
+- **Type Safety**: Full TypeScript support with strongly typed interfaces
+- **Provider-Consumer Pattern**: Clean separation between middleware providers and consumers
+- **Context Management**: Per-FynApp middleware data storage and sharing
 
-A fynapp is a self-contained microfrontend that can be developed and deployed independently.
+**Core Components:**
+- **`useMiddleware` API**: Declarative middleware usage
+- **`FynUnit` Interface**: Standardized execution contract for FynApp modules
+- **Registry System**: Kernel-managed middleware registry with `provider::name` format
+- **Middleware Context**: Per-FynApp data storage and sharing
 
-#### Development Structure
+*For detailed middleware architecture, see [fynapp-middleware-architecture.md](./fynapp-middleware-architecture.md)*
 
-The development of a fynapp would follow the NPM package format, so a fynapp's code typically consists of the following minimum files:
+### FynApp Structure
 
+FynApps are self-contained microfrontends with clear boundaries and standardized interfaces.
+
+**Development Structure:**
 ```
 fynapp/
-├── package.json        # Dependencies and metadata
+├── package.json          # NPM package with FynApp dependencies
+├── rollup.config.ts      # Federation and build configuration
 ├── src/
-│   ├── index.ts       # Entry point
-│   ├── App.tsx        # Main application component
-│   └── types.ts       # TypeScript type definitions
-├── rollup.config.js   # Build configuration
-└── tsconfig.json      # TypeScript configuration
+│   ├── main.ts          # Entry point and bootstrap logic
+│   ├── config.ts        # FynApp configuration
+│   ├── components/      # Application components
+│   └── middleware/      # Middleware implementations (optional)
+└── tsconfig.json        # TypeScript configuration
 ```
 
-Key characteristics:
-
-- Independent build and deployment
-- Isolated state management
-- Clear boundaries and interfaces
-- Shared dependency management
-
-#### Deployment Structure
-
-After building, a fynapp's deployment structure consists of:
-
+**Build Output:**
 ```
 dist/
-├── manifest.json     # Fynapp metadata and configuration
-├── remoteEntry.js    # Module Federation entry point
-├── main.js           # Main application bundle
-├── chunks/           # Code-split chunks
-│   ├── vendor.js     # Third-party dependencies
-│   └── *.js          # Other dynamic imports
-└── assets/           # Static assets
-    ├── images/
-    └── styles/
+├── federation.json      # Federation metadata and dependencies
+├── fynapp-entry.js     # FynMesh federation entry point
+├── main.js             # Application bundle
+├── middleware-*.js     # Middleware bundles (if any)
+└── assets/             # Static resources
 ```
 
-The `manifest.json` contains essential metadata about the fynapp:
+**Configuration:**
+- Module exposure and sharing through federation plugin
+- Dependency declarations in package.json
+- Build optimization and compilation
+- Standardized entry points with main function and optional configuration
+- Middleware loading configuration (`loadMiddlewares: true`)
 
+### Federation Integration
+
+FynMesh leverages Module Federation through the `@fynmesh/federation-js` package.
+
+**Key Components:**
+- **Container**: Module Federation container interface
+- **FederationEntry**: Typed interface for federation entry modules
+- **Share Scope**: Shared dependency management
+- **Dynamic Loading**: Runtime module resolution
+
+**Capabilities:**
+- Container setup and share scope integration
+- Dynamic module loading and resolution
+- Direct access to federation containers
+- Automatic middleware detection from exposed modules
+
+### Dependency System
+
+FynApps can depend on other FynApps through shared modules and exposed components, with automatic detection and resolution.
+
+**Dependency Types:**
+- **Shared Module Dependencies**: Consuming shared libraries from provider FynApps
+- **Exposed Module Dependencies**: Dynamic imports of components from other FynApps
+- **Middleware Dependencies**: Consuming middleware functionality from provider FynApps
+
+**Process:**
+- **Build-Time**: Rollup plugin detects dependencies during build
+- **Runtime**: Kernel resolves load order and validates dependencies
+- **Storage**: Dependencies stored in federation.json for runtime use
+
+*For detailed dependency detection, resolution algorithms, and implementation phases, see [fynapp-dependencies.md](./fynapp-dependencies.md)*
+
+## Runtime Flow
+
+**Kernel Initialization:**
+Platform-specific kernel instantiation → Runtime data structure initialization → Share scope and federation setup → Middleware registry initialization → Ready for FynApp loading
+
+**FynApp Loading:**
+Load federation.json from FynApp URL → Parse dependency information → Resolve dependency load order → Load federation entry modules → Initialize federation containers → Auto-detect and register middleware
+
+**FynApp Bootstrap:**
+Validate all dependencies are loaded → Load middleware from exposed modules → Bootstrap FynApps in dependency order → Execute middleware lifecycle (setup/apply) → Execute FynApp initialization logic → Register with kernel runtime
+
+**Runtime Operation:**
+Inter-FynApp communication through kernel → Shared dependency resolution → Middleware functionality access → Dynamic module loading → Lifecycle management
+
+## File Formats
+
+### federation.json
+Generated by the build process, contains federation metadata and dependencies:
 ```json
 {
-  "name": "fynapp-name",
+  "name": "my-fynapp",
   "version": "1.0.0",
-  "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
-  },
+  "dependencies": [
+    {
+      "fynapp": "provider-fynapp",
+      "reason": "shared-module-consumption",
+      "provides": ["react", "lodash"]
+    }
+  ],
   "exposes": {
-    "./App": "./src/App",
-    "./types": "./src/types"
+    "./main": "./main.js",
+    "./middleware/my-middleware": "./middleware-my-middleware.js"
   },
+  "entry": "./fynapp-entry.js",
   "shared": {
-    "react": { "singleton": true },
-    "react-dom": { "singleton": true }
+    "react": { "singleton": true }
+  }
+}
+```
+
+### FynApp Entry Point
+FynApps export standardized entry points:
+- **Function-based**: `export function main(runtime: FynUnitRuntime)`
+- **Object-based**: `export const main = { execute(runtime) { ... } }`
+- **With middleware**: `export const main = useMiddleware(config, fynUnit)`
+- **Middleware exports**: `export const __middleware__MiddlewareName = implementation`
+
+### FynApp Configuration
+```typescript
+// src/config.ts
+export const config = {
+  loadMiddlewares: true, // Enable middleware loading
+  // ... other configuration
+};
+```
+
+## Middleware Examples
+
+### Design Tokens Middleware
+
+A comprehensive design tokens middleware that provides centralized theme management and CSS custom properties.
+
+**Features:**
+- Centralized design system management
+- CSS custom properties injection
+- Runtime theme switching
+- Type-safe design tokens
+- FynApp-specific configurations
+
+**Usage:**
+```typescript
+export const main = useMiddleware(
+  {
+    info: {
+      name: "design-tokens",
+      provider: "fynapp-design-tokens",
+      version: "^1.0.0",
+    },
+    config: {
+      theme: "fynmesh-default",
+      cssCustomProperties: true,
+      cssVariablePrefix: "fynmesh",
+    },
   },
-  "entry": "./remoteEntry.js",
-  "type": "fynapp"
-}
+  middlewareUser,
+);
 ```
 
-Key aspects of the deployment:
+### React Context Middleware
 
-1. **Manifest File**
+Provides shared React context across multiple FynApps.
 
-   - Contains static metadata about the fynapp
-   - Lists exposed modules and their paths
-   - Specifies shared dependencies and versions
-   - Enables kernel to make loading decisions without code execution
-   - Helps with version compatibility checks
-
-2. **Module Federation Format**
-
-   - `remoteEntry.js` serves as the entry point for Module Federation
-   - Exposes the fynapp's public API and shared modules
-   - Defines the version and dependencies
-   - Handles runtime module loading
-
-3. **Bundle Structure**
-
-   - Main application code is split into optimized chunks
-   - Vendor dependencies are separated for better caching
-   - Dynamic imports are automatically code-split
-   - Assets are optimized and versioned
-
-4. **Runtime Loading**
-   - Bundles are loaded on-demand by the kernel
-   - Module Federation handles dependency resolution
-   - Shared dependencies are loaded from the kernel
-   - Version compatibility is enforced
-
-## Key Criteria
-
-### 1. Module Mapping
-
-A fynapp must provide a clear map of its modules in the manifest:
-
-```json
-{
-  "modules": {
-    "App": {
-      "path": "./src/App",
-      "bundle": "main.js",
-      "version": "1.0.0",
-      "type": "component"
-    },
-    "utils": {
-      "path": "./src/utils",
-      "bundle": "chunks/utils.js",
-      "version": "1.0.0",
-      "type": "utility"
-    }
-  }
-}
-```
-
-This mapping enables:
-
-- Precise module location tracking
-- Version management per module
-- Efficient bundle loading
-- Clear module boundaries
-
-### 2. Fynapp Dependencies
-
-Fynapps must declare their dependencies on other fynapps:
-
-```json
-{
-  "fynappDependencies": {
-    "auth-fynapp": {
-      "version": "^1.0.0",
-      "requiredModules": ["AuthProvider", "useAuth"],
-      "optionalModules": ["LoginForm"]
-    },
-    "ui-fynapp": {
-      "version": "^2.0.0",
-      "requiredModules": ["Button", "Input"],
-      "optionalModules": ["Modal"]
-    }
-  }
-}
-```
-
-This enables:
-
-- Explicit dependency tracking
-- Version compatibility checking
-- Required vs optional module specification
-- Clear dependency graph construction
-
-### 3. Bundle Characteristics
-
-Bundles must be designed for optimal loading and concatenation:
-
-1. **Idempotency**
-
-   - Each bundle must be self-contained
-   - No side effects from multiple inclusions
-   - Safe for concatenation
-   - Clear initialization boundaries
-
-2. **Bundle Structure**
-
-   ```json
-   {
-     "bundles": {
-       "main.js": {
-         "type": "entry",
-         "dependencies": ["vendor.js"],
-         "modules": ["App", "Router"]
-       },
-       "vendor.js": {
-         "type": "vendor",
-         "dependencies": [],
-         "modules": ["react", "react-dom"]
-       }
-     }
-   }
-   ```
-
-3. **Concatenation Support**
-   - Bundles can be safely combined
-   - No global namespace pollution
-   - Clear module boundaries
-   - Efficient loading strategies
-
-These criteria ensure:
-
-- Reliable module loading
-- Efficient bundle management
-- Clear dependency tracking
-- Optimal performance
-- Safe concatenation
-- Version compatibility
-
-## Communication Flow
-
-1. Kernel initializes and loads configuration
-2. Kernel loads required fynapps based on routing/configuration
-3. fynapps register themselves with the kernel
-4. Inter-fynapp communication happens through kernel-mediated events
-5. Shared services are accessed through kernel-provided interfaces
+**Features:**
+- Shared React context providers
+- Cross-FynApp state sharing
+- Event-driven state synchronization
+- Type-safe context hooks
 
 ## Development Workflow
 
-1. Create new fynapp using `create-fynapp`
-2. Develop fynapp independently
-3. Build and deploy fynapp
-4. Register fynapp with kernel configuration
-5. Kernel loads and manages fynapp at runtime
+**FynApp Development:**
+Create FynApp using template → Configure federation and build settings → Develop components and logic → Declare dependencies in package.json → Configure middleware usage → Build and test locally
+
+**Middleware Development:**
+Create middleware provider FynApp → Implement middleware interface → Export with `__middleware__` prefix → Configure module exposure → Test with consumer FynApps → Deploy middleware provider
+
+**Dependency Management:**
+Configure shared modules in federation settings → Declare FynApp dependencies in package.json → Declare middleware dependencies in `useMiddleware` → Automatic build-time detection via rollup plugin → Runtime resolution handled by kernel
+
+**Deployment:**
+Compile and generate federation bundles → Deploy build output to CDN/server → Configure FynApp URLs in host applications → Kernel manages loading, dependencies, and middleware automatically
+
+## Platform Support
+
+**Browser Environment:**
+DOM integration, client-side federation, asset management, development tools, middleware system
+
+**Node.js Environment:**
+Server-side rendering, file system access, process integration, build tools, middleware system
+
+## Demo and Development Server
+
+FynMesh includes a comprehensive demo server that showcases the capabilities of the framework.
+
+**Features:**
+- **Template System**: Nunjucks-based template engine for dynamic HTML generation
+- **Container Management**: Responsive container sizing for different FynApp types
+- **Hot Reloading**: Development server with automatic recompilation
+- **Middleware Demonstration**: Live examples of middleware usage
+
+**Container Sizing:**
+- **Standard FynApps**: 350px minimum height for framework demos
+- **Complex Applications**: Dynamic sizing (e.g., 70vh for dashboard applications)
+- **Responsive Design**: Adaptive containers based on content requirements
 
 ## Best Practices
 
-1. Keep fynapps focused and single-purpose
-2. Use shared types for inter-fynapp communication
-3. Implement proper error boundaries
-4. Follow consistent naming conventions
-5. Document public interfaces
-6. Maintain backward compatibility
-7. Use proper versioning for shared dependencies
+**FynApp Design:**
+- Keep FynApps focused and single-purpose
+- Use clear, typed interfaces for exposed modules
+- Implement proper error boundaries
+- Follow consistent naming conventions
+- Use middleware for cross-cutting concerns
+
+**Middleware Design:**
+- Single responsibility principle
+- Stateless design with explicit state management
+- Configuration validation
+- Error boundaries and fallback strategies
+- Performance considerations
+
+**Dependency Management:**
+- Minimize cross-FynApp dependencies
+- Use shared modules for common libraries
+- Version dependencies appropriately
+- Document public interfaces
+- Use middleware for shared functionality
+
+**Performance:**
+- Optimize bundle sizes and loading
+- Use code splitting effectively
+- Implement proper caching strategies
+- Monitor federation overhead
+- Lazy load middleware when possible
+
+**Development:**
+- Use TypeScript for type safety
+- Implement comprehensive testing
+- Follow semantic versioning
+- Maintain backward compatibility
+- Document middleware APIs
+
+## Production Examples
+
+### FynApp Design Tokens
+A comprehensive design tokens middleware providing:
+- 🎨 Centralized design system
+- 🎯 CSS custom properties injection
+- 🔄 Runtime theme switching
+- 📱 Responsive design tokens
+- 🎭 Multiple theme support
+
+### React Context Middleware
+Shared React context across FynApps:
+- ⚛️ Provider/Consumer pattern
+- 🔗 Cross-FynApp state sharing
+- 🎪 Event-driven synchronization
+- 🔒 Type-safe context hooks
+
+### Dashboard Applications
+Complex multi-section applications:
+- 📊 Tab-based navigation
+- 📈 Charts and statistics
+- 📋 Data tables
+- ⚙️ Settings management
+- 🎛️ Real-time updates
+
+## Future Considerations
+
+- **Advanced Dependency Resolution**: Third-party provider scenarios and resolution modes
+- **Performance Optimization**: Bundle concatenation and loading strategies
+- **Development Tooling**: Enhanced debugging and development experience
+- **Ecosystem Integration**: Framework-specific adapters and tooling
+- **Middleware Marketplace**: Standardized middleware distribution
+- **Advanced Federation**: Dynamic fallback mechanisms and smart loading
+
+## Architecture Diagrams
+
+### System Overview
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        FynMesh Kernel                          │
+├─────────────────────────────────────────────────────────────────┤
+│  Lifecycle Management │ Federation Integration │ Middleware    │
+│  Dependency Resolution │ Platform Abstraction  │ Management    │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+            ┌───────▼──────┐ ┌─────▼─────┐ ┌──────▼──────┐
+            │   FynApp A   │ │  FynApp B │ │   FynApp C  │
+            │              │ │           │ │             │
+            │ ┌──────────┐ │ │ ┌───────┐ │ │ ┌─────────┐ │
+            │ │Components│ │ │ │Middleware│ │ │Components│ │
+            │ │          │ │ │ │Provider│ │ │          │ │
+            │ └──────────┘ │ │ └───────┘ │ │ └─────────┘ │
+            └──────────────┘ └───────────┘ └─────────────┘
+```
+
+### Middleware Flow
+```
+Provider FynApp          Kernel Registry          Consumer FynApp
+┌─────────────┐         ┌─────────────────┐      ┌─────────────────┐
+│__middleware_│────────▶│  Auto-Detection │      │  useMiddleware  │
+│   Export    │         │  & Registration │      │     API         │
+└─────────────┘         └─────────────────┘      └─────────────────┘
+                                │                          │
+                                ▼                          ▼
+                        ┌─────────────────┐      ┌─────────────────┐
+                        │  Middleware     │      │  FynUnit        │
+                        │  Registry       │      │  Interface      │
+                        │  provider::name │      │  initialize()   │
+                        └─────────────────┘      │  execute()      │
+                                │                └─────────────────┘
+                                ▼                          │
+                        ┌─────────────────┐                │
+                        │  Lifecycle      │◀───────────────┘
+                        │  Management     │
+                        │  setup() →      │
+                        │  apply() →      │
+                        │  execute()      │
+                        └─────────────────┘
+```
+
+This architecture provides a robust, scalable, and maintainable foundation for enterprise-scale micro frontend applications with comprehensive middleware support.

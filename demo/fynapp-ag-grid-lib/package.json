@@ -1,0 +1,27 @@
+{
+  "name": "fynapp-ag-grid-lib",
+  "version": "33.3.2",
+  "description": "FynApp that provides AG Grid Library for sharing",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf dist && rollup -c"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.8.9",
+    "create-fynapp": "^1.0.0",
+    "esm-ag-grid": "^33.3.2",
+    "esm-ag-grid-react": "^33.3.2",
+    "esm-react": "^19.1.0",
+    "rollup": "^4.9.1",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.2.2"
+  }
+}

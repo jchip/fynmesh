@@ -1,5 +1,5 @@
 {
-  "name": "fynact",
+  "name": "fynmesh",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,6 +9,9 @@
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "fynpo",
     "build-prod": "NODE_ENV=production fynpo",
+    "clean:demo": "rm -rf demo/*/dist",
+    "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
+    "_gh-publish": "cd demo/demo-server && xrun gh-publish",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
     "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git"
@@ -25,6 +28,16 @@
     "url": ""
   },
   "dependencies": {
-    "fynpo": "^1.1.43"
+    "@types/node": "^24.10.1",
+    "@xarc/run": "^2.3.0",
+    "fyn": "^2.0.4",
+    "fynpo": "^2.0.4",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6"
+  },
+  "fyn": {
+    "dependencies": {
+      "@xarc/run": "../xarc-run"
+    }
   }
 }

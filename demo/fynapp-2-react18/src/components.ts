@@ -2,7 +2,7 @@
 * This file handles dynamic imports of the reusable components from fynapp-x1
 * These imports are managed by the fynmesh kernel's module federation system
 */
-import React from 'react';
+import React from 'esm-react';
 
 // Type definition for the component library
 export type ComponentLibrary = {
@@ -23,7 +23,7 @@ export const preloadComponents = async (): Promise<ComponentLibrary> => {
     try {
         // dynamic import exposed modules from module federation remote container
         // @ts-ignore - TS can't understand module federation remote containers
-        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", requireVersion: "^1.0.0" } }) as ComponentLibrary;
+        const components = await import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^1.0.0" } }) as ComponentLibrary;
 
         // Return the components library
         return components;

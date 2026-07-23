@@ -24,7 +24,6 @@
     "url": ""
   },
   "devDependencies": {
-    "react": "19.1.0"
+    "react": "^19.1.0"
   }
 }
-

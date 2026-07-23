@@ -1,4 +1,9 @@
-export type Module = Record<any, any>;
+// Import and re-export FederationEntry from federation-js
+import type { FederationEntry } from "federation-js";
+
+export type FynAppEntry = FederationEntry & {
+  setup?: () => Promise<void>;
+};
 
 // Declare the global fynMeshKernel
 declare global {
@@ -12,31 +17,14 @@ export type FynAppEventTarget = EventTarget & {
   on(
     type: string,
     handler: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ): void;
   once(
     type: string,
     handler: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions
+    options?: boolean | AddEventListenerOptions,
   ): void;
 };
-
-/**
- * Interface representing a Module Federation remote container
- */
-export interface MFRemoteContainer {
-  /**
-   * Initialize the container with a share scope
-   * @param shareScope The share scope containing shared modules
-   */
-  init(shareScope: any): void | Promise<void>;
-
-  /**
-   * Get a module from the container
-   * @param moduleName The name of the module to get
-   */
-  get(moduleName: string): Promise<any>;
-}
 
 /**
  * Configuration for the FynMesh kernel
@@ -50,65 +38,12 @@ export type KernelConfig = {
    * Whether to enable debug mode
    */
   debug?: boolean;
+  /**
+   * Bootstrap timeout in milliseconds. FynApps waiting for dependencies
+   * longer than this will be skipped with an error log. Default: 30000 (30s)
+   */
+  bootstrapTimeout?: number;
 };
-
-/**
- * Manifest for a fynapp
- */
-export type FynappManifest = {
-  /**
-   * Name of the fynapp
-   */
-  name: string;
-  /**
-   * Version of the fynapp
-   */
-  version: string;
-  /**
-   * Entry point file for the fynapp
-   */
-  entry: string;
-  /**
-   * Modules exposed by the fynapp
-   */
-  exposes?: Record<string, string>;
-  /**
-   * Shared dependencies
-   */
-  shared?: Record<string, any>;
-};
-
-/**
- * Container for a fynapp
- */
-export interface FynappContainer {
-  /**
-   * Initialize the container with a share scope
-   */
-  init(shareScope: any): Promise<void>;
-  /**
-   * Get a module from the container
-   */
-  get(moduleName: string): Promise<any>;
-}
-
-/**
- * Registry for fynapps
- */
-export interface FynappRegistry {
-  /**
-   * Register a container
-   */
-  register(name: string, container: FynappContainer): void;
-  /**
-   * Get a container by name
-   */
-  get(name: string): FynappContainer | undefined;
-  /**
-   * Check if a container exists
-   */
-  has(name: string): boolean;
-}
 
 /**
  *
@@ -119,100 +54,284 @@ export type FynAppInfo = {
   /** version of the fynapp */
   version: string;
   /* npm package name of the fynapp */
-  packageName?: string;
-  /**
-   * name of the config module - this is a module that must be self sufficient without external dependencies, meant to
-   * execute before the rest of the fynapp is loaded.  Its typically used to do configuration before the rest of the fynapp is loaded.
-   */
-  config?: string;
-  /** name of the main module */
-  main?: string;
-  /** free form object containing build related information */
-  buildInfo?: Record<string, unknown>;
-  /** modules that the fynapp exposed */
-  exposes?: Record<string, string>;
-  /** middlewares that the fynapp implemented */
-  middlewares?: Record<string, FynAppMiddleware>;
+  packageName: string;
+  /** Federation entry module (for new bootstrap system) */
+  entry: FynAppEntry;
 };
 
-export type MiddlewareUsage = {
-  __middlewareInfo: {
-    pkg: string;
-    middleware: string;
-  };
-  user: unknown;
+/**
+ * Middleware info for registry and usage
+ */
+export interface MiddlewareInfo {
+  /** name of the middleware */
+  name: string;
+  /** provider of the middleware */
+  provider: string;
+  /** version of the middleware */
+  version?: string;
+}
+
+export interface MiddlewareUseMeta<ConfigT> {
+  info: MiddlewareInfo;
+  config: ConfigT;
+}
+
+/**
+ * Runtime context passed to FynUnit during execution
+ */
+export type FynUnitRuntime = {
+  fynApp: FynApp;
+  middlewareContext: Map<string, Record<string, any>>;
+  /** Inter-FynApp messaging, stamped with this FynApp as source (FYM-2) */
+  bus?: import("./fyn-bus").FynBus;
+  [key: string]: any;
+};
+
+/**
+ * @deprecated Use FynUnitRuntime instead. Will be removed in next major version.
+ */
+export type FynModuleRuntime = FynUnitRuntime;
+
+/**
+ * Standardized interface for FynMesh execution units
+ *
+ * FynUnit is the core contract for any executable unit in FynMesh.
+ * It can be implemented by plain objects, functions (wrapped by kernel), or class instances.
+ *
+ * @example Plain object
+ * ```typescript
+ * export const main: FynUnit = {
+ *   execute(runtime) { return { type: 'component', component: MyComponent }; }
+ * };
+ * ```
+ *
+ * @example Function (kernel wraps as { execute: fn })
+ * ```typescript
+ * export const main = (runtime: FynUnitRuntime) => { ... };
+ * ```
+ *
+ * @example With middleware
+ * ```typescript
+ * export const main = useMiddleware(
+ *   [{ middleware: import('...'), config: {...} }],
+ *   { execute(runtime) { ... } }
+ * );
+ * ```
+ */
+export interface FynUnit {
+  __middlewareMeta?: MiddlewareUseMeta<unknown>[];
+  /** Tell middleware what you need - called first to determine readiness */
+  initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }> | { status: string; mode?: string };
+  /** Do your actual work - called when middleware is ready. Returns any value - middleware defines contract. */
+  execute(runtime: FynUnitRuntime): Promise<any> | any;
+  /** Graceful shutdown - called when FynApp is being unloaded. Clean up resources here. */
+  shutdown?(runtime: FynUnitRuntime): Promise<void> | void;
+  /** Pause a mounted FynApp running in the background (e.g. stop timers, unsubscribe). Kept in the registry; resume() restores it. */
+  suspend?(runtime: FynUnitRuntime): Promise<void> | void;
+  /** Resume a suspended FynApp. */
+  resume?(runtime: FynUnitRuntime): Promise<void> | void;
+  [key: string]: any;
+}
+
+/**
+ * @deprecated Use FynUnit instead. Will be removed in next major version.
+ */
+export type FynModule = FynUnit;
+
+/**
+ * Expose object for a fynapp that represents a module exposed by federation
+ */
+export type FynAppExpose = {
+  /**
+   * optional name of the exposed module, if desire to use something else in addition to the name
+   * used for the federation expose config
+   */
+  __name?: string;
+  /** main export of the exposed module */
+  main?: FynUnit;
+  /** other exports from the exposed module */
+  [key: string]: any;
 };
 
 /**
  * object that contains implementations of a fynapp
  */
 export type FynApp = FynAppInfo & {
-  mainModule?: Module;
-  configModule?: Module;
+  config?: any;
+  exposes: Record<string, FynAppExpose>;
   /** Set to true to tell the kernel to skip applying middlewares */
   skipApplyMiddlewares?: boolean;
+  /** Middleware-specific data storage for this FynApp */
+  middlewareContext: Map<string, Record<string, any>>;
 };
 
 /**
- * middleware implementation
+ * Kernel-side lifecycle status of a mounted FynApp (see FynAppLifecycle).
+ * - `bootstrapping` — bootstrap started (may be deferred waiting on providers)
+ * - `mounted` — bootstrap completed; FynUnits are running
+ * - `suspended` — suspend() called; app is paused in the background
+ * - `failed` — bootstrap threw; app is isolated but recorded (error boundary)
+ * - `shutdown` — transient state during shutdownFynApp before the entry is removed
+ */
+export type FynAppStatus = "bootstrapping" | "mounted" | "suspended" | "failed" | "shutdown";
+
+/**
+ * A snapshot of a FynApp's kernel-side lifecycle state.
+ */
+export type FynAppState = {
+  name: string;
+  version: string;
+  status: FynAppStatus;
+  /** Present only when status is `failed`. */
+  error?: unknown;
+  /** Timestamp of the last status change. */
+  updatedAt: number;
+  /** Timestamp when the app first reached `mounted`. */
+  mountedAt?: number;
+};
+
+export type FynAppMiddlewareCallContext = {
+  meta: MiddlewareUseMeta<unknown>;
+  fynUnit: FynUnit;
+  fynApp: FynApp;
+  reg: FynAppMiddlewareReg;
+  runtime: FynUnitRuntime;
+  kernel: FynMeshKernel;
+  status: string;
+  /** @deprecated Use fynUnit instead */
+  fynMod?: FynUnit;
+};
+
+/**
+ * Enhanced middleware implementation interface
  */
 export type FynAppMiddleware = {
   /** name of the middleware */
   name: string;
+  /** Controls automatic application. Explicit useMiddleware() calls always work regardless of autoApplyScope */
+  autoApplyScope?: ("all" | "fynapp" | "middleware")[];
+  /** Optional filter function to determine if this middleware should apply to a specific FynApp */
+  shouldApply?(fynApp: FynApp): boolean;
   /** one time setup for the middleware */
-  setup?(kernel: FynMeshKernel
-  ): Promise<void>;
-  /** apply the middleware to a fynapp */
-  apply?(fynApp: FynApp): Promise<void>;
+  setup?(context: FynAppMiddlewareCallContext): Promise<{ status: string; share?: any } | void>;
+  /** apply the middleware to a fynapp with context */
+  apply?(context: FynAppMiddlewareCallContext): Promise<void> | void;
+
+  /** Execution override capabilities */
+  canOverrideExecution?(fynApp: FynApp, fynUnit: FynUnit): boolean;
+  overrideInitialize?(context: FynAppMiddlewareCallContext): Promise<{ status: string; mode?: string }>;
+  overrideExecute?(context: FynAppMiddlewareCallContext): Promise<void>;
 };
 
-export type FynAppMiddlewareConfig = {
-  //
+export type FynAppMiddlewareReg = {
+  /** key used to register the middleware with the kernel */
+  regKey: string;
+  /** full key used to register the middleware with the kernel */
+  fullKey: string;
+  /** fynapp that hosts the middleware */
+  hostFynApp: FynApp;
+  /**
+   * name of the exposed module that exported the middleware
+   */
+  exposeName: string;
+  /**
+   * name of the exported middleware
+   */
+  exportName: string;
+
+  middleware: FynAppMiddleware;
 };
 
 /**
- * object that holds all parts of a middleware together
+ * Middleware version map for tracking different versions of the same middleware
  */
-export type FynAppMiddlewareMeta = {
-  /**
-   * fynApp that registered the middleware
-   */
-  fynApp: FynApp;
-  /**
-   * config for the middleware
-   */
-  config: FynAppMiddlewareConfig;
-  /**
-   * name of the module that implemented the middleware
-   */
-  moduleName: string;
-  /**
-   * The export name of the middleware definition from the module
-   */
-  exportName: string;
-  /**
-   * The middleware implementation
-   */
-  implementation: FynAppMiddleware;
-};
+export type FynAppMiddlewareVersionMap = Record<string, FynAppMiddlewareReg>;
+
+/**
+ * Middleware registry structure using provider::middleware-name format
+ */
+export type MiddlewareRegistry = Record<string, FynAppMiddlewareVersionMap>;
 
 /**
  * Run time data for FynMesh fynApp core loader
  */
 export type FynMeshRuntimeData = {
-  /** cache to save remote modules that have been loaded */
-  remoteModuleCache: Record<string, unknown>;
-  /** store inflight promises for loading remote modules */
-  inflightRemote: Record<string, unknown>;
-  /** a fynapp should add its info to this array when it's first fetched for initializing */
-  appsLoading: FynAppInfo[];
   /** FynApps that have been loaded and initialized */
   appsLoaded: Record<string, FynApp>;
   /**
    * middlewares that the loaded fynapps registered
+   * Key format: "provider::middleware-name"
    */
-  middlewares: Record<string, FynAppMiddlewareMeta>;
+  middlewares: MiddlewareRegistry;
+  /** Auto-applying middleware categorized by scope */
+  autoApplyMiddlewares?: {
+    fynapp: FynAppMiddlewareReg[];
+    middleware: FynAppMiddlewareReg[];
+  };
 };
+
+/**
+ * Middleware lookup options
+ */
+export interface MiddlewareLookupOptions {
+  /** Whether to perform fallback search across all providers */
+  fallbackSearch?: boolean;
+  /** Specific version to look for */
+  version?: string;
+}
+
+/**
+ * Minimal per-app manifest used at runtime
+ */
+export interface FynAppRequireEdge {
+  name: string;
+  range?: string;
+  optional?: boolean;
+}
+
+export interface FynAppManifest {
+  name: string;
+  version: string;
+  exposes?: Record<string, {
+    path: string;
+    chunk: string;
+  }>;
+  "provide-shared"?: Record<string, {
+    singleton?: boolean;
+    semver?: string;
+  }>;
+  requires?: FynAppRequireEdge[];
+  middlewares?: {
+    uses?: Array<{ provider: string; name: string; range?: string; role?: string }>;
+    provides?: Array<{ name: string }>;
+  };
+  "import-exposed"?: Record<string, Record<string, {
+    semver?: string;
+    sites?: string[];
+    type?: string;
+    exposeModule?: string;
+    middlewareName?: string;
+  }>>;
+  "shared-providers"?: Record<string, {
+    semver: string;
+    provides: string[];
+  }>;
+}
+
+/**
+ * Resolver and resolver result for turning {name, range} into a concrete manifest URL
+ */
+export interface RegistryResolverResult {
+  name: string;
+  version: string;
+  manifestUrl: string;
+  distBase?: string;
+}
+
+export type RegistryResolver = (
+  name: string,
+  range?: string,
+) => Promise<RegistryResolverResult>;
 
 /**
  * FynMesh client side library types
@@ -220,6 +339,8 @@ export type FynMeshRuntimeData = {
 export interface FynMeshKernel {
   /** emitter of kernel events */
   events: FynAppEventTarget;
+  /** inter-FynApp messaging bus (see notes/FYNBUS_DESIGN.md) */
+  bus: import("./fyn-bus").FynBus;
   /** kernel version */
   version: string;
   /**
@@ -235,21 +356,22 @@ export interface FynMeshKernel {
   shareScopeName: string;
 
   /**
-   * Get the remote module federation container
-   *
-   * @remark Core doesn't implement this because it requires global (window) to
-   *   hold the container.
+   * Register a middleware implementation (called automatically during FynApp loading)
    */
-  getRemoteContainer(name: string): MFRemoteContainer;
+  registerMiddleware(meta: FynAppMiddlewareReg): void;
 
   /**
-   * Queue a fynapp for loading.
-   *
-   * - When a fynapp JS files is loaded, it should have code that automatically queue its info
-   * for loading
-   * @param info
+   * Get middleware by name and provider
+   * @param name - middleware name
+   * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
    */
-  queueFynAppLoading(info: FynAppInfo): void;
+  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg;
+
+  /**
+   * Get middleware state registry for global or region scope
+   * @param scope - either "global" or { region: string }
+   */
+  getMiddlewareRegistry(scope: "global" | { region: string }): import("./middleware-state-registry").MiddlewareStateRegistry;
 
   /**
    * Clean up a container name to ensure it's a valid identifier
@@ -261,25 +383,259 @@ export interface FynMeshKernel {
   cleanContainerName(name: string): string;
 
   /**
-   * Load a remote fynapp
+   * Load the basics of a fynapp federation entry into a FynApp object
+   * - This only does loading, no execution of anything occurs here
+   * Basics are:
+   * - Initialize the entry
+   * - Load config
+   * - Load main module
+   *     - Load middlewares from main module
+   *
+   * @param fynAppEntry - fynapp entry
+   * @returns fynapp object
+   */
+  loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp>;
+
+  /**
+   * Load and bootstrap a single remote FynApp.
+   *
+   * Error contract (error isolation):
+   * - Resolves to the loaded `FynApp` on success.
+   * - Resolves to `null` when the per-app load/bootstrap fails (the remote
+   *   entry fails to import, `loadFynAppBasics` rejects, or bootstrap throws).
+   *   Failures are isolated so one bad FynApp does not abort callers loading
+   *   others; the failure is logged and captured via telemetry
+   *   (`fynapp.load_failed`). Note `bootstrapFynApp` additionally isolates its
+   *   own errors internally (emitting `FYNAPP_BOOTSTRAP_FAILED`).
+   * - Rejects (throws) only for environment/precondition errors that make
+   *   loading impossible regardless of the FynApp — e.g. the browser kernel
+   *   throws when the Federation.js runtime is absent. The Node kernel has no
+   *   such precondition and never throws from this method.
    *
    * @param baseUrl - base URL to the fynapp assets
    * @param loadId - id for the load task
+   * @returns the loaded FynApp, or null if the per-app load failed
    */
-  loadFynApp(baseUrl: string, loadId?: string): Promise<void>;
+  loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null>;
 
   /**
-   * bootstrap fynapps by importing their bootstrap module
+   * Bootstrap a fynapp
    *
-   * @param fynAppInfo - array of fynapps info
+   * @param fynApp - fynapp to bootstrap
    */
-  bootstrapFynApp(fynAppInfo: FynAppInfo[]): Promise<void>;
+  bootstrapFynApp(fynApp: FynApp): Promise<void>;
 
   /**
-   * Apply middlewares to a fynapp
+   * Shutdown a FynApp - calls shutdown() on its FynUnits and removes from registry
    *
-   * @param fynApp
+   * @param name - name of the FynApp to shutdown
+   * @returns true if FynApp was found and shutdown, false otherwise
    */
-  applyMiddlewares(fynApp: FynApp): Promise<void>;
+  shutdownFynApp(name: string): Promise<boolean>;
+
+  /**
+   * Get the current lifecycle state of a FynApp (mount tracking).
+   *
+   * @param name - "name" or "name@version"; a bare name resolves to the most
+   *   recently updated version when several are tracked
+   * @returns the lifecycle state, or undefined if the FynApp is not tracked
+   */
+  getFynAppState(name: string): FynAppState | undefined;
+
+  /**
+   * List the lifecycle state of every tracked FynApp (bootstrapping, mounted,
+   * suspended, or failed).
+   */
+  listFynAppStates(): FynAppState[];
+
+  /**
+   * Suspend a mounted FynApp: calls suspend() on each of its FynUnits, marks it
+   * `suspended`, and emits `FYNAPP_SUSPENDED`. Only a `mounted` app can be
+   * suspended. The kernel does not touch the DOM — each FynUnit decides what to
+   * pause.
+   *
+   * @param name - "name" or "name@version"
+   * @returns true if the app was suspended, false if not found or not mounted
+   */
+  suspendFynApp(name: string): Promise<boolean>;
+
+  /**
+   * Resume a suspended FynApp: calls resume() on each of its FynUnits, marks it
+   * `mounted`, and emits `FYNAPP_RESUMED`. Only a `suspended` app can be resumed.
+   *
+   * @param name - "name" or "name@version"
+   * @returns true if the app was resumed, false if not found or not suspended
+   */
+  resumeFynApp(name: string): Promise<boolean>;
+
+  /**
+   * Send an event to the kernel
+   * @param event - event to send
+   */
+  emitAsync(event: CustomEvent): Promise<boolean>;
+
+  /**
+   * Programmatic API for middlewares to signal readiness to the kernel without emitting DOM events.
+   * - Optionally pass a share object to be provided to waiting consumers via cc.runtime.share
+   */
+  signalMiddlewareReady(
+    cc: FynAppMiddlewareCallContext,
+    detail?: { name?: string; status?: string; share?: any }
+  ): Promise<void>;
+
+  /**
+   * Set a resolver that maps {name, range} to a concrete manifest URL (and optional dist base)
+   */
+  setRegistryResolver(resolver: RegistryResolver): void;
+
+  /**
+   * Load one or more FynApps by name/range using manifests and a dependency graph.
+   *
+   * Error contract:
+   * - Rejects (throws) on structural/configuration errors that prevent the
+   *   batch from being planned — e.g. no registry resolver configured, or a
+   *   dependency graph that cannot be built/resolved.
+   * - Isolates per-app failures: each FynApp is loaded via `loadFynApp`, whose
+   *   `null` result (a failed individual load) does not abort the batch. The
+   *   call resolves once every reachable FynApp has been attempted.
+   *
+   * @param requests - FynApps to load, by name and optional semver range
+   * @param options - batch options (concurrency, preload strategy)
+   */
+  loadFynAppsByName(
+    requests: Array<{ name: string; range?: string }>,
+    options?: LoadFynAppsOptions
+  ): Promise<void>;
 }
 
+/**
+ * Preload priority levels for resource loading
+ */
+export enum PreloadPriority {
+  /** Critical: modulepreload with fetchpriority="high" */
+  CRITICAL = 'critical',
+  /** Important: modulepreload with fetchpriority="auto" */
+  IMPORTANT = 'important',
+  /** Deferred: prefetch (idle time only) */
+  DEFERRED = 'deferred',
+  /** None: no preloading */
+  NONE = 'none'
+}
+
+/**
+ * Preload strategy configuration
+ */
+export interface PreloadStrategy {
+  /**
+   * Maximum dependency depth to preload
+   * - 0: Only requested FynApps
+   * - 1: Requested + immediate dependencies (recommended default)
+   * - 2+: Include transitive dependencies
+   * - Infinity: All dependencies (current behavior)
+   * @default 1
+   */
+  depth?: number;
+
+  /**
+   * Priority assignment strategy
+   * - 'static': Use fixed priority per depth
+   * - 'adaptive': Adjust based on network conditions (future)
+   * - 'manifest': Use priorities from FynApp manifests (future)
+   * @default 'static'
+   */
+  priority?: 'static' | 'adaptive' | 'manifest';
+
+  /**
+   * Priority mapping by depth (when priority='static')
+   * @default { 0: 'critical', 1: 'important', 2: 'deferred' }
+   */
+  priorityByDepth?: Record<number, PreloadPriority>;
+
+  /**
+   * Disable preloading entirely
+   * Useful for debugging or testing without preload
+   * @default false
+   */
+  disabled?: boolean;
+}
+
+/**
+ * Options for loadFynAppsByName
+ */
+export interface LoadFynAppsOptions {
+  /**
+   * Concurrency limit for parallel FynApp loading
+   * @default 4
+   */
+  concurrency?: number;
+
+  /**
+   * Preload strategy configuration
+   * Can be:
+   * - number: shorthand for { depth: n }
+   * - PreloadStrategy: full configuration
+   * - undefined: use default (depth: 1)
+   */
+  preload?: number | PreloadStrategy;
+}
+
+export interface MiddlewareHandlerContext {
+  config?: any;
+  fynApp?: FynApp;
+  kernel?: FynMeshKernel;
+  initResult?: any;
+  [key: string]: any;
+}
+
+export interface Middleware {
+  // New control methods
+  handleInitialize?(context: MiddlewareHandlerContext): Promise<any>;
+  handleMain?(context: MiddlewareHandlerContext): Promise<void>;
+}
+
+// --- Telemetry ---
+
+/**
+ * A single telemetry entry captured by the kernel
+ */
+export interface TelemetryEntry {
+  type: "event" | "metric" | "error";
+  name: string;
+  ts: number;
+  data?: Record<string, unknown>;
+  /** For metrics */
+  value?: number;
+  /** Serialized error (not an Error reference) */
+  error?: { message: string; stack?: string };
+}
+
+/**
+ * Kernel telemetry capture interface
+ */
+export interface KernelTelemetry {
+  /** Record a telemetry entry. Timestamp is auto-filled. */
+  capture(entry: Omit<TelemetryEntry, "ts">): void;
+  /** Helper to quickly record an error telemetry entry. */
+  captureError(name: string, data: Record<string, unknown>, error: unknown): void;
+  /** Return a child instance that auto-prepends `prefix.` to all entry names */
+  scope(prefix: string): KernelTelemetry;
+  /** Manually drain the buffer to the transport */
+  flush(): void;
+}
+
+/**
+ * Pluggable transport backend for telemetry
+ */
+export interface TelemetryTransport {
+  send(batch: TelemetryEntry[]): Promise<void>;
+}
+
+/**
+ * Configuration for the telemetry system
+ */
+export interface TelemetryConfig {
+  /** Transport backend. Default: ConsoleTelemetryTransport */
+  transport?: TelemetryTransport;
+  /** Maximum ring buffer size. Default: 500 */
+  maxBufferSize?: number;
+}

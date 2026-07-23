@@ -1,0 +1,103 @@
+.notes-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.notes-title {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.notes-content {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.add-note-section {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.note-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.note-input:focus {
+  outline: none;
+  border-color: #0066cc;
+}
+
+.add-button {
+  background: #0066cc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.add-button:hover {
+  background: #0052a3;
+}
+
+.notes-list {
+  margin-top: 1rem;
+}
+
+.empty-message {
+  color: #666;
+  text-align: center;
+  padding: 1rem;
+}
+
+.note-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.note-text {
+  flex: 1;
+  color: #333;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: #cc0000;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  line-height: 1;
+}
+
+.delete-button:hover {
+  color: #990000;
+}
+
+.notes-stats {
+  margin-top: 1rem;
+  color: #666;
+  text-align: center;
+}
+
+.runtime-info {
+  margin-top: 0.5rem;
+  color: #999;
+  text-align: center;
+}

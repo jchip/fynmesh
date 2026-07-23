@@ -1,10 +1,9 @@
-/**
- * fynmesh kernel
- * Core runtime for the fynmesh microfrontend framework
- */
-
 // Export types
-export * from './types';
-
-// Export core components
-export { FynMeshKernel as Kernel } from './kernel';
+export * from "./types";
+export * from "./use-middleware";
+export * from "./share-scope";
+export * from "./errors";
+export * from "./observable-state";
+export * from "./middleware-state-registry";
+export * from "./fyn-bus";
+export * from "./kernel-telemetry";

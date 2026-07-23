@@ -1,0 +1,34 @@
+{
+  "name": "fynapp-notes",
+  "version": "1.0.0",
+  "description": "Notes FynApp micro frontend",
+  "type": "module",
+  "main": "dist/fynapp-entry.js",
+  "exports": {
+    ".": "./dist/fynapp-entry.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "dev": "rollup -c -w"
+  },
+  "dependencies": {
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@fynmesh/kernel": "^1.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.8.9",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "create-fynapp": "^1.0.0",
+    "esm-react": "^19.1.0",
+    "esm-react-dom": "^19.1.0",
+    "rollup": "^4.9.1",
+    "postcss": "^8.5.3",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.0",
+    "typescript": "^5.2.2"
+  }
+}

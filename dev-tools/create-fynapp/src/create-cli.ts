@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
-import path from "path";
-import { promises as fsPromises } from "fs";
-import { exec as execCb } from "child_process";
+import { pathToFileURL } from "url";
+import { promises as fsPromises, realpathSync } from "fs";
 import AveAzul from "aveazul";
-import { generateApp } from "./generator";
-import { promptForMissingInfo } from "./prompts";
-import { ConfigManager } from "./config";
-import { fileExists } from "./utils";
-
-const exec = AveAzul.promisify(execCb);
-const configManager = new ConfigManager();
+import { generateApp } from "./generator.js";
+import { promptForMissingInfo } from "./prompts.js";
+import { fileExists } from "./utils.js";
+import { runFynCommand } from "./run-fyn.js";
+import { getCommandOptions } from "./cli-options.js";
+import { supportedFrameworks } from "./frameworks.js";
+import { resolveTargetDir } from "./app-config.js";
 
 export async function main() {
-    const nixClap = new NixClap();
+    const nixClap = new NixClap({ defaultCommand: "create" });
 
     const cliOptions = {
         name: {
@@ -23,17 +22,10 @@ export async function main() {
             required: false,
         },
         framework: {
-            desc: "Framework to use (react, vue, preact, solid, marko)",
+            desc: `Framework to use (${supportedFrameworks.join(", ")})`,
             alias: "f",
             args: "< string>",
             required: false,
-            validate: (value) => {
-                const validFrameworks = ["react", "vue", "preact", "solid", "marko"];
-                if (!validFrameworks.includes(value)) {
-                    throw new Error(`Framework must be one of: ${validFrameworks.join(", ")}`);
-                }
-                return value;
-            }
         },
         dir: {
             desc: "Target directory (relative to demo/)",
@@ -43,16 +35,14 @@ export async function main() {
         },
         "skip-install": {
             desc: "Skip dependency installation",
-            flag: true,
-            default: false,
+            argDefault: "false",
         },
     };
 
-    nixClap.init({}, {
-        _: {
+    nixClap.init(cliOptions, {
+        create: {
             desc: "Create a new FynApp",
-            options: cliOptions,
-            exec: createNewApp
+            exec: (command, commands) => createNewApp(getCommandOptions(command, commands))
         }
     });
 
@@ -73,8 +63,7 @@ async function createNewApp(opts) {
 
         // Set up paths
         const rootDir = process.cwd();
-        const demoDir = path.join(rootDir, "demo");
-        const targetDir = path.join(demoDir, config.dir || config.name);
+        const targetDir = resolveTargetDir(rootDir, config.dir || config.name);
 
         // Check if directory already exists
         if (await fileExists(targetDir)) {
@@ -94,38 +83,14 @@ async function createNewApp(opts) {
 
         // Install dependencies if not skipped
         if (!config.skipInstall) {
-            await AveAzul.resolve(exec("npm install", { cwd: targetDir }))
-                .tap(() => console.log("📦 Installing dependencies..."))
+            console.log("📦 Installing dependencies...");
+            await AveAzul.resolve(runFynCommand(targetDir, ["install"]))
                 .timeout(120000, "Dependency installation timed out after 2 minutes")
                 .catch((error) => {
                     console.warn("⚠️  Dependency installation failed:", error.message);
-                    console.log("You can install dependencies manually by running 'npm install' in the project directory.");
+                    console.log("You can install dependencies manually by running 'fyn install' in the project directory.");
                 });
         }
-
-        // Create and save configuration
-        await configManager.createConfig(targetDir, {
-            name: config.name,
-            framework: config.framework,
-            version: "1.0.0",
-            created: new Date().toISOString(),
-            lastUpdated: new Date().toISOString(),
-            components: config.components || [],
-            dependencies: {},
-            devDependencies: {},
-            buildOptions: {
-                minify: true,
-                sourceMaps: true,
-                externals: []
-            },
-            deployTargets: {},
-            federation: {
-                name: config.name,
-                shareScope: "fynmesh",
-                exposedModules: {},
-                sharedDependencies: {}
-            }
-        });
 
         return config;
     })
@@ -138,13 +103,13 @@ Your FynApp has been created in: demo/${config.dir || config.name}
 
 Next steps:
   cd demo/${config.dir || config.name}
-  npm start
+  fyn install
+  cfa build          # Build the FynApp
+  cfa check          # Build + check the federation output
 
-For ongoing development, use the 'cfa' command:
-  cd demo/${config.dir || config.name}    # Navigate to your FynApp
-  cfa build -w                            # Build with watch mode
-  cfa update                              # Update dependencies
-  cfa config                              # Manage configuration
+To modify this FynApp (add middleware, change rendering, migrate to a new
+kernel API), hand it to an LLM coding agent — see the contract and guide in
+create-fynapp/agent/ (CONTRACT.md, GUIDE.md) and examples/ for patterns.
 `);
         })
         .catch((error) => {
@@ -154,7 +119,7 @@ For ongoing development, use the 'cfa' command:
 }
 
 // Run main if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
     main().catch((err) => {
         console.error(`Error: ${err.message}`);
         process.exit(1);

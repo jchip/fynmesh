@@ -60,9 +60,9 @@ class {
 }
 
 <div style=(state.darkMode ?
-  "font-family: sans-serif; padding: 20px; background-color: #1a202c; color: #f7fafc; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3)" :
-  "font-family: sans-serif; padding: 20px; background-color: #f7fafc; color: #2d3748; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1)")>
-  <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  "font-family: sans-serif; padding: 20px; background-color: #1a202c; color: #f7fafc; border-radius: 8px; width: 100%; height: 100%; min-height: 100%; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); box-sizing: border-box; display: flex; flex-direction: column;" :
+  "font-family: sans-serif; padding: 20px; background-color: #f7fafc; color: #2d3748; border-radius: 8px; width: 100%; height: 100%; min-height: 100%; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; display: flex; flex-direction: column;")>
+  <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
     <div>
       <h2 style=(state.darkMode ? "color: #90cdf4; margin: 0; font-size: 16px; opacity: 0.8; margin-bottom: 4px;" : "color: #4a5568; margin: 0; font-size: 16px; opacity: 0.8; margin-bottom: 4px;")>
         FynApp using Marko ${state.markoVersion}
@@ -84,7 +84,7 @@ class {
   </header>
 
   <!-- Tab Navigation -->
-  <div style="margin-bottom: 24px; border-bottom: 1px solid rgba(160, 174, 192, 0.3); display: flex;">
+  <div style="margin-bottom: 24px; border-bottom: 1px solid rgba(160, 174, 192, 0.3); display: flex; flex-shrink: 0;">
     <div
       on-click("setActiveTab", "dashboard")
       style=(state.activeTab === "dashboard" ?
@@ -123,8 +123,10 @@ class {
     </div>
   </div>
 
-  <!-- Dashboard Tab -->
-  <div style=`display: ${state.activeTab === 'dashboard' ? 'block' : 'none'}`>
+  <!-- Main Content Area -->
+  <div style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto;">
+    <!-- Dashboard Tab -->
+    <div style=`display: ${state.activeTab === 'dashboard' ? 'block' : 'none'}`>
     <!-- Stats Cards -->
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
       <for|card| of=state.cards>
@@ -147,8 +149,8 @@ class {
 
     <!-- Chart Section -->
     <div style=(state.darkMode ?
-      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
-      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex: 1; min-height: 0;" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-height: 0;")>
       <h3 style="margin-top: 0; margin-bottom: 16px;">Performance Metrics</h3>
       <div style="height: 150px; display: flex; align-items: flex-end; gap: 4px;">
         <for|value, index| of=state.chartData>
@@ -174,8 +176,8 @@ class {
 
     <!-- Counter Example -->
     <div style=(state.darkMode ?
-      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
-      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex: 1; min-height: 0;" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-height: 0;")>
       <h3 style="margin-top: 0;">Interactive Counter</h3>
       <p>You clicked the button <strong>${state.count}</strong> times</p>
 
@@ -193,8 +195,8 @@ class {
   <!-- Projects Tab -->
   <div style=`display: ${state.activeTab === 'projects' ? 'block' : 'none'}`>
     <div style=(state.darkMode ?
-      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
-      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex: 1; min-height: 0;" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-height: 0;")>
       <h3 style="margin-top: 0; margin-bottom: 16px;">Project Status</h3>
 
       <div style="border-radius: 6px; overflow: hidden;">
@@ -257,8 +259,8 @@ class {
   <!-- Settings Tab -->
   <div style=`display: ${state.activeTab === 'settings' ? 'block' : 'none'}`>
     <div style=(state.darkMode ?
-      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)" :
-      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1)")>
+      "background-color: #2d3748; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); flex: 1; min-height: 0;" :
+      "background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex: 1; min-height: 0;")>
       <h3 style="margin-top: 0; margin-bottom: 16px;">Application Settings</h3>
 
       <for|setting, index| of=state.settings>
@@ -285,8 +287,9 @@ class {
       </for>
     </div>
   </div>
+  </div>
 
-  <footer style="font-size: 12px; opacity: 0.7; text-align: center; margin-top: 20px;">
+  <footer style="font-size: 12px; opacity: 0.7; text-align: center; margin-top: 20px; flex-shrink: 0;">
     <p>Marko.js Micro Frontend Example | Last updated: ${new Date().toLocaleDateString()}</p>
   </footer>
 </div>

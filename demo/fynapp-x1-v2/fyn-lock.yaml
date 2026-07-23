@@ -2,6 +2,9 @@ $fyn:
  layout: normal
  flattenTop: true
 $pkg:
+ dep:
+  fynapp-design-tokens: ../fynapp-design-tokens
+  fynapp-react-lib: ../fynapp-react-19
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-alias': ^5.1.1
@@ -10,38 +13,20 @@ $pkg:
   '@rollup/plugin-node-resolve': ^15.2.3
   '@rollup/plugin-terser': ^0.4.4
   '@rollup/plugin-typescript': ^11.1.6
-  '@tailwindcss/postcss': ^4.1.7
   '@types/node': ^20.8.9
   '@types/react': ^19.1.4
-  autoprefixer: ^10.4.16
+  aveazul: ^1.0.1
   create-fynapp: ../../dev-tools/create-fynapp
   esm-react: ../../misc/esm-react-19
+  esm-react-dom: ../../misc/esm-react-dom-19
   postcss: ^8.5.3
-  postcss-import: ^15.1.0
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
   rollup-plugin-postcss: ^4.0.2
-  tailwindcss: ^4.1.7
+  rollup-wrap-plugin: ../../dev-tools/rollup-wrap-plugin
   tslib: ^2.8.1
   typescript: ^5.2.2
-'@alloc/quick-lru':
- _latest: 5.2.0
- _:
-  ^5.2.0: 5.2.0
- 5.2.0:
-  $: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
-  _: 'https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz'
-'@ampproject/remapping':
- _latest: 2.3.0
- _:
-  ^2.3.0: 2.3.0
- 2.3.0:
-  $: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==
-  _: 'https://registry.npmjs.org/@ampproject/remapping/-/remapping-2.3.0.tgz'
-  dependencies:
-   '@jridgewell/gen-mapping': ^0.3.5
-   '@jridgewell/trace-mapping': ^0.3.24
 '@babel/code-frame':
  _latest: 7.27.1
  _:
@@ -77,15 +62,6 @@ $pkg:
  1.0.11:
   $: sha512-eOg92lvrn/aRUqbxRyvpEWnrvRuTYRifixHkYVpJiygTgVSBIHDqLh0SrMQXkafvULg3ck11V7xvR+zcgvpHFw==
   _: 'https://registry.npmjs.org/@inquirer/figures/-/figures-1.0.11.tgz'
-'@isaacs/fs-minipass':
- _latest: 4.0.1
- _:
-  ^4.0.0: 4.0.1
- 4.0.1:
-  $: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==
-  _: 'https://registry.npmjs.org/@isaacs/fs-minipass/-/fs-minipass-4.0.1.tgz'
-  dependencies:
-   minipass: ^7.0.4
 '@jchip/error':
  _latest: 1.0.3
  _:
@@ -229,6 +205,15 @@ $pkg:
    rollup: ^2.14.0||^3.0.0||^4.0.0
    tslib: '*'
    typescript: '>=3.7.0'
+'@rollup/plugin-virtual':
+ _latest: 3.0.2
+ _:
+  ^3.0.2: 3.0.2
+ 3.0.2:
+  $: sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A==
+  _: 'https://registry.npmjs.org/@rollup/plugin-virtual/-/plugin-virtual-3.0.2.tgz'
+  peerDependencies:
+   rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
 '@rollup/pluginutils':
  _latest: 5.1.4
  _:
@@ -243,7 +228,7 @@ $pkg:
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
 '@rollup/rollup-darwin-arm64':
- _latest: 4.41.0
+ _latest: 4.52.4
  _:
   4.41.0: 4.41.0
  4.41.0:
@@ -253,70 +238,6 @@ $pkg:
    - darwin
   cpu:
    - arm64
-'@tailwindcss/node':
- _latest: 4.1.7
- _:
-  4.1.7: 4.1.7
- 4.1.7:
-  $: sha512-9rsOpdY9idRI2NH6CL4wORFY0+Q6fnx9XP9Ju+iq/0wJwGD5IByIgFmwVbyy4ymuyprj8Qh4ErxMKTUL4uNh3g==
-  _: 'https://registry.npmjs.org/@tailwindcss/node/-/node-4.1.7.tgz'
-  dependencies:
-   '@ampproject/remapping': ^2.3.0
-   enhanced-resolve: ^5.18.1
-   jiti: ^2.4.2
-   lightningcss: 1.30.1
-   magic-string: ^0.30.17
-   source-map-js: ^1.2.1
-   tailwindcss: 4.1.7
-'@tailwindcss/oxide':
- _latest: 4.1.7
- _:
-  4.1.7: 4.1.7
- 4.1.7:
-  hasI: 1
-  $: sha512-5SF95Ctm9DFiUyjUPnDGkoKItPX/k+xifcQhcqX5RA85m50jw1pT/KzjdvlqxRja45Y52nR4MR9fD1JYd7f8NQ==
-  _: 'https://registry.npmjs.org/@tailwindcss/oxide/-/oxide-4.1.7.tgz'
-  dependencies:
-   tar: ^7.4.3
-   detect-libc: ^2.0.4
-  optionalDependencies:
-   '@tailwindcss/oxide-darwin-x64': 4.1.7
-   '@tailwindcss/oxide-darwin-arm64': 4.1.7
-   '@tailwindcss/oxide-freebsd-x64': 4.1.7
-   '@tailwindcss/oxide-linux-arm-gnueabihf': 4.1.7
-   '@tailwindcss/oxide-linux-arm64-gnu': 4.1.7
-   '@tailwindcss/oxide-linux-arm64-musl': 4.1.7
-   '@tailwindcss/oxide-linux-x64-musl': 4.1.7
-   '@tailwindcss/oxide-wasm32-wasi': 4.1.7
-   '@tailwindcss/oxide-win32-x64-msvc': 4.1.7
-   '@tailwindcss/oxide-win32-arm64-msvc': 4.1.7
-   '@tailwindcss/oxide-android-arm64': 4.1.7
-   '@tailwindcss/oxide-linux-x64-gnu': 4.1.7
-'@tailwindcss/oxide-darwin-arm64':
- _latest: 4.1.7
- _:
-  4.1.7: 4.1.7
- 4.1.7:
-  $: sha512-81jUw9To7fimGGkuJ2W5h3/oGonTOZKZ8C2ghm/TTxbwvfSiFSDPd6/A/KE2N7Jp4mv3Ps9OFqg2fEKgZFfsvg==
-  _: 'https://registry.npmjs.org/@tailwindcss/oxide-darwin-arm64/-/oxide-darwin-arm64-4.1.7.tgz'
-  os:
-   - darwin
-  cpu:
-   - arm64
-'@tailwindcss/postcss':
- _latest: 4.1.7
- _:
-  ^4.1.7: 4.1.7
- 4.1.7:
-  top: 1
-  $: sha512-88g3qmNZn7jDgrrcp3ZXEQfp9CVox7xjP1HN2TFKI03CltPVd/c61ydn5qJJL8FYunn0OqBaW5HNUga0kmPVvw==
-  _: 'https://registry.npmjs.org/@tailwindcss/postcss/-/postcss-4.1.7.tgz'
-  dependencies:
-   '@alloc/quick-lru': ^5.2.0
-   postcss: ^8.4.41
-   '@tailwindcss/node': 4.1.7
-   '@tailwindcss/oxide': 4.1.7
-   tailwindcss: 4.1.7
 '@trysound/sax':
  _latest: 0.2.0
  _:
@@ -406,30 +327,14 @@ ast-types:
   _: 'https://registry.npmjs.org/ast-types/-/ast-types-0.16.1.tgz'
   dependencies:
    tslib: ^2.0.1
-autoprefixer:
- _latest: 10.4.21
- _:
-  ^10.4.16: 10.4.21
- 10.4.21:
-  top: 1
-  $: sha512-O+A6LWV5LDHSJD3LjHYoNi4VLsj/Whi7k6zG12xTYaU4cQ8oxQGckXNX8cRHK5yOZ/ppVHe0ZBXGzSV9jXdVbQ==
-  _: 'https://registry.npmjs.org/autoprefixer/-/autoprefixer-10.4.21.tgz'
-  dependencies:
-   browserslist: ^4.24.4
-   caniuse-lite: ^1.0.30001702
-   fraction.js: ^4.3.7
-   normalize-range: ^0.1.2
-   picocolors: ^1.1.1
-   postcss-value-parser: ^4.2.0
-  peerDependencies:
-   postcss: ^8.1.0
 aveazul:
- _latest: 1.0.1
+ _latest: 1.0.2
  _:
-  ^1.0.1: 1.0.1
- 1.0.1:
-  $: sha512-rvjmoi1Nv8V9Pvfe0TF/JrJM9q0tqcQCnRHmoIeyPrmPuLTJtd0hfR6wVxXBV45EuZFI96M7R5uUMACqepEF5Q==
-  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.1.tgz'
+  '^1.0.1,^1.0.2': 1.0.2
+ 1.0.2:
+  top: 1
+  $: sha512-AxNC1s5Nv++jqk9qpyD6RojhoUrr5anfYWKIlUXVreXT3bVBjtOiibTc8snQSVNHq+5BAAE5gyM+XkOUR9fbEQ==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.2.tgz'
   dependencies:
    '@jchip/error': ^1.0.3
    xaa: ^1.8.0
@@ -477,7 +382,7 @@ brace-expansion:
 browserslist:
  _latest: 4.24.5
  _:
-  '^4.0.0,^4.21.4,^4.24.4': 4.24.5
+  '^4.0.0,^4.21.4': 4.24.5
  4.24.5:
   $: sha512-FDToo4Wo82hIdgc1CQ+NQD0hEhmpPjrZ3hiUgwgOG6IuTdlpr8jdjyG24P6cNP1yJpTLzS5OcGgSw0xmDU1/Tw==
   _: 'https://registry.npmjs.org/browserslist/-/browserslist-4.24.5.tgz'
@@ -518,7 +423,7 @@ caniuse-api:
 caniuse-lite:
  _latest: 1.0.30001718
  _:
-  '^1.0.0,^1.0.30001702,^1.0.30001716': 1.0.30001718
+  '^1.0.0,^1.0.30001716': 1.0.30001718
  1.0.30001718:
   $: sha512-AflseV1ahcSunK53NfEs9gFWgOEmzr0f+kaMFA4xiLZlr9Hzt7HxcSpIFcnNCUkz6R6dWKa54rUz3HUmI3nVcw==
   _: 'https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001718.tgz'
@@ -539,13 +444,6 @@ chardet:
  0.7.0:
   $: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==
   _: 'https://registry.npmjs.org/chardet/-/chardet-0.7.0.tgz'
-chownr:
- _latest: 3.0.0
- _:
-  ^3.0.0: 3.0.0
- 3.0.0:
-  $: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==
-  _: 'https://registry.npmjs.org/chownr/-/chownr-3.0.0.tgz'
 cli-cursor:
  _latest: 5.0.0
  _:
@@ -629,7 +527,7 @@ concat-with-sourcemaps:
 create-fynapp:
  _latest: 1.0.0-fynlocal_h
  _:
-  '../../dev-tools/create-fynapp,./': 1.0.0-fynlocal_h
+  ../../dev-tools/create-fynapp: 1.0.0-fynlocal_h
  1.0.0-fynlocal_h:
   top: 1
   $: local
@@ -641,15 +539,17 @@ create-fynapp:
    '@rollup/plugin-node-resolve': ^15.2.3
    '@rollup/plugin-terser': ^0.4.4
    '@rollup/plugin-typescript': ^11.1.6
+   '@rollup/plugin-virtual': ^3.0.2
    ast-types: ^0.16.1
    aveazul: ^1.0.1
-   create-fynapp: ^1.0.0
    inquirer: ^9.2.10
    nix-clap: ^2.0.0
    recast: ^0.23.4
    rollup: ^4.9.1
    rollup-plugin-dts: ^6.1.0
    rollup-plugin-federation: ^1.0.0
+   rollup-plugin-no-emit: ^1.3.0
+   rollup-wrap-plugin: ^1.0.0
    tslib: ^2.6.2
 css-declaration-sorter:
  _latest: 7.2.0
@@ -790,13 +690,6 @@ defaults:
   _: 'https://registry.npmjs.org/defaults/-/defaults-1.0.4.tgz'
   dependencies:
    clone: ^1.0.2
-detect-libc:
- _latest: 2.0.4
- _:
-  '^2.0.3,^2.0.4': 2.0.4
- 2.0.4:
-  $: sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA==
-  _: 'https://registry.npmjs.org/detect-libc/-/detect-libc-2.0.4.tgz'
 dom-serializer:
  _latest: 2.0.0
  _:
@@ -849,16 +742,6 @@ emoji-regex:
  8.0.0:
   $: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==
   _: 'https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz'
-enhanced-resolve:
- _latest: 5.18.1
- _:
-  ^5.18.1: 5.18.1
- 5.18.1:
-  $: sha512-ZSW3ma5GkcQBIpwZTSRAI8N71Uuwgs93IezB7mf7R60tC8ZbJideoDNKjHn2O9KIlx6rkGTTEk1xUCK2E1Y2Yg==
-  _: 'https://registry.npmjs.org/enhanced-resolve/-/enhanced-resolve-5.18.1.tgz'
-  dependencies:
-   graceful-fs: ^4.2.4
-   tapable: ^2.2.0
 entities:
  _latest: 6.0.0
  _:
@@ -885,11 +768,21 @@ escalade:
 esm-react:
  _latest: 19.1.0-fynlocal_h
  _:
-  ../../misc/esm-react-19: 19.1.0-fynlocal_h
+  '../../misc/esm-react-19,../esm-react-19': 19.1.0-fynlocal_h
  19.1.0-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-react-19
+esm-react-dom:
+ _latest: 19.1.0-fynlocal_h
+ _:
+  ../../misc/esm-react-dom-19: 19.1.0-fynlocal_h
+ 19.1.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-dom-19
+  dependencies:
+   esm-react: ^19.1.0
 esprima:
  _latest: 4.0.1
  _:
@@ -936,13 +829,6 @@ find-up:
   dependencies:
    locate-path: ^7.1.0
    path-exists: ^5.0.0
-fraction.js:
- _latest: 5.2.2
- _:
-  ^4.3.7: 4.3.7
- 4.3.7:
-  $: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==
-  _: 'https://registry.npmjs.org/fraction.js/-/fraction.js-4.3.7.tgz'
 fs.realpath:
  _latest: 1.0.0
  _:
@@ -966,6 +852,26 @@ function-bind:
  1.1.2:
   $: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==
   _: 'https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz'
+fynapp-design-tokens:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../fynapp-design-tokens: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-design-tokens
+  dependencies:
+   '@fynmesh/kernel': ^1.0.0
+   create-fynapp: ^1.0.0
+   rollup-wrap-plugin: ^1.0.0
+fynapp-react-lib:
+ _latest: 19.1.0-fynlocal_h
+ _:
+  ../fynapp-react-19: 19.1.0-fynlocal_h
+ 19.1.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-react-19
 generic-names:
  _latest: 4.0.0
  _:
@@ -989,13 +895,6 @@ glob:
    minimatch: ^5.0.1
    once: ^1.3.0
   deprecated: 'Glob versions prior to v9 are no longer supported'
-graceful-fs:
- _latest: 4.2.11
- _:
-  ^4.2.4: 4.2.11
- 4.2.11:
-  $: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==
-  _: 'https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz'
 has-flag:
  _latest: 5.0.1
  _:
@@ -1162,13 +1061,6 @@ is-unicode-supported:
  0.1.0:
   $: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==
   _: 'https://registry.npmjs.org/is-unicode-supported/-/is-unicode-supported-0.1.0.tgz'
-jiti:
- _latest: 2.4.2
- _:
-  ^2.4.2: 2.4.2
- 2.4.2:
-  $: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==
-  _: 'https://registry.npmjs.org/jiti/-/jiti-2.4.2.tgz'
 js-tokens:
  _latest: 9.0.1
  _:
@@ -1183,37 +1075,6 @@ json-parse-even-better-errors:
  3.0.2:
   $: sha512-fi0NG4bPjCHunUJffmLd0gxssIgkNmArMvis4iNah6Owg1MCJjWhEcDLmsK6iGkJq3tHwbDkTlce70/tmXN4cQ==
   _: 'https://registry.npmjs.org/json-parse-even-better-errors/-/json-parse-even-better-errors-3.0.2.tgz'
-lightningcss:
- _latest: 1.30.1
- _:
-  1.30.1: 1.30.1
- 1.30.1:
-  $: sha512-xi6IyHML+c9+Q3W0S4fCQJOym42pyurFiJUHEcEyHS0CeKzia4yZDEsLlqOFykxOdHpNy0NmvVO31vcSqAxJCg==
-  _: 'https://registry.npmjs.org/lightningcss/-/lightningcss-1.30.1.tgz'
-  dependencies:
-   detect-libc: ^2.0.3
-  optionalDependencies:
-   lightningcss-darwin-x64: 1.30.1
-   lightningcss-linux-x64-gnu: 1.30.1
-   lightningcss-win32-x64-msvc: 1.30.1
-   lightningcss-win32-arm64-msvc: 1.30.1
-   lightningcss-darwin-arm64: 1.30.1
-   lightningcss-linux-arm64-gnu: 1.30.1
-   lightningcss-linux-arm-gnueabihf: 1.30.1
-   lightningcss-linux-arm64-musl: 1.30.1
-   lightningcss-linux-x64-musl: 1.30.1
-   lightningcss-freebsd-x64: 1.30.1
-lightningcss-darwin-arm64:
- _latest: 1.30.1
- _:
-  1.30.1: 1.30.1
- 1.30.1:
-  $: sha512-c8JK7hyE65X1MHMN+Viq9n11RRC7hgin3HhYKhrMyaXflk5GVplZ60IxyoVtzILeKr+xAJwg6zK6sjTBJ0FKYQ==
-  _: 'https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.30.1.tgz'
-  os:
-   - darwin
-  cpu:
-   - arm64
 lilconfig:
  _latest: 3.1.3
  _:
@@ -1321,29 +1182,6 @@ minimatch:
   _: 'https://registry.npmjs.org/minimatch/-/minimatch-5.1.6.tgz'
   dependencies:
    brace-expansion: ^2.0.1
-minipass:
- _latest: 7.1.2
- _:
-  '^7.0.4,^7.1.2': 7.1.2
- 7.1.2:
-  $: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==
-  _: 'https://registry.npmjs.org/minipass/-/minipass-7.1.2.tgz'
-minizlib:
- _latest: 3.0.2
- _:
-  ^3.0.1: 3.0.2
- 3.0.2:
-  $: sha512-oG62iEk+CYt5Xj2YqI5Xi9xWUeZhDI8jjQmC5oThVH5JGCTgIjr7ciJDzC7MBzYd//WvR1OTmP5Q38Q8ShQtVA==
-  _: 'https://registry.npmjs.org/minizlib/-/minizlib-3.0.2.tgz'
-  dependencies:
-   minipass: ^7.1.2
-mkdirp:
- _latest: 3.0.1
- _:
-  ^3.0.1: 3.0.1
- 3.0.1:
-  $: sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==
-  _: 'https://registry.npmjs.org/mkdirp/-/mkdirp-3.0.1.tgz'
 mute-stream:
  _latest: 2.0.0
  _:
@@ -1386,13 +1224,6 @@ normalize-package-data:
    hosted-git-info: ^7.0.0
    semver: ^7.3.5
    validate-npm-package-license: ^3.0.4
-normalize-range:
- _latest: 0.1.2
- _:
-  ^0.1.2: 0.1.2
- 0.1.2:
-  $: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==
-  _: 'https://registry.npmjs.org/normalize-range/-/normalize-range-0.1.2.tgz'
 normalize-url:
  _latest: 8.0.1
  _:
@@ -1539,14 +1370,10 @@ picomatch:
 pify:
  _latest: 6.1.0
  _:
-  ^2.3.0: 2.3.0
   ^5.0.0: 5.0.0
  5.0.0:
   $: sha512-eW/gHNMlxdSP6dmG6uJip6FXN0EQBwm2clYYd8Wul42Cwu/DK8HEftzsapcNdYe2MfLiIwZqsDk2RDEsTE79hA==
   _: 'https://registry.npmjs.org/pify/-/pify-5.0.0.tgz'
- 2.3.0:
-  $: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==
-  _: 'https://registry.npmjs.org/pify/-/pify-2.3.0.tgz'
 pkg-up:
  _latest: 5.0.0
  _:
@@ -1559,7 +1386,7 @@ pkg-up:
 postcss:
  _latest: 8.5.3
  _:
-  '^8.4.41,^8.5.3': 8.5.3
+  ^8.5.3: 8.5.3
  8.5.3:
   top: 1
   $: sha512-dle9A3yYxlBSrt8Fu+IpjGT8SY8hN0mlaA6GY8t0P5PjIOZemULz/E2Bnm/2dcUOena75OTNkHI76uZBNUUq3A==
@@ -1642,20 +1469,6 @@ postcss-discard-overridden:
   _: 'https://registry.npmjs.org/postcss-discard-overridden/-/postcss-discard-overridden-5.1.0.tgz'
   peerDependencies:
    postcss: ^8.2.15
-postcss-import:
- _latest: 16.1.0
- _:
-  ^15.1.0: 15.1.0
- 15.1.0:
-  top: 1
-  $: sha512-hpr+J05B2FVYUAXHeK1YyI267J/dDDhMU6B6civm8hSY1jYJnBXxzKDKDswzJmtLHryrjhnDjqqp/49t8FALew==
-  _: 'https://registry.npmjs.org/postcss-import/-/postcss-import-15.1.0.tgz'
-  dependencies:
-   postcss-value-parser: ^4.0.0
-   read-cache: ^1.0.0
-   resolve: ^1.1.7
-  peerDependencies:
-   postcss: ^8.0.0
 postcss-load-config:
  _latest: 6.0.1
  _:
@@ -1982,7 +1795,7 @@ postcss-unique-selectors:
 postcss-value-parser:
  _latest: 4.2.0
  _:
-  '^4.0.0,^4.1.0,^4.2.0': 4.2.0
+  '^4.1.0,^4.2.0': 4.2.0
  4.2.0:
   $: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==
   _: 'https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz'
@@ -2002,15 +1815,6 @@ randombytes:
   _: 'https://registry.npmjs.org/randombytes/-/randombytes-2.1.0.tgz'
   dependencies:
    safe-buffer: ^5.1.0
-read-cache:
- _latest: 1.0.0
- _:
-  ^1.0.0: 1.0.0
- 1.0.0:
-  $: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==
-  _: 'https://registry.npmjs.org/read-cache/-/read-cache-1.0.0.tgz'
-  dependencies:
-   pify: ^2.3.0
 read-pkg:
  _latest: 9.0.1
  _:
@@ -2061,7 +1865,7 @@ recast:
 resolve:
  _latest: 1.22.10
  _:
-  '^1.1.7,^1.19.0,^1.22.1': 1.22.10
+  '^1.19.0,^1.22.1': 1.22.10
  1.22.10:
   $: sha512-NPRy+/ncIMeDlTAsuqwKIiferiawhefFJtkNSW0qZJEqMEb+qBt/77B/jGeeek+F0uOeN05CDa6HXbbIgtVX4w==
   _: 'https://registry.npmjs.org/resolve/-/resolve-1.22.10.tgz'
@@ -2143,10 +1947,20 @@ rollup-plugin-federation:
   _: ../../rollup-federation/rollup-plugin-federation
   dependencies:
    '@rollup/plugin-node-resolve': ^15.2.0
+   aveazul: ^1.0.2
    lodash-es: ^4.17.21
    pkg-up: ^4.0.0
    read-pkg-up: ^10.0.0
-   xaa: ^1.7.3
+   xaa: ^1.8.0
+rollup-plugin-no-emit:
+ _latest: 1.3.0
+ _:
+  ^1.3.0: 1.3.0
+ 1.3.0:
+  $: sha512-sSm+EsCJ7kIldNYa9Dr3Jp1lCylXV4TJPWiGQrZ/Q00KvHvA3hWTvxj/qMp4KzluHMtw9gIWZyLNN6bhnK3xog==
+  _: 'https://registry.npmjs.org/rollup-plugin-no-emit/-/rollup-plugin-no-emit-1.3.0.tgz'
+  peerDependencies:
+   rollup: '^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0'
 rollup-plugin-postcss:
  _latest: 4.0.2
  _:
@@ -2180,6 +1994,14 @@ rollup-pluginutils:
   _: 'https://registry.npmjs.org/rollup-pluginutils/-/rollup-pluginutils-2.8.2.tgz'
   dependencies:
    estree-walker: ^0.6.1
+rollup-wrap-plugin:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  '../../dev-tools/rollup-wrap-plugin,../rollup-wrap-plugin': 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../dev-tools/rollup-wrap-plugin
 run-async:
  _latest: 3.0.0
  _:
@@ -2399,35 +2221,6 @@ svgo:
    csso: ^4.2.0
    picocolors: ^1.0.0
    stable: ^0.1.8
-tailwindcss:
- _latest: 4.1.7
- _:
-  '4.1.7,^4.1.7': 4.1.7
- 4.1.7:
-  top: 1
-  $: sha512-kr1o/ErIdNhTz8uzAYL7TpaUuzKIE6QPQ4qmSdxnoX/lo+5wmUHQA6h3L5yIqEImSRnAAURDirLu/BgiXGPAhg==
-  _: 'https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.1.7.tgz'
-tapable:
- _latest: 2.2.2
- _:
-  ^2.2.0: 2.2.2
- 2.2.2:
-  $: sha512-Re10+NauLTMCudc7T5WLFLAwDhQ0JWdrMK+9B2M8zR5hRExKmsRDCBA7/aV/pNJFltmBFO5BAMlQFi/vq3nKOg==
-  _: 'https://registry.npmjs.org/tapable/-/tapable-2.2.2.tgz'
-tar:
- _latest: 7.4.3
- _:
-  ^7.4.3: 7.4.3
- 7.4.3:
-  $: sha512-5S7Va8hKfV7W5U6g3aYxXmlPoZVAwUMy9AOKyF2fVuZa2UD3qZjg578OrLRt8PcNN1PleVaL/5/yYATNL0ICUw==
-  _: 'https://registry.npmjs.org/tar/-/tar-7.4.3.tgz'
-  dependencies:
-   '@isaacs/fs-minipass': ^4.0.0
-   chownr: ^3.0.0
-   minipass: ^7.1.2
-   minizlib: ^3.0.1
-   mkdirp: ^3.0.1
-   yallist: ^5.0.0
 terser:
  _latest: 5.39.2
  _:
@@ -2553,19 +2346,12 @@ wrappy:
 xaa:
  _latest: 1.8.0
  _:
-  '^1.7.3,^1.8.0': 1.8.0
+  ^1.8.0: 1.8.0
  1.8.0:
   $: sha512-XPNHZLhbO/KyboMyJaJnqma/KUSRAkMUHZpNRVbilvsloJErKsTaOcxxte79u3Hj4UixCHR+y+p+DFp7rZ7MWQ==
   _: 'https://registry.npmjs.org/xaa/-/xaa-1.8.0.tgz'
   dependencies:
    tslib: ^2.6.2
-yallist:
- _latest: 5.0.0
- _:
-  ^5.0.0: 5.0.0
- 5.0.0:
-  $: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==
-  _: 'https://registry.npmjs.org/yallist/-/yallist-5.0.0.tgz'
 yaml:
  _latest: 2.8.0
  _:

@@ -1,86 +1,56 @@
-import { FynMeshKernel, FynApp } from '@fynmesh/kernel';
-import React from "react";
-import ReactDomClient from "react-dom/client";
-// Used by dynamic component imports
-import './components';
-import App from './App';
-import { preloadComponents, ComponentLibrary } from './components';
+import type { FynBus, FynUnitRuntime } from "@fynmesh/kernel";
+import type { FynApp1Config } from "../../shared-demo-utils/fynapp-1-shared/types.ts";
+import { createMain } from "../../shared-demo-utils/fynapp-1-shared/shared-main.ts";
+import { GET_STATUS_TOPIC } from "../../shared-demo-utils/fynbus-hooks.ts";
 
-/**
- * This is the main entry point for fynapp-1
- * It preloads components from fynapp-x1 before rendering the App
- */
-export async function main(kernel: FynMeshKernel, fynApp: FynApp) {
-    console.log(`${fynApp.name} initializing with React ${React.version}`);
+const config: FynApp1Config = {
+  appName: "FynApp 1",
+  targetId: "fynapp-1",
+  theme: "fynmesh-dark",
+  middlewareRole: "provider",
+  spinnerColor: "#3498db",
+  counterConfig: {
+    share: true,
+    count: 10,
+  },
+  designTokensConfig: {
+    theme: "fynmesh-default",
+    cssCustomProperties: true,
+    cssVariablePrefix: "fynmesh",
+    enableThemeSwitching: true,
+    global: false,
+  },
+  metadata: {
+    name: "FynApp 1",
+    version: "1.0.0",
+    description: "React 19 demo app with components",
+  },
+};
 
-    // Create a loading indicator
-    const createLoadingIndicator = () => {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'fynapp-1-loading';
-        loadingDiv.style.padding = '20px';
-        loadingDiv.style.textAlign = 'center';
-        loadingDiv.innerHTML = `
-            <h2>Loading components from fynapp-x1...</h2>
-            <div style="margin-top: 20px; display: inline-block;">
-                <div style="width: 50px; height: 50px; border: 5px solid #f3f3f3;
-                            border-top: 5px solid #3498db; border-radius: 50%;
-                            animation: spin 1s linear infinite;"></div>
-            </div>
-            <style>
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
-        `;
-        return loadingDiv;
-    };
+// FynBus demo (FYM-18): this app is THE responder for "get-status".
+// handle() throws on duplicate registration, so guard against execute
+// being called more than once — keyed by facade instance, because a
+// re-bootstrap after shutdown gets a fresh facade whose handler must be
+// registered again (the old one died with the disposed facade).
+let statusHandlerBus: FynBus | undefined;
 
-    // Find or create the div element to render into
-    let targetDiv = document.getElementById('fynapp-1');
-    if (!targetDiv) {
-        targetDiv = document.createElement('div');
-        targetDiv.id = 'fynapp-1';
-        document.body.appendChild(targetDiv);
+export const main = createMain(config, {
+  preloadComponents: async () => {
+    const { preloadComponents } = await import("./components");
+    return preloadComponents();
+  },
+  importApp: () => import("./App"),
+  setupBus: (runtime: FynUnitRuntime) => {
+    if (!runtime.bus || statusHandlerBus === runtime.bus) {
+      return;
     }
-
-    // Show loading indicator
-    const loadingIndicator = createLoadingIndicator();
-    targetDiv.appendChild(loadingIndicator);
-
-    // Pre-load components from fynapp-x1
-    let componentLibrary: ComponentLibrary;
-
-    try {
-        // Load the actual components
-        componentLibrary = await preloadComponents();
-        console.log('Successfully loaded component library from fynapp-x1');
-    } catch (error) {
-        console.error('Failed to load components from fynapp-x1:', error);
-
-        // Show error message
-        targetDiv.innerHTML = `
-            <div style="padding: 20px; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
-                <h3>Error Loading Components</h3>
-                <p>Failed to load component library from fynapp-x1. Check console for details.</p>
-                <button onclick="location.reload()">Retry</button>
-            </div>
-        `;
-        return; // Exit early
-    } finally {
-        // Remove loading indicator
-        if (loadingIndicator.parentNode) {
-            loadingIndicator.parentNode.removeChild(loadingIndicator);
-        }
-    }
-
-    // Render the React component with pre-loaded components
-    const root = ReactDomClient.createRoot(targetDiv);
-    root.render(
-        React.createElement(App, {
-            appName: fynApp.name,
-            components: componentLibrary
-        })
+    runtime.bus.handle(GET_STATUS_TOPIC, () => ({
+      app: runtime.fynApp.name,
+      time: new Date().toISOString(),
+    }));
+    statusHandlerBus = runtime.bus;
+    console.debug(
+      `\u{1F68C} ${runtime.fynApp.name}: FynBus handler registered for "${GET_STATUS_TOPIC}"`
     );
-}
-
+  },
+});

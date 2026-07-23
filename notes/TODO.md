@@ -1,0 +1,145 @@
+# FynMesh Development Roadmap
+
+## Current State (Completed)
+
+- [x] Kernel with module loading via SystemJS federation
+- [x] Middleware system with setup/apply/execute phases
+- [x] Middleware execution override capability
+- [x] Manifest resolution and bootstrap coordination
+- [x] Multi-framework support (React, Vue, Marko, Preact, Solid, Svelte)
+- [x] Multi-version module support
+- [x] Error reporting with KernelError hierarchy
+- [x] Shell layout middleware with multi-region support
+- [x] React Context middleware
+- [x] Design tokens middleware
+- [x] Runtime telemetry & observability (KernelTelemetry: ring buffer, scopes, transports)
+- [x] FynBus inter-FynApp messaging (pub/sub + request/response + channels)
+
+---
+
+## Near-Term Priorities (Next 1-3 Months)
+
+### 1. **FynApp Lifecycle** ⭐ Priority 1
+**Pain Point:** FynApps have initialize() and execute(), but no cleanup
+
+- [x] Add `shutdown()` lifecycle hook to FynUnit interface
+- [x] Add `shutdownFynApp()` to kernel with `FYNAPP_SHUTDOWN` event
+- [x] Lifecycle events (`FYNAPP_BOOTSTRAPPED`, `FYNAPP_BOOTSTRAP_FAILED`, `FYNAPP_BOOTSTRAP_TIMEOUT`, `FYNAPP_SHUTDOWN`)
+- [x] Add `suspend()` / `resume()` for background FynApps (FYM-9; `FYNAPP_SUSPENDED`/`FYNAPP_RESUMED`)
+- [x] Implement mount tracking in kernel (FYM-10; `getFynAppState`/`listFynAppStates`)
+- [x] Add error boundary per FynApp (isolate failures) (FYM-11; failed state recorded, siblings unaffected)
+- [ ] HMR support for development (FYM-12; won't do—intentionally out of scope)
+
+### 2. **Inter-FynApp Communication (FynBus)** ✅ Shipped (epic FYM-2, FYM-13–18)
+**Was:** FynApps could only communicate via middleware context (indirect). Now via `core/kernel/src/fyn-bus.ts` (design: [`FYNBUS_DESIGN.md`](./FYNBUS_DESIGN.md)).
+
+- [x] Design FynBus event bus API
+- [x] Implement pub/sub messaging (emit, on, once)
+- [x] Add request/response pattern (RPC-like)
+- [x] Channel scoping and namespacing (FYM-16; flat channel isolation)
+- [x] Per-call generic payload types (shared topic contracts remain open as FYM-17)
+- [x] Demo: Two FynApps communicating via events (`demo/fynapp-1`, `shared-demo-utils/fynbus-hooks.ts`)
+
+### 3. **Developer Experience & Tooling** ⭐ Priority 3
+
+#### create-fynapp Improvements
+- [ ] Complete all framework templates (Preact, Solid, Marko, Svelte)
+- [ ] Replace string templating with proper template engine
+- [ ] Add `cfa dev` command with built-in dev server + HMR
+- [ ] Add `cfa add middleware` command
+- [ ] Test framework scaffolding (Vitest)
+- [ ] Config schema validation
+
+#### DevTools & Debugging
+- [ ] Dev overlay showing FynApp boundaries and names
+- [ ] Console integration (prefix logs with FynApp name)
+- [x] Error overlay with stack traces (FYM-29; development browser bundle)
+
+#### Chrome Extension
+- [ ] FynApp Panel (list loaded FynApps with status)
+- [ ] Federation Inspector (modules, versions, sharing)
+- [ ] Dependency Graph visualization
+- [ ] Middleware Viewer
+- [ ] Event Monitor (FynBus stream)
+- [ ] Performance Tab
+
+### 4. **Performance & Optimization** ⭐ Priority 4
+- [ ] Lazy region loading (Intersection Observer)
+- [x] Preload hints in manifest (`shared-providers`, `import-exposed`, `requires`)
+- [x] Entry file preloading with depth-based prioritization
+- [ ] Performance event emission
+- [ ] Bundle analysis tooling
+- [ ] Intelligent caching strategies
+
+---
+
+## Medium-Term Priorities
+
+### 5. **Platform Middleware**
+- [ ] Auth middleware (session, tokens, protected routes)
+- [ ] API middleware (HTTP client, token injection)
+- [ ] Global state middleware (cross-FynApp state)
+- [ ] Router middleware (URL mapping, deep linking)
+
+### 6. **Dependency Resolution**
+- [x] Runtime dependency graph with topological sort (`buildGraph`, `topoBatches`)
+- [x] Intelligent preloading and prefetching (entry file preloading with depth tracking)
+- [x] Circular dependency detection (warning + best-effort loading)
+- [ ] federation.json generation
+
+### 7. **Observability & APM**
+- [ ] Structured logging with correlation IDs
+- [ ] Performance metrics collection
+- [ ] Distributed tracing across FynApps
+- [ ] Integration with DataDog, New Relic
+
+### 8. **Security & Governance**
+- [ ] CSP integration
+- [ ] Module signature verification
+- [ ] Multi-tenant isolation
+- [ ] Enterprise SSO integration
+
+---
+
+## Long-Term Priorities
+
+### 9. **CI/CD & Production**
+- [ ] Automated build pipelines
+- [ ] Progressive rollout / canary deployments
+- [ ] Multi-environment orchestration
+
+### 10. **Mobile & PWA**
+- [ ] Mobile-optimized loading
+- [ ] Service worker integration
+- [ ] Offline capabilities
+
+### 11. **Server-Side Rendering**
+- [ ] SSR architecture for federated FynApps
+- [ ] Client-side hydration
+- [ ] SEO optimization
+
+### 12. **Internationalization**
+- [ ] Federated translation management
+- [ ] Cross-FynApp locale coordination
+- [ ] RTL support
+
+### 13. **Accessibility**
+- [ ] WCAG compliance framework
+- [ ] Screen reader coordination
+- [ ] Automated a11y testing
+
+### 14. **Experimentation**
+- [ ] A/B testing framework
+- [ ] Feature flag management
+- [ ] Progressive rollout
+
+---
+
+## Implementation Principles
+
+- **Enterprise-First**: Prioritize large-scale enterprise needs
+- **Federation-Native**: Leverage Module Federation capabilities
+- **ES Modules Only**: Modern, standardized module architecture
+- **Extensible Design**: Build for middleware and plugin ecosystems
+- **Error-Resilient**: Graceful degradation built into every component
+- **Developer Experience**: Tools and utilities for seamless adoption

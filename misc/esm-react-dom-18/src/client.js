@@ -1,7 +1,13 @@
-import ReactDOM from "react-dom/client";
+import ReactDOMClient from "react-dom/client";
+import ReactDOMServer from "react-dom";
 
-export default ReactDOM;
+const CombinedDOM = {
+  ...ReactDOMServer,
+  ...ReactDOMClient,
+};
+
+export default CombinedDOM;
 
 console.log("ESM_REACT_DOM_VERSION 18.3.1");
 
-export const { createRoot, hydrateRoot } = ReactDOM;
+export { createPortal, flushSync } from "react-dom";

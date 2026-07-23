@@ -1,8 +1,12 @@
 import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import AveAzul from "aveazul";
-import { AppConfig } from "./prompts";
+import type { AppConfig } from "./prompts.js";
+import { assertSupportedFramework } from "./frameworks.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Use fs.promises directly - cleaner than promisifying
 const readFile = fsPromises.readFile;
@@ -22,15 +26,26 @@ async function fileExists(filePath: string): Promise<boolean> {
     }
 }
 
-interface GeneratorConfig extends AppConfig {
+export interface GeneratorConfig extends AppConfig {
     targetDir: string;
     rootDir: string;
+}
+
+/**
+ * Convert kebab-case or snake_case to PascalCase
+ */
+function toPascalCase(str: string): string {
+    return str
+        .split(/[-_]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('');
 }
 
 /**
  * Creates a FynApp from templates based on the configuration
  */
 export async function generateApp(config: GeneratorConfig): Promise<void> {
+    assertSupportedFramework(config.framework);
     console.log(`\nCreating a new ${config.framework} FynApp in ${config.targetDir}...`);
 
     // Create src directory
@@ -83,6 +98,7 @@ async function createPackageJson(templateDir: string, config: GeneratorConfig): 
         // Replace template variables
         content = content
             .replace(/\{\{appName\}\}/g, config.name)
+            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
             .replace(/\{\{framework\}\}/g, config.framework);
 
         // Write the file
@@ -98,7 +114,7 @@ async function createPackageJson(templateDir: string, config: GeneratorConfig): 
  * Creates rollup.config.mjs for the new FynApp
  */
 async function createRollupConfig(templateDir: string, config: GeneratorConfig): Promise<void> {
-    const templatePath = path.join(templateDir, "rollup.config.mjs.template");
+    const templatePath = path.join(templateDir, "rollup.config.ts.template");
 
     try {
         let content = await readFile(templatePath, "utf-8");
@@ -106,13 +122,14 @@ async function createRollupConfig(templateDir: string, config: GeneratorConfig):
         // Replace template variables
         content = content
             .replace(/\{\{appName\}\}/g, config.name)
+            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
             .replace(/\{\{framework\}\}/g, config.framework);
 
         // Write the file
-        await writeFile(path.join(config.targetDir, "rollup.config.mjs"), content);
-        console.log("✅ Created rollup.config.mjs");
+        await writeFile(path.join(config.targetDir, "rollup.config.ts"), content);
+        console.log("✅ Created rollup.config.ts");
     } catch (error) {
-        console.error("Error creating rollup.config.mjs:", error);
+        console.error("Error creating rollup.config.ts:", error);
         throw error;
     }
 }
@@ -171,12 +188,8 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
                 // Replace template variables
                 content = content
                     .replace(/\{\{appName\}\}/g, config.name)
+                    .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
                     .replace(/\{\{framework\}\}/g, config.framework);
-
-                // Handle component inclusion based on selected components
-                if (content.includes("{{#if counter}}") && config.components) {
-                    content = processComponentInclusion(content, config.components);
-                }
 
                 // Write the processed file
                 await writeFile(targetFilePath.replace(".template", ""), content);
@@ -192,57 +205,4 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
             console.error("❌ Error creating source files:", error.message);
             throw error;
         });
-}
-
-/**
- * Process conditional component inclusion
- */
-function processComponentInclusion(content: string, components: string[]): string {
-    // Handle counter component
-    content = processComponentSection(content, "counter", components.includes("counter"));
-
-    // Handle stats component
-    content = processComponentSection(content, "stats", components.includes("stats"));
-
-    // Handle chart component
-    content = processComponentSection(content, "chart", components.includes("chart"));
-
-    // Handle projects component
-    content = processComponentSection(content, "projects", components.includes("projects"));
-
-    // Handle settings component
-    content = processComponentSection(content, "settings", components.includes("settings"));
-
-    return content;
-}
-
-/**
- * Process a single component section in the template
- */
-function processComponentSection(content: string, componentName: string, include: boolean): string {
-    const startTag = `{{#if ${componentName}}}`;
-    const endTag = `{{/if ${componentName}}}`;
-
-    let result = content;
-    let startIndex = result.indexOf(startTag);
-
-    while (startIndex !== -1) {
-        const endIndex = result.indexOf(endTag, startIndex);
-
-        if (endIndex === -1) {
-            break; // Malformed template
-        }
-
-        const beforeSection = result.substring(0, startIndex);
-        const section = result.substring(startIndex + startTag.length, endIndex);
-        const afterSection = result.substring(endIndex + endTag.length);
-
-        result = include
-            ? beforeSection + section + afterSection
-            : beforeSection + afterSection;
-
-        startIndex = result.indexOf(startTag);
-    }
-
-    return result;
 }

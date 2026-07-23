@@ -49,11 +49,11 @@ export default [
         shared: {
           "esm-react": {
             singleton: true,
-            requiredVersion: "^18.0.0",
+            semver: "^18.0.0",
           },
           "esm-react-dom": {
             singleton: true,
-            requiredVersion: "^18.0.0",
+            semver: "^18.0.0",
           },
         },
       }),

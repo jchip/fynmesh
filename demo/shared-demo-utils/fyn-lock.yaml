@@ -1,0 +1,23 @@
+$fyn:
+ layout: normal
+ flattenTop: true
+$pkg:
+ dev:
+  '@fynmesh/kernel': ../../core/kernel
+'@fynmesh/kernel':
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../../core/kernel: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../core/kernel
+  dependencies:
+   tslib: ^2.6.2
+tslib:
+ _latest: 2.8.1
+ _:
+  ^2.6.2: 2.8.1
+ 2.8.1:
+  $: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
+  _: 'https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz'

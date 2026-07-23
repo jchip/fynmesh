@@ -36,10 +36,5 @@
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0"
-  },
-  "fyn": {
-    "dependencies": {
-      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation"
-    }
   }
 }

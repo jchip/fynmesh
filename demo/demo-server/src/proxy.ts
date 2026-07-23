@@ -1,7 +1,14 @@
-const redbird = require("@jchip/redbird")
-const Url = require("node:url");
-const Path = require("node:path");
-const ck = require("chalker");
+// @ts-ignore - No types available
+import redbird from "@jchip/redbird";
+import * as Url from "node:url";
+import * as Path from "node:path";
+// @ts-ignore - No types available
+import ck from "chalker";
+import { fileURLToPath } from "node:url";
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = Path.dirname(__filename);
 
 
 /**

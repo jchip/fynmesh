@@ -1,0 +1,27 @@
+{
+  "name": "rollup-wrap-plugin",
+  "version": "1.0.0",
+  "description": "A wrapper for constructing rollup plugins in config",
+  "main": "dist/rollup-wrap-plugin.js",
+  "homepage": "",
+  "license": "UNLICENSED",
+  "type": "module",
+  "source": "src/rollup-wrap-plugin.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc --skipLibCheck"
+  },
+  "author": "",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3"
+  }
+}

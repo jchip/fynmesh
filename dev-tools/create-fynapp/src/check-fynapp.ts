@@ -1,0 +1,148 @@
+import fs from "fs";
+import path from "path";
+import { spawn } from "child_process";
+import { fynappEntryFilename } from "./constants.js";
+
+/**
+ * Result of checking a FynApp.
+ */
+export interface CheckResult {
+  ok: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Locate the local `rollup` binary for an app, preferring the app's own
+ * node_modules, then walking up to the monorepo root. Avoids `npm`/`npx`.
+ */
+function findRollupBin(appDir: string): string | null {
+  let dir = appDir;
+  for (let i = 0; i < 6; i++) {
+    const bin = path.join(dir, "node_modules", ".bin", "rollup");
+    if (fs.existsSync(bin)) return bin;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+/**
+ * Build a FynApp by invoking its local rollup binary (`rollup -c`).
+ */
+function buildWithRollup(appDir: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const bin = findRollupBin(appDir);
+    if (!bin) {
+      reject(new Error("Could not find local `rollup` binary. Run `fyn install` first."));
+      return;
+    }
+    const child = spawn(bin, ["-c"], { cwd: appDir, stdio: "inherit" });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`rollup exited with code ${code}`));
+    });
+  });
+}
+
+/**
+ * Check that a directory is a well-formed FynApp: it builds and emits the
+ * federation entry + a manifest declaring name/version and the `./main` expose.
+ *
+ * This is the check an LLM coding agent runs after an edit. It exercises the
+ * real build and inspects the runtime contract, not just types.
+ */
+export async function checkFynApp(
+  appDir: string,
+  options: { build?: boolean } = {},
+): Promise<CheckResult> {
+  const { build = true } = options;
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const pkgPath = path.join(appDir, "package.json");
+  if (!fs.existsSync(pkgPath)) {
+    return { ok: false, errors: [`No package.json in ${appDir} — not a FynApp.`], warnings };
+  }
+
+  let pkg: any;
+  try {
+    pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+  } catch (e: any) {
+    return { ok: false, errors: [`package.json does not parse: ${e.message}`], warnings };
+  }
+
+  if (!pkg.name) errors.push("package.json is missing `name`");
+  if (!pkg.version) errors.push("package.json is missing `version`");
+  if (errors.length > 0) return { ok: false, errors, warnings };
+
+  const distDir = path.join(appDir, "dist");
+  if (build) {
+    try {
+      fs.rmSync(distDir, { recursive: true, force: true });
+      await buildWithRollup(appDir);
+    } catch (e: any) {
+      return { ok: false, errors: [`Build failed: ${e.message}`], warnings };
+    }
+  }
+
+  const entryPath = path.join(distDir, fynappEntryFilename);
+  const manifestPath = path.join(distDir, "fynapp.manifest.json");
+
+  if (!fs.existsSync(entryPath)) {
+    errors.push(`Missing federation entry: dist/${fynappEntryFilename}`);
+  }
+
+  if (!fs.existsSync(manifestPath)) {
+    errors.push("Missing dist/fynapp.manifest.json");
+  } else {
+    let manifest: any;
+    try {
+      manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    } catch (e: any) {
+      errors.push(`dist/fynapp.manifest.json does not parse: ${e.message}`);
+    }
+    if (manifest) {
+      if (!manifest.name) errors.push("manifest is missing `name`");
+      else if (manifest.name !== pkg.name) {
+        errors.push(
+          `manifest name ${JSON.stringify(manifest.name)} does not match package.json name ${JSON.stringify(pkg.name)}`,
+        );
+      }
+      if (!manifest.version) errors.push("manifest is missing `version`");
+      else if (manifest.version !== pkg.version) {
+        errors.push(
+          `manifest version ${JSON.stringify(manifest.version)} does not match package.json version ${JSON.stringify(pkg.version)}`,
+        );
+      }
+      if (!manifest.exposes || !manifest.exposes["./main"]) {
+        errors.push('manifest.exposes is missing the required "./main" module');
+      }
+    }
+  }
+
+  return { ok: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Run the check and print a human-readable report. Returns the result.
+ */
+export async function runCheck(
+  appDir: string,
+  options: { build?: boolean } = {},
+): Promise<CheckResult> {
+  const name = path.basename(appDir);
+  console.log(`\n🔎 Checking FynApp: ${name}`);
+  const result = await checkFynApp(appDir, options);
+
+  for (const w of result.warnings) console.warn(`  ⚠️  ${w}`);
+  if (result.ok) {
+    console.log(`  ✅ ${name} is a valid FynApp (entry + manifest + ./main expose present).`);
+  } else {
+    console.error(`  ❌ ${name} failed the check:`);
+    for (const e of result.errors) console.error(`     - ${e}`);
+  }
+  return result;
+}

@@ -1,4 +1,3 @@
-import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
 import AveAzul from "aveazul";
@@ -107,7 +106,7 @@ export async function copyFilesWithProgress(
 }
 
 /**
- * Validate multiple files exist with AveAzul's some utility
+ * Check that multiple files exist with AveAzul's some utility
  */
 export async function validateRequiredFiles(
     filePaths: string[],

@@ -1,0 +1,106 @@
+/* Custom component styles for fynapp-x1 v1 */
+
+/* Card component styles */
+.card {
+  background: var(--fynmesh-color-light);
+  border: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  border-radius: var(--fynmesh-radius-lg);
+  box-shadow: var(--fynmesh-shadow-sm);
+}
+
+.card-header {
+  padding: var(--fynmesh-spacing-md) var(--fynmesh-spacing-lg);
+  border-bottom: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  background: var(--fynmesh-color-light);
+  border-radius: var(--fynmesh-radius-md) var(--fynmesh-radius-md) 0 0;
+}
+
+.card-body {
+  padding: var(--fynmesh-spacing-sm);
+}
+
+.card-footer {
+  padding: var(--fynmesh-spacing-md) var(--fynmesh-spacing-lg);
+  border-top: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  background: var(--fynmesh-color-light);
+  border-radius: 0 0 var(--fynmesh-radius-md) var(--fynmesh-radius-md);
+}
+
+/* Input component styles */
+.input {
+  width: 100%;
+  padding: var(--fynmesh-spacing-sm) var(--fynmesh-spacing-md);
+  border: var(--fynmesh-border-1) solid var(--fynmesh-color-secondary);
+  border-radius: var(--fynmesh-radius-md);
+  box-shadow: var(--fynmesh-shadow-sm);
+  font-size: var(--fynmesh-text-base);
+  font-family: var(--fynmesh-font-family-sans);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--fynmesh-color-primary);
+  box-shadow: var(--fynmesh-shadow-md);
+}
+
+.input-error {
+  border-color: var(--fynmesh-color-danger);
+}
+
+.input-error:focus {
+  border-color: var(--fynmesh-color-danger);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Alert component styles */
+.alert {
+  padding: var(--fynmesh-spacing-lg);
+  border-radius: var(--fynmesh-radius-md);
+  border: var(--fynmesh-border-1) solid;
+  font-size: var(--fynmesh-text-base);
+  font-family: var(--fynmesh-font-family-sans);
+}
+
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--fynmesh-color-info);
+  color: var(--fynmesh-color-info);
+}
+
+.alert-success {
+  background: rgba(5, 150, 105, 0.1);
+  border-color: var(--fynmesh-color-success);
+  color: var(--fynmesh-color-success);
+}
+
+.alert-warning {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: var(--fynmesh-color-warning);
+  color: var(--fynmesh-color-warning);
+}
+
+.alert-error {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: var(--fynmesh-color-danger);
+  color: var(--fynmesh-color-danger);
+}
+
+/* Spinner component styles */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.spinner-small {
+  width: var(--fynmesh-spacing-lg);
+  height: var(--fynmesh-spacing-lg);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

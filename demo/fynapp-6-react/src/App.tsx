@@ -3,6 +3,7 @@ import './styles.css';
 
 interface AppProps {
     appName: string;
+    counterAPI?: any; // Basic counter middleware API
 }
 
 // Card Component
@@ -132,10 +133,44 @@ const SettingRow: React.FC<{
 };
 
 // Main App Component
-const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
+const App: React.FC<AppProps> = ({ appName = 'React App', counterAPI }) => {
     const [count, setCount] = useState(0);
+    const [sharedCount, setSharedCount] = useState(0);
     const [darkMode, setDarkMode] = useState(false);
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
+
+    // Set up event listener for shared counter changes
+    React.useEffect(() => {
+        if (counterAPI?.eventTarget) {
+            console.log('🔍 fynapp-6-react: Setting up shared counter event listener');
+            setConnectionStatus('connected');
+
+            // Initial sync - read current count from shared state (late join support)
+            const currentCount = counterAPI?.config?.count ?? 0;
+            setSharedCount(currentCount);
+            console.log('🔍 fynapp-6-react: Initial sync - current count:', currentCount);
+
+            const handleCounterChange = (event: any) => {
+                console.log('🔍 fynapp-6-react: Counter changed event received:', event.detail);
+                setSharedCount(event.detail.count);
+            };
+
+            counterAPI.eventTarget.addEventListener('counterChanged', handleCounterChange);
+
+            // Clean up on unmount
+            return () => {
+                counterAPI.eventTarget.removeEventListener('counterChanged', handleCounterChange);
+                setConnectionStatus('disconnected');
+            };
+        } else {
+            console.warn('⚠️ fynapp-6-react: No counter API available');
+            setConnectionStatus('disconnected');
+        }
+    }, [counterAPI]);
+
+    console.log('🔍 fynapp-6-react: Counter API available:', !!counterAPI);
+    console.log('🔍 fynapp-6-react: Connection status:', connectionStatus);
 
     const [cards] = useState([
         { title: "Analytics", value: "85%", trend: "up" as const, desc: "User engagement" },
@@ -202,82 +237,160 @@ const App: React.FC<AppProps> = ({ appName = 'React App' }) => {
                 ))}
             </div>
 
-            {/* Dashboard Tab */}
-            {activeTab === 'dashboard' && (
-                <>
-                    {/* Stats Cards */}
-                    <div className="stats-grid">
-                        {cards.map((card, index) => (
-                            <StatCard
+            {/* Main Content Area */}
+            <div className="main-content">
+                {/* Dashboard Tab */}
+                {activeTab === 'dashboard' && (
+                    <>
+                        {/* Stats Cards */}
+                        <div className="stats-grid">
+                            {cards.map((card, index) => (
+                                <StatCard
+                                    key={index}
+                                    title={card.title}
+                                    value={card.value}
+                                    trend={card.trend}
+                                    desc={card.desc}
+                                    refreshKey={count}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Chart Section */}
+                        <div className="chart-section">
+                            <h3>Performance Metrics</h3>
+                            <div className="chart">
+                                {chartData.map((value, index) => (
+                                    <ChartBar key={index} value={value} total={150} />
+                                ))}
+                            </div>
+                            <div className="chart-labels">
+                                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map(month => (
+                                    <span key={month}>{month}</span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Shared Counter Example */}
+                        <div className="counter-section">
+                            <h3>🔗 Cross-App Shared Counter</h3>
+                            <div style={{ marginBottom: '16px' }}>
+                                <div style={{
+                                    fontSize: '48px',
+                                    fontWeight: 'bold',
+                                    textAlign: 'center',
+                                    margin: '20px 0',
+                                    color: darkMode ? '#63b3ed' : '#3182ce'
+                                }}>
+                                    {sharedCount}
+                                </div>
+                                <p style={{
+                                    color: darkMode ? '#a0aec0' : '#718096',
+                                    textAlign: 'center',
+                                    marginBottom: '16px'
+                                }}>
+                                    Shared with fynapp-1 & fynapp-1-b! Status: {' '}
+                                    <span style={{
+                                        color: connectionStatus === 'connected' ? '#48bb78' : '#f56565',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {connectionStatus === 'connected' ? '✅ Connected' : '❌ Not Connected'}
+                                    </span>
+                                    <br />
+                                    <small>
+                                        {connectionStatus === 'connected'
+                                            ? 'Updates instantly across all apps!'
+                                            : '⚠️ Load FynApp 1 first to enable counter sharing'}
+                                    </small>
+                                </p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
+                                <button
+                                    className="primary-button"
+                                    disabled={connectionStatus !== 'connected'}
+                                    onClick={() => {
+                                        console.log('🔍 fynapp-6-react: Incrementing shared counter...');
+                                        if (counterAPI?.increment) {
+                                            counterAPI.increment('fynapp-6-react');
+                                            console.log('✅ fynapp-6-react: Shared counter incremented');
+                                        } else {
+                                            console.error('❌ fynapp-6-react: increment action not available');
+                                        }
+                                    }}
+                                    style={{
+                                        opacity: connectionStatus !== 'connected' ? 0.5 : 1,
+                                        cursor: connectionStatus !== 'connected' ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    + Increment (Cross-App)
+                                </button>
+                                <button
+                                    className="primary-button"
+                                    disabled={connectionStatus !== 'connected'}
+                                    onClick={() => {
+                                        console.log('🔍 fynapp-6-react: Resetting shared counter...');
+                                        if (counterAPI?.reset) {
+                                            counterAPI.reset('fynapp-6-react');
+                                            console.log('✅ fynapp-6-react: Shared counter reset');
+                                        } else {
+                                            console.error('❌ fynapp-6-react: reset action not available');
+                                        }
+                                    }}
+                                    style={{
+                                        backgroundColor: '#e53e3e',
+                                        opacity: connectionStatus !== 'connected' ? 0.5 : 1,
+                                        cursor: connectionStatus !== 'connected' ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                            <hr style={{ margin: '20px 0', opacity: 0.3 }} />
+                            <div>
+                                <h4>Local Counter (fynapp-6 only)</h4>
+                                <p>You clicked the local button <strong>{count}</strong> times</p>
+                                <button className="primary-button" onClick={increment}>Increment Local</button>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {/* Projects Tab */}
+                {activeTab === 'projects' && (
+                    <div className="content-section">
+                        <h3>Project Status</h3>
+
+                        <div className="projects-table">
+                            <div className="projects-header">
+                                <div>Project Name</div>
+                                <div>Status</div>
+                                <div>Priority</div>
+                                <div>Progress</div>
+                            </div>
+
+                            {projects.map(project => (
+                                <ProjectRow key={project.id} project={project} />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Settings Tab */}
+                {activeTab === 'settings' && (
+                    <div className="content-section">
+                        <h3>Application Settings</h3>
+
+                        {settings.map((setting, index) => (
+                            <SettingRow
                                 key={index}
-                                title={card.title}
-                                value={card.value}
-                                trend={card.trend}
-                                desc={card.desc}
-                                refreshKey={count}
+                                setting={setting}
+                                index={index}
+                                onToggle={toggleSetting}
                             />
                         ))}
                     </div>
-
-                    {/* Chart Section */}
-                    <div className="chart-section">
-                        <h3>Performance Metrics</h3>
-                        <div className="chart">
-                            {chartData.map((value, index) => (
-                                <ChartBar key={index} value={value} total={150} />
-                            ))}
-                        </div>
-                        <div className="chart-labels">
-                            {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'].map(month => (
-                                <span key={month}>{month}</span>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Counter Example */}
-                    <div className="counter-section">
-                        <h3>Interactive Counter</h3>
-                        <p>You clicked the button <strong>{count}</strong> times</p>
-                        <button className="primary-button" onClick={increment}>Increment</button>
-                    </div>
-                </>
-            )}
-
-            {/* Projects Tab */}
-            {activeTab === 'projects' && (
-                <div className="content-section">
-                    <h3>Project Status</h3>
-
-                    <div className="projects-table">
-                        <div className="projects-header">
-                            <div>Project Name</div>
-                            <div>Status</div>
-                            <div>Priority</div>
-                            <div>Progress</div>
-                        </div>
-
-                        {projects.map(project => (
-                            <ProjectRow key={project.id} project={project} />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Settings Tab */}
-            {activeTab === 'settings' && (
-                <div className="content-section">
-                    <h3>Application Settings</h3>
-
-                    {settings.map((setting, index) => (
-                        <SettingRow
-                            key={index}
-                            setting={setting}
-                            index={index}
-                            onToggle={toggleSetting}
-                        />
-                    ))}
-                </div>
-            )}
+                )}
+            </div>
 
             <footer>
                 <p>React Micro Frontend Example | Last updated: {new Date().toLocaleDateString()}</p>

@@ -1,112 +1,268 @@
-import React, { useState } from 'react';
-import type { ComponentLibrary } from './components';
+import React, { useState, useEffect } from "react";
+import type { ComponentLibrary } from "./components";
+import { THEME_OPTIONS } from "../../shared-demo-utils/middleware-helpers.ts";
+import { useSharedCounter, useDesignTokens } from "../../shared-demo-utils/react-hooks.ts";
+import { useFynBusChat, DEMO_CHAT_TOPIC, GET_STATUS_TOPIC } from "../../shared-demo-utils/fynbus-hooks.ts";
+import "./app-layout.css";
 
 interface AppProps {
-    appName: string;
-    components: ComponentLibrary;
+  appName: string;
+  components: ComponentLibrary;
+  middlewareConfig?: { count: number }; // Config from basic counter middleware
+  runtime?: any; // Runtime to access middleware context
 }
 
-const App: React.FC<AppProps> = ({ appName, components }) => {
-    const [showEffect, setShowEffect] = useState(false);
-    const [clickCount, setClickCount] = useState(0);
-    const [showModal, setShowModal] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [count, setCount] = useState(0);
+const App: React.FC<AppProps> = ({
+  appName,
+  components,
+  middlewareConfig,
+  runtime,
+}: AppProps) => {
+  // Shared counter hook
+  const { counter, handleIncrement, handleReset } = useSharedCounter(
+    useState, useEffect, runtime, middlewareConfig
+  );
 
-    // Destructure the components
-    const { Button, Card, Input, Modal, Alert, Badge, Spinner } = components;
+  // Design tokens hook
+  const {
+    currentTheme,
+    applyGlobally,
+    acceptGlobally,
+    handleThemeChange,
+    handleApplyGloballyChange,
+    handleAcceptGloballyChange,
+  } = useDesignTokens(useState, useEffect, runtime, "fynmesh-dark");
 
-    const handleButtonClick = () => {
-        setShowEffect(true);
-        setClickCount(prev => prev + 1);
-        setCount(count + 1); // Update the counter immediately for simplicity
-        setTimeout(() => setShowEffect(false), 1000);
-    };
+  // Destructure the components
+  const { Button, Card, Input, Badge, Spinner } = components;
 
-    return (
-        <div className="p-5 max-w-3xl mx-auto">
-            <h2>{appName}: Using Components from fynapp-x1</h2>
+  // FynBus chat hook (pub/sub demo)
+  const {
+    messages: busMessages,
+    sendMessage: sendBusMessage,
+    busAvailable,
+  } = useFynBusChat(useState, useEffect, runtime);
+  const [busText, setBusText] = useState("");
 
-            <Alert variant="info" className="mb-4">
-                Component counter: {count}
-            </Alert>
+  const handleBusSend = () => {
+    if (sendBusMessage(busText)) {
+      setBusText("");
+    }
+  };
 
-            <Card
-                title="Example Card from fynapp-x1"
-                footer={
-                    <div className="flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setShowModal(true)}>
-                            Open Modal
-                        </Button>
-                        <Button variant="primary" onClick={handleButtonClick}>
-                            Click Me ({clickCount})
-                        </Button>
-                    </div>
-                }
-            >
-                <p>This is a card component from fynapp-x1!</p>
-                <p>Try out different components below:</p>
+  // Demo state
+  const [inputValue, setInputValue] = useState("");
+  const [inputError, setInputError] = useState("");
 
-                <div className="mb-5">
-                    <h4>Badges:</h4>
-                    <div className="flex gap-3 mt-3">
-                        <Badge variant="default">Default</Badge>
-                        <Badge variant="primary">Primary</Badge>
-                        <Badge variant="success">Success</Badge>
-                        <Badge variant="warning">Warning</Badge>
-                        <Badge variant="danger">Danger</Badge>
-                    </div>
-                </div>
+  const handleInputSubmit = () => {
+    if (!inputValue.trim()) {
+      setInputError("Please enter some text");
+      return;
+    }
+    setInputError("");
+    alert(`You entered: ${inputValue}`);
+    setInputValue("");
+  };
 
-                <div className="mt-5">
-                    <h4>Spinner examples:</h4>
-                    <div className="flex gap-5 items-center mt-3">
-                        <Spinner size="small" color="primary" />
-                        <Spinner size="medium" color="gray" />
-                        <Spinner size="large" color="primary" />
-                    </div>
-                </div>
-            </Card>
+  return (
+    <div className="app-container">
+      <h1 className="app-title">
+        {appName}: React {React.version}
+      </h1>
 
-            {showEffect && (
-                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-10">
-                    <div className="absolute w-[150%] h-[150%] rounded-full bg-gradient-to-r from-indigo-500/20 to-transparent animate-pulse" />
-                    <div className="text-4xl font-bold text-indigo-500 drop-shadow-lg animate-bounce">
-                        +1 Click!
-                    </div>
-                </div>
-            )}
-
-            {showModal && (
-                <Modal
-                    isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    title="Example Modal"
-                    overlayOpacity={0.3}
-                    overlayBlur="6px"
-                    footer={
-                        <div className="flex justify-end gap-3">
-                            <Button variant="outline" onClick={() => setShowModal(false)}>
-                                Cancel
-                            </Button>
-                            <Button variant="primary" onClick={() => setShowModal(false)}>
-                                Confirm
-                            </Button>
-                        </div>
-                    }
-                >
-                    <p>This is a modal component from fynapp-x1!</p>
-                    <Input
-                        label="Example Input"
-                        value={inputValue}
-                        onChange={(e: any) => setInputValue(e.target.value)}
-                        placeholder="Type something..."
-                        helperText="This is a helper text"
-                    />
-                </Modal>
-            )}
+      {/* Theme Selection */}
+      <Card
+        title="🎨 Design Tokens Theme Selection"
+        className="card-spacious section"
+      >
+        <div className="space-y-1 mb-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={applyGlobally}
+              onChange={(e) => handleApplyGloballyChange(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span>Apply globally (affects all fynapp instances)</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={acceptGlobally}
+              onChange={(e) => handleAcceptGloballyChange(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span>Accept changes globally (from other apps)</span>
+          </label>
         </div>
-    );
+        <div className="flex flex-wrap gap-2 mb-4">
+          {THEME_OPTIONS.map((theme) => (
+            <Button
+              key={theme.value}
+              variant={currentTheme === theme.value ? "primary" : "outline"}
+              size="small"
+              onClick={() => handleThemeChange(theme.value)}
+            >
+              {theme.label}
+            </Button>
+          ))}
+        </div>
+        <div className="text-sm text-gray-600">
+          Current theme: <strong>{currentTheme}</strong>
+          <br />
+          Apply scope: <strong>{applyGlobally ? "Global" : "Local"}</strong>
+          <br />
+          Accept scope: <strong>{acceptGlobally ? "Global" : "Local"}</strong>
+        </div>
+      </Card>
+
+      {/* Demo UI Sections */}
+      <Card
+        title="🎨 fynapp-x1 Components Demo"
+        className="card-spacious section"
+      >
+        {/* Buttons Section */}
+        <div className="component-group">
+          <h3 className="section-title">Buttons</h3>
+          <div className="flex-wrap gap-3">
+            <Button variant="primary" size="small">
+              Primary Small
+            </Button>
+            <Button variant="secondary" size="medium">
+              Secondary Medium
+            </Button>
+            <Button variant="outline" size="large">
+              Outline Large
+            </Button>
+            <Button variant="danger" size="medium">
+              Danger
+            </Button>
+            <Button variant="primary" size="medium" isLoading>
+              Loading...
+            </Button>
+          </div>
+        </div>
+
+        {/* Badges Section */}
+        <div className="component-group">
+          <h3 className="section-title">Badges</h3>
+          <div className="flex-wrap gap-3">
+            <Badge variant="default">Default</Badge>
+            <Badge variant="primary">Primary</Badge>
+            <Badge variant="success">Success</Badge>
+            <Badge variant="warning">Warning</Badge>
+            <Badge variant="danger">Danger</Badge>
+          </div>
+        </div>
+
+        {/* Spinners Section */}
+        <div className="component-group">
+          <h3 className="section-title">Spinners</h3>
+          <div className="items-center flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <Spinner size="small" color="primary" />
+              <span>Small</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Spinner size="medium" color="gray" />
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Spinner size="large" color="primary" />
+              <span>Large</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Input Section */}
+        <div className="component-group">
+          <h3 className="section-title">Input</h3>
+          <div className="max-w-md">
+            <Input
+              label="Demo Input"
+              placeholder="Type something..."
+              value={inputValue}
+              onChange={(e: any) => setInputValue(e.target.value)}
+              error={inputError}
+              helperText="This is a helper text"
+            />
+            <Button onClick={handleInputSubmit} variant="primary" size="medium">
+              Submit Input
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* FynBus Demo (FYM-18) */}
+      <Card title="🚌 FynBus" className="card-spacious section">
+        {busAvailable ? (
+          <>
+            <div className="flex items-end gap-3 mb-3 max-w-md">
+              <Input
+                label={`Send on "${DEMO_CHAT_TOPIC}"`}
+                placeholder="Message other fynapps..."
+                value={busText}
+                onChange={(e: any) => setBusText(e.target.value)}
+              />
+              <Button onClick={handleBusSend} variant="primary" size="medium">
+                Send
+              </Button>
+            </div>
+            <div className="text-sm text-gray-600 mb-3">
+              Received messages (own emits are filtered by the bus):
+            </div>
+            {busMessages.length === 0 ? (
+              <div className="text-sm text-gray-600" style={{ fontStyle: "italic" }}>
+                No messages yet — send one from another fynapp.
+              </div>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {busMessages.map((message, index) => (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2 text-sm"
+                    style={{ padding: "4px 0" }}
+                  >
+                    <Badge variant="primary">{message.source}</Badge>
+                    <span>{message.text}</span>
+                    <span className="text-gray-600" style={{ fontSize: "12px" }}>
+                      {message.at}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="text-sm text-gray-600" style={{ marginTop: "12px" }}>
+              This app also answers <code>bus.request("{GET_STATUS_TOPIC}")</code> from
+              other fynapps.
+            </div>
+          </>
+        ) : (
+          <div className="text-sm text-gray-600">
+            FynBus not available (runtime.bus is undefined).
+          </div>
+        )}
+      </Card>
+
+      {/* Counter Display and Controls - Moved to bottom */}
+      <Card className="card-spacious">
+        <h2 className="card-title">
+          Shared Counter (Provider)
+        </h2>
+        <div className="flex items-center justify-center gap-4">
+          <div className="text-3xl font-bold text-blue-600 min-w-16 text-center">
+            {counter.count}
+          </div>
+          <Button onClick={handleIncrement} variant="primary" size="medium">
+            Increment
+          </Button>
+          <Button onClick={handleReset} variant="danger" size="medium">
+            Reset
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
 };
 
 export default App;
