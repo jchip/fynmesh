@@ -99,28 +99,28 @@ This allows the same build to work on multiple hosts without rebuilding.
 
 ### Deployment Steps
 
-#### 1. Build All FynApps
+#### One command (recommended): `fyn publish-demo`
 
-First, ensure all FynApps are built with production settings:
+**Must be on the `main` branch.** From the repository root:
 
 ```bash
-# From repository root
 cd ~/dev/fynmesh
-NODE_ENV=production fyn bootstrap
+git checkout main
+fyn publish-demo
 ```
 
-This builds all packages in production mode with optimizations.
+`publish-demo` runs the whole pipeline **in production mode** —
+`NODE_ENV=production` wrapping `clean:demo` → `build-prod` (rebuild all packages) →
+`_gh-publish` (build the demo site, reset `gh-pages` to `main`, commit `docs/`, force
+push). It leaves you back on a clean `main`; there is no separate `git push` step.
 
-#### 2. Run the Deployment Script
+> ⚠️ **Always deploy with `NODE_ENV=production`.** Running `gh-publish` on its own does
+> **not** set it, so `build-demo-site` renders templates in dev mode — loading
+> non-minified `system.js`/`spectre.css`, verbose federation logging, and shipping
+> `.map`/`.d.ts` files. Use `fyn publish-demo`, or if you must run the sub-step directly,
+> prefix it: `NODE_ENV=production fyn _gh-publish`.
 
-**Important**: You must be on the `main` branch before running this command.
-
-```bash
-cd demo/demo-server
-xrun gh-publish
-```
-
-**What `gh-publish` does** (one-command deploy):
+**What the `gh-publish` step does:**
 
 1. **Builds the demo site** using `build-demo-site` to `../../.temp/docs/`
    (`.temp` is gitignored, so it survives the branch switch).
@@ -133,25 +133,15 @@ xrun gh-publish
    Pages deploy.
 6. **Returns to a clean `main`**: `git checkout -f main` and removes the local `docs/`.
 
-There is no separate `git push` step — the task force-pushes for you.
+#### Deploy without rebuilding
 
-### Deployment Workflow
+If the package `dist/`s are already built in production mode and you only changed the
+demo site (templates, copy list) or just want to re-push:
 
 ```bash
-# Complete deployment workflow (must start on main branch)
 cd ~/dev/fynmesh
-
-# 0. Ensure you're on main branch
 git checkout main
-
-# 1. Build all packages in production mode
-NODE_ENV=production fyn bootstrap
-
-# 2. Build demo site, reset gh-pages to main, commit docs, and force push
-cd demo/demo-server
-xrun gh-publish
-
-# gh-publish leaves you back on main — no manual push needed.
+NODE_ENV=production fyn _gh-publish   # build demo site + reset gh-pages + force push
 ```
 
 ### Deploy-Only Files
@@ -212,12 +202,14 @@ xrun build-demo-site
 - **Script**: `scripts/build-demo-site.mts`
 
 #### `gh-publish`
-Complete Cloudflare Pages deployment workflow (one command).
+Cloudflare Pages deployment step (reset `gh-pages`, build docs, force push).
 
-**Prerequisites**: Must be run from `main` branch.
+**Prerequisites**: Must be run from `main` branch, **with `NODE_ENV=production`** — prefer
+`fyn publish-demo` (sets it for the whole pipeline) over invoking this directly. Without
+it, the demo site builds in dev mode (non-minified assets, source maps, verbose logging).
 
 ```bash
-xrun gh-publish
+NODE_ENV=production fyn _gh-publish   # or: fyn publish-demo (clean + build-prod + this)
 ```
 
 **Steps executed:**
@@ -323,7 +315,7 @@ Both build scripts provide the same template data structure:
 4. Update `templates/components/fynapp-loader.html`
 5. Run `fyn bootstrap` to build
 6. Test locally with `fyn start`
-7. Deploy with `xrun gh-publish && git push`
+7. Deploy with `fyn publish-demo` (force-pushes `gh-pages`; no manual `git push`)
 
 ### Debugging
 
