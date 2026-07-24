@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, writeFileSync, cpSync, readFileSync, readdirSync
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectShellPreloadModules } from "./shell-preload.mts";
+import { generateCacheHeaders } from "./cache-headers.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -329,6 +330,17 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 log(`📁 Copied: ${pkg.name}/dist/`);
             }
         });
+
+        // Emit _headers last: it is derived from the dist files just copied, so
+        // it always describes what actually shipped.
+        const cacheHeaders = generateCacheHeaders(outputDir, msg => log(`⚠️  _headers: ${msg}`));
+        if (cacheHeaders) {
+            writeFileSync(path.join(outputDir, "_headers"), cacheHeaders);
+            const ruleCount = (cacheHeaders.match(/^\/:pkg\//gm) || []).length;
+            log(`📄 Generated: _headers (${ruleCount} immutable chunk rules)`);
+        } else {
+            log("⚠️  No content-hashed chunks found — skipped _headers");
+        }
 
         log("✅ Demo site built successfully with all assets!");
         log(`🌐 Path prefix: ${pathPrefix}`);
