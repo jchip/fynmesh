@@ -16,10 +16,25 @@ n=5, median reported.
 | Shell UI ready (cold) | **575 ms** |
 | Last resource in chain | 741 ms (≈970 ms on the live page incl. sidebar) |
 
-**After FYM-159/160/161/162** (same conditions, last resource in chain, n=3
-median): **983 ms → 311 ms (−68%)**, transfer 194,076 → 188,203 bytes, rendered
-DOM unchanged. Not yet deployed — the live site updates on the next
-`NODE_ENV=production fyn publish-demo`.
+**After FYM-159/160/161/162 — deployed and measured live** (same conditions,
+last resource in chain): **983 ms → ~416 ms (−58%)**, n=6 median, transfer
+194,076 → 188,503 bytes, rendered DOM unchanged.
+
+Note the A/B harness below reports ~337 ms for the same build. The harness served
+the document from a local route stub, so it skipped the HTML round trip; `/shell`
+is `cf-cache-status: DYNAMIC` and always costs an origin fetch before parsing can
+start. The ~416 ms live figure is the real one — it is measured exactly like the
+983 ms baseline. Treat harness numbers as a lower bound when comparing loader
+strategies, not as absolute page timings.
+
+Verified on the live site after deploy:
+
+- 22 `modulepreload` tags present
+- hashed chunks → `public, max-age=31536000, immutable`
+- `fynapp-entry.js`, `index.js`, `federation.json`, `/shell` → still
+  revalidating, single clean header value (confirming the rules are disjoint —
+  no comma-joined duplicates)
+- no service worker controlling the page; `sw.js` still served
 
 Brotli is on, HTTP/2 with h3 advertised, all assets same-origin. **Bytes are not
 the problem — round trips are.**
