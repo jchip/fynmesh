@@ -229,8 +229,13 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "system.js",
             "system.min.js",
             "system.min.js.map",
-            "sw.js",           // Service Worker
-            "sw-utils.js",     // Service Worker Utilities
+            // No page registers a service worker any more, but sw.js must keep
+            // shipping: a caching service worker was deployed here previously,
+            // and sw.js is the unregister stub that tears it down. Browsers
+            // re-fetch the script on navigation for clients that still have one
+            // active, so those self-heal without a registration call. Removing
+            // this file would strand them on a stale worker permanently.
+            "sw.js",
             "favicon.ico",     // Favicon
             "sitemap.xml",     // SEO: XML Sitemap
             "robots.txt"       // SEO: Robots.txt
