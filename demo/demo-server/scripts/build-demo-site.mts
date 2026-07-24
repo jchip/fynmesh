@@ -3,6 +3,7 @@ import nunjucks from "nunjucks";
 import { existsSync, mkdirSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { collectShellPreloadModules } from "./shell-preload.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -200,11 +201,20 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(demoOutputPath, demoHtml);
         log("📄 Generated: " + demoOutputPath);
 
-        // Build the shell page (shell.html)
+        // Build the shell page (shell.html).
+        // The preload hints collapse the shell's startup request waterfall; see
+        // scripts/shell-preload.mts and notes/SHELL_LOAD_PERF.md.
+        const preloadModules = collectShellPreloadModules(
+            path.join(__dirname, "../.."),
+            pathPrefix,
+            msg => log(`⚠️  preload: ${msg}`)
+        );
+        log(`🔗 Shell modulepreload hints: ${preloadModules.length}`);
         const shellHtml = env.render("pages/shell.html", {
             title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
+            preloadModules,
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
         writeFileSync(shellOutputPath, shellHtml);

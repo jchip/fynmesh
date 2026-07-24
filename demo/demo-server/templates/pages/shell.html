@@ -119,6 +119,22 @@
         }
     </style>
 
+    {% if preloadModules %}
+    <!--
+      Startup FynApp chunks, preloaded in parallel.
+
+      Loading these on demand is a serial waterfall: every FynApp costs a round
+      trip for its ~500-byte fynapp-entry.js — which only declares what to fetch
+      next — before its chunks can be requested at all. These hints let the
+      browser pull the whole set off the initial HTML parse instead.
+
+      Generated at build time from the FynApps' dist dirs by
+      scripts/shell-preload.mts. Keep that list in sync with the loader below.
+    -->
+    {% for href in preloadModules %}<link rel="modulepreload" href="{{ href }}" crossorigin>
+    {% endfor %}
+    {% endif %}
+
     {% if isProduction %}
     <script src="{{pathPrefix}}system.min.js"></script>
     <script src="{{pathPrefix}}federation-js/dist/federation-js.min.js"></script>
