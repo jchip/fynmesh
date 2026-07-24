@@ -16,6 +16,11 @@ n=5, median reported.
 | Shell UI ready (cold) | **575 ms** |
 | Last resource in chain | 741 ms (≈970 ms on the live page incl. sidebar) |
 
+**After FYM-159/160/161/162** (same conditions, last resource in chain, n=3
+median): **983 ms → 311 ms (−68%)**, transfer 194,076 → 188,203 bytes, rendered
+DOM unchanged. Not yet deployed — the live site updates on the next
+`NODE_ENV=production fyn publish-demo`.
+
 Brotli is on, HTTP/2 with h3 advertised, all assets same-origin. **Bytes are not
 the problem — round trips are.**
 
@@ -143,6 +148,9 @@ Within the 4 h window repeat visits are already fine (measured ~80 ms, 0 network
 
 ### 3. Use minified CSS on the shell page — small
 
+**Implemented (FYM-161).**
+
+
 `templates/pages/shell.html` hardcodes `spectre.css` / `spectre-exp.css` /
 `spectre-icons.css`. `templates/layouts/base.html` correctly switches to
 `.min.css` under `isProduction`, but `shell.html` does not extend the base layout
@@ -150,6 +158,15 @@ and so missed it. Three render-blocking stylesheets, 100 KB raw / 18.5 KB brotli
 The main gain is dropping 2 requests; the byte gain after brotli is modest.
 
 ### 4. Remove the dead service worker — cleanup, not a perf win
+
+**Implemented (FYM-162)** — registration removed, but `sw.js` still ships.
+Git history confirms a real caching worker was deployed here once (`ce98bf6`)
+before being replaced by the unregister stub (`6fa83df`). Clients that still have
+that worker active self-heal without a `register()` call: the browser re-fetches
+the worker script on navigation within scope, gets the UNREGISTER version, and it
+clears caches and unregisters itself. Deleting `sw.js` would strand them
+permanently, so it stays.
+
 
 `public/sw.js` is a self-unregistering no-op (`SW_VERSION = "UNREGISTER"`, empty
 `fetch` handler), yet `sw-utils.js` (2.8 KB) is still loaded and registers it on
@@ -162,7 +179,17 @@ page, but removing the SW did not reproduce a gain in the harness, so **the caus
 of that gap is unconfirmed**. It becomes moot under fix #1 anyway, since the
 chunks are already in the preload cache by then.
 
-### 5. Stop eagerly loading both React runtimes — needs a product decision
+### 5. Stop eagerly loading both React runtimes — **rejected, by design**
+
+Closed as `wont_do` (FYM-163). Loading React 18 and 19 side by side is a
+deliberate demonstration of the framework's multi-version shared-dependency
+support — a headline capability, not an oversight. The ~104 KB is accepted in
+exchange for showing it, and after fix #1 those chunks download in parallel so
+the wall-clock cost is negligible. Recorded here so it does not get "optimized"
+again later.
+
+Original analysis retained below.
+
 
 React 18 + react-dom 18 (44.4 KB br) and React 19 + react-dom 19 (59.3 KB br),
 plus `x1-v1` (React 18 lib) and `x1-v2` (React 19 lib), are all loaded at startup
