@@ -13,7 +13,15 @@ $pkg:
   $: local
   _: ../../core/kernel
   dependencies:
+   federation-js: ^1.0.0
    tslib: ^2.6.2
+federation-js:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../../rollup-federation/federation-js: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  $: local
+  _: ../../rollup-federation/federation-js
 tslib:
  _latest: 2.8.1
  _:
