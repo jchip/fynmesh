@@ -1,4 +1,5 @@
 import { FynMeshKernelCore } from "./kernel-core";
+import { captureEvent } from "./kernel-telemetry";
 import type { FynApp, PreloadStrategy, LoadFynAppsOptions } from "./types";
 import { PreloadPriority } from "./types";
 import { getFederation } from "./util";
@@ -8,7 +9,7 @@ import { getFederation } from "./util";
  * Handles Federation.js integration and browser-specific loading
  */
 export class BrowserKernel extends FynMeshKernelCore {
-  private preloadStrategy: Required<PreloadStrategy> = {
+  #preloadStrategy: Required<PreloadStrategy> = {
     depth: 1, // Default: requested + immediate dependencies
     priority: 'static',
     priorityByDepth: {
@@ -22,25 +23,25 @@ export class BrowserKernel extends FynMeshKernelCore {
   /**
    * Resolve preload strategy from options
    */
-  private resolvePreloadStrategy(options?: LoadFynAppsOptions): Required<PreloadStrategy> {
+  #resolvePreloadStrategy(options?: LoadFynAppsOptions): Required<PreloadStrategy> {
     if (!options?.preload) {
-      return this.preloadStrategy; // Use instance default
+      return this.#preloadStrategy; // Use instance default
     }
 
     // Shorthand: number = depth
     if (typeof options.preload === 'number') {
       return {
-        ...this.preloadStrategy,
+        ...this.#preloadStrategy,
         depth: options.preload
       };
     }
 
     // Full strategy object
     return {
-      depth: options.preload.depth ?? this.preloadStrategy.depth,
-      priority: options.preload.priority ?? this.preloadStrategy.priority,
-      priorityByDepth: options.preload.priorityByDepth ?? this.preloadStrategy.priorityByDepth,
-      disabled: options.preload.disabled ?? this.preloadStrategy.disabled
+      depth: options.preload.depth ?? this.#preloadStrategy.depth,
+      priority: options.preload.priority ?? this.#preloadStrategy.priority,
+      priorityByDepth: options.preload.priorityByDepth ?? this.#preloadStrategy.priorityByDepth,
+      disabled: options.preload.disabled ?? this.#preloadStrategy.disabled
     };
   }
 
@@ -48,7 +49,7 @@ export class BrowserKernel extends FynMeshKernelCore {
    * Inject a modulepreload link tag into the document head
    * @private
    */
-  private injectPreloadLink(url: string): void {
+  #injectPreloadLink(url: string): void {
     // Skip if document/head not available
     if (typeof document === "undefined" || !document.head) {
       return;
@@ -72,19 +73,19 @@ export class BrowserKernel extends FynMeshKernelCore {
    */
   tryPreload(url: string, depth: number): void {
     // Check if preloading is disabled
-    if (this.preloadStrategy.disabled) {
+    if (this.#preloadStrategy.disabled) {
       console.debug(`⏭️  Preload disabled, skipping: ${url} (depth: ${depth})`);
       return;
     }
 
     // Check if depth exceeds max depth
-    if (depth > this.preloadStrategy.depth) {
-      console.debug(`⏭️  Depth ${depth} > max ${this.preloadStrategy.depth}, skipping: ${url}`);
+    if (depth > this.#preloadStrategy.depth) {
+      console.debug(`⏭️  Depth ${depth} > max ${this.#preloadStrategy.depth}, skipping: ${url}`);
       return;
     }
 
     // Inject the preload link
-    this.injectPreloadLink(url);
+    this.#injectPreloadLink(url);
   }
 
   /**
@@ -95,18 +96,18 @@ export class BrowserKernel extends FynMeshKernelCore {
     options?: LoadFynAppsOptions
   ): Promise<void> {
     // Resolve and store strategy for this load
-    const strategy = this.resolvePreloadStrategy(options);
+    const strategy = this.#resolvePreloadStrategy(options);
 
     // Store strategy temporarily for preload callback
-    const previousStrategy = this.preloadStrategy;
-    this.preloadStrategy = strategy;
+    const previousStrategy = this.#preloadStrategy;
+    this.#preloadStrategy = strategy;
 
     try {
       // Call parent implementation
       await super.loadFynAppsByName(requests, options);
     } finally {
       // Restore previous strategy
-      this.preloadStrategy = previousStrategy;
+      this.#preloadStrategy = previousStrategy;
     }
   }
 
@@ -126,7 +127,7 @@ export class BrowserKernel extends FynMeshKernelCore {
 
     try {
       loadId = loadId || baseUrl;
-      this.telemetry.capture({ type: "event", name: "fynapp.load_started", data: { url: baseUrl } });
+      captureEvent(this.telemetry, "fynapp.load_started", { url: baseUrl });
       const urlPath = this.buildFynAppUrl(baseUrl);
       console.debug("🚀 Loading FynApp from", urlPath);
       const fynAppEntry = await Federation.import(urlPath);
@@ -139,7 +140,7 @@ export class BrowserKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
-      this.telemetry.capture({ type: "event", name: "fynapp.loaded", data: { app: fynApp.name, version: fynApp.version } });
+      captureEvent(this.telemetry, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
       return fynApp;
     } catch (err) {
       this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);

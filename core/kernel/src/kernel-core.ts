@@ -35,7 +35,7 @@ import type {
   KernelTelemetry,
   TelemetryConfig,
 } from "./types";
-import { KernelTelemetryImpl, noOpTelemetry } from "./kernel-telemetry";
+import { KernelTelemetryImpl, noOpTelemetry, captureEvent } from "./kernel-telemetry";
 
 /**
  * Abstract base class for FynMesh kernel implementations
@@ -53,8 +53,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   protected runTime: FynMeshRuntimeData;
 
   // Middleware state registries
-  private globalMiddlewareRegistry = new MiddlewareStateRegistry();
-  private regionRegistries: Map<string, MiddlewareStateRegistry> = new Map();
+  #globalMiddlewareRegistry = new MiddlewareStateRegistry();
+  #regionRegistries: Map<string, MiddlewareStateRegistry> = new Map();
 
   // Telemetry
   public telemetry: KernelTelemetry;
@@ -185,7 +185,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     requests: Array<{ name: string; range?: string }>,
     options?: import("./types").LoadFynAppsOptions
   ): Promise<void> {
-    this.telemetry.capture({ type: "event", name: "load_batch.started", data: { count: requests.length } });
+    captureEvent(this.telemetry, "load_batch.started", { count: requests.length });
 
     // Preload initial FynApp entry files before building dependency graph
     // This allows the initial batch to start loading in parallel
@@ -253,17 +253,17 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   getMiddlewareRegistry(scope: "global" | { region: string }): MiddlewareStateRegistry {
     if (scope === "global") {
-      return this.globalMiddlewareRegistry;
+      return this.#globalMiddlewareRegistry;
     }
 
     const regionId = scope.region;
-    if (!this.regionRegistries.has(regionId)) {
-      this.regionRegistries.set(
+    if (!this.#regionRegistries.has(regionId)) {
+      this.#regionRegistries.set(
         regionId,
-        this.globalMiddlewareRegistry.createScope()
+        this.#globalMiddlewareRegistry.createScope()
       );
     }
-    return this.regionRegistries.get(regionId)!;
+    return this.#regionRegistries.get(regionId)!;
   }
 
   /**
@@ -442,7 +442,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return;
     }
 
-    this.telemetry.capture({ type: "event", name: "bootstrap.started", data: { app: fynApp.name, version: fynApp.version } });
+    captureEvent(this.telemetry, "bootstrap.started", { app: fynApp.name, version: fynApp.version });
 
     try {
       // Load middleware modules for all FynApps
@@ -486,7 +486,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       // Mount tracking: bootstrap succeeded — app is now mounted/running.
       this.fynAppLifecycle.set(fynApp.name, fynApp.version, "mounted");
 
-      this.telemetry.capture({ type: "event", name: "bootstrap.completed", data: { app: fynApp.name, version: fynApp.version } });
+      captureEvent(this.telemetry, "bootstrap.completed", { app: fynApp.name, version: fynApp.version });
 
       // Emit bootstrap complete event
       await this.emitAsync(
@@ -537,7 +537,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     console.debug(`🛑 Shutting down FynApp ${name}`);
 
-    this.telemetry.capture({ type: "event", name: "shutdown.started", data: { app: name } });
+    captureEvent(this.telemetry, "shutdown.started", { app: name });
 
     // Mount tracking: mark the transient shutdown state so shutdown() hooks that
     // query state see it; removeFromRegistry() then stops tracking the app.
@@ -566,7 +566,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
 
-      this.telemetry.capture({ type: "event", name: "shutdown.completed", data: { app: fynApp.name, version: fynApp.version } });
+      captureEvent(this.telemetry, "shutdown.completed", { app: fynApp.name, version: fynApp.version });
 
       console.debug(`✅ FynApp ${fynApp.name}@${fynApp.version} shutdown complete`);
       return true;
@@ -585,7 +585,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * Suspend a mounted FynApp (only mounted -> suspended is valid).
    */
   async suspendFynApp(name: string): Promise<boolean> {
-    return this.transitionLifecycle(name, {
+    return this.#transitionLifecycle(name, {
       from: "mounted",
       to: "suspended",
       hook: "suspend",
@@ -597,7 +597,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * Resume a suspended FynApp (only suspended -> mounted is valid).
    */
   async resumeFynApp(name: string): Promise<boolean> {
-    return this.transitionLifecycle(name, {
+    return this.#transitionLifecycle(name, {
       from: "suspended",
       to: "mounted",
       hook: "resume",
@@ -610,7 +610,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * the given FynUnit hook on each expose that implements it, update state, and
    * emit the lifecycle event. Returns false (no-op) on invalid transitions.
    */
-  private async transitionLifecycle(
+  async #transitionLifecycle(
     name: string,
     opts: { from: FynAppStatus; to: FynAppStatus; hook: "suspend" | "resume"; event: string },
   ): Promise<boolean> {
@@ -628,7 +628,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return false;
     }
 
-    this.telemetry.capture({ type: "event", name: `${opts.hook}.started`, data: { app: fynApp.name, version: fynApp.version } });
+    captureEvent(this.telemetry, `${opts.hook}.started`, { app: fynApp.name, version: fynApp.version });
 
     try {
       for (const exposeName of Object.keys(fynApp.exposes)) {
@@ -648,7 +648,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
         })
       );
 
-      this.telemetry.capture({ type: "event", name: `${opts.hook}.completed`, data: { app: fynApp.name, version: fynApp.version } });
+      captureEvent(this.telemetry, `${opts.hook}.completed`, { app: fynApp.name, version: fynApp.version });
       return true;
     } catch (error) {
       this.telemetry.captureError(`${opts.hook}.failed`, { app: name }, error);

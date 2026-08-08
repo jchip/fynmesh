@@ -10,7 +10,7 @@ import type {
   FynMeshRuntimeData,
   KernelTelemetry,
 } from "../types";
-import { noOpTelemetry } from "../kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { MIDDLEWARE_EXPORT_PREFIX } from "../util";
 
 const DummyMiddlewareReg: FynAppMiddlewareReg = {
@@ -31,7 +31,7 @@ export class MiddlewareManager {
   protected telemetry: KernelTelemetry;
   private middlewares: Record<string, MiddlewareVersionMap> = {};
   private autoApplyMiddlewares?: AutoApplyMiddlewares;
-  private scannedModules: Set<string> = new Set();
+  #scannedModules: Set<string> = new Set();
 
   constructor(telemetry?: KernelTelemetry) {
     this.telemetry = telemetry ?? noOpTelemetry;
@@ -82,11 +82,7 @@ export class MiddlewareManager {
       console.debug(`✅ Registered explicit-use middleware: ${regKey}@${hostFynApp.version}`);
     }
 
-    this.telemetry.capture({
-      type: "event",
-      name: "registered",
-      data: { key: regKey, version: hostFynApp.version, autoApply: autoApplyScope.length > 0 },
-    });
+    captureEvent(this.telemetry, "registered", { key: regKey, version: hostFynApp.version, autoApply: autoApplyScope.length > 0 });
   }
 
   /**
@@ -138,14 +134,14 @@ export class MiddlewareManager {
    * Check if a module has been scanned for middleware
    */
   hasScannedModule(scanCacheKey: string): boolean {
-    return this.scannedModules.has(scanCacheKey);
+    return this.#scannedModules.has(scanCacheKey);
   }
 
   /**
    * Mark a module as scanned for middleware
    */
   markModuleScanned(scanCacheKey: string): void {
-    this.scannedModules.add(scanCacheKey);
+    this.#scannedModules.add(scanCacheKey);
   }
 
   /**
@@ -198,11 +194,7 @@ export class MiddlewareManager {
       mwExports.join(", "),
     );
 
-    this.telemetry.capture({
-      type: "event",
-      name: "scan.completed",
-      data: { app: fynApp.name, expose: exposeName, count: mwExports.length },
-    });
+    captureEvent(this.telemetry, "scan.completed", { app: fynApp.name, expose: exposeName, count: mwExports.length });
 
     return mwExports;
   }
@@ -235,6 +227,6 @@ export class MiddlewareManager {
   clear(): void {
     this.middlewares = {};
     this.autoApplyMiddlewares = undefined;
-    this.scannedModules.clear();
+    this.#scannedModules.clear();
   }
 }

@@ -1,4 +1,5 @@
 import { FynMeshKernelCore } from "./kernel-core";
+import { captureEvent } from "./kernel-telemetry";
 import type { FynApp } from "./types";
 
 /**
@@ -21,7 +22,7 @@ export class NodeKernel extends FynMeshKernelCore {
     const urlPath = this.buildFynAppUrl(baseUrl);
 
     try {
-      this.telemetry.capture({ type: "event", name: "fynapp.load_started", data: { url: baseUrl } });
+      captureEvent(this.telemetry, "fynapp.load_started", { url: baseUrl });
 
       // Node.js-specific loading logic
       // This could use dynamic imports, require, or a Node.js federation library
@@ -37,7 +38,7 @@ export class NodeKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
-      this.telemetry.capture({ type: "event", name: "fynapp.loaded", data: { app: fynApp.name, version: fynApp.version } });
+      captureEvent(this.telemetry, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
       return fynApp;
     } catch (err) {
       this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);

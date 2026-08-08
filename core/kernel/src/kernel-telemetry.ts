@@ -88,6 +88,23 @@ export class KernelTelemetryImpl implements KernelTelemetry {
 }
 
 /**
+ * Record an event. Equivalent to `t.capture({ type: "event", name, data })`.
+ *
+ * A module-scope function rather than a method or an inline literal, for size:
+ * the kernel records events at ~30 call sites, and each inline
+ * `{ type: "event", name: …, data: … }` repeats the whole object shape in the
+ * bundle. Terser mangles a module-scope function's name to one character; a
+ * class method's name is a property and can never be mangled.
+ */
+export function captureEvent(
+  telemetry: KernelTelemetry,
+  name: string,
+  data?: Record<string, unknown>,
+): void {
+  telemetry.capture({ type: "event", name, data });
+}
+
+/**
  * No-op telemetry instance for when telemetry is not configured.
  * All methods are silent no-ops.
  */

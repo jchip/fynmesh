@@ -5,7 +5,7 @@
 
 import type { FynApp, KernelTelemetry } from "../types";
 import type { FynEventTarget } from "../event-target";
-import { noOpTelemetry } from "../kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 
 /** Default bootstrap timeout: 30 seconds */
 const DEFAULT_BOOTSTRAP_TIMEOUT = 30000;
@@ -37,12 +37,12 @@ export class BootstrapCoordinator {
 
     // Listen for bootstrap completion events
     this.events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
-      this.handleFynAppBootstrapped(event as CustomEvent);
+      this.#handleFynAppBootstrapped(event as CustomEvent);
     });
 
     // Also advance deferred queue on failures so the kernel doesn't stall
     this.events.on("FYNAPP_BOOTSTRAP_FAILED", (event: Event) => {
-      this.handleFynAppBootstrapFailed(event as CustomEvent);
+      this.#handleFynAppBootstrapFailed(event as CustomEvent);
     });
   }
 
@@ -89,7 +89,7 @@ export class BootstrapCoordinator {
     }
     this.bootstrappingApp = fynAppName;
     console.debug(`🔒 ${fynAppName} acquired bootstrap lock`);
-    this.telemetry.capture({ type: "event", name: "lock.acquired", data: { app: fynAppName } });
+    captureEvent(this.telemetry, "lock.acquired", { app: fynAppName });
     return true;
   }
 
@@ -110,7 +110,7 @@ export class BootstrapCoordinator {
       : `waiting for provider dependencies`;
 
     console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
-    this.telemetry.capture({ type: "event", name: "deferred", data: { app: fynApp.name, reason } });
+    captureEvent(this.telemetry, "deferred", { app: fynApp.name, reason });
 
     return new Promise<void>((resolve, reject) => {
       const deferred: { fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> } = {
@@ -194,16 +194,16 @@ export class BootstrapCoordinator {
    * Handle FynApp bootstrap completion event
    * Resume any deferred bootstraps that have their dependencies satisfied
    */
-  private async handleFynAppBootstrapped(event: CustomEvent): Promise<void> {
+  async #handleFynAppBootstrapped(event: CustomEvent): Promise<void> {
     const { name } = event.detail;
 
     console.debug(`✅ FynApp ${name} bootstrap complete, checking deferred bootstraps`);
-    this.telemetry.capture({ type: "event", name: "completed", data: { app: name } });
+    captureEvent(this.telemetry, "completed", { app: name });
 
     // Mark this FynApp as bootstrapped
     this.markBootstrapped(name);
 
-    this.finishBootstrapAndResumeNext();
+    this.#finishBootstrapAndResumeNext();
   }
 
   /**
@@ -259,7 +259,7 @@ export class BootstrapCoordinator {
    * the bootstrap lock and advances the deferred queue for apps whose
    * dependencies are already satisfied.
    */
-  private async handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
+  async #handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
     const { name, error } = event.detail;
     console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
     // Only attach an error object when the event actually carries one; fabricating
@@ -269,13 +269,13 @@ export class BootstrapCoordinator {
     } else {
       this.telemetry.capture({ type: "error", name: "failed", data: { app: name } });
     }
-    this.finishBootstrapAndResumeNext();
+    this.#finishBootstrapAndResumeNext();
   }
 
   /**
    * Release bootstrap lock and resume the next eligible deferred bootstrap.
    */
-  private finishBootstrapAndResumeNext(): void {
+  #finishBootstrapAndResumeNext(): void {
     // Clear the currently bootstrapping app
     this.releaseBootstrapLock();
 
@@ -293,7 +293,7 @@ export class BootstrapCoordinator {
     if (nextIndex >= 0) {
       const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
       console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
-      this.telemetry.capture({ type: "event", name: "resumed", data: { app: next.fynApp.name } });
+      captureEvent(this.telemetry, "resumed", { app: next.fynApp.name });
       next.resolve();
     } else if (this.deferredBootstraps.length > 0) {
       console.debug(`⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`);

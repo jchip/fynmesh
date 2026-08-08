@@ -12,7 +12,7 @@ import type {
   FynMeshKernel,
   KernelTelemetry,
 } from "../types";
-import { noOpTelemetry } from "../kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { FynAppRegistry } from "./fynapp-registry";
 import {
   ModuleLoadError,
@@ -177,11 +177,7 @@ export class ModuleLoader {
     // Step 1: Initialize the entry
     fynAppEntry.init();
 
-    this.telemetry.capture({
-      type: "event",
-      name: "fynapp.init",
-      data: { app: container.name, version: container.version },
-    });
+    captureEvent(this.telemetry, "fynapp.init", { app: container.name, version: container.version });
 
     console.debug("🚀 Loading FynApp basics for", container.name, container.version);
 
@@ -257,11 +253,7 @@ export class ModuleLoader {
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
-    this.telemetry.capture({
-      type: "event",
-      name: "fynapp.basics_loaded",
-      data: { app: fynApp.name, version: fynApp.version },
-    });
+    captureEvent(this.telemetry, "fynapp.basics_loaded", { app: fynApp.name, version: fynApp.version });
 
     // Record app in runtime registry for observability
     appsLoaded.add(fynApp);
@@ -321,11 +313,7 @@ export class ModuleLoader {
 
     if (fynUnit.execute) {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
-      this.telemetry.capture({
-        type: "event",
-        name: "fynunit.execute",
-        data: { app: fynApp.name },
-      });
+      captureEvent(this.telemetry, "fynunit.execute", { app: fynApp.name });
       const executeResult = await fynUnit.execute(runtime);
 
       // Handle execution result - middleware defines contract, kernel just passes through
