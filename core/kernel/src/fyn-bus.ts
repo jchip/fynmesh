@@ -136,10 +136,10 @@ export class FynBusRoot {
   private channels = new Map<string, ChannelState>();
   private facades = new Map<string, FynBusFacade>();
   #kernelFacade?: FynBusFacade;
-  private telemetry: KernelTelemetry;
+  #telemetry: KernelTelemetry;
 
   constructor(telemetry?: KernelTelemetry) {
-    this.telemetry = telemetry ?? noOpTelemetry;
+    this.#telemetry = telemetry ?? noOpTelemetry;
   }
 
   #getChannel(name: string): ChannelState {
@@ -156,7 +156,7 @@ export class FynBusRoot {
     // must not be tamperable by one of them
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
     // Unprefixed name by convention: the kernel passes telemetry.scope("bus")
-    captureEvent(this.telemetry, "emit", { topic, channel: channelName, source });
+    captureEvent(this.#telemetry, "emit", { topic, channel: channelName, source });
     const detail: BusEventDetail = { payload, meta };
     this.#getChannel(channelName).events.dispatchEvent(new CustomEvent(topic, { detail }));
   }
@@ -191,7 +191,7 @@ export class FynBusRoot {
         // Error isolation: one throwing handler must not break delivery to
         // the others, nor make emit() throw at the sender
         console.error(`FynBus: handler error on topic "${topic}"`, error);
-        this.telemetry.captureError(
+        this.#telemetry.captureError(
           "handler",
           { topic, channel: channelName, subscriber: source },
           error,
@@ -218,7 +218,7 @@ export class FynBusRoot {
   ): Promise<any> {
     const state = this.#getChannel(channelName);
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
-    captureEvent(this.telemetry, "request", { topic, channel: channelName, source });
+    captureEvent(this.#telemetry, "request", { topic, channel: channelName, source });
 
     const signal = options?.signal;
     return new Promise((resolve, reject) => {
@@ -335,7 +335,7 @@ export class FynBusRoot {
       );
     }
     state.handlers.set(topic, handler);
-    captureEvent(this.telemetry, "handle", { topic, channel: channelName, source });
+    captureEvent(this.#telemetry, "handle", { topic, channel: channelName, source });
 
     // Release requests that arrived before the handler
     const waiting = state.waiters.get(topic);
@@ -442,7 +442,7 @@ export class FynBusFacade implements FynBus {
     options?: SubscribeOptions,
   ): Unsubscribe {
     this.#assertActive();
-    return this.subscribe(topic, handler, options, false);
+    return this.#subscribe(topic, handler, options, false);
   }
 
   once<T = unknown>(
@@ -451,7 +451,7 @@ export class FynBusFacade implements FynBus {
     options?: SubscribeOptions,
   ): Unsubscribe {
     this.#assertActive();
-    return this.subscribe(topic, handler, options, true);
+    return this.#subscribe(topic, handler, options, true);
   }
 
   request<TRes = unknown, TReq = unknown>(
@@ -508,7 +508,7 @@ export class FynBusFacade implements FynBus {
     this.state.subs.clear();
   }
 
-  private subscribe(
+  #subscribe(
     topic: string,
     handler: BusHandler<any>,
     options: SubscribeOptions | undefined,

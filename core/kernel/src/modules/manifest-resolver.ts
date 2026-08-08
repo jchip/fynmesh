@@ -27,7 +27,7 @@ export interface ResolvedManifest {
 
 export class ManifestResolver {
   protected telemetry: KernelTelemetry;
-  private registryResolver?: RegistryResolver;
+  #registryResolver?: RegistryResolver;
   private manifestCache: Map<string, FynAppManifest> = new Map();
   private nodeMeta: Map<string, ManifestMeta> = new Map();
   #preloadedEntries: Map<string, number> = new Map();
@@ -41,7 +41,7 @@ export class ManifestResolver {
    * Install a registry resolver (browser: demo server paths)
    */
   setRegistryResolver(resolver: RegistryResolver): void {
-    this.registryResolver = resolver;
+    this.#registryResolver = resolver;
   }
 
   /**
@@ -62,7 +62,7 @@ export class ManifestResolver {
    * Get the current registry resolver
    */
   getRegistryResolver(): RegistryResolver | undefined {
-    return this.registryResolver;
+    return this.#registryResolver;
   }
 
   /**
@@ -167,11 +167,11 @@ export class ManifestResolver {
    */
   async resolveAndFetch(name: string, range?: string): Promise<ResolvedManifest> {
     const t0 = Date.now();
-    if (!this.registryResolver) {
+    if (!this.#registryResolver) {
       throw new Error("No registry resolver configured");
     }
     
-    const res = await this.registryResolver(name, range);
+    const res = await this.#registryResolver(name, range);
     
     // Optimize: Create final key once and check cache
     const resolvedVersion = res.version;
@@ -265,7 +265,7 @@ export class ManifestResolver {
       const requires = manifest.requires || [];
       for (const req of requires) {
         // Preload dependency entry file before visiting
-        const reqRes = await this.registryResolver!(req.name, req.range);
+        const reqRes = await this.#registryResolver!(req.name, req.range);
         const reqDistBase = this.#calculateDistBase(reqRes);
         this.#preloadEntryFile(req.name, reqDistBase, depth + 1);
 
@@ -288,7 +288,7 @@ export class ManifestResolver {
             }
           }
           // Preload dependency entry file before visiting
-          const importRes = await this.registryResolver!(packageName, semver);
+          const importRes = await this.#registryResolver!(packageName, semver);
           const importDistBase = this.#calculateDistBase(importRes);
           this.#preloadEntryFile(packageName, importDistBase, depth + 1);
 
@@ -309,7 +309,7 @@ export class ManifestResolver {
           }
           console.debug(`  → Loading shared provider: ${packageName}@${semver || 'latest'}`);
           // Preload dependency entry file before visiting
-          const sharedRes = await this.registryResolver!(packageName, semver);
+          const sharedRes = await this.#registryResolver!(packageName, semver);
           const sharedDistBase = this.#calculateDistBase(sharedRes);
           this.#preloadEntryFile(packageName, sharedDistBase, depth + 1);
 

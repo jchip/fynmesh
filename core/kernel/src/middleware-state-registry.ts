@@ -5,12 +5,12 @@ import { ObservableState } from "./observable-state";
  * Supports late-join discovery and reactive updates.
  */
 export class MiddlewareStateRegistry {
-  private parent?: MiddlewareStateRegistry;
-  private states: Map<string, ObservableState<any>> = new Map();
+  #parent?: MiddlewareStateRegistry;
+  #states: Map<string, ObservableState<any>> = new Map();
   #pendingWaiters: Map<string, Array<{ resolve: (state: ObservableState<any>) => void; reject: (err: Error) => void }>> = new Map();
 
   constructor(parent?: MiddlewareStateRegistry) {
-    this.parent = parent;
+    this.#parent = parent;
   }
 
   /**
@@ -20,13 +20,13 @@ export class MiddlewareStateRegistry {
    * @returns ObservableState for updates
    */
   provide<T>(key: string, initial: T): ObservableState<T> {
-    if (this.states.has(key)) {
+    if (this.#states.has(key)) {
       // Return existing state if already provided
-      return this.states.get(key) as ObservableState<T>;
+      return this.#states.get(key) as ObservableState<T>;
     }
 
     const state = new ObservableState(initial);
-    this.states.set(key, state);
+    this.#states.set(key, state);
 
     // Notify any waiters
     const waiters = this.#pendingWaiters.get(key);
@@ -45,19 +45,19 @@ export class MiddlewareStateRegistry {
    */
   lookup<T>(key: string): ObservableState<T> | undefined {
     // Check local scope first
-    if (this.states.has(key)) {
-      return this.states.get(key) as ObservableState<T>;
+    if (this.#states.has(key)) {
+      return this.#states.get(key) as ObservableState<T>;
     }
     // Walk up hierarchy
-    return this.parent?.lookup<T>(key);
+    return this.#parent?.lookup<T>(key);
   }
 
   /**
    * Check if state exists in this scope or parent scopes.
    */
   has(key: string): boolean {
-    if (this.states.has(key)) return true;
-    return this.parent?.has(key) ?? false;
+    if (this.#states.has(key)) return true;
+    return this.#parent?.has(key) ?? false;
   }
 
   /**
@@ -106,10 +106,10 @@ export class MiddlewareStateRegistry {
    * @returns true if removed, false if not found
    */
   remove(key: string): boolean {
-    const state = this.states.get(key);
+    const state = this.#states.get(key);
     if (state) {
       state.dispose();
-      this.states.delete(key);
+      this.#states.delete(key);
       return true;
     }
     return false;
@@ -119,8 +119,8 @@ export class MiddlewareStateRegistry {
    * Clear all state in this scope.
    */
   clear(): void {
-    this.states.forEach(state => state.dispose());
-    this.states.clear();
+    this.#states.forEach(state => state.dispose());
+    this.#states.clear();
     // Reject any pending waiters
     this.#pendingWaiters.forEach((waiters, key) => {
       waiters.forEach(({ reject }) => reject(new Error(`Registry cleared while waiting for: ${key}`)));
@@ -139,13 +139,13 @@ export class MiddlewareStateRegistry {
    * Get all keys in this scope (not including parent).
    */
   keys(): string[] {
-    return Array.from(this.states.keys());
+    return Array.from(this.#states.keys());
   }
 
   /**
    * Get parent registry if exists.
    */
   getParent(): MiddlewareStateRegistry | undefined {
-    return this.parent;
+    return this.#parent;
   }
 }
