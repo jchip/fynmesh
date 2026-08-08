@@ -31,10 +31,32 @@ export interface MiddlewareExecutionOptions {
   skipFynUnit?: boolean;
 }
 
+/**
+ * A group of middleware call contexts parked until all of them are ready.
+ *
+ * `key` identifies the group by its members. It is stored rather than derived
+ * on demand because every lookup used to rebuild it — a map + sort + join over
+ * the group — for *each* parked group, turning a comparison into O(n·m log m)
+ * of string building.
+ */
+type DeferredGroup = {
+  callContexts: FynAppMiddlewareCallContext[];
+  resumeMode?: "full" | "middleware_only";
+  key: string;
+};
+
+/** Identity of a deferred group: its member keys, order-independent. */
+function deferKeyOf(ccs: FynAppMiddlewareCallContext[]): string {
+  return ccs
+    .map((c) => c.reg.fullKey)
+    .sort()
+    .join("|");
+}
+
 export class MiddlewareExecutor {
   protected telemetry: KernelTelemetry;
   private middlewareReady: Map<string, any> = new Map();
-  private deferInvoke: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] = [];
+  private deferInvoke: DeferredGroup[] = [];
   /** Runtimes whose unit.initialize already ran — a deferred group resumes
    * with the same runtime and must not re-run it (FYM-144) */
   #initializedRuntimes = new WeakSet<FynUnitRuntime>();
@@ -43,14 +65,10 @@ export class MiddlewareExecutor {
     this.telemetry = telemetry ?? noOpTelemetry;
   }
 
-  #getDeferKey(ccs: FynAppMiddlewareCallContext[]): string {
-    return ccs.map((c) => c.reg.fullKey).sort().join("|");
-  }
-
   #markDeferResumeMode(ccs: FynAppMiddlewareCallContext[], resumeMode: "full" | "middleware_only"): void {
-    const key = this.#getDeferKey(ccs);
+    const key = deferKeyOf(ccs);
     for (const item of this.deferInvoke) {
-      if (this.#getDeferKey(item.callContexts) === key) {
+      if (item.key === key) {
         item.resumeMode = resumeMode;
       }
     }
@@ -97,14 +115,13 @@ export class MiddlewareExecutor {
         return "retry";
       }
       // Dedupe: avoid pushing identical pending groups
-      const incomingKeys = this.#getDeferKey(ccs);
-      const exists = this.deferInvoke.some((d) => {
-        return this.#getDeferKey(d.callContexts) === incomingKeys;
-      });
+      const incomingKey = deferKeyOf(ccs);
+      const exists = this.deferInvoke.some((d) => d.key === incomingKey);
       if (!exists) {
         this.deferInvoke.push({
           callContexts: ccs,
           resumeMode: "full",
+          key: incomingKey,
         });
       }
       return "defer";
@@ -118,7 +135,7 @@ export class MiddlewareExecutor {
   processReadyMiddleware(
     readyKey: string,
     share: any
-  ): { resumes: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] } {
+  ): { resumes: DeferredGroup[] } {
     this.setMiddlewareReady(readyKey, share);
 
     // Optimized: Use a Map to track ready status instead of O(n²) loops
@@ -145,7 +162,7 @@ export class MiddlewareExecutor {
     }
 
     // Process resumes and clean up in reverse order to maintain indices
-    const resumes: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] = [];
+    const resumes: DeferredGroup[] = [];
     if (resumeIndices.length > 0) {
       for (let i = resumeIndices.length - 1; i >= 0; i--) {
         const idx = resumeIndices[i];
@@ -186,13 +203,16 @@ export class MiddlewareExecutor {
     ccs: FynAppMiddlewareCallContext[],
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
   ): Promise<{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }> {
-    this.checkMiddlewareReady(ccs);
     let middlewareSetupStatus = "ready";
     let hasDeferredMiddleware = false;
 
     for (const cc of ccs) {
       const { fynApp, reg } = cc;
       const mw = reg.middleware;
+      // Checked per context here rather than for the whole group up front: the
+      // bulk pass discarded its result and only marked contexts ready, which
+      // this call redoes for each one anyway — and does so later, after earlier
+      // setups have had a chance to signal readiness, so it is never staler.
       this.checkSingleMiddlewareReady(cc);
       if (mw.setup) {
         console.debug("🚀 Invoking middleware", reg.regKey, "setup for", fynApp.name, fynApp.version);
@@ -582,7 +602,7 @@ export class MiddlewareExecutor {
   /**
    * Get deferred invokes
    */
-  getDeferredInvokes(): { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] {
+  getDeferredInvokes(): DeferredGroup[] {
     return [...this.deferInvoke];
   }
 
