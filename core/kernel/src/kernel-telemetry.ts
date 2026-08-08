@@ -26,7 +26,7 @@ export class ConsoleTelemetryTransport implements TelemetryTransport {
  * When the buffer reaches maxBufferSize, oldest entries are dropped.
  */
 export class KernelTelemetryImpl implements KernelTelemetry {
-  private buffer: TelemetryEntry[] = [];
+  #buffer: TelemetryEntry[] = [];
   private transport: TelemetryTransport;
   private maxBufferSize: number;
 
@@ -38,12 +38,12 @@ export class KernelTelemetryImpl implements KernelTelemetry {
   capture(entry: Omit<TelemetryEntry, "ts">): void {
     const full: TelemetryEntry = { ...entry, ts: Date.now() };
 
-    if (this.buffer.length >= this.maxBufferSize) {
+    if (this.#buffer.length >= this.maxBufferSize) {
       // Drop oldest — shift is O(n) but acceptable for the buffer sizes we use
-      this.buffer.shift();
+      this.#buffer.shift();
     }
 
-    this.buffer.push(full);
+    this.#buffer.push(full);
   }
 
   captureError(name: string, data: Record<string, unknown>, error: unknown): void {
@@ -66,9 +66,9 @@ export class KernelTelemetryImpl implements KernelTelemetry {
   }
 
   flush(): void {
-    if (this.buffer.length === 0) return;
+    if (this.#buffer.length === 0) return;
 
-    const batch = this.buffer.splice(0);
+    const batch = this.#buffer.splice(0);
     // Fire-and-forget. Call send() synchronously (callers and tests rely on the
     // timing), but never leak: a synchronous throw is caught here and an async
     // rejection by .catch.
@@ -83,7 +83,7 @@ export class KernelTelemetryImpl implements KernelTelemetry {
 
   /** Expose buffer length for testing */
   get bufferSize(): number {
-    return this.buffer.length;
+    return this.#buffer.length;
   }
 }
 

@@ -5,7 +5,7 @@
 export class ObservableState<T> {
   private value: T;
   #observers: Set<(value: T, prev?: T) => void> = new Set();
-  private disposed = false;
+  #disposed = false;
 
   constructor(initial: T) {
     this.value = initial;
@@ -13,7 +13,7 @@ export class ObservableState<T> {
 
   /** Get current value */
   get(): T {
-    if (this.disposed) {
+    if (this.#disposed) {
       throw new Error("Cannot get value from disposed ObservableState");
     }
     return this.value;
@@ -21,7 +21,7 @@ export class ObservableState<T> {
 
   /** Set new value and notify observers */
   set(value: T): void {
-    if (this.disposed) return;
+    if (this.#disposed) return;
     const prev = this.value;
     this.value = value;
     this.#notify(prev);
@@ -34,7 +34,7 @@ export class ObservableState<T> {
 
   /** Subscribe to changes. Callback is called immediately with current value. Returns unsubscribe function. */
   subscribe(fn: (value: T, prev?: T) => void): () => void {
-    if (this.disposed) {
+    if (this.#disposed) {
       throw new Error("Cannot subscribe to disposed ObservableState");
     }
     fn(this.value, undefined); // Immediate call with current value
@@ -44,12 +44,12 @@ export class ObservableState<T> {
 
   /** Check if state is disposed */
   isDisposed(): boolean {
-    return this.disposed;
+    return this.#disposed;
   }
 
   /** Dispose state and clear all observers */
   dispose(): void {
-    this.disposed = true;
+    this.#disposed = true;
     this.#observers.clear();
   }
 
