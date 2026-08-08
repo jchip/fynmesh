@@ -7,7 +7,7 @@ import { ObservableState } from "./observable-state";
 export class MiddlewareStateRegistry {
   private parent?: MiddlewareStateRegistry;
   private states: Map<string, ObservableState<any>> = new Map();
-  private pendingWaiters: Map<string, Array<{ resolve: (state: ObservableState<any>) => void; reject: (err: Error) => void }>> = new Map();
+  #pendingWaiters: Map<string, Array<{ resolve: (state: ObservableState<any>) => void; reject: (err: Error) => void }>> = new Map();
 
   constructor(parent?: MiddlewareStateRegistry) {
     this.parent = parent;
@@ -29,10 +29,10 @@ export class MiddlewareStateRegistry {
     this.states.set(key, state);
 
     // Notify any waiters
-    const waiters = this.pendingWaiters.get(key);
+    const waiters = this.#pendingWaiters.get(key);
     if (waiters) {
       waiters.forEach(({ resolve }) => resolve(state));
-      this.pendingWaiters.delete(key);
+      this.#pendingWaiters.delete(key);
     }
 
     return state;
@@ -76,11 +76,11 @@ export class MiddlewareStateRegistry {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         // Remove from waiters
-        const waiters = this.pendingWaiters.get(key);
+        const waiters = this.#pendingWaiters.get(key);
         if (waiters) {
           const idx = waiters.findIndex(w => w.resolve === resolve);
           if (idx >= 0) waiters.splice(idx, 1);
-          if (waiters.length === 0) this.pendingWaiters.delete(key);
+          if (waiters.length === 0) this.#pendingWaiters.delete(key);
         }
         reject(new Error(`Timeout waiting for state: ${key}`));
       }, timeout);
@@ -93,10 +93,10 @@ export class MiddlewareStateRegistry {
         reject
       };
 
-      if (!this.pendingWaiters.has(key)) {
-        this.pendingWaiters.set(key, []);
+      if (!this.#pendingWaiters.has(key)) {
+        this.#pendingWaiters.set(key, []);
       }
-      this.pendingWaiters.get(key)!.push(waiter);
+      this.#pendingWaiters.get(key)!.push(waiter);
     });
   }
 
@@ -122,10 +122,10 @@ export class MiddlewareStateRegistry {
     this.states.forEach(state => state.dispose());
     this.states.clear();
     // Reject any pending waiters
-    this.pendingWaiters.forEach((waiters, key) => {
+    this.#pendingWaiters.forEach((waiters, key) => {
       waiters.forEach(({ reject }) => reject(new Error(`Registry cleared while waiting for: ${key}`)));
     });
-    this.pendingWaiters.clear();
+    this.#pendingWaiters.clear();
   }
 
   /**

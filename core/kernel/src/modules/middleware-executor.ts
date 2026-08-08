@@ -13,7 +13,7 @@ import type {
   MiddlewareUseMeta,
   KernelTelemetry,
 } from "../types";
-import { noOpTelemetry } from "../kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride, parseMiddlewareString } from "../util";
 import { noOpFynUnit } from "../use-middleware";
 import {
@@ -37,20 +37,20 @@ export class MiddlewareExecutor {
   private deferInvoke: { callContexts: FynAppMiddlewareCallContext[]; resumeMode?: "full" | "middleware_only" }[] = [];
   /** Runtimes whose unit.initialize already ran — a deferred group resumes
    * with the same runtime and must not re-run it (FYM-144) */
-  private initializedRuntimes = new WeakSet<FynUnitRuntime>();
+  #initializedRuntimes = new WeakSet<FynUnitRuntime>();
 
   constructor(telemetry?: KernelTelemetry) {
     this.telemetry = telemetry ?? noOpTelemetry;
   }
 
-  private getDeferKey(ccs: FynAppMiddlewareCallContext[]): string {
+  #getDeferKey(ccs: FynAppMiddlewareCallContext[]): string {
     return ccs.map((c) => c.reg.fullKey).sort().join("|");
   }
 
-  private markDeferResumeMode(ccs: FynAppMiddlewareCallContext[], resumeMode: "full" | "middleware_only"): void {
-    const key = this.getDeferKey(ccs);
+  #markDeferResumeMode(ccs: FynAppMiddlewareCallContext[], resumeMode: "full" | "middleware_only"): void {
+    const key = this.#getDeferKey(ccs);
     for (const item of this.deferInvoke) {
-      if (this.getDeferKey(item.callContexts) === key) {
+      if (this.#getDeferKey(item.callContexts) === key) {
         item.resumeMode = resumeMode;
       }
     }
@@ -97,9 +97,9 @@ export class MiddlewareExecutor {
         return "retry";
       }
       // Dedupe: avoid pushing identical pending groups
-      const incomingKeys = this.getDeferKey(ccs);
+      const incomingKeys = this.#getDeferKey(ccs);
       const exists = this.deferInvoke.some((d) => {
-        return this.getDeferKey(d.callContexts) === incomingKeys;
+        return this.#getDeferKey(d.callContexts) === incomingKeys;
       });
       if (!exists) {
         this.deferInvoke.push({
@@ -162,7 +162,7 @@ export class MiddlewareExecutor {
   /**
    * Validate retry count and throw if exceeded
    */
-  private validateRetryCount(ccs: FynAppMiddlewareCallContext[], tries: number): void {
+  #validateRetryCount(ccs: FynAppMiddlewareCallContext[], tries: number): void {
     if (tries > 1) {
       const mwError = new MiddlewareError(
         KernelErrorCode.MIDDLEWARE_SETUP_FAILED,
@@ -182,7 +182,7 @@ export class MiddlewareExecutor {
    * Run middleware setup phase and signal readiness
    * @returns {{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }}
    */
-  private async setupMiddlewares(
+  async #setupMiddlewares(
     ccs: FynAppMiddlewareCallContext[],
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
   ): Promise<{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }> {
@@ -197,11 +197,7 @@ export class MiddlewareExecutor {
       if (mw.setup) {
         console.debug("🚀 Invoking middleware", reg.regKey, "setup for", fynApp.name, fynApp.version);
         const result = await mw.setup(cc);
-        this.telemetry.capture({
-          type: "event",
-          name: "setup.completed",
-          data: { middleware: reg.regKey, app: fynApp.name },
-        });
+        captureEvent(this.telemetry, "setup.completed", { middleware: reg.regKey, app: fynApp.name });
         if (result?.status === "ready" && !this.middlewareReady.has(cc.reg.fullKey)) {
           if (signalReady) {
             await signalReady(cc, result?.share);
@@ -226,7 +222,7 @@ export class MiddlewareExecutor {
    * Initialize the FynUnit and handle provider mode registration
    * @returns {{ allowDegraded: boolean; deferResult: string | null }} where deferResult is non-null if the caller should return early
    */
-  private async initializeFynUnit(
+  async #initializeFynUnit(
     ccs: FynAppMiddlewareCallContext[],
     fynUnit: FynUnit,
     fynApp: FynApp,
@@ -239,13 +235,13 @@ export class MiddlewareExecutor {
     }
 
     // initialize is a one-time declaration per unit runtime (FYM-144)
-    if (this.initializedRuntimes.has(runtime)) {
+    if (this.#initializedRuntimes.has(runtime)) {
       return { allowDegraded: false, initDeferStatus: "ready" };
     }
 
     console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
     const result: any = await fynUnit.initialize(runtime);
-    this.initializedRuntimes.add(runtime);
+    this.#initializedRuntimes.add(runtime);
     const allowDegraded = Boolean(result?.deferOk);
 
     if (result?.mode && providerModeRegistrar) {
@@ -262,7 +258,7 @@ export class MiddlewareExecutor {
   /**
    * Apply middlewares that are currently ready
    */
-  private async applyReadyMiddlewares(ccs: FynAppMiddlewareCallContext[], fynApp: FynApp): Promise<void> {
+  async #applyReadyMiddlewares(ccs: FynAppMiddlewareCallContext[], fynApp: FynApp): Promise<void> {
     for (const cc of ccs) {
       if (cc.status !== "ready") continue;
       const mw = cc.reg.middleware;
@@ -275,7 +271,7 @@ export class MiddlewareExecutor {
   /**
    * Execute the FynUnit with possible middleware override
    */
-  private async executeWithOverride(
+  async #executeWithOverride(
     fynUnit: FynUnit,
     fynApp: FynApp,
     runtime: FynUnitRuntime,
@@ -298,11 +294,7 @@ export class MiddlewareExecutor {
     }
 
     if (didExecute) {
-      this.telemetry.capture({
-        type: "event",
-        name: "execute.completed",
-        data: { app: fynApp.name, override: !!executionOverride },
-      });
+      captureEvent(this.telemetry, "execute.completed", { app: fynApp.name, override: !!executionOverride });
     }
   }
 
@@ -320,17 +312,13 @@ export class MiddlewareExecutor {
     }
 
     if (tries === 0) {
-      this.telemetry.capture({
-        type: "event",
-        name: "call.started",
-        data: { count: ccs.length, app: ccs[0]?.fynApp?.name },
-      });
+      captureEvent(this.telemetry, "call.started", { count: ccs.length, app: ccs[0]?.fynApp?.name });
     }
 
-    this.validateRetryCount(ccs, tries);
+    this.#validateRetryCount(ccs, tries);
 
     // Phase 1: Setup middlewares
-    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.setupMiddlewares(ccs, options.signalReady);
+    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.#setupMiddlewares(ccs, options.signalReady);
 
     const fynUnit = ccs[0].fynUnit;
     const fynApp = ccs[0].fynApp;
@@ -342,12 +330,12 @@ export class MiddlewareExecutor {
     }
 
     // Phase 2: Initialize the FynUnit
-    const { allowDegraded, initDeferStatus } = await this.initializeFynUnit(
+    const { allowDegraded, initDeferStatus } = await this.#initializeFynUnit(
       ccs, fynUnit, fynApp, runtime, options.providerModeRegistrar, options.skipFynUnit
     );
 
     if (initDeferStatus === "defer" && !allowDegraded) {
-      this.telemetry.capture({ type: "event", name: "call.deferred", data: { app: fynApp?.name } });
+      captureEvent(this.telemetry, "call.deferred", { app: fynApp?.name });
       return "defer";
     }
     if (initDeferStatus === "retry") {
@@ -355,23 +343,23 @@ export class MiddlewareExecutor {
     }
 
     if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options.skipFynUnit) {
-      this.telemetry.capture({ type: "event", name: "call.deferred", data: { app: fynApp?.name } });
+      captureEvent(this.telemetry, "call.deferred", { app: fynApp?.name });
       return "defer";
     }
 
     // Phase 3: Apply ready middlewares
-    await this.applyReadyMiddlewares(ccs, fynApp);
+    await this.#applyReadyMiddlewares(ccs, fynApp);
 
     if (options.skipFynUnit) {
       return "ready";
     }
 
     if (allowDegraded && postSetupStatus === "defer") {
-      this.markDeferResumeMode(ccs, "middleware_only");
+      this.#markDeferResumeMode(ccs, "middleware_only");
     }
 
     // Phase 4: Execute with possible override
-    await this.executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, options.autoApplyMiddlewares);
+    await this.#executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, options.autoApplyMiddlewares);
 
     return "ready";
   }

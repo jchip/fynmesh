@@ -9,7 +9,7 @@ import type {
   RegistryResolverResult,
   KernelTelemetry,
 } from "../types";
-import { noOpTelemetry } from "../kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { getFederation } from "../util";
 
 export interface ManifestMeta {
@@ -30,8 +30,8 @@ export class ManifestResolver {
   private registryResolver?: RegistryResolver;
   private manifestCache: Map<string, FynAppManifest> = new Map();
   private nodeMeta: Map<string, ManifestMeta> = new Map();
-  private preloadedEntries: Map<string, number> = new Map();
-  private preloadCallback?: (url: string, depth: number) => void;
+  #preloadedEntries: Map<string, number> = new Map();
+  #preloadCallback?: (url: string, depth: number) => void;
 
   constructor(telemetry?: KernelTelemetry) {
     this.telemetry = telemetry ?? noOpTelemetry;
@@ -48,14 +48,14 @@ export class ManifestResolver {
    * Set callback for preloading entry files
    */
   setPreloadCallback(callback: (url: string, depth: number) => void): void {
-    this.preloadCallback = callback;
+    this.#preloadCallback = callback;
   }
 
   /**
    * Get the current preload callback
    */
   getPreloadCallback(): ((url: string, depth: number) => void) | undefined {
-    return this.preloadCallback;
+    return this.#preloadCallback;
   }
 
   /**
@@ -69,26 +69,26 @@ export class ManifestResolver {
    * Calculate distBase from resolver result (public API)
    */
   getDistBase(res: RegistryResolverResult): string {
-    return this.calculateDistBase(res);
+    return this.#calculateDistBase(res);
   }
 
   /**
    * Preload an entry file (with deduplication and depth tracking)
    * @private
    */
-  private preloadEntryFile(name: string, distBase: string, depth: number): void {
+  #preloadEntryFile(name: string, distBase: string, depth: number): void {
     const entryUrl = `${distBase}fynapp-entry.js`;
 
     // Use Map to track both URL and depth for deduplication
-    if (this.preloadedEntries.has(entryUrl)) {
+    if (this.#preloadedEntries.has(entryUrl)) {
       return; // Already preloaded
     }
 
-    this.preloadedEntries.set(entryUrl, depth);
+    this.#preloadedEntries.set(entryUrl, depth);
 
-    if (this.preloadCallback) {
+    if (this.#preloadCallback) {
       console.debug(`⚡ Preloading entry file: ${entryUrl} (depth: ${depth})`);
-      this.preloadCallback(entryUrl, depth);
+      this.#preloadCallback(entryUrl, depth);
     }
   }
 
@@ -112,14 +112,14 @@ export class ManifestResolver {
   clearCache(): void {
     this.manifestCache.clear();
     this.nodeMeta.clear();
-    this.preloadedEntries.clear();
+    this.#preloadedEntries.clear();
   }
 
   /**
    * Fetch JSON from URL
    * @private
    */
-  private async fetchJson(url: string): Promise<any> {
+  async #fetchJson(url: string): Promise<any> {
     const res = await fetch(url, { credentials: "same-origin" });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
     return res.json();
@@ -129,7 +129,7 @@ export class ManifestResolver {
    * Calculate distBase from resolver result
    * @private
    */
-  private calculateDistBase(res: RegistryResolverResult): string {
+  #calculateDistBase(res: RegistryResolverResult): string {
     return res.distBase ||
       (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
   }
@@ -138,12 +138,12 @@ export class ManifestResolver {
    * Update node metadata with manifest info
    * @private
    */
-  private updateNodeMeta(
+  #updateNodeMeta(
     key: string,
     res: RegistryResolverResult,
     manifest: FynAppManifest
   ): void {
-    const distBase = this.calculateDistBase(res);
+    const distBase = this.#calculateDistBase(res);
     const finalVersion = manifest.version || res.version;
 
     this.nodeMeta.set(key, {
@@ -157,9 +157,9 @@ export class ManifestResolver {
   /**
    * Emit the resolve.duration metric and resolved event for a completed resolution.
    */
-  private reportResolved(t0: number, name: string, version: string | undefined): void {
+  #reportResolved(t0: number, name: string, version: string | undefined): void {
     this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-    this.telemetry.capture({ type: "event", name: "resolved", data: { name, version } });
+    captureEvent(this.telemetry, "resolved", { name, version });
   }
 
   /**
@@ -180,8 +180,8 @@ export class ManifestResolver {
     
     if (cached) {
       // Fast path: already cached
-      this.updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
-      this.reportResolved(t0, name, cached.version || resolvedVersion);
+      this.#updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
+      this.#reportResolved(t0, name, cached.version || resolvedVersion);
       return { key: cacheKey, res, manifest: cached };
     }
 
@@ -197,8 +197,8 @@ export class ManifestResolver {
         manifest = entryModule.__FYNAPP_MANIFEST__;
         const key = `${res.name}@${manifest.version || res.version}`;
         this.manifestCache.set(key, manifest);
-        this.updateNodeMeta(key, res, manifest);
-        this.reportResolved(t0, name, manifest.version || res.version);
+        this.#updateNodeMeta(key, res, manifest);
+        this.#reportResolved(t0, name, manifest.version || res.version);
         return { key, res, manifest };
       }
     } catch (embeddedErr) {
@@ -206,12 +206,12 @@ export class ManifestResolver {
     }
 
     try {
-      manifest = await this.fetchJson(res.manifestUrl);
+      manifest = await this.#fetchJson(res.manifestUrl);
     } catch (err1) {
       try {
         // fallback to federation.json in same dist
         const fallback = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "federation.json");
-        manifest = await this.fetchJson(fallback);
+        manifest = await this.#fetchJson(fallback);
       } catch (err2) {
         // demo fallback: synthesize an empty manifest (no requires) and proceed
         manifest = { name, version: res.version, requires: [] };
@@ -220,8 +220,8 @@ export class ManifestResolver {
     
     const key = `${res.name}@${manifest.version || res.version}`;
     this.manifestCache.set(key, manifest);
-    this.updateNodeMeta(key, res, manifest);
-    this.reportResolved(t0, name, manifest.version || res.version);
+    this.#updateNodeMeta(key, res, manifest);
+    this.#reportResolved(t0, name, manifest.version || res.version);
     return { key, res, manifest };
   }
 
@@ -266,8 +266,8 @@ export class ManifestResolver {
       for (const req of requires) {
         // Preload dependency entry file before visiting
         const reqRes = await this.registryResolver!(req.name, req.range);
-        const reqDistBase = this.calculateDistBase(reqRes);
-        this.preloadEntryFile(req.name, reqDistBase, depth + 1);
+        const reqDistBase = this.#calculateDistBase(reqRes);
+        this.#preloadEntryFile(req.name, reqDistBase, depth + 1);
 
         await visit(req.name, req.range, key, depth + 1);
       }
@@ -289,8 +289,8 @@ export class ManifestResolver {
           }
           // Preload dependency entry file before visiting
           const importRes = await this.registryResolver!(packageName, semver);
-          const importDistBase = this.calculateDistBase(importRes);
-          this.preloadEntryFile(packageName, importDistBase, depth + 1);
+          const importDistBase = this.#calculateDistBase(importRes);
+          this.#preloadEntryFile(packageName, importDistBase, depth + 1);
 
           // Visit this package as a dependency
           await visit(packageName, semver, key, depth + 1);
@@ -310,8 +310,8 @@ export class ManifestResolver {
           console.debug(`  → Loading shared provider: ${packageName}@${semver || 'latest'}`);
           // Preload dependency entry file before visiting
           const sharedRes = await this.registryResolver!(packageName, semver);
-          const sharedDistBase = this.calculateDistBase(sharedRes);
-          this.preloadEntryFile(packageName, sharedDistBase, depth + 1);
+          const sharedDistBase = this.#calculateDistBase(sharedRes);
+          this.#preloadEntryFile(packageName, sharedDistBase, depth + 1);
 
           // Visit this package as a dependency
           await visit(packageName, semver, key, depth + 1);
@@ -326,11 +326,7 @@ export class ManifestResolver {
     }
 
     console.debug('buildGraph completed, nodes:', Array.from(nodes));
-    this.telemetry.capture({
-      type: "event",
-      name: "graph.built",
-      data: { nodes: nodes.size },
-    });
+    captureEvent(this.telemetry, "graph.built", { nodes: nodes.size });
     return { nodes, adj, indegree };
   }
 

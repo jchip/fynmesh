@@ -12,7 +12,7 @@
 
 import { FynEventTarget } from "./event-target";
 import { FynBusError, KernelErrorCode } from "./errors";
-import { noOpTelemetry } from "./kernel-telemetry";
+import { noOpTelemetry, captureEvent } from "./kernel-telemetry";
 import type { KernelTelemetry } from "./types";
 
 export type Unsubscribe = () => void;
@@ -135,14 +135,14 @@ type FacadeState = {
 export class FynBusRoot {
   private channels = new Map<string, ChannelState>();
   private facades = new Map<string, FynBusFacade>();
-  private kernelFacade?: FynBusFacade;
+  #kernelFacade?: FynBusFacade;
   private telemetry: KernelTelemetry;
 
   constructor(telemetry?: KernelTelemetry) {
     this.telemetry = telemetry ?? noOpTelemetry;
   }
 
-  private getChannel(name: string): ChannelState {
+  #getChannel(name: string): ChannelState {
     let state = this.channels.get(name);
     if (!state) {
       state = { events: new FynEventTarget(), handlers: new Map(), waiters: new Map() };
@@ -156,13 +156,9 @@ export class FynBusRoot {
     // must not be tamperable by one of them
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
     // Unprefixed name by convention: the kernel passes telemetry.scope("bus")
-    this.telemetry.capture({
-      type: "event",
-      name: "emit",
-      data: { topic, channel: channelName, source },
-    });
+    captureEvent(this.telemetry, "emit", { topic, channel: channelName, source });
     const detail: BusEventDetail = { payload, meta };
-    this.getChannel(channelName).events.dispatchEvent(new CustomEvent(topic, { detail }));
+    this.#getChannel(channelName).events.dispatchEvent(new CustomEvent(topic, { detail }));
   }
 
   subscribeFrom(
@@ -174,7 +170,7 @@ export class FynBusRoot {
     once: boolean,
     onAutoRemove?: () => void,
   ): Unsubscribe {
-    const { events } = this.getChannel(channelName);
+    const { events } = this.#getChannel(channelName);
     const signal = options?.signal;
     // Fired once() and signal aborts remove the listener without going
     // through the facade's unsubscribe — the hook lets it drop its tracking
@@ -220,13 +216,9 @@ export class FynBusRoot {
     options?: RequestOptions,
     onCancel?: (cancel: () => void) => () => void,
   ): Promise<any> {
-    const state = this.getChannel(channelName);
+    const state = this.#getChannel(channelName);
     const meta: FynBusMeta = Object.freeze({ topic, source, channel: channelName });
-    this.telemetry.capture({
-      type: "event",
-      name: "request",
-      data: { topic, channel: channelName, source },
-    });
+    captureEvent(this.telemetry, "request", { topic, channel: channelName, source });
 
     const signal = options?.signal;
     return new Promise((resolve, reject) => {
@@ -334,7 +326,7 @@ export class FynBusRoot {
   }
 
   registerHandler(source: string, channelName: string, topic: string, handler: RpcHandler): Unsubscribe {
-    const state = this.getChannel(channelName);
+    const state = this.#getChannel(channelName);
     if (state.handlers.has(topic)) {
       throw new FynBusError(
         KernelErrorCode.BUS_HANDLER_EXISTS,
@@ -343,11 +335,7 @@ export class FynBusRoot {
       );
     }
     state.handlers.set(topic, handler);
-    this.telemetry.capture({
-      type: "event",
-      name: "handle",
-      data: { topic, channel: channelName, source },
-    });
+    captureEvent(this.telemetry, "handle", { topic, channel: channelName, source });
 
     // Release requests that arrived before the handler
     const waiting = state.waiters.get(topic);
@@ -410,10 +398,10 @@ export class FynBusRoot {
    * a no-op.
    */
   forKernel(): FynBus {
-    if (!this.kernelFacade) {
-      this.kernelFacade = new FynBusFacade(this, KERNEL_BUS_SOURCE);
+    if (!this.#kernelFacade) {
+      this.#kernelFacade = new FynBusFacade(this, KERNEL_BUS_SOURCE);
     }
-    return this.kernelFacade;
+    return this.#kernelFacade;
   }
 }
 
@@ -433,7 +421,7 @@ export class FynBusFacade implements FynBus {
     this.state = state ?? { subs: new Set(), disposed: false };
   }
 
-  private assertActive(): void {
+  #assertActive(): void {
     if (this.state.disposed) {
       throw new FynBusError(
         KernelErrorCode.BUS_DISPOSED,
@@ -444,7 +432,7 @@ export class FynBusFacade implements FynBus {
   }
 
   emit<T = unknown>(topic: string, payload?: T): void {
-    this.assertActive();
+    this.#assertActive();
     this.root.emitFrom(this.source, this.channelName, topic, payload);
   }
 
@@ -453,7 +441,7 @@ export class FynBusFacade implements FynBus {
     handler: BusHandler<T>,
     options?: SubscribeOptions,
   ): Unsubscribe {
-    this.assertActive();
+    this.#assertActive();
     return this.subscribe(topic, handler, options, false);
   }
 
@@ -462,7 +450,7 @@ export class FynBusFacade implements FynBus {
     handler: BusHandler<T>,
     options?: SubscribeOptions,
   ): Unsubscribe {
-    this.assertActive();
+    this.#assertActive();
     return this.subscribe(topic, handler, options, true);
   }
 
@@ -471,7 +459,7 @@ export class FynBusFacade implements FynBus {
     payload?: TReq,
     options?: RequestOptions,
   ): Promise<TRes> {
-    this.assertActive();
+    this.#assertActive();
     return this.root.requestFrom(
       this.source,
       this.channelName,
@@ -481,7 +469,7 @@ export class FynBusFacade implements FynBus {
       // Track the request so dispose() stops its wait (parked or in-flight);
       // the returned untrack drops the canceller once the request settles
       (cancel) => {
-        const tracked = this.track(cancel);
+        const tracked = this.#track(cancel);
         return () => this.state.subs.delete(tracked);
       },
     );
@@ -491,14 +479,14 @@ export class FynBusFacade implements FynBus {
     topic: string,
     handler: RequestHandler<TReq, TRes>,
   ): Unsubscribe {
-    this.assertActive();
-    return this.track(
+    this.#assertActive();
+    return this.#track(
       this.root.registerHandler(this.source, this.channelName, topic, handler as RpcHandler),
     );
   }
 
   channel(name: string): FynBus {
-    this.assertActive();
+    this.#assertActive();
     if (!name) {
       throw new FynBusError(
         KernelErrorCode.BUS_INVALID_CHANNEL,
@@ -537,7 +525,7 @@ export class FynBusFacade implements FynBus {
       // Auto-removal (fired once / aborted signal) drops the tracking entry
       () => this.state.subs.delete(tracked),
     );
-    tracked = this.track(raw);
+    tracked = this.#track(raw);
     if (options?.signal?.aborted) {
       // Pre-aborted signal: the listener was never registered and the abort
       // event won't re-fire — don't keep a tracking entry for it
@@ -546,7 +534,7 @@ export class FynBusFacade implements FynBus {
     return tracked;
   }
 
-  private track(unsub: Unsubscribe): Unsubscribe {
+  #track(unsub: Unsubscribe): Unsubscribe {
     const tracked = () => {
       this.state.subs.delete(tracked);
       unsub();

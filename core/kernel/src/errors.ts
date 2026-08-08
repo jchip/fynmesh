@@ -4,40 +4,51 @@
  */
 
 /**
- * Error codes for kernel errors
+ * Error codes for kernel errors.
+ *
+ * A frozen object rather than a TS `enum`, for size: a *numeric* enum emits a
+ * reverse map (`E[E.MODULE_NOT_FOUND = 1001] = "MODULE_NOT_FOUND"`), so every
+ * member's name ships twice — 1,007 B across these 19 members. Nothing looks a
+ * name up from a code, so that half was dead weight. (`const enum`, which would
+ * inline instead, is unavailable here: `isolatedModules` is on.)
+ *
+ * The companion type alias keeps `KernelErrorCode` usable in type position
+ * exactly as the enum was.
  */
-export enum KernelErrorCode {
+export const KernelErrorCode = {
   // Module Loading Errors (1xxx)
-  MODULE_NOT_FOUND = 1001,
-  MODULE_LOAD_FAILED = 1002,
-  EXPOSE_MODULE_NOT_FOUND = 1003,
-  DEPENDENCY_NOT_FOUND = 1004,
+  MODULE_NOT_FOUND: 1001,
+  MODULE_LOAD_FAILED: 1002,
+  EXPOSE_MODULE_NOT_FOUND: 1003,
+  DEPENDENCY_NOT_FOUND: 1004,
 
   // Middleware Errors (2xxx)
-  MIDDLEWARE_NOT_FOUND = 2001,
-  MIDDLEWARE_SETUP_FAILED = 2002,
-  MIDDLEWARE_APPLY_FAILED = 2003,
-  MIDDLEWARE_FILTER_ERROR = 2004,
+  MIDDLEWARE_NOT_FOUND: 2001,
+  MIDDLEWARE_SETUP_FAILED: 2002,
+  MIDDLEWARE_APPLY_FAILED: 2003,
+  MIDDLEWARE_FILTER_ERROR: 2004,
 
   // Bootstrap Errors (3xxx)
-  BOOTSTRAP_FAILED = 3001,
-  REGISTRY_RESOLVER_MISSING = 3002,
+  BOOTSTRAP_FAILED: 3001,
+  REGISTRY_RESOLVER_MISSING: 3002,
 
   // Manifest Errors (4xxx)
-  MANIFEST_FETCH_FAILED = 4001,
-  MANIFEST_PARSE_FAILED = 4002,
+  MANIFEST_FETCH_FAILED: 4001,
+  MANIFEST_PARSE_FAILED: 4002,
 
   // Federation Errors (5xxx)
-  FEDERATION_NOT_LOADED = 5001,
-  FEDERATION_ENTRY_FAILED = 5002,
+  FEDERATION_NOT_LOADED: 5001,
+  FEDERATION_ENTRY_FAILED: 5002,
 
   // FynBus Errors (6xxx)
-  BUS_DISPOSED = 6001,
-  BUS_INVALID_CHANNEL = 6002,
-  BUS_HANDLER_EXISTS = 6003,
-  BUS_REQUEST_TIMEOUT = 6004,
-  BUS_REQUEST_ABORTED = 6005,
-}
+  BUS_DISPOSED: 6001,
+  BUS_INVALID_CHANNEL: 6002,
+  BUS_HANDLER_EXISTS: 6003,
+  BUS_REQUEST_TIMEOUT: 6004,
+  BUS_REQUEST_ABORTED: 6005,
+} as const;
+
+export type KernelErrorCode = (typeof KernelErrorCode)[keyof typeof KernelErrorCode];
 
 /**
  * Base error class for all kernel errors
@@ -83,126 +94,65 @@ export class KernelError extends Error {
 }
 
 /**
- * Error for module loading failures
+ * Builds a KernelError subclass whose options bag becomes `context`.
+ *
+ * The five classes below were byte-for-byte the same shape — a constructor, a
+ * `super()`, a hand-written literal copying each option onto `context`, and a
+ * `this.name` assignment — differing only in the name and the option keys. That
+ * is five constructors and five repacking literals in the bundle for behaviour
+ * expressible once. The generic parameter keeps each class's option names
+ * type-checked at call sites, so the collapse costs no type safety.
+ *
+ * Unlike the hand-written versions, `context` now holds only the keys actually
+ * passed rather than every key with `undefined` values. Nothing observes the
+ * difference: readers index single fields, and `toDetailedString`'s
+ * JSON.stringify omits undefined either way.
  */
-export class ModuleLoadError extends KernelError {
-  constructor(
-    code: KernelErrorCode,
-    message: string,
-    options?: {
-      fynAppName?: string;
-      fynAppVersion?: string;
-      exposeName?: string;
-      cause?: Error;
+function defineErrorClass<TOptions extends Record<string, unknown>>(name: string) {
+  return class extends KernelError {
+    constructor(code: KernelErrorCode, message: string, options?: TOptions & { cause?: Error }) {
+      const { cause, ...context } = options ?? ({} as TOptions & { cause?: Error });
+      super(code, message, { context, cause });
+      this.name = name;
     }
-  ) {
-    super(code, message, {
-      context: {
-        fynAppName: options?.fynAppName,
-        fynAppVersion: options?.fynAppVersion,
-        exposeName: options?.exposeName,
-      },
-      cause: options?.cause,
-    });
-    this.name = "ModuleLoadError";
-  }
+  };
 }
 
-/**
- * Error for middleware-related failures
- */
-export class MiddlewareError extends KernelError {
-  constructor(
-    code: KernelErrorCode,
-    message: string,
-    options?: {
-      middlewareName?: string;
-      provider?: string;
-      fynAppName?: string;
-      cause?: Error;
-    }
-  ) {
-    super(code, message, {
-      context: {
-        middlewareName: options?.middlewareName,
-        provider: options?.provider,
-        fynAppName: options?.fynAppName,
-      },
-      cause: options?.cause,
-    });
-    this.name = "MiddlewareError";
-  }
-}
+/** Error for module loading failures */
+export const ModuleLoadError = defineErrorClass<{
+  fynAppName?: string;
+  fynAppVersion?: string;
+  exposeName?: string;
+}>("ModuleLoadError");
+export type ModuleLoadError = InstanceType<typeof ModuleLoadError>;
 
-/**
- * Error for bootstrap failures
- */
-export class BootstrapError extends KernelError {
-  constructor(
-    code: KernelErrorCode,
-    message: string,
-    options?: {
-      fynAppName?: string;
-      phase?: string;
-      cause?: Error;
-    }
-  ) {
-    super(code, message, {
-      context: {
-        fynAppName: options?.fynAppName,
-        phase: options?.phase,
-      },
-      cause: options?.cause,
-    });
-    this.name = "BootstrapError";
-  }
-}
+/** Error for middleware-related failures */
+export const MiddlewareError = defineErrorClass<{
+  middlewareName?: string;
+  provider?: string;
+  fynAppName?: string;
+}>("MiddlewareError");
+export type MiddlewareError = InstanceType<typeof MiddlewareError>;
 
-/**
- * Error for manifest resolution failures
- */
-export class ManifestError extends KernelError {
-  constructor(
-    code: KernelErrorCode,
-    message: string,
-    options?: {
-      manifestUrl?: string;
-      packageName?: string;
-      cause?: Error;
-    }
-  ) {
-    super(code, message, {
-      context: {
-        manifestUrl: options?.manifestUrl,
-        packageName: options?.packageName,
-      },
-      cause: options?.cause,
-    });
-    this.name = "ManifestError";
-  }
-}
+/** Error for bootstrap failures */
+export const BootstrapError = defineErrorClass<{
+  fynAppName?: string;
+  phase?: string;
+}>("BootstrapError");
+export type BootstrapError = InstanceType<typeof BootstrapError>;
 
-/**
- * Error for federation-related failures
- */
-export class FederationError extends KernelError {
-  constructor(
-    code: KernelErrorCode,
-    message: string,
-    options?: {
-      entryUrl?: string;
-      cause?: Error;
-    }
-  ) {
-    super(code, message, {
-      context: {
-        entryUrl: options?.entryUrl,
-      },
-      cause: options?.cause,
-    });
-    this.name = "FederationError";
-  }
-}
+/** Error for manifest resolution failures */
+export const ManifestError = defineErrorClass<{
+  manifestUrl?: string;
+  packageName?: string;
+}>("ManifestError");
+export type ManifestError = InstanceType<typeof ManifestError>;
+
+/** Error for federation-related failures */
+export const FederationError = defineErrorClass<{
+  entryUrl?: string;
+}>("FederationError");
+export type FederationError = InstanceType<typeof FederationError>;
 
 /**
  * Error for FynBus messaging failures
