@@ -46,7 +46,7 @@ export class BrowserKernel extends FynMeshKernelCore {
   }
 
   /**
-   * Inject a modulepreload link tag into the document head
+   * Inject a preload link tag into the document head
    * @private
    */
   #injectPreloadLink(url: string): void {
@@ -55,9 +55,12 @@ export class BrowserKernel extends FynMeshKernelCore {
       return;
     }
 
-    // Create modulepreload link tag
+    // Classic script preload, not modulepreload: entry files are System.register
+    // output and SystemJS loads them via an injected classic <script>. A
+    // modulepreload is fetched as a module in CORS mode, which never matches the
+    // no-cors classic load that follows — the entry would be fetched twice.
     const link = document.createElement("link");
-    link.rel = "modulepreload";
+    link.rel = "preload";
     link.href = url;
     link.as = "script";
 
