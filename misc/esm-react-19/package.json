@@ -1,6 +1,6 @@
 {
   "name": "esm-react",
-  "version": "19.1.0",
+  "version": "19.2.8",
   "description": "",
   "homepage": "",
   "license": "UNLICENSED",
@@ -10,7 +10,7 @@
     "development": "./src/react-esm-19.development.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node scripts/gen-esm.mjs"
   },
   "author": "",
   "files": [
@@ -24,6 +24,7 @@
     "url": ""
   },
   "devDependencies": {
-    "react": "^19.1.0"
+    "prettier": "^3.6.2",
+    "react": "^19.2.8"
   }
 }

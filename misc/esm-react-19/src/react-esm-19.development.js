@@ -19,7 +19,7 @@ function defReact(exports) {
           info[0],
           info[1]
         );
-      },
+      }
     });
   }
   function getIteratorFn(maybeIterable) {
@@ -56,6 +56,7 @@ function defReact(exports) {
     this.refs = emptyObject;
     this.updater = updater || ReactNoopUpdateQueue;
   }
+  function noop() {}
   function testStringCoercion(value) {
     return "" + value;
   }
@@ -113,7 +114,7 @@ function defReact(exports) {
         case REACT_PORTAL_TYPE:
           return "Portal";
         case REACT_CONTEXT_TYPE:
-          return (type.displayName || "Context") + ".Provider";
+          return type.displayName || "Context";
         case REACT_CONSUMER_TYPE:
           return (type._context.displayName || "Context") + ".Consumer";
         case REACT_FORWARD_REF_TYPE:
@@ -174,7 +175,7 @@ function defReact(exports) {
     warnAboutAccessingKey.isReactWarning = !0;
     Object.defineProperty(props, "key", {
       get: warnAboutAccessingKey,
-      configurable: !0,
+      configurable: !0
     });
   }
   function elementRefGetterWithDeprecationWarning() {
@@ -187,19 +188,19 @@ function defReact(exports) {
     componentName = this.props.ref;
     return void 0 !== componentName ? componentName : null;
   }
-  function ReactElement(type, key, self, source, owner, props, debugStack, debugTask) {
-    self = props.ref;
+  function ReactElement(type, key, props, owner, debugStack, debugTask) {
+    var refProp = props.ref;
     type = {
       $$typeof: REACT_ELEMENT_TYPE,
       type: type,
       key: key,
       props: props,
-      _owner: owner,
+      _owner: owner
     };
-    null !== (void 0 !== self ? self : null)
+    null !== (void 0 !== refProp ? refProp : null)
       ? Object.defineProperty(type, "ref", {
           enumerable: !1,
-          get: elementRefGetterWithDeprecationWarning,
+          get: elementRefGetterWithDeprecationWarning
         })
       : Object.defineProperty(type, "ref", { enumerable: !1, value: null });
     type._store = {};
@@ -207,25 +208,25 @@ function defReact(exports) {
       configurable: !1,
       enumerable: !1,
       writable: !0,
-      value: 0,
+      value: 0
     });
     Object.defineProperty(type, "_debugInfo", {
       configurable: !1,
       enumerable: !1,
       writable: !0,
-      value: null,
+      value: null
     });
     Object.defineProperty(type, "_debugStack", {
       configurable: !1,
       enumerable: !1,
       writable: !0,
-      value: debugStack,
+      value: debugStack
     });
     Object.defineProperty(type, "_debugTask", {
       configurable: !1,
       enumerable: !1,
       writable: !0,
-      value: debugTask,
+      value: debugTask
     });
     Object.freeze && (Object.freeze(type.props), Object.freeze(type));
     return type;
@@ -234,15 +235,25 @@ function defReact(exports) {
     newKey = ReactElement(
       oldElement.type,
       newKey,
-      void 0,
-      void 0,
-      oldElement._owner,
       oldElement.props,
+      oldElement._owner,
       oldElement._debugStack,
       oldElement._debugTask
     );
     oldElement._store && (newKey._store.validated = oldElement._store.validated);
     return newKey;
+  }
+  function validateChildKeys(node) {
+    isValidElement(node)
+      ? node._store && (node._store.validated = 1)
+      : "object" === typeof node &&
+        null !== node &&
+        node.$$typeof === REACT_LAZY_TYPE &&
+        ("fulfilled" === node._payload.status
+          ? isValidElement(node._payload.value) &&
+            node._payload.value._store &&
+            (node._payload.value._store.validated = 1)
+          : node._store && (node._store.validated = 1));
   }
   function isValidElement(object) {
     return "object" === typeof object && null !== object && object.$$typeof === REACT_ELEMENT_TYPE;
@@ -261,7 +272,6 @@ function defReact(exports) {
       ? (checkKeyStringCoercion(element.key), escape("" + element.key))
       : index.toString(36);
   }
-  function noop$1() {}
   function resolveThenable(thenable) {
     switch (thenable.status) {
       case "fulfilled":
@@ -271,7 +281,7 @@ function defReact(exports) {
       default:
         switch (
           ("string" === typeof thenable.status
-            ? thenable.then(noop$1, noop$1)
+            ? thenable.then(noop, noop)
             : ((thenable.status = "pending"),
               thenable.then(
                 function (fulfilledValue) {
@@ -363,9 +373,9 @@ function defReact(exports) {
     childKey = "" === nameSoFar ? "." : nameSoFar + ":";
     if (isArrayImpl(children))
       for (var i = 0; i < children.length; i++)
-        (nameSoFar = children[i]),
+        ((nameSoFar = children[i]),
           (type = childKey + getElementKey(nameSoFar, i)),
-          (invokeCallback += mapIntoArray(nameSoFar, array, escapedPrefix, type, callback));
+          (invokeCallback += mapIntoArray(nameSoFar, array, escapedPrefix, type, callback)));
     else if (((i = getIteratorFn(children)), "function" === typeof i))
       for (
         i === children.entries &&
@@ -377,11 +387,10 @@ function defReact(exports) {
           children = i.call(children),
           i = 0;
         !(nameSoFar = children.next()).done;
-
       )
-        (nameSoFar = nameSoFar.value),
+        ((nameSoFar = nameSoFar.value),
           (type = childKey + getElementKey(nameSoFar, i++)),
-          (invokeCallback += mapIntoArray(nameSoFar, array, escapedPrefix, type, callback));
+          (invokeCallback += mapIntoArray(nameSoFar, array, escapedPrefix, type, callback)));
     else if ("object" === type) {
       if ("function" === typeof children.then)
         return mapIntoArray(resolveThenable(children), array, escapedPrefix, nameSoFar, callback);
@@ -407,34 +416,54 @@ function defReact(exports) {
   }
   function lazyInitializer(payload) {
     if (-1 === payload._status) {
-      var ctor = payload._result;
-      ctor = ctor();
-      ctor.then(
+      var ioInfo = payload._ioInfo;
+      null != ioInfo && (ioInfo.start = ioInfo.end = performance.now());
+      ioInfo = payload._result;
+      var thenable = ioInfo();
+      thenable.then(
         function (moduleObject) {
-          if (0 === payload._status || -1 === payload._status)
-            (payload._status = 1), (payload._result = moduleObject);
+          if (0 === payload._status || -1 === payload._status) {
+            payload._status = 1;
+            payload._result = moduleObject;
+            var _ioInfo = payload._ioInfo;
+            null != _ioInfo && (_ioInfo.end = performance.now());
+            void 0 === thenable.status &&
+              ((thenable.status = "fulfilled"), (thenable.value = moduleObject));
+          }
         },
         function (error) {
-          if (0 === payload._status || -1 === payload._status)
-            (payload._status = 2), (payload._result = error);
+          if (0 === payload._status || -1 === payload._status) {
+            payload._status = 2;
+            payload._result = error;
+            var _ioInfo2 = payload._ioInfo;
+            null != _ioInfo2 && (_ioInfo2.end = performance.now());
+            void 0 === thenable.status &&
+              ((thenable.status = "rejected"), (thenable.reason = error));
+          }
         }
       );
-      -1 === payload._status && ((payload._status = 0), (payload._result = ctor));
+      ioInfo = payload._ioInfo;
+      if (null != ioInfo) {
+        ioInfo.value = thenable;
+        var displayName = thenable.displayName;
+        "string" === typeof displayName && (ioInfo.name = displayName);
+      }
+      -1 === payload._status && ((payload._status = 0), (payload._result = thenable));
     }
     if (1 === payload._status)
       return (
-        (ctor = payload._result),
-        void 0 === ctor &&
+        (ioInfo = payload._result),
+        void 0 === ioInfo &&
           console.error(
             "lazy: Expected the result of a dynamic import() call. Instead received: %s\n\nYour code should look like: \n  const MyComponent = lazy(() => import('./MyComponent'))\n\nDid you accidentally put curly braces around the import?",
-            ctor
+            ioInfo
           ),
-        "default" in ctor ||
+        "default" in ioInfo ||
           console.error(
             "lazy: Expected the result of a dynamic import() call. Instead received: %s\n\nYour code should look like: \n  const MyComponent = lazy(() => import('./MyComponent'))",
-            ctor
+            ioInfo
           ),
-        ctor.default
+        ioInfo.default
       );
     throw payload._result;
   }
@@ -446,7 +475,9 @@ function defReact(exports) {
       );
     return dispatcher;
   }
-  function noop() {}
+  function releaseAsyncTransition() {
+    ReactSharedInternals.asyncTransitions--;
+  }
   function enqueueTask(task) {
     if (null === enqueueTaskImpl)
       try {
@@ -521,7 +552,7 @@ function defReact(exports) {
         }
         queue.length = 0;
       } catch (error) {
-        queue.splice(0, i + 1), ReactSharedInternals.thrownErrors.push(error);
+        (queue.splice(0, i + 1), ReactSharedInternals.thrownErrors.push(error));
       } finally {
         isFlushing = !1;
       }
@@ -534,9 +565,8 @@ function defReact(exports) {
     REACT_PORTAL_TYPE = Symbol.for("react.portal"),
     REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"),
     REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"),
-    REACT_PROFILER_TYPE = Symbol.for("react.profiler");
-  Symbol.for("react.provider");
-  var REACT_CONSUMER_TYPE = Symbol.for("react.consumer"),
+    REACT_PROFILER_TYPE = Symbol.for("react.profiler"),
+    REACT_CONSUMER_TYPE = Symbol.for("react.consumer"),
     REACT_CONTEXT_TYPE = Symbol.for("react.context"),
     REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"),
     REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"),
@@ -558,7 +588,7 @@ function defReact(exports) {
       },
       enqueueSetState: function (publicInstance) {
         warnNoop(publicInstance, "setState");
-      },
+      }
     },
     assign = Object.assign,
     emptyObject = {};
@@ -579,16 +609,15 @@ function defReact(exports) {
     this.updater.enqueueForceUpdate(this, callback, "forceUpdate");
   };
   var deprecatedAPIs = {
-      isMounted: [
-        "isMounted",
-        "Instead, make sure to clean up subscriptions and pending requests in componentWillUnmount to prevent memory leaks.",
-      ],
-      replaceState: [
-        "replaceState",
-        "Refactor your code to use setState instead (see https://github.com/facebook/react/issues/3236).",
-      ],
-    },
-    fnName;
+    isMounted: [
+      "isMounted",
+      "Instead, make sure to clean up subscriptions and pending requests in componentWillUnmount to prevent memory leaks."
+    ],
+    replaceState: [
+      "replaceState",
+      "Refactor your code to use setState instead (see https://github.com/facebook/react/issues/3236)."
+    ]
+  };
   for (fnName in deprecatedAPIs)
     deprecatedAPIs.hasOwnProperty(fnName) &&
       defineDeprecationWarning(fnName, deprecatedAPIs[fnName]);
@@ -604,14 +633,14 @@ function defReact(exports) {
       A: null,
       T: null,
       S: null,
-      V: null,
       actQueue: null,
+      asyncTransitions: 0,
       isBatchingLegacy: !1,
       didScheduleLegacyUpdate: !1,
       didUsePromise: !1,
       thrownErrors: [],
       getCurrentStack: null,
-      recentlyCreatedOwnerStacks: 0,
+      recentlyCreatedOwnerStacks: 0
     },
     hasOwnProperty = Object.prototype.hasOwnProperty,
     createTask = console.createTask
@@ -620,13 +649,13 @@ function defReact(exports) {
           return null;
         };
   deprecatedAPIs = {
-    "react-stack-bottom-frame": function (callStackForError) {
+    react_stack_bottom_frame: function (callStackForError) {
       return callStackForError();
-    },
+    }
   };
   var specialPropKeyWarningShown, didWarnAboutOldJSXRuntime;
   var didWarnAboutElementRef = {};
-  var unknownOwnerDebugStack = deprecatedAPIs["react-stack-bottom-frame"].bind(
+  var unknownOwnerDebugStack = deprecatedAPIs.react_stack_bottom_frame.bind(
     deprecatedAPIs,
     UnknownOwner
   )();
@@ -645,7 +674,7 @@ function defReact(exports) {
                   "object" === typeof error && null !== error && "string" === typeof error.message
                     ? String(error.message)
                     : String(error),
-                error: error,
+                error: error
               });
               if (!window.dispatchEvent(event)) return;
             } else if ("object" === typeof process && "function" === typeof process.emit) {
@@ -671,9 +700,9 @@ function defReact(exports) {
     __proto__: null,
     c: function (size) {
       return resolveDispatcher().useMemoCache(size);
-    },
+    }
   });
-  exports.Children = {
+  var fnName = {
     map: mapChildren,
     forEach: function (children, forEachFunc, forEachContext) {
       mapChildren(
@@ -702,8 +731,10 @@ function defReact(exports) {
       if (!isValidElement(children))
         throw Error("React.Children.only expected to receive a single React element child.");
       return children;
-    },
+    }
   };
+  exports.Activity = REACT_ACTIVITY_TYPE;
+  exports.Children = fnName;
   exports.Component = Component;
   exports.Fragment = REACT_FRAGMENT_TYPE;
   exports.Profiler = REACT_PROFILER_TYPE;
@@ -725,10 +756,10 @@ function defReact(exports) {
     }
     if (0 < ReactSharedInternals.thrownErrors.length)
       throw (
-        (popActScope(prevActQueue, prevActScopeDepth),
+        popActScope(prevActQueue, prevActScopeDepth),
         (callback = aggregateErrors(ReactSharedInternals.thrownErrors)),
         (ReactSharedInternals.thrownErrors.length = 0),
-        callback)
+        callback
       );
     if (null !== result && "object" === typeof result && "function" === typeof result.then) {
       var thenable = result;
@@ -748,10 +779,10 @@ function defReact(exports) {
               popActScope(prevActQueue, prevActScopeDepth);
               if (0 === prevActScopeDepth) {
                 try {
-                  flushActQueue(queue),
+                  (flushActQueue(queue),
                     enqueueTask(function () {
                       return recursivelyFlushAsyncActWork(returnValue, resolve, reject);
-                    });
+                    }));
                 } catch (error$0) {
                   ReactSharedInternals.thrownErrors.push(error$0);
                 }
@@ -771,7 +802,7 @@ function defReact(exports) {
                 : reject(error);
             }
           );
-        },
+        }
       };
     }
     var returnValue$jscomp$0 = result;
@@ -790,9 +821,9 @@ function defReact(exports) {
       (ReactSharedInternals.actQueue = null));
     if (0 < ReactSharedInternals.thrownErrors.length)
       throw (
-        ((callback = aggregateErrors(ReactSharedInternals.thrownErrors)),
+        (callback = aggregateErrors(ReactSharedInternals.thrownErrors)),
         (ReactSharedInternals.thrownErrors.length = 0),
-        callback)
+        callback
       );
     return {
       then: function (resolve, reject) {
@@ -803,13 +834,16 @@ function defReact(exports) {
               return recursivelyFlushAsyncActWork(returnValue$jscomp$0, resolve, reject);
             }))
           : resolve(returnValue$jscomp$0);
-      },
+      }
     };
   };
   exports.cache = function (fn) {
     return function () {
       return fn.apply(null, arguments);
     };
+  };
+  exports.cacheSignal = function () {
+    return null;
   };
   exports.captureOwnerStack = function () {
     var getCurrentStack = ReactSharedInternals.getCurrentStack;
@@ -851,19 +885,8 @@ function defReact(exports) {
       for (var i = 0; i < propName; i++) JSCompiler_inline_result[i] = arguments[i + 2];
       props.children = JSCompiler_inline_result;
     }
-    props = ReactElement(
-      element.type,
-      key,
-      void 0,
-      void 0,
-      owner,
-      props,
-      element._debugStack,
-      element._debugTask
-    );
-    for (key = 2; key < arguments.length; key++)
-      (owner = arguments[key]),
-        isValidElement(owner) && owner._store && (owner._store.validated = 1);
+    props = ReactElement(element.type, key, props, owner, element._debugStack, element._debugTask);
+    for (key = 2; key < arguments.length; key++) validateChildKeys(arguments[key]);
     return props;
   };
   exports.createContext = function (defaultValue) {
@@ -873,24 +896,21 @@ function defReact(exports) {
       _currentValue2: defaultValue,
       _threadCount: 0,
       Provider: null,
-      Consumer: null,
+      Consumer: null
     };
     defaultValue.Provider = defaultValue;
     defaultValue.Consumer = {
       $$typeof: REACT_CONSUMER_TYPE,
-      _context: defaultValue,
+      _context: defaultValue
     };
     defaultValue._currentRenderer = null;
     defaultValue._currentRenderer2 = null;
     return defaultValue;
   };
   exports.createElement = function (type, config, children) {
-    for (var i = 2; i < arguments.length; i++) {
-      var node = arguments[i];
-      isValidElement(node) && node._store && (node._store.validated = 1);
-    }
+    for (var i = 2; i < arguments.length; i++) validateChildKeys(arguments[i]);
     i = {};
-    node = null;
+    var key = null;
     if (null != config)
       for (propName in (didWarnAboutOldJSXRuntime ||
         !("__self" in config) ||
@@ -899,7 +919,7 @@ function defReact(exports) {
         console.warn(
           "Your app (or one of its dependencies) is using an outdated JSX transform. Update to the modern JSX transform for faster performance: https://react.dev/link/new-jsx-transform"
         )),
-      hasValidKey(config) && (checkKeyStringCoercion(config.key), (node = "" + config.key)),
+      hasValidKey(config) && (checkKeyStringCoercion(config.key), (key = "" + config.key)),
       config))
         hasOwnProperty.call(config, propName) &&
           "key" !== propName &&
@@ -917,7 +937,7 @@ function defReact(exports) {
     if (type && type.defaultProps)
       for (propName in ((childrenLength = type.defaultProps), childrenLength))
         void 0 === i[propName] && (i[propName] = childrenLength[propName]);
-    node &&
+    key &&
       defineKeyPropWarningGetter(
         i,
         "function" === typeof type ? type.displayName || type.name || "Unknown" : type
@@ -925,11 +945,9 @@ function defReact(exports) {
     var propName = 1e4 > ReactSharedInternals.recentlyCreatedOwnerStacks++;
     return ReactElement(
       type,
-      node,
-      void 0,
-      void 0,
-      getOwner(),
+      key,
       i,
+      getOwner(),
       propName ? Error("react-stack-top-frame") : unknownOwnerDebugStack,
       propName ? createTask(getTaskName(type)) : unknownOwnerDebugTask
     );
@@ -945,18 +963,18 @@ function defReact(exports) {
           "forwardRef requires a render function but received a `memo` component. Instead of forwardRef(memo(...)), use memo(forwardRef(...))."
         )
       : "function" !== typeof render
-      ? console.error(
-          "forwardRef requires a render function but was given %s.",
-          null === render ? "null" : typeof render
-        )
-      : 0 !== render.length &&
-        2 !== render.length &&
-        console.error(
-          "forwardRef render functions accept exactly two parameters: props and ref. %s",
-          1 === render.length
-            ? "Did you forget to use the ref parameter?"
-            : "Any additional parameter will be undefined."
-        );
+        ? console.error(
+            "forwardRef requires a render function but was given %s.",
+            null === render ? "null" : typeof render
+          )
+        : 0 !== render.length &&
+          2 !== render.length &&
+          console.error(
+            "forwardRef render functions accept exactly two parameters: props and ref. %s",
+            1 === render.length
+              ? "Did you forget to use the ref parameter?"
+              : "Any additional parameter will be undefined."
+          );
     null != render &&
       null != render.defaultProps &&
       console.error(
@@ -975,17 +993,30 @@ function defReact(exports) {
         render.name ||
           render.displayName ||
           (Object.defineProperty(render, "name", { value: name }), (render.displayName = name));
-      },
+      }
     });
     return elementType;
   };
   exports.isValidElement = isValidElement;
   exports.lazy = function (ctor) {
-    return {
-      $$typeof: REACT_LAZY_TYPE,
-      _payload: { _status: -1, _result: ctor },
-      _init: lazyInitializer,
-    };
+    ctor = { _status: -1, _result: ctor };
+    var lazyType = {
+        $$typeof: REACT_LAZY_TYPE,
+        _payload: ctor,
+        _init: lazyInitializer
+      },
+      ioInfo = {
+        name: "lazy",
+        start: -1,
+        end: -1,
+        value: null,
+        owner: null,
+        debugStack: Error("react-stack-top-frame"),
+        debugTask: console.createTask ? console.createTask("lazy()") : null
+      };
+    ctor._ioInfo = ioInfo;
+    lazyType._debugInfo = [{ awaited: ioInfo }];
+    return lazyType;
   };
   exports.memo = function (type, compare) {
     null == type &&
@@ -996,7 +1027,7 @@ function defReact(exports) {
     compare = {
       $$typeof: REACT_MEMO_TYPE,
       type: type,
-      compare: void 0 === compare ? null : compare,
+      compare: void 0 === compare ? null : compare
     };
     var ownName;
     Object.defineProperty(compare, "displayName", {
@@ -1010,15 +1041,15 @@ function defReact(exports) {
         type.name ||
           type.displayName ||
           (Object.defineProperty(type, "name", { value: name }), (type.displayName = name));
-      },
+      }
     });
     return compare;
   };
   exports.startTransition = function (scope) {
     var prevTransition = ReactSharedInternals.T,
       currentTransition = {};
-    ReactSharedInternals.T = currentTransition;
     currentTransition._updatedFibers = new Set();
+    ReactSharedInternals.T = currentTransition;
     try {
       var returnValue = scope(),
         onStartTransitionFinish = ReactSharedInternals.S;
@@ -1026,11 +1057,13 @@ function defReact(exports) {
       "object" === typeof returnValue &&
         null !== returnValue &&
         "function" === typeof returnValue.then &&
-        returnValue.then(noop, reportGlobalError);
+        (ReactSharedInternals.asyncTransitions++,
+        returnValue.then(releaseAsyncTransition, releaseAsyncTransition),
+        returnValue.then(noop, reportGlobalError));
     } catch (error) {
       reportGlobalError(error);
     } finally {
-      null === prevTransition &&
+      (null === prevTransition &&
         currentTransition._updatedFibers &&
         ((scope = currentTransition._updatedFibers.size),
         currentTransition._updatedFibers.clear(),
@@ -1038,7 +1071,15 @@ function defReact(exports) {
           console.warn(
             "Detected a large number of updates inside startTransition. If this is due to a subscription please re-write it to use React provided hooks. Otherwise concurrent mode guarantees are off the table."
           )),
-        (ReactSharedInternals.T = prevTransition);
+        null !== prevTransition &&
+          null !== currentTransition.types &&
+          (null !== prevTransition.types &&
+            prevTransition.types !== currentTransition.types &&
+            console.error(
+              "We expected inner Transitions to have transferred the outer types set and that you cannot add to the outer Transition while inside the inner.This is a bug in React."
+            ),
+          (prevTransition.types = currentTransition.types)),
+        (ReactSharedInternals.T = prevTransition));
     }
   };
   exports.unstable_useCacheRefresh = function () {
@@ -1067,15 +1108,15 @@ function defReact(exports) {
   exports.useDeferredValue = function (value, initialValue) {
     return resolveDispatcher().useDeferredValue(value, initialValue);
   };
-  exports.useEffect = function (create, createDeps, update) {
+  exports.useEffect = function (create, deps) {
     null == create &&
       console.warn(
         "React Hook useEffect requires an effect callback. Did you forget to pass a callback to the hook?"
       );
-    var dispatcher = resolveDispatcher();
-    if ("function" === typeof update)
-      throw Error("useEffect CRUD overload is not enabled in this build of React.");
-    return dispatcher.useEffect(create, createDeps);
+    return resolveDispatcher().useEffect(create, deps);
+  };
+  exports.useEffectEvent = function (callback) {
+    return resolveDispatcher().useEffectEvent(callback);
   };
   exports.useId = function () {
     return resolveDispatcher().useId();
@@ -1118,7 +1159,7 @@ function defReact(exports) {
   exports.useTransition = function () {
     return resolveDispatcher().useTransition();
   };
-  exports.version = "19.1.0";
+  exports.version = "19.2.8";
   "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ &&
     "function" === typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop &&
     __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop(Error());
@@ -1131,9 +1172,10 @@ const React = defReact({});
 export default React;
 export const __esmModule = true;
 
-console.log("ESM_REACT_VERSION 19.1.0");
+console.log("ESM_REACT_VERSION 19.2.8");
 
 export const {
+  Activity,
   Children,
   Component,
   Fragment,
@@ -1145,6 +1187,7 @@ export const {
   __COMPILER_RUNTIME,
   act,
   cache,
+  cacheSignal,
   captureOwnerStack,
   cloneElement,
   createContext,
@@ -1163,6 +1206,7 @@ export const {
   useDebugValue,
   useDeferredValue,
   useEffect,
+  useEffectEvent,
   useId,
   useImperativeHandle,
   useInsertionEffect,
@@ -1174,5 +1218,5 @@ export const {
   useState,
   useSyncExternalStore,
   useTransition,
-  version,
+  version
 } = React;

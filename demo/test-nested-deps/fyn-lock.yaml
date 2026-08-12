@@ -307,11 +307,11 @@ error-ex:
   dependencies:
    is-arrayish: ^0.2.1
 esm-react:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
   '../../misc/esm-react-18,../esm-react-18': 18.3.1-fynlocal_h
-  '../../misc/esm-react-19,../esm-react-19': 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  '../../misc/esm-react-19,../esm-react-19': 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-react-19
@@ -319,16 +319,16 @@ esm-react:
   $: local
   _: ../../misc/esm-react-18
 esm-react-dom:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
   ../../misc/esm-react-dom-18: 18.3.1-fynlocal_h
-  ../../misc/esm-react-dom-19: 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  ../../misc/esm-react-dom-19: 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-react-dom-19
   dependencies:
-   esm-react: ^19.1.0
+   esm-react: ^19.2.8
  18.3.1-fynlocal_h:
   $: local
   _: ../../misc/esm-react-dom-18

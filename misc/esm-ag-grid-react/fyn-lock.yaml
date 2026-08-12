@@ -391,10 +391,10 @@ esm-ag-grid:
   $: local
   _: ../esm-ag-grid
 esm-react:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
-  ../esm-react-19: 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  ../esm-react-19: 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../esm-react-19

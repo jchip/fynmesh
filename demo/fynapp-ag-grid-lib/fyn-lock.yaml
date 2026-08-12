@@ -669,10 +669,10 @@ esm-ag-grid-react:
    esm-ag-grid: ^33.3.2
    esm-react: ^19.1.0
 esm-react:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
-  '../../misc/esm-react-19,../esm-react-19': 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  '../../misc/esm-react-19,../esm-react-19': 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-react-19
