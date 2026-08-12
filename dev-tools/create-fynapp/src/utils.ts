@@ -1,6 +1,6 @@
 import { promises as fsPromises } from "fs";
 import path from "path";
-import AveAzul from "aveazul";
+import AveAzul from "./aveazul-compat.js";
 
 /**
  * Utility functions using AveAzul for better async flow control
