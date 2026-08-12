@@ -34,5 +34,11 @@
     "fynpo": "^2.1.5",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6"
+  },
+  "fyn": {
+    "enforceRegistryDeps": false,
+    "dependencies": {
+      "fynpo": "../fynpo/packages/fynpo"
+    }
   }
 }
