@@ -2,7 +2,7 @@ import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import AveAzul from "aveazul";
+import AveAzul from "./aveazul-compat.js";
 import type { AppConfig } from "./prompts.js";
 import { assertSupportedFramework } from "./frameworks.js";
 

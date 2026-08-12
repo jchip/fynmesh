@@ -2,7 +2,7 @@
 import { NixClap } from "nix-clap";
 import { pathToFileURL } from "url";
 import { promises as fsPromises, realpathSync } from "fs";
-import AveAzul from "aveazul";
+import AveAzul from "./aveazul-compat.js";
 import { generateApp } from "./generator.js";
 import { promptForMissingInfo } from "./prompts.js";
 import { fileExists } from "./utils.js";
