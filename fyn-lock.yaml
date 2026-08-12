@@ -4,9 +4,9 @@ $fyn:
 $pkg:
  dep:
   '@types/node': ^24.10.1
-  '@xarc/run': ../xarc-run
-  fyn: ^2.0.4
-  fynpo: ^2.0.4
+  '@xarc/run': ^2.3.0
+  fyn: ^2.1.5
+  fynpo: ^2.1.5
   prettier: ^3.6.2
   tsx: ^4.20.6
 '@babel/code-frame':
@@ -77,30 +77,29 @@ $pkg:
   $: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==
   _: 'https://registry.npmjs.org/@types/normalize-package-data/-/normalize-package-data-2.4.4.tgz'
 '@xarc/run':
- _latest: 2.3.0-fynlocal_h
+ _latest: 2.3.0
  _:
-  ../xarc-run: 2.3.0-fynlocal_h
- 2.3.0-fynlocal_h:
+  ^2.3.0: 2.3.0
+ 2.3.0:
   top: 1
-  $: local
-  _: ../xarc-run
+  $: sha512-PLR1Z/3oCiTqWQhhEXNGCtSt+XgnaT68DgDtGGZwrTkkkg7m9tyn8ZVYl1/w8RLx7IaVvjAjLzhYAlmH8sNSKg==
+  _: 'https://registry.npmjs.org/@xarc/run/-/run-2.3.0.tgz'
   dependencies:
    chalk: ^4.1.2
    chalker: ^1.2.0
    insync: ^2.1.1
    jaro-winkler: ^0.2.8
    lodash.foreach: ^4.5.0
-   nix-clap: ^2.4.1
+   nix-clap: ^2.4.0
    optional-require: ^2.1.0
    path-is-inside: ^1.0.2
    read-pkg-up: ^7.0.1
    require-at: ^1.0.6
    string-array: ^1.0.1
-   tsx: ^4.20.6
    unwrap-npm-cmd: ^1.1.2
    xsh: ^0.4.5
 ansi-regex:
- _latest: 6.1.0
+ _latest: 6.2.2
  _:
   ^5.0.1: 5.0.1
   ^6.0.1: 6.1.0
@@ -131,7 +130,7 @@ balanced-match:
   $: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
   _: 'https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz'
 brace-expansion:
- _latest: 4.0.1
+ _latest: 5.0.9
  _:
   ^2.0.1: 2.0.2
  2.0.2:
@@ -255,7 +254,7 @@ esbuild:
    '@esbuild/win32-ia32': 0.25.12
    '@esbuild/win32-x64': 0.25.12
 find-up:
- _latest: 7.0.0
+ _latest: 8.0.0
  _:
   ^4.1.0: 4.1.0
  4.1.0:
@@ -293,24 +292,60 @@ function-bind:
 fyn:
  _latest: 1.1.46
  _:
-  ^2.0.4: 2.0.4
- 2.0.4:
+  ^2.1.5: 2.1.5
+ 2.1.5:
   top: 1
-  $: sha512-JcHHBb5pOeruYdP4b2NoiKczQz4DgAhYhKSGpM+Tv2xzE0RLxZMRH/cIfWB4iay+7RBxjTueIdnP1qxrI0QK2Q==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-2.0.4.tgz'
+  $: sha512-i9SK4Pf4ABNlsRNyn45kdgAKAzzlFZciwGF7doxNjCTUUshsv4hBhajlgqmXKA/ffkZ6uj9dR074hd42Ob/W9Q==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-2.1.5.tgz'
 fynpo:
  _latest: 1.1.49
  _:
-  ^2.0.4: 2.0.4
- 2.0.4:
+  ^2.1.5: 2.1.5
+ 2.1.5:
   top: 1
-  $: sha512-fbRv1kmtYCI6EMlueUAtNnNRZD/L3b6f2G8A3wcCkrAtAEruXsdtTBjvZQCBtnu/5FkrJ4qoPViQOiRquDQujA==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.0.4.tgz'
+  $: sha512-2VKXajcvJDJJ+6b0MgNPIZMgVwtU7Yyxfe52UrvwU9tc7Wlpy6GBalHJGEsZIgq5iOS+xvJCuQ+paYwFIunkwQ==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-2.1.5.tgz'
   dependencies:
-   fyn: ^2.0.4
+   '@commitlint/execute-rule': ^18.6.1
+   '@commitlint/format': ^18.6.1
+   '@commitlint/lint': ^18.6.1
+   '@commitlint/read': ^18.6.1
+   '@commitlint/resolve-extends': ^18.6.1
+   '@fynpo/base': ^1.1.22
+   '@jchip/error': ^1.0.3
+   aveazul: ^1.1.0
+   boxen: ^5.1.2
+   chalk: ^4.1.2
+   chalker: ^1.2.0
+   cosmiconfig: ^7.0.0
+   deep-object-diff: ^1.1.7
+   env-paths: ^2.2.1
+   execa: ^5.0.0
+   fs-extra: ^9.1.0
+   fyn: ^2.1.5
+   get-stdin: ^8.0.0
    import-fresh: 3.3.0
-   resolve-global: 1.0.0
+   item-queue: ^1.1.2
+   lodash: ^4.17.21
+   minimatch: ^3.0.4
+   mkdirp: ^1.0.4
+   nix-clap: ^2.4.5
+   npm-packlist: 'jchip/npm-packlist#v1'
+   optional-require: ^1.1.10
    prettier: 2.4.1
+   regenerator-runtime: ^0.13.9
+   resolve-from: ^5.0.0
+   resolve-global: 1.0.0
+   semver: ^7.3.5
+   shcmd: ^0.8.4
+   slash: ^3.0.0
+   strong-log-transformer: ^2.1.0
+   tslib: ^2.3.1
+   undici: ^4.14.1
+   visual-exec: ^0.1.14
+   visual-logger: ^1.1.3
+   xaa: ^2.0.0
+   xsh: ^0.4.6
 get-tsconfig:
  _latest: 4.13.0
  _:
@@ -360,7 +395,7 @@ hasown:
   dependencies:
    function-bind: ^1.1.2
 hosted-git-info:
- _latest: 8.1.0
+ _latest: 10.1.1
  _:
   ^2.1.4: 2.8.9
  2.8.9:
@@ -460,7 +495,7 @@ lines-and-columns:
   $: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
   _: 'https://registry.npmjs.org/lines-and-columns/-/lines-and-columns-1.2.4.tgz'
 locate-path:
- _latest: 7.2.0
+ _latest: 8.0.0
  _:
   ^5.0.0: 5.0.0
  5.0.0:
@@ -476,14 +511,14 @@ lodash.foreach:
   $: sha512-aEXTF4d+m05rVOAUG3z4vZZ4xVexLKZGF0lIxuHZ1Hplpk/3B6Z1+/ICICYRLm7c41Z2xiejbkCkJoTlypoXhQ==
   _: 'https://registry.npmjs.org/lodash.foreach/-/lodash.foreach-4.5.0.tgz'
 lru-cache:
- _latest: 11.1.0
+ _latest: 11.5.2
  _:
   ^10.2.0: 10.4.3
  10.4.3:
   $: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==
   _: 'https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz'
 minimatch:
- _latest: 10.0.3
+ _latest: 10.2.6
  _:
   ^9.0.4: 9.0.5
  9.0.5:
@@ -501,14 +536,14 @@ minipass:
 nix-clap:
  _latest: 1.3.13
  _:
-  ^2.4.1: 2.4.1
+  ^2.4.0: 2.4.1
  2.4.1:
   $: sha512-mpZlm1o4epfkdhyydrv582nIcq1YErOH7qwmVQ8EXsNOnKrtCHXaGjLr6BPMqcfZDHAI7aIrNPmgCaf3F6oeiw==
   _: 'https://registry.npmjs.org/nix-clap/-/nix-clap-2.4.1.tgz'
   dependencies:
    tslib: ^2.6.2
 normalize-package-data:
- _latest: 7.0.0
+ _latest: 9.0.0
  _:
   ^2.5.0: 2.5.0
  2.5.0:
@@ -529,7 +564,7 @@ optional-require:
   dependencies:
    require-at: ^1.0.6
 p-limit:
- _latest: 6.2.0
+ _latest: 7.3.1
  _:
   ^2.2.0: 2.3.0
  2.3.0:
@@ -538,7 +573,7 @@ p-limit:
   dependencies:
    p-try: ^2.0.0
 p-locate:
- _latest: 6.0.0
+ _latest: 7.0.0
  _:
   ^4.1.0: 4.1.0
  4.1.0:
@@ -703,7 +738,7 @@ resolve-pkg-maps:
   $: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==
   _: 'https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz'
 semver:
- _latest: 7.7.2
+ _latest: 7.8.5
  _:
   '2 || 3 || 4 || 5': 5.7.2
  5.7.2:
@@ -783,7 +818,7 @@ string-array:
   $: sha512-IHgqBWTsXuE27ZL7N9/XBIzWWrSwr9tKJw6qdIOMGIM2sxxJRvJe9vQMPW37MHrxidXlyJD8w61mQ6qLvnjqvg==
   _: 'https://registry.npmjs.org/string-array/-/string-array-1.0.1.tgz'
 string-width:
- _latest: 7.2.0
+ _latest: 8.2.2
  _:
   ^4.1.0: 4.2.3
   '^5.0.1,^5.1.2': 5.1.2
@@ -871,7 +906,7 @@ tsx:
   optionalDependencies:
    fsevents: ~2.3.3
 type-fest:
- _latest: 4.41.0
+ _latest: 5.8.0
  _:
   ^0.6.0: 0.6.0
   ^0.8.1: 0.8.1
@@ -923,7 +958,7 @@ which:
   dependencies:
    isexe: ^2.0.0
 wrap-ansi:
- _latest: 9.0.0
+ _latest: 10.0.0
  _:
   ^8.1.0: 8.1.0
  8.1.0:
@@ -944,11 +979,11 @@ wrap-ansi-cjs:
    string-width: ^4.1.0
    strip-ansi: ^6.0.0
 xsh:
- _latest: 0.4.5
+ _latest: 0.4.6
  _:
-  ^0.4.5: 0.4.5
- 0.4.5:
-  $: sha512-Tkmj2v1+Uik0zaTU/0+Qwbv8b/NEnPwHgSfnhPIjlSoIb2dRW8HlJMrJb4x232LoITzZATKr7fhdMR4renzhzg==
-  _: 'https://registry.npmjs.org/xsh/-/xsh-0.4.5.tgz'
+  ^0.4.5: 0.4.6
+ 0.4.6:
+  $: sha512-CzY2CN5EoECp1gfULlGfnqFQ5MKh2fEM5zcgWM60PNSyCNn/7wGYXy9Zlgu7EDxhPi6Xb642wFlV+vj4qgDBGA==
+  _: 'https://registry.npmjs.org/xsh/-/xsh-0.4.6.tgz'
   dependencies:
    shcmd: ^0.8.4
