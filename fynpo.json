@@ -3,6 +3,14 @@
     "## Packages",
     "## Commits"
   ],
+  "packages": [
+    "core/*",
+    "demo/*",
+    "dev-tools/*",
+    "misc/*",
+    "demo-rollup-externals/*",
+    "rollup-federation/*"
+  ],
   "command": {
     "publish": {
       "tags": {},

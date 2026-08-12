@@ -1,6 +1,6 @@
 {
   "name": "rollup-wrap-plugin",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "A wrapper for constructing rollup plugins in config",
   "main": "dist/rollup-wrap-plugin.js",
   "homepage": "https://github.com/jchip/fynmesh/tree/main/dev-tools/rollup-wrap-plugin",

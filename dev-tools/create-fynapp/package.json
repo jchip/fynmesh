@@ -1,6 +1,6 @@
 {
   "name": "create-fynapp",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "CLI tool to create new FynApp micro frontends",
   "type": "module",
   "main": "dist/index.js",
