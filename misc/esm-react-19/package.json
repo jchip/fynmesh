@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "esm-react",
   "version": "19.2.8",
   "description": "",

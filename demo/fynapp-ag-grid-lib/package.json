@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-ag-grid-lib",
   "version": "33.3.2",
   "description": "FynApp that provides AG Grid Library for sharing",

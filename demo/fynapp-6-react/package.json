@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-6-react",
   "version": "1.0.0",
   "description": "Sample FynApp 6 using React with Dashboard UI",

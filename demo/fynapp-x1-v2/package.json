@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-x1",
   "version": "2.0.0",
   "description": "Sample FynApp providing shared widgets and components",

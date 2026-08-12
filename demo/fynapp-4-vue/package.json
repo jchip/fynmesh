@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-4-vue",
   "version": "1.0.0",
   "description": "Sample FynApp using Vue",

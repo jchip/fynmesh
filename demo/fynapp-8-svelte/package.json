@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-8-svelte",
   "version": "1.0.0",
   "description": "Sample FynApp using Svelte",

@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-react-lib",
   "version": "18.3.0",
   "description": "FynApp that provides React 18 Library",

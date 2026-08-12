@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-5-preact",
   "version": "1.0.0",
   "description": "Sample FynApp using Preact (without React compat)",

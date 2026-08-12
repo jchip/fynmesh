@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-notes",
   "version": "1.0.0",
   "description": "Notes FynApp micro frontend",

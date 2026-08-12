@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "regular-react-app",
   "version": "1.0.0",
   "description": "A regular React app using React 19 with TypeScript",

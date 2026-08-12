@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-1-b",
   "version": "1.0.0",
   "description": "Sample FynApp 1",
