@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "esm-ag-grid-react",
   "version": "33.3.2",
   "description": "ESM wrapper for ag-grid-react",

@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-shell-mw",
   "version": "1.0.0",
   "description": "FynMesh Shell Middleware Provider - Dynamic FynApp loading and layout management",

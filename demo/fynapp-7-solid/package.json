@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-7-solid",
   "version": "1.0.0",
   "description": "Sample FynApp using Solid.js",

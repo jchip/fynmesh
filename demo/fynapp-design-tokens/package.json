@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-design-tokens",
   "version": "1.0.0",
   "description": "FynMesh Design Tokens Middleware Provider",

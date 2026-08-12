@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "test-nested-deps",
   "version": "1.0.0",
   "description": "",

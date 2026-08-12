@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-react-middleware",
   "version": "1.0.0",
   "description": "React middleware provider for FynMesh",

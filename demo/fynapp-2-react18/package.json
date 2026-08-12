@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-2-react18",
   "version": "1.0.0",
   "description": "Sample FynApp 2 using React 18",

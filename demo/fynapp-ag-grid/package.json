@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "fynapp-ag-grid",
   "version": "1.0.0",
   "description": "FynApp showcasing AG Grid enterprise data grid",
