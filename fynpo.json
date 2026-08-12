@@ -6,7 +6,11 @@
   "command": {
     "publish": {
       "tags": {},
-      "versionTagging": {}
+      "versionTagging": {},
+      "includePackages": [
+        "path:core/*",
+        "path:dev-tools/*"
+      ]
     }
   }
 }
