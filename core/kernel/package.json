@@ -14,8 +14,11 @@
     "./package.json": "./package.json"
   },
   "description": "FynMesh Kernel",
-  "homepage": "",
-  "license": "UNLICENSED",
+  "homepage": "https://github.com/jchip/fynmesh/tree/main/core/kernel",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "xrun -s [clean, [compile-lib, build-dist]]",
     "clean": "rm -rf dist lib",
@@ -26,15 +29,17 @@
     "test:watch": "vitest --watch",
     "prepublishOnly": "xrun build"
   },
-  "author": "",
+  "author": "Joel Chen",
   "files": [
+    "LICENSE",
     "lib",
     "dist"
   ],
   "keywords": [],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/jchip/fynmesh.git",
+    "directory": "core/kernel"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",

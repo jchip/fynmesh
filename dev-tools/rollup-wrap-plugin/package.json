@@ -3,22 +3,24 @@
   "version": "1.0.0",
   "description": "A wrapper for constructing rollup plugins in config",
   "main": "dist/rollup-wrap-plugin.js",
-  "homepage": "",
-  "license": "UNLICENSED",
+  "homepage": "https://github.com/jchip/fynmesh/tree/main/dev-tools/rollup-wrap-plugin",
+  "license": "Apache-2.0",
   "type": "module",
   "source": "src/rollup-wrap-plugin.ts",
   "scripts": {
     "build": "rm -rf dist && tsc --skipLibCheck"
   },
-  "author": "",
+  "author": "Joel Chen",
   "files": [
+    "LICENSE",
     "src",
     "dist"
   ],
   "keywords": [],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/jchip/fynmesh.git",
+    "directory": "dev-tools/rollup-wrap-plugin"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",

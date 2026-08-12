@@ -11,8 +11,8 @@
     "create-fynapp": "dist/create-cli.js",
     "cfa": "dist/cfa.js"
   },
-  "homepage": "",
-  "license": "UNLICENSED",
+  "homepage": "https://github.com/jchip/fynmesh/tree/main/dev-tools/create-fynapp",
+  "license": "Apache-2.0",
   "scripts": {
     "jest-test": "jest test/spec/",
     "build": "rm -rf dist && tsc --skipLibCheck",
@@ -23,8 +23,9 @@
     "coverage": "xrun xarc/test-cov",
     "install-cfa": "fyn run build && fyn global add ."
   },
-  "author": "",
+  "author": "Joel Chen",
   "files": [
+    "LICENSE",
     "dist",
     "lib",
     "src",
@@ -39,7 +40,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/jchip/fynmesh.git",
+    "directory": "dev-tools/create-fynapp"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",
