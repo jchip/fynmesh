@@ -17,7 +17,10 @@
   "files": [
     "src"
   ],
-  "keywords": ["esm", "modules"],
+  "keywords": [
+    "esm",
+    "modules"
+  ],
   "repository": {
     "type": "git",
     "url": ""
