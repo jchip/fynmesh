@@ -1,15 +1,18 @@
 # create-fynapp Release Handoff
 
-Date: 2026-07-10 (America/Los_Angeles)
+Date: 2026-07-10 (America/Los_Angeles). Provenance details re-verified and corrected 2026-08-11;
+the release blockers below were re-checked and all still stand.
 
 ## Current state
 
-- Repository: `/Users/joel.chen/dev/fynmesh`
+- Repository: `~/dev/fynmesh` (`git+https://github.com/jchip/fynmesh.git`)
 - Package: `dev-tools/create-fynapp`
 - Working branch: `main`
-- Integration: merge commit `bd4b828` preserves main parent `8974d47` and release parent `6c36c21`
+- Integration: merge commit `24ff8c6` preserves main parent `9bff2d2` and release parent `361674b`
+  (SHAs corrected 2026-08-11; see the commit ledger note on the worktree move)
 - Branch status: clean after the local main integration
-- Merge/push status: merged locally into `main`; not pushed
+- Merge/push status: merged into `main` and pushed (verified 2026-08-11 — every ledger commit is an
+  ancestor of `origin/main`)
 - Task project: `fynmesh-create-fynapp` (`CFA` prefix)
 - Epic: `CFA-1`; public-release prerequisites are tracked by `CFA-20`, `CFA-25`, `CFA-33`,
   and `CFA-34`
@@ -66,36 +69,51 @@ gates/publication for the core dependency packages listed below.
 
 ## Commit ledger
 
+> **The SHAs below were corrected on 2026-08-11.** This release was built on
+> `codex/create-fynapp-release` in a separate worktree under `~/dev/fynpo/.temp/worktrees/`, then
+> moved into the direct `fynmesh` checkout (see "Temporary branch/worktree cleanup"). That move
+> rewrote every commit — same content, new hashes — so the SHAs originally recorded here were the
+> pre-move ones and resolved in no surviving checkout. The hashes below are the post-integration
+> commits, each verified as an ancestor of `origin/main`. No work was lost; `git fsck` is clean.
+
 | Ticket | Commit | Result |
 | --- | --- | --- |
-| CFA-16 | `4c24fb7` | Exclude development examples from package |
-| CFA-17 | `ffcaf86` | Enforce lint in prepublish gate |
-| CFA-19 | `497f2ec` | Generate compatible, warning-free API docs |
-| CFA-9 | `1a468a0` | Stream app commands through `fyn` |
-| CFA-10 | `bd50b3d` | Reject stale or mismatched output |
-| CFA-15 | `0e079d0` | Declare middleware example provider |
-| CFA-13 | `5e54bc8` | Synchronize the agent contract |
-| CFA-14 | `76327db` | Rename local artifact inspections |
-| CFA-12 | `0e960ab` | Align release CLI documentation |
-| CFA-21 | `b0ed170` | Port output regressions to `checkFynApp` |
-| CFA-5 | `a544651` | Make ESM CLI artifacts executable |
-| CFA-11 | `607c7a9` | Deliver parsed CLI options to handlers |
-| CFA-18 | `6419e91` | Make CLI execution guards URL-safe |
-| CFA-6 | `ad7d7e7` | Expose only complete framework templates |
-| CFA-7 | `931aa2d` | Inspect create inputs and constrain target paths |
-| CFA-8 | `377f34a` | Remove inert component prompts |
-| CFA-22 | `70aaf3b` | Use inspection terms for create inputs |
-| CFA-23 | `47101bc` | Exercise the renamed built `check` command |
-| CFA-24 | `fecb4a2` | Publish only supported React templates |
-| CFA-26 | `1b28a10` | Document the release handoff |
-| CFA-27 | `d20c0c1` | Use `fyn` for global CLI installation |
-| CFA-28 | `d7834e6` | Remove the demo dependency from the React template |
-| CFA-29 | `ccb72a2` | Install the kernel declaration dependency |
-| CFA-30 | `e997a79` | Remove the false CommonJS kernel export |
-| CFA-31 | `f0df4d1` | Bundle the kernel public entrypoint |
-| CFA-32 | `20d5371` | Fix packaged example references |
-| CFA-36 | `cf50ce6` | Refresh the public release handoff |
-| CFA-37 | `3edbeee` | Keep demo React adapters out of public scaffolds |
+| CFA-16 | `a37a685` | Exclude development examples from package |
+| CFA-17 | `8e6de38` | Enforce lint in prepublish gate |
+| CFA-19 | `c627ed9` | Generate compatible, warning-free API docs |
+| CFA-9 | `64ea8b8` | Stream app commands through `fyn` |
+| CFA-10 | `8fd0784` | Reject stale or mismatched output |
+| CFA-15 | `bdaee0b` | Declare middleware example provider |
+| CFA-13 | `45979ac` | Synchronize the agent contract |
+| CFA-14 | `6208ea8` | Rename local artifact inspections |
+| CFA-12 | `64a3f50` | Align release CLI documentation |
+| CFA-21 | `44079a0` | Port output regressions to `checkFynApp` |
+| CFA-5 | `f6dba15` | Make ESM CLI artifacts executable |
+| CFA-11 | `e1b958e` | Deliver parsed CLI options to handlers |
+| CFA-18 | `f1a24be` | Make CLI execution guards URL-safe |
+| CFA-6 | `d6493e5` | Expose only complete framework templates |
+| CFA-7 | `3991ef5` | Inspect create inputs and constrain target paths |
+| CFA-8 | `24ec8a1` | Remove inert component prompts |
+| CFA-22 | `ee4f1d7` | Use inspection terms for create inputs |
+| CFA-23 | `23fd34a` | Exercise the renamed built `check` command |
+| CFA-24 | `2c1a81c` | Publish only supported React templates |
+| CFA-26 | `8672ae3` | Document the release handoff |
+| CFA-27 | `0bc59fc` | Use `fyn` for global CLI installation |
+| CFA-28 | `df709ff` | Remove the demo dependency from the React template |
+| CFA-29 | `8d211b6` | Install the kernel declaration dependency |
+| CFA-30 | `d9ffee7` | Remove the false CommonJS kernel export |
+| CFA-31 | `77062a1` | Bundle the kernel public entrypoint |
+| CFA-32 | `a07b436` | Fix packaged example references |
+| CFA-36 | `77d2c84` | Refresh the public release handoff |
+| CFA-37 | `b98e45f` | Keep demo React adapters out of public scaffolds |
+
+The integration itself was not in the original ledger; it is recorded here for traceability:
+
+| Ticket | Commit | Result |
+| --- | --- | --- |
+| CFA-38 | `361674b` | Narrow the handoff to core package releases |
+| CFA-39 | `24ff8c6` | Merge the create-fynapp release work (parents `9bff2d2` main, `361674b` release) |
+| CFA-40 | `d1d69b5` | Record the local main integration |
 
 Audit tickets `CFA-2`, `CFA-3`, and `CFA-4` were completed and closed before implementation.
 
@@ -138,7 +156,8 @@ clean, and sufficient for repository-local bootstrap/build work.
 
 Observed state:
 
-- The checkout's origin is the GitLab `jchip/rollup-federation` repository.
+- The checkout's origin is the GitHub `jchip/rollup-federation` repository
+  (`git@github.com:jchip/rollup-federation.git`; corrected 2026-08-11 — this previously said GitLab).
 - Root bootstrap uses the existing checkout without cloning or fetching and completes successfully.
 - The public npm registry returns 404 for `rollup-plugin-federation`.
 - Its package declares `UNLICENSED`, has blank public metadata, and lacks a package-local license and
@@ -201,22 +220,26 @@ its approved package-local license text.
 
 ## Supporting audit summaries
 
-The original audit and implementation summaries are in ignored scratch storage:
+The original audit and implementation summaries were written to ignored scratch storage.
+**Checked 2026-08-11: all eight are gone** — scratch storage is not durable, and the paths were
+additionally recorded under a stale home directory. They are listed only as a record of what once
+existed:
 
-- `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-code-audit.md`
-- `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-workflow-audit.md`
-- `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-package-audit.md`
-- `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-cli-fixes.md`
-- `/Users/joel.chen/dev/fynpo/.temp/create-fynapp-release-doc-fixes.md`
-- `/Users/joel.chen/dev/fynmesh/.temp/subagent-cfa20.md`
-- `/Users/joel.chen/dev/fynmesh/.temp/subagent-cfa25.md`
-- `/Users/joel.chen/dev/fynmesh/.temp/subagent-release-actions.md`
+- `~/dev/fynpo/.temp/create-fynapp-code-audit.md`
+- `~/dev/fynpo/.temp/create-fynapp-workflow-audit.md`
+- `~/dev/fynpo/.temp/create-fynapp-package-audit.md`
+- `~/dev/fynpo/.temp/create-fynapp-cli-fixes.md`
+- `~/dev/fynpo/.temp/create-fynapp-release-doc-fixes.md`
+- `~/dev/fynmesh/.temp/subagent-cfa20.md`
+- `~/dev/fynmesh/.temp/subagent-cfa25.md`
+- `~/dev/fynmesh/.temp/subagent-release-actions.md`
 
-Those files are supplemental; this handoff is the durable continuation source in `fynmesh`.
+Those files were supplemental; this handoff is the durable continuation source in `fynmesh`.
 
 ## Temporary branch/worktree cleanup
 
 The integration worktree was removed after moving `codex/create-fynapp-release` into the direct
-`fynmesh` checkout. Additional isolated ticket worktrees/branches under
-`/Users/joel.chen/dev/fynpo/.temp/worktrees/` may be removed after the release branch is merged;
-their commits have already been integrated. The tracked `fynpo` worktree remains unchanged.
+`fynmesh` checkout — that move is what rewrote the commit SHAs (see the commit ledger note).
+Additional isolated ticket worktrees/branches lived under `~/dev/fynpo/.temp/worktrees/`;
+**checked 2026-08-11: that directory is gone**, and their commits were already integrated. The
+tracked `fynpo` worktree remains unchanged. Nothing here is outstanding.
