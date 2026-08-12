@@ -1,6 +1,6 @@
 {
   "name": "fynapp-react-lib",
-  "version": "19.1.0",
+  "version": "19.2.8",
   "description": "FynApp that provides React 19 Library",
   "type": "module",
   "scripts": {
@@ -17,8 +17,8 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.8.9",
     "create-fynapp": "^1.0.0",
-    "esm-react": "^19.1.0",
-    "esm-react-dom": "^19.1.0",
+    "esm-react": "^19.2.8",
+    "esm-react-dom": "^19.2.8",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",

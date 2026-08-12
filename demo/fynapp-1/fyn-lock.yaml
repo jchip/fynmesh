@@ -878,11 +878,11 @@ fynapp-design-tokens:
    create-fynapp: ^1.0.0
    rollup-wrap-plugin: ^1.0.0
 fynapp-react-lib:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
   ../fynapp-react-18: 18.3.0-fynlocal_h
-  ../fynapp-react-19: 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  ../fynapp-react-19: 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../fynapp-react-19
