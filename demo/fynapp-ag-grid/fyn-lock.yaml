@@ -1032,10 +1032,10 @@ fynapp-ag-grid-lib:
   $: local
   _: ../fynapp-ag-grid-lib
 fynapp-react-lib:
- _latest: 19.1.0-fynlocal_h
+ _latest: 19.2.8-fynlocal_h
  _:
-  ../fynapp-react-19: 19.1.0-fynlocal_h
- 19.1.0-fynlocal_h:
+  ../fynapp-react-19: 19.2.8-fynlocal_h
+ 19.2.8-fynlocal_h:
   top: 1
   $: local
   _: ../fynapp-react-19
