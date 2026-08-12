@@ -101,3 +101,7 @@ This opt-in command copies the bundled `fynapp-modify` and
 fyn run build
 fyn run jest-test
 ```
+
+## License
+
+Apache-2.0

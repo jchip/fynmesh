@@ -395,4 +395,4 @@ Each middleware becomes a mini-kernel for its domain, processing its own FynUnit
 
 ## License
 
-UNLICENSED
+Apache-2.0
