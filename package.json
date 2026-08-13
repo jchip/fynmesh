@@ -30,15 +30,12 @@
   "dependencies": {
     "@types/node": "^24.10.1",
     "@xarc/run": "^2.3.0",
-    "fyn": "^2.1.5",
-    "fynpo": "^2.1.5",
+    "fyn": "^2.1.6",
+    "fynpo": "^2.1.6",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6"
   },
   "fyn": {
-    "enforceRegistryDeps": false,
-    "dependencies": {
-      "fynpo": "../fynpo/packages/fynpo"
-    }
+    "enforceRegistryDeps": false
   }
 }
