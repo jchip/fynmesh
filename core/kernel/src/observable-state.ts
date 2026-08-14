@@ -24,7 +24,14 @@ export class ObservableState<T> {
     if (this.#disposed) return;
     const prev = this.value;
     this.value = value;
-    this.#notify(prev);
+    this.#observers.forEach((fn) => {
+      try {
+        fn(value, prev);
+      } catch (e) {
+        // Error isolation: one throwing observer must not stop the others
+        console.error("ObservableState observer error:", e);
+      }
+    });
   }
 
   /** Functional update */
@@ -46,15 +53,5 @@ export class ObservableState<T> {
   dispose(): void {
     this.#disposed = true;
     this.#observers.clear();
-  }
-
-  #notify(prev: T): void {
-    this.#observers.forEach(fn => {
-      try {
-        fn(this.value, prev);
-      } catch (e) {
-        console.error("ObservableState observer error:", e);
-      }
-    });
   }
 }

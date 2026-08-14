@@ -48,17 +48,12 @@ export function findExecutionOverride(
   fynUnit: FynUnit,
   autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] }
 ): FynAppMiddlewareReg | null {
-  if (!autoApply) return null;
-
-  const targetMiddlewares = getTargetMiddlewares(fynApp, autoApply);
-
-  for (const mwReg of targetMiddlewares) {
-    if (mwReg.mw.canOverrideExecution?.(fynApp, fynUnit)) {
-      return mwReg;
-    }
-  }
-
-  return null;
+  // getTargetMiddlewares already yields [] when autoApply is absent
+  return (
+    getTargetMiddlewares(fynApp, autoApply).find((mwReg) =>
+      mwReg.mw.canOverrideExecution?.(fynApp, fynUnit),
+    ) ?? null
+  );
 }
 
 /**

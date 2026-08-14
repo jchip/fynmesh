@@ -10,24 +10,6 @@ describe("Utility Methods", () => {
     kernel = createTestKernel();
   });
 
-  describe("cleanContainerName", () => {
-    it("should replace special characters with underscores", () => {
-      expect(kernel.testCleanContainerName("@scope/package-name")).toBe("scope_package_name");
-      expect(kernel.testCleanContainerName("package.name")).toBe("package_name");
-      expect(kernel.testCleanContainerName("package-name")).toBe("package_name");
-      expect(kernel.testCleanContainerName("package/name")).toBe("package_name");
-    });
-
-    it("should remove leading underscores", () => {
-      expect(kernel.testCleanContainerName("___package")).toBe("package");
-      expect(kernel.testCleanContainerName("_@scope/name")).toBe("scope_name");
-    });
-
-    it("should handle already clean names", () => {
-      expect(kernel.testCleanContainerName("packagename")).toBe("packagename");
-      expect(kernel.testCleanContainerName("package_name")).toBe("package_name");
-    });
-  });
 
   describe("buildFynAppUrl", () => {
     it("should build URL with default entry file", () => {

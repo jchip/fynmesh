@@ -74,29 +74,33 @@ export class MiddlewareStateRegistry {
     }
 
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        // Remove from waiters
-        const waiters = this.#pendingWaiters.get(key);
-        if (waiters) {
-          const idx = waiters.findIndex(w => w.resolve === resolve);
-          if (idx >= 0) waiters.splice(idx, 1);
-          if (waiters.length === 0) this.#pendingWaiters.delete(key);
-        }
-        reject(new Error(`Timeout waiting for state: ${key}`));
-      }, timeout);
-
+      // Identity of the parked entry, so the timeout below can drop exactly
+      // this one. Matching on the promise's `resolve` never worked: what is
+      // stored is the wrapper, so every timed-out waiter leaked.
       const waiter = {
         resolve: (state: ObservableState<any>) => {
           clearTimeout(timer);
           resolve(state as ObservableState<T>);
         },
-        reject
+        reject,
       };
 
-      if (!this.#pendingWaiters.has(key)) {
-        this.#pendingWaiters.set(key, []);
+      const timer = setTimeout(() => {
+        const waiters = this.#pendingWaiters.get(key);
+        const idx = waiters?.indexOf(waiter) ?? -1;
+        if (idx >= 0) {
+          waiters!.splice(idx, 1);
+          if (waiters!.length === 0) this.#pendingWaiters.delete(key);
+        }
+        reject(new Error(`Timeout waiting for state: ${key}`));
+      }, timeout);
+
+      const waiters = this.#pendingWaiters.get(key);
+      if (waiters) {
+        waiters.push(waiter);
+      } else {
+        this.#pendingWaiters.set(key, [waiter]);
       }
-      this.#pendingWaiters.get(key)!.push(waiter);
     });
   }
 

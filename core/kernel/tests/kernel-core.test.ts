@@ -70,11 +70,6 @@ describe('FynMeshKernelCore', () => {
     });
 
     describe('utility methods', () => {
-        it('should clean container names correctly', () => {
-            const cleaned = kernel.cleanContainerName('@my-app/test-module');
-            expect(cleaned).toBe('my_app_test_module');
-        });
-
         it('should build fynapp URLs correctly', () => {
             const url = kernel['buildFynAppUrl']('http://example.com/app');
             expect(url).toBe('http://example.com/app/fynapp-entry.js');

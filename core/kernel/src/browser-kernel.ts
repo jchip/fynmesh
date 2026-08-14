@@ -21,27 +21,23 @@ export class BrowserKernel extends FynMeshKernelCore {
   };
 
   /**
-   * Resolve preload strategy from options
+   * Resolve preload strategy from options: instance defaults, overlaid with
+   * whatever the caller specified. `preload` may be a bare number, meaning depth.
    */
   #resolvePreloadStrategy(options?: LoadFynAppsOptions): Required<PreloadStrategy> {
-    if (!options?.preload) {
-      return this.#preloadStrategy; // Use instance default
+    const preload = options?.preload;
+    const defaults = this.#preloadStrategy;
+    if (!preload) {
+      return defaults;
     }
-
-    // Shorthand: number = depth
-    if (typeof options.preload === 'number') {
-      return {
-        ...this.#preloadStrategy,
-        depth: options.preload
-      };
+    if (typeof preload === "number") {
+      return { ...defaults, depth: preload };
     }
-
-    // Full strategy object
+    // Spread skips absent keys, but an explicitly-undefined one would clobber
+    // its default, so those are dropped first.
     return {
-      depth: options.preload.depth ?? this.#preloadStrategy.depth,
-      priority: options.preload.priority ?? this.#preloadStrategy.priority,
-      priorityByDepth: options.preload.priorityByDepth ?? this.#preloadStrategy.priorityByDepth,
-      disabled: options.preload.disabled ?? this.#preloadStrategy.disabled
+      ...defaults,
+      ...Object.fromEntries(Object.entries(preload).filter(([, v]) => v !== undefined)),
     };
   }
 

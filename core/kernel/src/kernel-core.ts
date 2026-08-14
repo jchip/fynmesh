@@ -309,13 +309,6 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
-   * Clean up a container name to ensure it's a valid identifier
-   */
-  cleanContainerName(name: string): string {
-    return name.replace(/[\@\-./]/g, "_").replace(/^_*/, "");
-  }
-
-  /**
    * Create middleware scanner callback that delegates to MiddlewareManager
    * This is the single source of truth for middleware scanning
    */
