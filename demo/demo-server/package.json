@@ -13,10 +13,11 @@
     "build": "xrun build:templates compile",
     "start": "xrun build:templates && tsx src/dev-proxy.ts",
     "dev": "xrun build:templates && tsc -w",
-    "test": "xrun xarc/test-only",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage",
     "prepublishOnly": "xrun --serial [[build, docs], xarc/check]",
-    "docs": "xrun xarc/docs",
-    "coverage": "xrun xarc/test-cov"
+    "docs": "xrun xarc/docs"
   },
   "author": "",
   "files": [
@@ -33,7 +34,6 @@
     "@fynmesh/kernel": "^1.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@jchip/redbird": "^1.4.0",
-    "@types/jest": "^29.5.6",
     "@types/node": "^20.8.9",
     "@xarc/module-dev": "^5.0.0",
     "chalker": "^1.2.0",
@@ -52,11 +52,11 @@
     "prettier": "^3.0.3",
     "source-map-support": "^0.5.21",
     "spectre.css": "^0.5.9",
-    "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
     "tsx": "^4.20.3",
     "typedoc": "^0.25.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "tslib": "^2.6.2"
@@ -64,15 +64,8 @@
   "prettier": {
     "printWidth": 100
   },
-  "jest": {
-    "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
-    }
-  },
   "@xarc/module-dev": {
     "features": [
-      "jest",
-      "jestTS",
       "prettier",
       "typedoc",
       "typescript"
