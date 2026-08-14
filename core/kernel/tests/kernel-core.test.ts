@@ -27,7 +27,7 @@ describe('FynMeshKernelCore', () => {
         });
 
         it('should have empty runtime data initially', () => {
-            expect(kernel['runTime'].appsLoaded).toEqual({});
+            expect(kernel['runTime'].apps).toEqual({});
             expect(kernel['runTime'].middlewares).toEqual({});
         });
     });
@@ -90,7 +90,7 @@ describe('FynMeshKernelCore', () => {
     describe('runtime management', () => {
         it('should initialize runtime data', () => {
             const mockRuntimeData = {
-                appsLoaded: { 'test-app': {} as any },
+                apps: { 'test-app': {} as any },
                 middlewares: { 'test-mw': {} as any }
             };
 

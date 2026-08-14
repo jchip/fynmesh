@@ -51,10 +51,10 @@ export const createMockMiddleware = (key: string, overrides: any = {}) => ({
         version: '1.0.0',
         ...overrides.hostFynApp,
     },
-    middleware: {
+    mw: {
         name: key,
         invoke: vi.fn(),
-        ...overrides.middleware,
+        ...overrides.mw,
     },
     ...overrides,
 });

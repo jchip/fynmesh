@@ -17,16 +17,16 @@ import { createMockFynApp } from "./fixtures/mock-fynapp";
 import { createMockMiddlewareReg, createMockMiddleware, createMockAutoApplyMiddleware } from "./fixtures/mock-middleware";
 
 // ---------------------------------------------------------------------------
-// Helper: create a spy telemetry that records all captured entries
+// Helper: create a spy tel that records all captured entries
 // ---------------------------------------------------------------------------
-function createSpyTelemetry(): { telemetry: KernelTelemetry; entries: Array<Omit<TelemetryEntry, "ts">> } {
+function createSpyTelemetry(): { tel: KernelTelemetry; entries: Array<Omit<TelemetryEntry, "ts">> } {
   const entries: Array<Omit<TelemetryEntry, "ts">> = [];
 
   const makeScopedTelemetry = (prefix: string): KernelTelemetry => ({
     capture(entry) {
       entries.push({ ...entry, name: `${prefix}.${entry.name}` });
     },
-    captureError(name, data, error) {
+    capErr(name, data, error) {
       const err = error instanceof Error ? error : new Error(String(error));
       entries.push({ type: "error", name: `${prefix}.${name}`, data, error: { message: err.message, stack: err.stack } });
     },
@@ -36,11 +36,11 @@ function createSpyTelemetry(): { telemetry: KernelTelemetry; entries: Array<Omit
     flush() {},
   });
 
-  const telemetry: KernelTelemetry = {
+  const tel: KernelTelemetry = {
     capture(entry) {
       entries.push(entry);
     },
-    captureError(name, data, error) {
+    capErr(name, data, error) {
       const err = error instanceof Error ? error : new Error(String(error));
       entries.push({ type: "error", name, data, error: { message: err.message, stack: err.stack } });
     },
@@ -50,7 +50,7 @@ function createSpyTelemetry(): { telemetry: KernelTelemetry; entries: Array<Omit
     flush() {},
   };
 
-  return { telemetry, entries };
+  return { tel, entries };
 }
 
 // Helper: create a mock transport for KernelTelemetryImpl-based tests
@@ -70,7 +70,7 @@ function findEntries(entries: Array<Omit<TelemetryEntry, "ts">>, namePattern: st
 }
 
 // ---------------------------------------------------------------------------
-// 1. MiddlewareManager telemetry capture points
+// 1. MiddlewareManager tel capture points
 // ---------------------------------------------------------------------------
 describe("Telemetry Capture Points", () => {
   describe("MiddlewareManager", () => {
@@ -79,7 +79,7 @@ describe("Telemetry Capture Points", () => {
 
     beforeEach(() => {
       spy = createSpyTelemetry();
-      manager = new MiddlewareManager(spy.telemetry);
+      manager = new MiddlewareManager(spy.tel);
     });
 
     it("should capture 'registered' event when middleware is registered", () => {
@@ -99,7 +99,7 @@ describe("Telemetry Capture Points", () => {
 
     it("should capture 'registered' with autoApply: true for auto-apply middleware", () => {
       const middleware = createMockAutoApplyMiddleware(["fynapp"]);
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
 
       manager.registerMiddleware(mwReg);
 
@@ -153,7 +153,7 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 2. ModuleLoader telemetry capture points
+  // 2. ModuleLoader tel capture points
   // ---------------------------------------------------------------------------
   describe("ModuleLoader", () => {
     let spy: ReturnType<typeof createSpyTelemetry>;
@@ -161,7 +161,7 @@ describe("Telemetry Capture Points", () => {
 
     beforeEach(() => {
       spy = createSpyTelemetry();
-      loader = new ModuleLoader(spy.telemetry);
+      loader = new ModuleLoader(spy.tel);
     });
 
     it("should capture 'fynapp.init' and 'fynapp.basics_loaded' during loadFynAppBasics", async () => {
@@ -251,7 +251,7 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 3. BootstrapCoordinator telemetry capture points
+  // 3. BootstrapCoordinator tel capture points
   // ---------------------------------------------------------------------------
   describe("BootstrapCoordinator", () => {
     let spy: ReturnType<typeof createSpyTelemetry>;
@@ -261,7 +261,7 @@ describe("Telemetry Capture Points", () => {
     beforeEach(() => {
       spy = createSpyTelemetry();
       events = new FynEventTarget();
-      coordinator = new BootstrapCoordinator(events, undefined, spy.telemetry);
+      coordinator = new BootstrapCoordinator(events, undefined, spy.tel);
     });
 
     it("should capture 'lock.acquired' when bootstrap lock is acquired", () => {
@@ -352,7 +352,7 @@ describe("Telemetry Capture Points", () => {
     it("should capture 'timeout' error when bootstrap times out", async () => {
       vi.useFakeTimers();
 
-      const shortTimeoutCoordinator = new BootstrapCoordinator(events, 100, spy.telemetry);
+      const shortTimeoutCoordinator = new BootstrapCoordinator(events, 100, spy.tel);
       shortTimeoutCoordinator.bootstrappingApp = "app1";
 
       const fynApp = createMockFynApp({ name: "app2" });
@@ -374,7 +374,7 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 4. MiddlewareExecutor telemetry capture points
+  // 4. MiddlewareExecutor tel capture points
   // ---------------------------------------------------------------------------
   describe("MiddlewareExecutor", () => {
     let spy: ReturnType<typeof createSpyTelemetry>;
@@ -382,7 +382,7 @@ describe("Telemetry Capture Points", () => {
 
     beforeEach(() => {
       spy = createSpyTelemetry();
-      executor = new MiddlewareExecutor(spy.telemetry);
+      executor = new MiddlewareExecutor(spy.tel);
     });
 
     it("should capture 'call.started' when callMiddlewares is invoked", async () => {
@@ -418,7 +418,7 @@ describe("Telemetry Capture Points", () => {
       const middleware = createMockMiddleware({
         setup: vi.fn().mockResolvedValue({ status: "ready" }),
       });
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       const ccs = [
         {
           meta: { info: { name: "test", provider: "test-app", version: "1.0.0" }, config: {} },
@@ -438,7 +438,7 @@ describe("Telemetry Capture Points", () => {
       expect(setupCompleted).toHaveLength(1);
       expect(setupCompleted[0].type).toBe("event");
       expect(setupCompleted[0].data).toEqual({
-        middleware: mwReg.regKey,
+        mw: mwReg.regKey,
         app: fynApp.name,
       });
     });
@@ -474,7 +474,7 @@ describe("Telemetry Capture Points", () => {
       const middleware = createMockMiddleware({
         setup: vi.fn().mockResolvedValue({ status: "defer" }),
       });
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       const ccs = [
         {
           meta: { info: { name: "test", provider: "test-app", version: "1.0.0" }, config: {} },
@@ -503,13 +503,13 @@ describe("Telemetry Capture Points", () => {
       const middleware = createMockAutoApplyMiddleware(["fynapp"], {
         setup: vi.fn().mockRejectedValue(new Error("auto-apply boom")),
       });
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
 
       const errors = await executor.applyAutoScopeMiddlewares(
         fynApp,
         undefined,
         {} as any,
-        { fynapp: [mwReg], middleware: [] },
+        { fynapp: [mwReg], mw: [] },
         () => ({ fynApp, middlewareContext: new Map() }),
       );
 
@@ -519,7 +519,7 @@ describe("Telemetry Capture Points", () => {
       expect(autoApplyFailed).toHaveLength(1);
       expect(autoApplyFailed[0].type).toBe("error");
       expect(autoApplyFailed[0].data).toEqual({
-        middleware: mwReg.regKey,
+        mw: mwReg.regKey,
         app: fynApp.name,
       });
       expect(autoApplyFailed[0].error!.message).toBe("auto-apply boom");
@@ -527,7 +527,7 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 5. ManifestResolver telemetry capture points
+  // 5. ManifestResolver tel capture points
   // ---------------------------------------------------------------------------
   describe("ManifestResolver", () => {
     let spy: ReturnType<typeof createSpyTelemetry>;
@@ -536,7 +536,7 @@ describe("Telemetry Capture Points", () => {
 
     beforeEach(() => {
       spy = createSpyTelemetry();
-      resolver = new ManifestResolver(spy.telemetry);
+      resolver = new ManifestResolver(spy.tel);
 
       mockFetch = vi.fn();
       global.fetch = mockFetch;
@@ -551,7 +551,7 @@ describe("Telemetry Capture Points", () => {
       const mockRegistryResolver = vi.fn().mockResolvedValue({
         name: "app1",
         version: "1.0.0",
-        manifestUrl: "/app1/dist/fynapp.manifest.json",
+        url: "/app1/dist/fynapp.manifest.json",
         distBase: "/app1/dist/",
       });
       resolver.setRegistryResolver(mockRegistryResolver);
@@ -585,7 +585,7 @@ describe("Telemetry Capture Points", () => {
       const mockRegistryResolver = vi.fn().mockResolvedValue({
         name: "app2",
         version: "2.0.0",
-        manifestUrl: "/app2/dist/fynapp.manifest.json",
+        url: "/app2/dist/fynapp.manifest.json",
         distBase: "/app2/dist/",
       });
       resolver.setRegistryResolver(mockRegistryResolver);
@@ -614,7 +614,7 @@ describe("Telemetry Capture Points", () => {
       const mockRegistryResolver = vi.fn().mockResolvedValue({
         name: "app3",
         version: "3.0.0",
-        manifestUrl: "/app3/dist/fynapp.manifest.json",
+        url: "/app3/dist/fynapp.manifest.json",
         distBase: "/app3/dist/",
       });
       resolver.setRegistryResolver(mockRegistryResolver);
@@ -636,7 +636,7 @@ describe("Telemetry Capture Points", () => {
       const mockRegistryResolver = vi.fn().mockResolvedValue({
         name: "root",
         version: "1.0.0",
-        manifestUrl: "/root/dist/fynapp.manifest.json",
+        url: "/root/dist/fynapp.manifest.json",
         distBase: "/root/dist/",
       });
       resolver.setRegistryResolver(mockRegistryResolver);
@@ -651,9 +651,9 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 6. kernel-core (FynMeshKernelCore) telemetry capture points
+  // 6. kernel-core (FynMeshKernelCore) tel capture points
   // ---------------------------------------------------------------------------
-  describe("kernel-core (via TestKernel with telemetry)", () => {
+  describe("kernel-core (via TestKernel with tel)", () => {
     let kernel: TestKernel;
     let transport: ReturnType<typeof createMockTransport>;
 
@@ -675,7 +675,7 @@ describe("Telemetry Capture Points", () => {
       } as any;
 
       await kernel.testBootstrapFynApp(fynApp);
-      kernel.telemetry.flush();
+      kernel.tel.flush();
 
       expect(transport.batches.length).toBeGreaterThanOrEqual(1);
       const allEntries = transport.batches.flat();
@@ -700,7 +700,7 @@ describe("Telemetry Capture Points", () => {
       } as any;
 
       await kernel.testBootstrapFynApp(fynApp);
-      kernel.telemetry.flush();
+      kernel.tel.flush();
 
       const allEntries = transport.batches.flat();
       // bootstrap.failed appears multiple times: once from kernel-core and once per
@@ -716,11 +716,11 @@ describe("Telemetry Capture Points", () => {
 
     it("should capture 'shutdown.started' and 'shutdown.completed' on successful shutdown", async () => {
       const fynApp = createMockFynApp({ name: "shutdown-app", version: "1.0.0" });
-      (kernel as any).runTime.appsLoaded["shutdown-app"] = fynApp;
+      (kernel as any).runTime.apps["shutdown-app"] = fynApp;
 
       const result = await kernel.shutdownFynApp("shutdown-app");
 
-      kernel.telemetry.flush();
+      kernel.tel.flush();
       const allEntries = transport.batches.flat();
 
       expect(result).toBe(true);
@@ -741,11 +741,11 @@ describe("Telemetry Capture Points", () => {
           shutdown: vi.fn().mockRejectedValue(new Error("shutdown boom")),
         },
       } as any;
-      (kernel as any).runTime.appsLoaded["crash-app"] = fynApp;
+      (kernel as any).runTime.apps["crash-app"] = fynApp;
 
       const result = await kernel.shutdownFynApp("crash-app");
 
-      kernel.telemetry.flush();
+      kernel.tel.flush();
       const allEntries = transport.batches.flat();
 
       expect(result).toBe(false);
@@ -768,7 +768,7 @@ describe("Telemetry Capture Points", () => {
         { name: "batch-app" },
       ]);
 
-      kernel.telemetry.flush();
+      kernel.tel.flush();
       const allEntries = transport.batches.flat();
 
       const startedEntries = allEntries.filter((e) => e.name === "load_batch.started");
@@ -781,10 +781,10 @@ describe("Telemetry Capture Points", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // 7. Scoped telemetry integration - verify modules get correct prefixes
+  // 7. Scoped tel integration - verify modules get correct prefixes
   //    when wired through the kernel
   // ---------------------------------------------------------------------------
-  describe("scoped telemetry through kernel", () => {
+  describe("scoped tel through kernel", () => {
     it("should prefix module entries with the correct scope when using KernelTelemetryImpl", async () => {
       const { transport, batches } = createMockTransport();
       const kernel = createTestKernel({ telemetryConfig: { transport } });
@@ -793,7 +793,7 @@ describe("Telemetry Capture Points", () => {
       const mwReg = createMockMiddlewareReg();
       kernel.registerMiddleware(mwReg);
 
-      kernel.telemetry.flush();
+      kernel.tel.flush();
 
       const allEntries = batches.flat();
       // MiddlewareManager is scoped to "middleware"
@@ -812,7 +812,7 @@ describe("Telemetry Capture Points", () => {
       fynApp.exposes["./main"] = { main: { execute: vi.fn() } } as any;
       await kernel.testBootstrapFynApp(fynApp);
 
-      kernel.telemetry.flush();
+      kernel.tel.flush();
       const allEntries = batches.flat();
 
       const bootstrapEntries = allEntries.filter((e) => e.name.startsWith("bootstrap."));

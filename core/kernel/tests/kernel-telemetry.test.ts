@@ -26,13 +26,13 @@ describe("KernelTelemetry", () => {
   describe("KernelTelemetryImpl.capture()", () => {
     it("should capture an event entry with auto-filled timestamp", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
       const before = Date.now();
-      telemetry.capture({ type: "event", name: "app.loaded" });
+      tel.capture({ type: "event", name: "app.loaded" });
       const after = Date.now();
 
-      telemetry.flush();
+      tel.flush();
 
       expect(batches).toHaveLength(1);
       const entry = batches[0][0];
@@ -44,20 +44,20 @@ describe("KernelTelemetry", () => {
 
     it("should store entries in the buffer", () => {
       const { transport } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "a" });
-      telemetry.capture({ type: "event", name: "b" });
+      tel.capture({ type: "event", name: "a" });
+      tel.capture({ type: "event", name: "b" });
 
-      expect(telemetry.bufferSize).toBe(2);
+      expect(tel.bufferSize).toBe(2);
     });
 
     it("should handle type 'event'", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "boot", data: { stage: "init" } });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "boot", data: { stage: "init" } });
+      tel.flush();
 
       const entry = batches[0][0];
       expect(entry.type).toBe("event");
@@ -66,10 +66,10 @@ describe("KernelTelemetry", () => {
 
     it("should handle type 'metric' with a value", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "metric", name: "load_time", value: 42 });
-      telemetry.flush();
+      tel.capture({ type: "metric", name: "load_time", value: 42 });
+      tel.flush();
 
       const entry = batches[0][0];
       expect(entry.type).toBe("metric");
@@ -79,14 +79,14 @@ describe("KernelTelemetry", () => {
 
     it("should handle type 'error' with error payload", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({
+      tel.capture({
         type: "error",
         name: "crash",
         error: { message: "Something broke", stack: "at line 1" },
       });
-      telemetry.flush();
+      tel.flush();
 
       const entry = batches[0][0];
       expect(entry.type).toBe("error");
@@ -101,18 +101,18 @@ describe("KernelTelemetry", () => {
   describe("ring buffer overflow", () => {
     it("should drop oldest entries when buffer reaches maxBufferSize", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport, maxBufferSize: 3 });
+      const tel = new KernelTelemetryImpl({ transport, maxBufferSize: 3 });
 
-      telemetry.capture({ type: "event", name: "first" });
-      telemetry.capture({ type: "event", name: "second" });
-      telemetry.capture({ type: "event", name: "third" });
+      tel.capture({ type: "event", name: "first" });
+      tel.capture({ type: "event", name: "second" });
+      tel.capture({ type: "event", name: "third" });
 
       // Buffer full — next capture should evict "first"
-      telemetry.capture({ type: "event", name: "fourth" });
+      tel.capture({ type: "event", name: "fourth" });
 
-      expect(telemetry.bufferSize).toBe(3);
+      expect(tel.bufferSize).toBe(3);
 
-      telemetry.flush();
+      tel.flush();
 
       const names = batches[0].map((e) => e.name);
       expect(names).toEqual(["second", "third", "fourth"]);
@@ -120,18 +120,18 @@ describe("KernelTelemetry", () => {
 
     it("should continue accepting entries after overflow", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport, maxBufferSize: 2 });
+      const tel = new KernelTelemetryImpl({ transport, maxBufferSize: 2 });
 
       // Overflow multiple times
-      telemetry.capture({ type: "event", name: "a" });
-      telemetry.capture({ type: "event", name: "b" });
-      telemetry.capture({ type: "event", name: "c" });
-      telemetry.capture({ type: "event", name: "d" });
-      telemetry.capture({ type: "event", name: "e" });
+      tel.capture({ type: "event", name: "a" });
+      tel.capture({ type: "event", name: "b" });
+      tel.capture({ type: "event", name: "c" });
+      tel.capture({ type: "event", name: "d" });
+      tel.capture({ type: "event", name: "e" });
 
-      expect(telemetry.bufferSize).toBe(2);
+      expect(tel.bufferSize).toBe(2);
 
-      telemetry.flush();
+      tel.flush();
 
       const names = batches[0].map((e) => e.name);
       expect(names).toEqual(["d", "e"]);
@@ -143,8 +143,8 @@ describe("KernelTelemetry", () => {
   // ---------------------------------------------------------------
   describe("scope()", () => {
     it("should return a KernelTelemetry-compatible instance", () => {
-      const telemetry = new KernelTelemetryImpl();
-      const scoped = telemetry.scope("bootstrap");
+      const tel = new KernelTelemetryImpl();
+      const scoped = tel.scope("bootstrap");
 
       expect(typeof scoped.capture).toBe("function");
       expect(typeof scoped.scope).toBe("function");
@@ -153,32 +153,32 @@ describe("KernelTelemetry", () => {
 
     it("should prepend the prefix to entry names", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
-      const scoped = telemetry.scope("bootstrap");
+      const tel = new KernelTelemetryImpl({ transport });
+      const scoped = tel.scope("bootstrap");
 
       scoped.capture({ type: "event", name: "completed" });
-      telemetry.flush();
+      tel.flush();
 
       expect(batches[0][0].name).toBe("bootstrap.completed");
     });
 
     it("should support nested scopes", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
-      const nested = telemetry.scope("a").scope("b");
+      const tel = new KernelTelemetryImpl({ transport });
+      const nested = tel.scope("a").scope("b");
 
       nested.capture({ type: "event", name: "c" });
-      telemetry.flush();
+      tel.flush();
 
       expect(batches[0][0].name).toBe("a.b.c");
     });
 
     it("should delegate flush to the parent", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
-      const scoped = telemetry.scope("child");
+      const tel = new KernelTelemetryImpl({ transport });
+      const scoped = tel.scope("child");
 
-      telemetry.capture({ type: "event", name: "parent-entry" });
+      tel.capture({ type: "event", name: "parent-entry" });
       scoped.capture({ type: "event", name: "child-entry" });
 
       // Flushing via the scoped instance should drain the parent buffer
@@ -186,7 +186,7 @@ describe("KernelTelemetry", () => {
 
       expect(batches).toHaveLength(1);
       expect(batches[0]).toHaveLength(2);
-      expect(telemetry.bufferSize).toBe(0);
+      expect(tel.bufferSize).toBe(0);
     });
   });
 
@@ -196,12 +196,12 @@ describe("KernelTelemetry", () => {
   describe("flush()", () => {
     it("should drain the buffer to the transport", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "x" });
-      telemetry.capture({ type: "metric", name: "y", value: 10 });
+      tel.capture({ type: "event", name: "x" });
+      tel.capture({ type: "metric", name: "y", value: 10 });
 
-      telemetry.flush();
+      tel.flush();
 
       expect(batches).toHaveLength(1);
       expect(batches[0]).toHaveLength(2);
@@ -209,32 +209,32 @@ describe("KernelTelemetry", () => {
 
     it("should empty the buffer after flush", () => {
       const { transport } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "x" });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "x" });
+      tel.flush();
 
-      expect(telemetry.bufferSize).toBe(0);
+      expect(tel.bufferSize).toBe(0);
     });
 
     it("should do nothing when buffer is already empty", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.flush();
+      tel.flush();
 
       expect(batches).toHaveLength(0);
     });
 
     it("should send all buffered entries as a single batch", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "one" });
-      telemetry.capture({ type: "event", name: "two" });
-      telemetry.capture({ type: "event", name: "three" });
+      tel.capture({ type: "event", name: "one" });
+      tel.capture({ type: "event", name: "two" });
+      tel.capture({ type: "event", name: "three" });
 
-      telemetry.flush();
+      tel.flush();
 
       // Exactly one call to transport.send with all three entries
       expect(batches).toHaveLength(1);
@@ -256,7 +256,7 @@ describe("KernelTelemetry", () => {
       await transport.send(batch);
 
       // console.log is mocked in tests/setup.ts
-      expect(console.log).toHaveBeenCalledWith("[telemetry]", batch);
+      expect(console.log).toHaveBeenCalledWith("[tel]", batch);
     });
   });
 
@@ -301,10 +301,10 @@ describe("KernelTelemetry", () => {
   describe("custom transport", () => {
     it("should accept a custom transport via config", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "custom" });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "custom" });
+      tel.flush();
 
       expect(batches).toHaveLength(1);
       expect(batches[0][0].name).toBe("custom");
@@ -312,13 +312,13 @@ describe("KernelTelemetry", () => {
 
     it("should receive all entries in the batch on flush", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "a" });
-      telemetry.capture({ type: "metric", name: "b", value: 99 });
-      telemetry.capture({ type: "error", name: "c", error: { message: "fail" } });
+      tel.capture({ type: "event", name: "a" });
+      tel.capture({ type: "metric", name: "b", value: 99 });
+      tel.capture({ type: "error", name: "c", error: { message: "fail" } });
 
-      telemetry.flush();
+      tel.flush();
 
       expect(batches).toHaveLength(1);
       expect(batches[0]).toHaveLength(3);
@@ -329,13 +329,13 @@ describe("KernelTelemetry", () => {
 
     it("should receive separate batches for separate flushes", () => {
       const { transport, batches } = createMockTransport();
-      const telemetry = new KernelTelemetryImpl({ transport });
+      const tel = new KernelTelemetryImpl({ transport });
 
-      telemetry.capture({ type: "event", name: "first-batch" });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "first-batch" });
+      tel.flush();
 
-      telemetry.capture({ type: "event", name: "second-batch" });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "second-batch" });
+      tel.flush();
 
       expect(batches).toHaveLength(2);
       expect(batches[0][0].name).toBe("first-batch");
@@ -354,12 +354,12 @@ describe("KernelTelemetry", () => {
           throw new Error("sync boom");
         },
       };
-      const telemetry = new KernelTelemetryImpl({ transport });
-      telemetry.capture({ type: "event", name: "x" });
+      const tel = new KernelTelemetryImpl({ transport });
+      tel.capture({ type: "event", name: "x" });
 
-      expect(() => telemetry.flush()).not.toThrow();
+      expect(() => tel.flush()).not.toThrow();
       expect(errSpy).toHaveBeenCalled();
-      expect(telemetry.bufferSize).toBe(0); // batch was still drained
+      expect(tel.bufferSize).toBe(0); // batch was still drained
 
       errSpy.mockRestore();
     });
@@ -369,10 +369,10 @@ describe("KernelTelemetry", () => {
       const transport: TelemetryTransport = {
         send: () => Promise.reject(new Error("async boom")),
       };
-      const telemetry = new KernelTelemetryImpl({ transport });
-      telemetry.capture({ type: "event", name: "x" });
+      const tel = new KernelTelemetryImpl({ transport });
+      tel.capture({ type: "event", name: "x" });
 
-      expect(() => telemetry.flush()).not.toThrow();
+      expect(() => tel.flush()).not.toThrow();
 
       // Let the rejection settle so the .catch handler runs.
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -387,28 +387,28 @@ describe("KernelTelemetry", () => {
   // ---------------------------------------------------------------
   describe("default config", () => {
     it("should default maxBufferSize to 500", () => {
-      const telemetry = new KernelTelemetryImpl();
+      const tel = new KernelTelemetryImpl();
 
       // Fill up to 500 without overflow
       for (let i = 0; i < 500; i++) {
-        telemetry.capture({ type: "event", name: `e${i}` });
+        tel.capture({ type: "event", name: `e${i}` });
       }
-      expect(telemetry.bufferSize).toBe(500);
+      expect(tel.bufferSize).toBe(500);
 
       // 501st should trigger overflow, keeping size at 500
-      telemetry.capture({ type: "event", name: "overflow" });
-      expect(telemetry.bufferSize).toBe(500);
+      tel.capture({ type: "event", name: "overflow" });
+      expect(tel.bufferSize).toBe(500);
     });
 
     it("should default transport to ConsoleTelemetryTransport", () => {
-      const telemetry = new KernelTelemetryImpl();
+      const tel = new KernelTelemetryImpl();
 
-      telemetry.capture({ type: "event", name: "default-transport-test" });
-      telemetry.flush();
+      tel.capture({ type: "event", name: "default-transport-test" });
+      tel.flush();
 
       // console.log is mocked in setup.ts — verify it was called by the default transport
       expect(console.log).toHaveBeenCalledWith(
-        "[telemetry]",
+        "[tel]",
         expect.arrayContaining([
           expect.objectContaining({ type: "event", name: "default-transport-test" }),
         ])

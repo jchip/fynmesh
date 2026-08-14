@@ -15,7 +15,7 @@ import { getFederation } from "../util";
 export interface ManifestMeta {
   name: string;
   version: string;
-  manifestUrl: string;
+  url: string;
   distBase: string;
 }
 
@@ -25,220 +25,174 @@ export interface ResolvedManifest {
   manifest: FynAppManifest;
 }
 
-export class ManifestResolver {
-  protected telemetry: KernelTelemetry;
-  #registryResolver?: RegistryResolver;
-  private manifestCache: Map<string, FynAppManifest> = new Map();
-  private nodeMeta: Map<string, ManifestMeta> = new Map();
-  #preloadedEntries: Map<string, number> = new Map();
-  #preloadCallback?: (url: string, depth: number) => void;
+export interface DependencyGraph {
+  nodes: Set<string>;
+  adj: Map<string, Set<string>>;
+  indegree: Map<string, number>;
+}
 
-  constructor(telemetry?: KernelTelemetry) {
-    this.telemetry = telemetry ?? noOpTelemetry;
-  }
+export interface ManifestResolver {
+  /** Resolved manifests keyed by `name@version`. */
+  manifestCache: Map<string, FynAppManifest>;
+  /** Per-package metadata gathered while walking the dependency graph. */
+  nodeMeta: Map<string, ManifestMeta>;
+  setRegistryResolver(resolver: RegistryResolver): void;
+  setPreloadCallback(callback: (url: string, depth: number) => void): void;
+  /** Preload the entry file of each requested FynApp, before the dependency
+   * graph is built, so the first batch starts fetching in parallel. */
+  warmPreload(requests: Array<{ name: string; range?: string }>): Promise<void>;
+  getDistBase(res: RegistryResolverResult): string;
+  resolveAndFetch(name: string, range?: string): Promise<ResolvedManifest>;
+  buildGraph(requests: Array<{ name: string; range?: string }>): Promise<DependencyGraph>;
+  topoBatches(graph: DependencyGraph): string[][];
+}
 
-  /**
-   * Install a registry resolver (browser: demo server paths)
-   */
-  setRegistryResolver(resolver: RegistryResolver): void {
-    this.#registryResolver = resolver;
-  }
+/**
+ * Built as a closure over its state rather than a class.
+ *
+ * The state is per-instance and entirely private, and every helper below is
+ * reachable only from within — which is exactly the shape a minifier can act
+ * on. Class members can never be renamed below their declared name, inlined, or
+ * dropped when unused; closure variables are renamed to one character, and
+ * single-use helpers get inlined away entirely. The methods that remain on the
+ * returned object are only those the kernel and the tests call.
+ *
+ * The cast keeps `new ManifestResolver(tel)` working and correctly typed
+ * at every existing call site: calling a function with `new` evaluates to the
+ * object it returns.
+ */
+export const ManifestResolver = function (telemetry?: KernelTelemetry): ManifestResolver {
+  const tel = telemetry ?? noOpTelemetry;
+  const manifestCache = new Map<string, FynAppManifest>();
+  const nodeMeta = new Map<string, ManifestMeta>();
+  const preloadedEntries = new Map<string, number>();
+  let registryResolver: RegistryResolver | undefined;
+  let preloadCallback: ((url: string, depth: number) => void) | undefined;
 
-  /**
-   * Set callback for preloading entry files
-   */
-  setPreloadCallback(callback: (url: string, depth: number) => void): void {
-    this.#preloadCallback = callback;
-  }
+  const calculateDistBase = (res: RegistryResolverResult): string =>
+    res.distBase || new URL(res.url, location.href).pathname.replace(/\/[^/]*$/, "/");
 
-  /**
-   * Get the current preload callback
-   */
-  getPreloadCallback(): ((url: string, depth: number) => void) | undefined {
-    return this.#preloadCallback;
-  }
-
-  /**
-   * Get the current registry resolver
-   */
-  getRegistryResolver(): RegistryResolver | undefined {
-    return this.#registryResolver;
-  }
-
-  /**
-   * Calculate distBase from resolver result (public API)
-   */
-  getDistBase(res: RegistryResolverResult): string {
-    return this.#calculateDistBase(res);
-  }
-
-  /**
-   * Preload an entry file (with deduplication and depth tracking)
-   * @private
-   */
-  #preloadEntryFile(name: string, distBase: string, depth: number): void {
+  /** Preload an entry file, deduplicated by URL and tracking its depth. */
+  const preloadEntryFile = (distBase: string, depth: number): void => {
     const entryUrl = `${distBase}fynapp-entry.js`;
-
-    // Use Map to track both URL and depth for deduplication
-    if (this.#preloadedEntries.has(entryUrl)) {
-      return; // Already preloaded
+    if (preloadedEntries.has(entryUrl)) {
+      return;
     }
-
-    this.#preloadedEntries.set(entryUrl, depth);
-
-    if (this.#preloadCallback) {
+    preloadedEntries.set(entryUrl, depth);
+    if (preloadCallback) {
       console.debug(`⚡ Preloading entry file: ${entryUrl} (depth: ${depth})`);
-      this.#preloadCallback(entryUrl, depth);
+      preloadCallback(entryUrl, depth);
     }
-  }
+  };
+
+  const updateNodeMeta = (
+    key: string,
+    res: RegistryResolverResult,
+    manifest: FynAppManifest,
+  ): void => {
+    nodeMeta.set(key, {
+      name: res.name,
+      version: manifest.version || res.version,
+      url: res.url,
+      distBase: calculateDistBase(res),
+    });
+  };
+
+  /** Emit the resolve.duration metric and resolved event for a completed resolution. */
+  const reportResolved = (t0: number, name: string, version: string | undefined): void => {
+    tel.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
+    captureEvent(tel, "resolved", { name, version });
+  };
 
   /**
-   * Get metadata for a resolved package
+   * Cache a freshly obtained manifest under its resolved key and report it.
+   * Shared by the embedded-manifest and fetched-manifest paths, which differ
+   * only in where the manifest came from.
    */
-  getNodeMeta(key: string): ManifestMeta | undefined {
-    return this.nodeMeta.get(key);
-  }
+  const cacheResolved = (
+    t0: number,
+    name: string,
+    res: RegistryResolverResult,
+    manifest: FynAppManifest,
+  ): ResolvedManifest => {
+    const version = manifest.version || res.version;
+    const key = `${res.name}@${version}`;
+    manifestCache.set(key, manifest);
+    updateNodeMeta(key, res, manifest);
+    reportResolved(t0, name, version);
+    return { key, res, manifest };
+  };
 
-  /**
-   * Get all node metadata
-   */
-  getAllNodeMeta(): Map<string, ManifestMeta> {
-    return this.nodeMeta;
-  }
-
-  /**
-   * Clear caches
-   */
-  clearCache(): void {
-    this.manifestCache.clear();
-    this.nodeMeta.clear();
-    this.#preloadedEntries.clear();
-  }
-
-  /**
-   * Fetch JSON from URL
-   * @private
-   */
-  async #fetchJson(url: string): Promise<any> {
+  const fetchJson = async (url: string): Promise<any> => {
     const res = await fetch(url, { credentials: "same-origin" });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
     return res.json();
-  }
+  };
 
-  /**
-   * Calculate distBase from resolver result
-   * @private
-   */
-  #calculateDistBase(res: RegistryResolverResult): string {
-    return res.distBase ||
-      (new URL(res.manifestUrl, location.href)).pathname.replace(/\/[^/]*$/, "/");
-  }
-
-  /**
-   * Update node metadata with manifest info
-   * @private
-   */
-  #updateNodeMeta(
-    key: string,
-    res: RegistryResolverResult,
-    manifest: FynAppManifest
-  ): void {
-    const distBase = this.#calculateDistBase(res);
-    const finalVersion = manifest.version || res.version;
-
-    this.nodeMeta.set(key, {
-      name: res.name,
-      version: finalVersion,
-      manifestUrl: res.manifestUrl,
-      distBase
-    });
-  }
-
-  /**
-   * Emit the resolve.duration metric and resolved event for a completed resolution.
-   */
-  #reportResolved(t0: number, name: string, version: string | undefined): void {
-    this.telemetry.capture({ type: "metric", name: "resolve.duration", value: Date.now() - t0, data: { name } });
-    captureEvent(this.telemetry, "resolved", { name, version });
-  }
-
-  /**
-   * Resolve and fetch a manifest with caching
-   */
-  async resolveAndFetch(name: string, range?: string): Promise<ResolvedManifest> {
+  const resolveAndFetch = async (name: string, range?: string): Promise<ResolvedManifest> => {
     const t0 = Date.now();
-    if (!this.#registryResolver) {
+    if (!registryResolver) {
       throw new Error("No registry resolver configured");
     }
-    
-    const res = await this.#registryResolver(name, range);
-    
+
+    const res = await registryResolver(name, range);
+
     // Optimize: Create final key once and check cache
     const resolvedVersion = res.version;
     const cacheKey = `${res.name}@${resolvedVersion}`;
-    const cached = this.manifestCache.get(cacheKey);
-    
+    const cached = manifestCache.get(cacheKey);
+
     if (cached) {
       // Fast path: already cached
-      this.#updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
-      this.#reportResolved(t0, name, cached.version || resolvedVersion);
+      updateNodeMeta(cacheKey, { ...res, version: resolvedVersion }, cached);
+      reportResolved(t0, name, cached.version || resolvedVersion);
       return { key: cacheKey, res, manifest: cached };
     }
-
-    let manifest: FynAppManifest;
 
     // Try to extract embedded manifest from entry file first (zero HTTP overhead)
     // Use Federation.import() to load the SystemJS module and extract the manifest export
     try {
-      const Federation = getFederation();
-      const entryUrl = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
-      const entryModule = await Federation.import(entryUrl);
+      const entryUrl = res.url.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
+      const entryModule = await getFederation().import(entryUrl);
       if (entryModule && entryModule.__FYNAPP_MANIFEST__) {
-        manifest = entryModule.__FYNAPP_MANIFEST__;
-        const key = `${res.name}@${manifest.version || res.version}`;
-        this.manifestCache.set(key, manifest);
-        this.#updateNodeMeta(key, res, manifest);
-        this.#reportResolved(t0, name, manifest.version || res.version);
-        return { key, res, manifest };
+        return cacheResolved(t0, name, res, entryModule.__FYNAPP_MANIFEST__);
       }
     } catch (embeddedErr) {
       // Entry module doesn't exist or doesn't have embedded manifest, fall back to fetching
     }
 
+    let manifest: FynAppManifest;
     try {
-      manifest = await this.#fetchJson(res.manifestUrl);
+      manifest = await fetchJson(res.url);
     } catch (err1) {
       try {
         // fallback to federation.json in same dist
-        const fallback = res.manifestUrl.replace(/fynapp\.manifest\.json$/, "federation.json");
-        manifest = await this.#fetchJson(fallback);
+        manifest = await fetchJson(
+          res.url.replace(/fynapp\.manifest\.json$/, "federation.json"),
+        );
       } catch (err2) {
         // demo fallback: synthesize an empty manifest (no requires) and proceed
         manifest = { name, version: res.version, requires: [] };
       }
     }
-    
-    const key = `${res.name}@${manifest.version || res.version}`;
-    this.manifestCache.set(key, manifest);
-    this.#updateNodeMeta(key, res, manifest);
-    this.#reportResolved(t0, name, manifest.version || res.version);
-    return { key, res, manifest };
-  }
 
-  /**
-   * Build dependency graph by resolving manifests recursively
-   */
-  async buildGraph(requests: Array<{ name: string; range?: string }>): Promise<{
-    nodes: Set<string>;
-    adj: Map<string, Set<string>>;
-    indegree: Map<string, number>;
-  }> {
+    return cacheResolved(t0, name, res, manifest);
+  };
+
+  const buildGraph = async (
+    requests: Array<{ name: string; range?: string }>,
+  ): Promise<DependencyGraph> => {
     const adj = new Map<string, Set<string>>();
     const indegree = new Map<string, number>();
     const nodes = new Set<string>();
 
-    const visit = async (name: string, range?: string, parentKey?: string, depth: number = 0): Promise<string> => {
-      const { key, manifest } = await this.resolveAndFetch(name, range);
+    const visit = async (
+      name: string,
+      range?: string,
+      parentKey?: string,
+      depth: number = 0,
+    ): Promise<string> => {
+      const { key, manifest } = await resolveAndFetch(name, range);
       const isNewNode = !nodes.has(key);
 
       if (isNewNode) {
@@ -261,15 +215,17 @@ export class ManifestResolver {
         return key;
       }
 
-      // Process explicit requires field
-      const requires = manifest.requires || [];
-      for (const req of requires) {
-        // Preload dependency entry file before visiting
-        const reqRes = await this.#registryResolver!(req.name, req.range);
-        const reqDistBase = this.#calculateDistBase(reqRes);
-        this.#preloadEntryFile(req.name, reqDistBase, depth + 1);
+      // Preload a dependency's entry file, then walk into it. The three
+      // dependency sources below differ only in where they get the name and
+      // semver from; everything after that is identical.
+      const visitDep = async (depName: string, semver?: string): Promise<void> => {
+        preloadEntryFile(calculateDistBase(await registryResolver!(depName, semver)), depth + 1);
+        await visit(depName, semver, key, depth + 1);
+      };
 
-        await visit(req.name, req.range, key, depth + 1);
+      // Process explicit requires field
+      for (const req of manifest.requires || []) {
+        await visitDep(req.name, req.range);
       }
 
       // Process import-exposed dependencies (middleware providers, component libraries, etc.)
@@ -287,13 +243,7 @@ export class ManifestResolver {
               }
             }
           }
-          // Preload dependency entry file before visiting
-          const importRes = await this.#registryResolver!(packageName, semver);
-          const importDistBase = this.#calculateDistBase(importRes);
-          this.#preloadEntryFile(packageName, importDistBase, depth + 1);
-
-          // Visit this package as a dependency
-          await visit(packageName, semver, key, depth + 1);
+          await visitDep(packageName, semver);
         }
       }
 
@@ -308,13 +258,7 @@ export class ManifestResolver {
             semver = providerInfo.semver as string;
           }
           console.debug(`  → Loading shared provider: ${packageName}@${semver || 'latest'}`);
-          // Preload dependency entry file before visiting
-          const sharedRes = await this.#registryResolver!(packageName, semver);
-          const sharedDistBase = this.#calculateDistBase(sharedRes);
-          this.#preloadEntryFile(packageName, sharedDistBase, depth + 1);
-
-          // Visit this package as a dependency
-          await visit(packageName, semver, key, depth + 1);
+          await visitDep(packageName, semver);
         }
       }
 
@@ -326,26 +270,19 @@ export class ManifestResolver {
     }
 
     console.debug('buildGraph completed, nodes:', Array.from(nodes));
-    captureEvent(this.telemetry, "graph.built", { nodes: nodes.size });
+    captureEvent(tel, "graph.built", { nodes: nodes.size });
     return { nodes, adj, indegree };
-  }
+  };
 
-  /**
-   * Calculate topological batches for parallel loading
-   */
-  topoBatches(graph: { 
-    nodes: Set<string>; 
-    adj: Map<string, Set<string>>; 
-    indegree: Map<string, number> 
-  }): string[][] {
+  const topoBatches = (graph: DependencyGraph): string[][] => {
     const { nodes, adj } = graph;
     const indegree = new Map(graph.indegree);
     const q: string[] = [];
-    
+
     for (const n of nodes) {
       if ((indegree.get(n) ?? 0) === 0) q.push(n);
     }
-    
+
     const order: string[] = [];
     const batches: string[][] = [];
 
@@ -370,5 +307,28 @@ export class ManifestResolver {
     }
 
     return batches;
-  }
-}
+  };
+
+  return {
+    // Exposed because the manifest-resolution tests seed and assert them
+    // directly; they are the caching behaviour those tests exist to cover.
+    manifestCache,
+    nodeMeta,
+    setRegistryResolver: (resolver) => {
+      registryResolver = resolver;
+    },
+    setPreloadCallback: (callback) => {
+      preloadCallback = callback;
+    },
+    async warmPreload(requests) {
+      if (!preloadCallback || !registryResolver) return;
+      for (const r of requests) {
+        preloadEntryFile(calculateDistBase(await registryResolver(r.name, r.range)), 0);
+      }
+    },
+    getDistBase: calculateDistBase,
+    resolveAndFetch,
+    buildGraph,
+    topoBatches,
+  };
+} as unknown as new (tel?: KernelTelemetry) => ManifestResolver;

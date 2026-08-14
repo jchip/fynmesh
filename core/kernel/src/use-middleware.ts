@@ -11,7 +11,7 @@ import type { MiddlewareUseMeta, FynUnit } from "./types.ts";
  * ```typescript
  * export const main = useMiddleware(
  *   [
- *     { middleware: import('pkg/middleware'), config: { theme: 'dark' } },
+ *     { mw: import('pkg/middleware'), config: { theme: 'dark' } },
  *   ],
  *   {
  *     execute(runtime) { return { type: 'component', component: MyComponent }; }

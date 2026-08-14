@@ -30,20 +30,20 @@ describe('KernelCore Deep Integration', () => {
             // Setup comprehensive middleware ecosystem
             const authMiddleware = createMockMiddleware('auth-provider');
             authMiddleware.regKey = 'security::auth-provider';
-            authMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            authMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            authMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            authMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(authMiddleware);
 
             const themeMiddleware = createMockMiddleware('theme-manager');
             themeMiddleware.regKey = 'ui::theme-manager';
-            themeMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            themeMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            themeMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            themeMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(themeMiddleware);
 
             const loggingMiddleware = createMockMiddleware('logger');
             loggingMiddleware.regKey = 'observability::logger';
-            loggingMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            loggingMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            loggingMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            loggingMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(loggingMiddleware);
 
             // Create comprehensive FynApp entry
@@ -252,8 +252,8 @@ describe('KernelCore Deep Integration', () => {
             // Register one valid middleware
             const validMiddleware = createMockMiddleware('valid-middleware');
             validMiddleware.regKey = 'provider::valid-middleware';
-            validMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            validMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            validMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            validMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(validMiddleware);
 
             const mockEntry: FynAppEntry = {

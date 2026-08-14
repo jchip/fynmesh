@@ -143,7 +143,7 @@ export type BootstrapError = InstanceType<typeof BootstrapError>;
 
 /** Error for manifest resolution failures */
 export const ManifestError = defineErrorClass<{
-  manifestUrl?: string;
+  url?: string;
   packageName?: string;
 }>("ManifestError");
 export type ManifestError = InstanceType<typeof ManifestError>;

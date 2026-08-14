@@ -84,7 +84,7 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
         // Register state in the global registry
         counterState = registry.provide("basic-counter", data);
         console.debug(
-          `✅ fynapp-react-middleware: Basic counter state provided to global registry`,
+          `✅ fynapp-react-mw: Basic counter state provided to global registry`,
           Date.now()
         );
       }
@@ -103,7 +103,7 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
         cc.kernel.emitAsync(event);
       }
       console.debug(
-        `🔍 fynapp-react-middleware: Basic counter ready event dispatched now:`,
+        `🔍 fynapp-react-mw: Basic counter ready event dispatched now:`,
         Date.now()
       );
 
@@ -112,7 +112,7 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
       // CONSUMER MODE: Lookup the counter state from registry
 
       console.debug(
-        "🔍 fynapp-react-middleware: basic counter consumer looking up state",
+        "🔍 fynapp-react-mw: basic counter consumer looking up state",
         cc.runtime
       );
 
@@ -122,7 +122,7 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
       if (!counterState) {
         // Provider not ready yet - defer
         console.debug(
-          `⏳ fynapp-react-middleware: ${cc.fynApp.name} waiting for provider (consume-only mode)`
+          `⏳ fynapp-react-mw: ${cc.fynApp.name} waiting for provider (consume-only mode)`
         );
         return { status: "defer" };
       }
@@ -141,7 +141,7 @@ export const __middleware__BasicCounter: FynAppMiddleware = {
         cc.kernel.emitAsync(event);
       }
       console.debug(
-        `🔍 fynapp-react-middleware: Basic counter ready event dispatched for consumer now:`,
+        `🔍 fynapp-react-mw: Basic counter ready event dispatched for consumer now:`,
         Date.now()
       );
 

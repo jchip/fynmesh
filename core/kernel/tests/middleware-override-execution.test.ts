@@ -28,7 +28,7 @@ describe("MiddlewareExecutor degraded execution", () => {
       regKey: "fynapp-react-middleware::basic-counter",
       fullKey: "fynapp-react-middleware@1.0.0::basic-counter",
       hostFynApp: { name: "fynapp-react-middleware", version: "1.0.0", middlewareContext: new Map() },
-      middleware: { name: "basic-counter", setup, apply },
+      mw: { name: "basic-counter", setup, apply },
     };
 
     const cc: any = {
@@ -64,7 +64,7 @@ describe("MiddlewareExecutor degraded execution", () => {
 
 describe("ModuleLoader override execution context", () => {
   it("provides kernel reference to override middleware context", async () => {
-    const moduleLoader = new ModuleLoader();
+    const loader = new ModuleLoader();
 
     const fynApp: any = {
       name: "test-app",
@@ -88,14 +88,14 @@ describe("ModuleLoader override execution context", () => {
       overrideExecute,
     };
 
-    const autoApplyMiddlewares = {
+    const autoApply = {
       fynapp: [
         {
-          middleware: overrideMiddleware,
+          mw: overrideMiddleware,
           hostFynApp: { name: "shell-middleware-provider", version: "1.0.0" },
         },
       ],
-      middleware: [],
+      mw: [],
     };
 
     // Mock kernel object
@@ -104,7 +104,7 @@ describe("ModuleLoader override execution context", () => {
       events: { on: vi.fn(), dispatchEvent: vi.fn() },
     };
 
-    await moduleLoader.invokeFynUnit(fynUnit, fynApp, autoApplyMiddlewares, mockKernel);
+    await loader.invokeFynUnit(fynUnit, fynApp, autoApply, mockKernel);
 
     expect(overrideExecute).toHaveBeenCalledTimes(1);
     expect(capturedContext).not.toBeNull();
@@ -115,7 +115,7 @@ describe("ModuleLoader override execution context", () => {
   });
 
   it("passes kernel to non-override execution path", async () => {
-    const moduleLoader = new ModuleLoader();
+    const loader = new ModuleLoader();
 
     const fynApp: any = {
       name: "test-app",
@@ -128,16 +128,16 @@ describe("ModuleLoader override execution context", () => {
     const fynUnit: any = { initialize, execute };
 
     // No override middleware
-    const autoApplyMiddlewares = {
+    const autoApply = {
       fynapp: [],
-      middleware: [],
+      mw: [],
     };
 
     const mockKernel: any = {
       version: "1.0.0",
     };
 
-    await moduleLoader.invokeFynUnit(fynUnit, fynApp, autoApplyMiddlewares, mockKernel);
+    await loader.invokeFynUnit(fynUnit, fynApp, autoApply, mockKernel);
 
     // Normal execution should proceed
     expect(initialize).toHaveBeenCalledTimes(1);

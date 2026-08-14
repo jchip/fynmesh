@@ -162,7 +162,7 @@ export function createMain(config: FynApp1Config, imports: AppImports) {
     [
       {
         // @ts-ignore - TS can't understand module federation remote containers
-        middleware: import(
+        mw: import(
           "fynapp-react-middleware/main/basic-counter",
           // @ts-ignore
           { with: { type: "fynapp-middleware" } }
@@ -171,7 +171,7 @@ export function createMain(config: FynApp1Config, imports: AppImports) {
       },
       {
         // @ts-ignore - TS can't understand module federation remote containers
-        middleware: import(
+        mw: import(
           "fynapp-design-tokens/middleware/design-tokens/design-tokens",
           // @ts-ignore
           { with: { type: "fynapp-middleware" } }

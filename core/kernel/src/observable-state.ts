@@ -42,11 +42,6 @@ export class ObservableState<T> {
     return () => this.#observers.delete(fn);
   }
 
-  /** Check if state is disposed */
-  isDisposed(): boolean {
-    return this.#disposed;
-  }
-
   /** Dispose state and clear all observers */
   dispose(): void {
     this.#disposed = true;

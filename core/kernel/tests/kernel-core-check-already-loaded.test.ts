@@ -32,7 +32,7 @@ describe('FynMeshKernelCore.checkAlreadyLoaded', () => {
 
   beforeEach(() => {
     kernel = new TestKernel();
-    kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+    kernel.initRunTime({ apps: {}, middlewares: {} });
   });
 
   it('should return null when no matching app is loaded', () => {
@@ -46,7 +46,7 @@ describe('FynMeshKernelCore.checkAlreadyLoaded', () => {
 
   it('should return existing app when name@version key matches', () => {
     const fynApp = createTestFynApp('my-app', '2.0.0');
-    kernel['runTime'].appsLoaded['my-app@2.0.0'] = fynApp;
+    kernel['runTime'].apps['my-app@2.0.0'] = fynApp;
 
     const entry = {
       container: { name: 'my-app', version: '2.0.0', $E: {} },
@@ -58,7 +58,7 @@ describe('FynMeshKernelCore.checkAlreadyLoaded', () => {
 
   it('should return existing app when only name matches (no version)', () => {
     const fynApp = createTestFynApp('my-app', '1.0.0');
-    kernel['runTime'].appsLoaded['my-app'] = fynApp;
+    kernel['runTime'].apps['my-app'] = fynApp;
 
     const entry = {
       container: { name: 'my-app', $E: {} },
@@ -70,7 +70,7 @@ describe('FynMeshKernelCore.checkAlreadyLoaded', () => {
 
   it('should return null when name exists but version differs', () => {
     const fynApp = createTestFynApp('my-app', '1.0.0');
-    kernel['runTime'].appsLoaded['my-app@1.0.0'] = fynApp;
+    kernel['runTime'].apps['my-app@1.0.0'] = fynApp;
 
     const entry = {
       container: { name: 'my-app', version: '2.0.0', $E: {} },
@@ -92,8 +92,8 @@ describe('FynMeshKernelCore.checkAlreadyLoaded', () => {
   it('should prefer versioned key over unversioned', () => {
     const fynApp1 = createTestFynApp('my-app', '1.0.0');
     const fynApp2 = createTestFynApp('my-app', '2.0.0');
-    kernel['runTime'].appsLoaded['my-app@1.0.0'] = fynApp1;
-    kernel['runTime'].appsLoaded['my-app@2.0.0'] = fynApp2;
+    kernel['runTime'].apps['my-app@1.0.0'] = fynApp1;
+    kernel['runTime'].apps['my-app@2.0.0'] = fynApp2;
 
     const entry = {
       container: { name: 'my-app', version: '2.0.0', $E: {} },
@@ -110,14 +110,14 @@ describe('BrowserKernel uses checkAlreadyLoaded', () => {
 
   beforeEach(() => {
     kernel = new BrowserKernel();
-    kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+    kernel.initRunTime({ apps: {}, middlewares: {} });
     (globalThis as any).Federation = mockFederation;
     vi.clearAllMocks();
   });
 
   it('should return existing instance for already-loaded app', async () => {
     const existingApp = createTestFynApp('dup-app', '1.0.0');
-    kernel['runTime'].appsLoaded['dup-app@1.0.0'] = existingApp;
+    kernel['runTime'].apps['dup-app@1.0.0'] = existingApp;
 
     mockFederation.import.mockResolvedValue({
       container: { name: 'dup-app', version: '1.0.0', $E: {} },
@@ -133,7 +133,7 @@ describe('NodeKernel uses checkAlreadyLoaded', () => {
 
   beforeEach(() => {
     kernel = new NodeKernel();
-    kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+    kernel.initRunTime({ apps: {}, middlewares: {} });
     vi.clearAllMocks();
   });
 

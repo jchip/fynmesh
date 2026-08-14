@@ -24,9 +24,9 @@ import {
 export interface MiddlewareExecutionOptions {
   signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>;
   providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void;
-  autoApplyMiddlewares?: {
+  autoApply?: {
     fynapp: FynAppMiddlewareReg[];
-    middleware: FynAppMiddlewareReg[];
+    mw: FynAppMiddlewareReg[];
   };
   skipFynUnit?: boolean;
 }
@@ -53,72 +53,132 @@ function deferKeyOf(ccs: FynAppMiddlewareCallContext[]): string {
     .join("|");
 }
 
-export class MiddlewareExecutor {
-  protected telemetry: KernelTelemetry;
-  private middlewareReady: Map<string, any> = new Map();
-  private deferInvoke: DeferredGroup[] = [];
+/**
+ * Turn a value thrown by middleware into a logged `MiddlewareError`.
+ *
+ * Every auto-apply failure site built the same thing by hand: the same
+ * `instanceof Error` narrowing twice over (once for the message, once for the
+ * cause), the same three-key context off `mwReg`, and the same `❌` log line.
+ * Only the code and the summary ever differed, so those are the parameters.
+ */
+function middlewareFailure(
+  code: KernelErrorCode,
+  summary: string,
+  mwReg: FynAppMiddlewareReg,
+  fynApp: FynApp,
+  error: unknown
+): MiddlewareError {
+  const cause = error instanceof Error ? error : undefined;
+  const mwError = new MiddlewareError(code, `${summary}: ${cause ? cause.message : String(error)}`, {
+    middlewareName: mwReg.mw.name,
+    provider: mwReg.hostFynApp.name,
+    fynAppName: fynApp.name,
+    cause,
+  });
+  console.error(`❌ ${mwError.message}`);
+  return mwError;
+}
+
+export interface MiddlewareExecutor {
+  /** Ready middlewares by fullKey, with the share each published. Exposed for
+   * the executor tests, which assert on defer/ready bookkeeping directly. */
+  middlewareReady: Map<string, any>;
+  deferInvoke: DeferredGroup[];
+  setMiddlewareReady(fullKey: string, share: any): void;
+  checkSingleMiddlewareReady(cc: FynAppMiddlewareCallContext): boolean;
+  checkMiddlewareReady(ccs: FynAppMiddlewareCallContext[]): boolean;
+  checkDeferCalls(status: string, ccs: FynAppMiddlewareCallContext[]): string;
+  processReadyMiddleware(readyKey: string, share: any): { resumes: DeferredGroup[] };
+  callMiddlewares(
+    ccs: FynAppMiddlewareCallContext[],
+    options?: MiddlewareExecutionOptions,
+    tries?: number,
+  ): Promise<string>;
+  useMiddlewareOnFynUnit(
+    fynUnit: FynUnit,
+    fynApp: FynApp,
+    kernel: FynMeshKernel,
+    createRuntime: () => FynUnitRuntime,
+    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
+    autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] },
+  ): Promise<string>;
+  applyAutoScopeMiddlewares(
+    fynApp: FynApp,
+    fynUnit: FynUnit | undefined,
+    kernel: FynMeshKernel,
+    autoApply: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] } | undefined,
+    createRuntime: () => FynUnitRuntime,
+    signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
+  ): Promise<MiddlewareError[]>;
+  clear(): void;
+}
+
+/**
+ * Built as a closure over its state rather than a class — see the note on
+ * `ManifestResolver`. The defer bookkeeping is read on nearly every path, so
+ * making it closure state removes a property lookup from each one.
+ */
+export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): MiddlewareExecutor {
+  const tel = telemetry ?? noOpTelemetry;
+  const middlewareReady = new Map<string, any>();
+  let deferInvoke: DeferredGroup[] = [];
   /** Runtimes whose unit.initialize already ran — a deferred group resumes
    * with the same runtime and must not re-run it (FYM-144) */
-  #initializedRuntimes = new WeakSet<FynUnitRuntime>();
+  const initializedRuntimes = new WeakSet<FynUnitRuntime>();
 
-  constructor(telemetry?: KernelTelemetry) {
-    this.telemetry = telemetry ?? noOpTelemetry;
-  }
-
-  #markDeferResumeMode(ccs: FynAppMiddlewareCallContext[], resumeMode: "full" | "middleware_only"): void {
+  const markDeferResumeMode = (ccs: FynAppMiddlewareCallContext[], resumeMode: "full" | "middleware_only"): void => {
     const key = deferKeyOf(ccs);
-    for (const item of this.deferInvoke) {
+    for (const item of deferInvoke) {
       if (item.key === key) {
         item.resumeMode = resumeMode;
       }
     }
-  }
+  };
 
   /**
    * Set middleware as ready
    */
-  setMiddlewareReady(fullKey: string, share: any): void {
-    this.middlewareReady.set(fullKey, share);
-  }
+  const setMiddlewareReady = (fullKey: string, share: any): void => {
+    middlewareReady.set(fullKey, share);
+  };
 
   /**
    * Check if a single middleware is ready
    */
-  private checkSingleMiddlewareReady(cc: FynAppMiddlewareCallContext): boolean {
-    if (this.middlewareReady.has(cc.reg.fullKey)) {
-      cc.runtime.share = this.middlewareReady.get(cc.reg.fullKey);
+  const checkSingleMiddlewareReady = (cc: FynAppMiddlewareCallContext): boolean => {
+    if (middlewareReady.has(cc.reg.fullKey)) {
+      cc.runtime.share = middlewareReady.get(cc.reg.fullKey);
       cc.status = "ready";
       return true;
     }
     return false;
-  }
+  };
 
   /**
-   * Check if all middlewares in the list are ready
+   * Check if all middlewares in the list are ready.
+   *
+   * Mapped before testing rather than `every`: checkSingleMiddlewareReady also
+   * stamps status and share onto each context, so every one must be visited —
+   * short-circuiting would leave later contexts unrefreshed.
    */
-  private checkMiddlewareReady(ccs: FynAppMiddlewareCallContext[]): string {
-    let status = "ready";
-    for (const cc of ccs) {
-      if (!this.checkSingleMiddlewareReady(cc)) {
-        status = "defer";
-      }
-    }
-    return status;
-  }
+  const checkMiddlewareReady = (ccs: FynAppMiddlewareCallContext[]): boolean => {
+    return ccs.map((cc) => checkSingleMiddlewareReady(cc)).every(Boolean);
+  };
 
   /**
    * Check and handle deferred calls
    */
-  private checkDeferCalls(status: string, ccs: FynAppMiddlewareCallContext[]): string {
+  const checkDeferCalls = (status: string, ccs: FynAppMiddlewareCallContext[]): string => {
     if (status === "defer") {
-      if (this.checkMiddlewareReady(ccs) === "ready") {
+      if (checkMiddlewareReady(ccs)) {
         return "retry";
       }
       // Dedupe: avoid pushing identical pending groups
       const incomingKey = deferKeyOf(ccs);
-      const exists = this.deferInvoke.some((d) => d.key === incomingKey);
+      const exists = deferInvoke.some((d) => d.key === incomingKey);
       if (!exists) {
-        this.deferInvoke.push({
+        deferInvoke.push({
           callContexts: ccs,
           resumeMode: "full",
           key: incomingKey,
@@ -127,65 +187,52 @@ export class MiddlewareExecutor {
       return "defer";
     }
     return "ready";
-  }
+  };
 
   /**
    * Process ready middlewares when one becomes ready
    */
-  processReadyMiddleware(
+  const processReadyMiddleware = (
     readyKey: string,
     share: any
-  ): { resumes: DeferredGroup[] } {
-    this.setMiddlewareReady(readyKey, share);
+  ): { resumes: DeferredGroup[] } => {
+    setMiddlewareReady(readyKey, share);
 
-    // Optimized: Use a Map to track ready status instead of O(n²) loops
-    const resumeIndices: number[] = [];
-
-    for (let i = 0; i < this.deferInvoke.length; i++) {
-      const { callContexts } = this.deferInvoke[i];
-      let allReady = true;
-
-      for (const deferCC of callContexts) {
-        if (deferCC.reg.fullKey === readyKey) {
-          deferCC.runtime.share = share;
-          deferCC.status = "ready";
-        }
-        // Check if all contexts are ready
-        if (deferCC.status !== "ready" && deferCC.status !== "skip") {
-          allReady = false;
-        }
-      }
-
-      if (allReady) {
-        resumeIndices.push(i);
-      }
-    }
-
-    // Process resumes and clean up in reverse order to maintain indices
+    // Partition the parked groups into those now fully ready and those still
+    // waiting. The previous version collected indices, spliced them out back to
+    // front to keep the indices valid, then reversed the result to undo that —
+    // three passes and an index dance to express one filter.
     const resumes: DeferredGroup[] = [];
-    if (resumeIndices.length > 0) {
-      for (let i = resumeIndices.length - 1; i >= 0; i--) {
-        const idx = resumeIndices[i];
-        resumes.push(this.deferInvoke[idx]);
-        this.deferInvoke.splice(idx, 1);
-      }
-      // Resume in original order
-      resumes.reverse();
+    const waiting: DeferredGroup[] = [];
+
+    for (const group of deferInvoke) {
+      const allReady = group.callContexts
+        .map((deferCC) => {
+          if (deferCC.reg.fullKey === readyKey) {
+            deferCC.runtime.share = share;
+            deferCC.status = "ready";
+          }
+          return deferCC.status === "ready" || deferCC.status === "skip";
+        })
+        .every(Boolean);
+
+      (allReady ? resumes : waiting).push(group);
     }
 
+    deferInvoke = waiting;
     return { resumes };
-  }
+  };
 
   /**
    * Validate retry count and throw if exceeded
    */
-  #validateRetryCount(ccs: FynAppMiddlewareCallContext[], tries: number): void {
+  const validateRetryCount = (ccs: FynAppMiddlewareCallContext[], tries: number): void => {
     if (tries > 1) {
       const mwError = new MiddlewareError(
         KernelErrorCode.MIDDLEWARE_SETUP_FAILED,
         `Middleware setup failed after 2 tries for ${ccs.map(cc => cc.reg.regKey).join(", ")}`,
         {
-          middlewareName: ccs[0]?.reg.middleware.name,
+          middlewareName: ccs[0]?.reg.mw.name,
           provider: ccs[0]?.reg.hostFynApp.name,
           fynAppName: ccs[0]?.fynApp.name,
         }
@@ -193,32 +240,32 @@ export class MiddlewareExecutor {
       console.error(`🚨 ${mwError.message}`);
       throw mwError;
     }
-  }
+  };
 
   /**
    * Run middleware setup phase and signal readiness
    * @returns {{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }}
    */
-  async #setupMiddlewares(
+  const setupMiddlewares = async (
     ccs: FynAppMiddlewareCallContext[],
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
-  ): Promise<{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }> {
+  ): Promise<{ middlewareSetupStatus: string; hasDeferredMiddleware: boolean }> => {
     let middlewareSetupStatus = "ready";
     let hasDeferredMiddleware = false;
 
     for (const cc of ccs) {
       const { fynApp, reg } = cc;
-      const mw = reg.middleware;
+      const mw = reg.mw;
       // Checked per context here rather than for the whole group up front: the
       // bulk pass discarded its result and only marked contexts ready, which
       // this call redoes for each one anyway — and does so later, after earlier
       // setups have had a chance to signal readiness, so it is never staler.
-      this.checkSingleMiddlewareReady(cc);
+      checkSingleMiddlewareReady(cc);
       if (mw.setup) {
         console.debug("🚀 Invoking middleware", reg.regKey, "setup for", fynApp.name, fynApp.version);
         const result = await mw.setup(cc);
-        captureEvent(this.telemetry, "setup.completed", { middleware: reg.regKey, app: fynApp.name });
-        if (result?.status === "ready" && !this.middlewareReady.has(cc.reg.fullKey)) {
+        captureEvent(tel, "setup.completed", { mw: reg.regKey, app: fynApp.name });
+        if (result?.status === "ready" && !middlewareReady.has(cc.reg.fullKey)) {
           if (signalReady) {
             await signalReady(cc, result?.share);
           }
@@ -231,77 +278,77 @@ export class MiddlewareExecutor {
         // ready map and refreshes deferred contexts, but not this in-flight
         // cc — refresh it so this first pass's applyReadyMiddlewares and
         // runtime.share see the readiness (FYM-143)
-        this.checkSingleMiddlewareReady(cc);
+        checkSingleMiddlewareReady(cc);
       }
     }
 
     return { middlewareSetupStatus, hasDeferredMiddleware };
-  }
+  };
 
   /**
    * Initialize the FynUnit and handle provider mode registration
    * @returns {{ allowDegraded: boolean; deferResult: string | null }} where deferResult is non-null if the caller should return early
    */
-  async #initializeFynUnit(
+  const initializeFynUnit = async (
     ccs: FynAppMiddlewareCallContext[],
     fynUnit: FynUnit,
     fynApp: FynApp,
     runtime: FynUnitRuntime,
     providerModeRegistrar?: (fynAppName: string, middlewareName: string, mode: "provider" | "consumer") => void,
     skipFynUnit?: boolean
-  ): Promise<{ allowDegraded: boolean; initDeferStatus: string }> {
+  ): Promise<{ allowDegraded: boolean; initDeferStatus: string }> => {
     if (skipFynUnit || !fynUnit.initialize) {
       return { allowDegraded: false, initDeferStatus: "ready" };
     }
 
     // initialize is a one-time declaration per unit runtime (FYM-144)
-    if (this.#initializedRuntimes.has(runtime)) {
+    if (initializedRuntimes.has(runtime)) {
       return { allowDegraded: false, initDeferStatus: "ready" };
     }
 
     console.debug("🚀 Invoking unit.initialize for", fynApp.name, fynApp.version);
     const result: any = await fynUnit.initialize(runtime);
-    this.#initializedRuntimes.add(runtime);
+    initializedRuntimes.add(runtime);
     const allowDegraded = Boolean(result?.deferOk);
 
     if (result?.mode && providerModeRegistrar) {
       for (const cc of ccs) {
-        providerModeRegistrar(fynApp.name, cc.reg.middleware.name, result.mode);
+        providerModeRegistrar(fynApp.name, cc.reg.mw.name, result.mode);
       }
       console.debug(`📝 ${fynApp.name} registered as ${result.mode} for middleware(s)`);
     }
 
-    const initDeferStatus = this.checkDeferCalls(result?.status, ccs);
+    const initDeferStatus = checkDeferCalls(result?.status, ccs);
     return { allowDegraded, initDeferStatus };
-  }
+  };
 
   /**
    * Apply middlewares that are currently ready
    */
-  async #applyReadyMiddlewares(ccs: FynAppMiddlewareCallContext[], fynApp: FynApp): Promise<void> {
+  const applyReadyMiddlewares = async (ccs: FynAppMiddlewareCallContext[], fynApp: FynApp): Promise<void> => {
     for (const cc of ccs) {
       if (cc.status !== "ready") continue;
-      const mw = cc.reg.middleware;
+      const mw = cc.reg.mw;
       if (!mw.apply) continue;
       console.debug("🚀 Invoking middleware", cc.reg.regKey, "apply for", fynApp.name, fynApp.version);
       await mw.apply(cc);
     }
-  }
+  };
 
   /**
    * Execute the FynUnit with possible middleware override
    */
-  async #executeWithOverride(
+  const executeWithOverride = async (
     fynUnit: FynUnit,
     fynApp: FynApp,
     runtime: FynUnitRuntime,
     kernel: FynMeshKernel,
-    autoApplyMiddlewares?: {
+    autoApply?: {
       fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
+      mw: FynAppMiddlewareReg[];
     }
-  ): Promise<void> {
-    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
+  ): Promise<void> => {
+    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApply);
 
     let didExecute = false;
     if (executionOverride) {
@@ -314,93 +361,93 @@ export class MiddlewareExecutor {
     }
 
     if (didExecute) {
-      captureEvent(this.telemetry, "execute.completed", { app: fynApp.name, override: !!executionOverride });
+      captureEvent(tel, "execute.completed", { app: fynApp.name, override: !!executionOverride });
     }
-  }
+  };
 
   /**
    * Call middlewares with setup and apply - orchestrates the middleware lifecycle
    */
-  async callMiddlewares(
+  const callMiddlewares = async (
     ccs: FynAppMiddlewareCallContext[],
     options: MiddlewareExecutionOptions = {},
     tries = 0
-  ): Promise<string> {
+  ): Promise<string> => {
     if (ccs.length === 0) {
       console.debug("⚠️ No middleware contexts to call, skipping middleware setup");
       return "ready";
     }
 
     if (tries === 0) {
-      captureEvent(this.telemetry, "call.started", { count: ccs.length, app: ccs[0]?.fynApp?.name });
+      captureEvent(tel, "call.started", { count: ccs.length, app: ccs[0]?.fynApp?.name });
     }
 
-    this.#validateRetryCount(ccs, tries);
+    validateRetryCount(ccs, tries);
 
     // Phase 1: Setup middlewares
-    const { middlewareSetupStatus, hasDeferredMiddleware } = await this.#setupMiddlewares(ccs, options.signalReady);
+    const { middlewareSetupStatus, hasDeferredMiddleware } = await setupMiddlewares(ccs, options.signalReady);
 
     const fynUnit = ccs[0].fynUnit;
     const fynApp = ccs[0].fynApp;
     const runtime = ccs[0].runtime;
 
-    const postSetupStatus = this.checkDeferCalls(middlewareSetupStatus, ccs);
+    const postSetupStatus = checkDeferCalls(middlewareSetupStatus, ccs);
     if (postSetupStatus === "retry") {
-      return await this.callMiddlewares(ccs, options, tries + 1);
+      return await callMiddlewares(ccs, options, tries + 1);
     }
 
     // Phase 2: Initialize the FynUnit
-    const { allowDegraded, initDeferStatus } = await this.#initializeFynUnit(
+    const { allowDegraded, initDeferStatus } = await initializeFynUnit(
       ccs, fynUnit, fynApp, runtime, options.providerModeRegistrar, options.skipFynUnit
     );
 
     if (initDeferStatus === "defer" && !allowDegraded) {
-      captureEvent(this.telemetry, "call.deferred", { app: fynApp?.name });
+      captureEvent(tel, "call.deferred", { app: fynApp?.name });
       return "defer";
     }
     if (initDeferStatus === "retry") {
-      return await this.callMiddlewares(ccs, options, tries + 1);
+      return await callMiddlewares(ccs, options, tries + 1);
     }
 
     if (hasDeferredMiddleware && postSetupStatus === "defer" && !allowDegraded && !options.skipFynUnit) {
-      captureEvent(this.telemetry, "call.deferred", { app: fynApp?.name });
+      captureEvent(tel, "call.deferred", { app: fynApp?.name });
       return "defer";
     }
 
     // Phase 3: Apply ready middlewares
-    await this.#applyReadyMiddlewares(ccs, fynApp);
+    await applyReadyMiddlewares(ccs, fynApp);
 
     if (options.skipFynUnit) {
       return "ready";
     }
 
     if (allowDegraded && postSetupStatus === "defer") {
-      this.#markDeferResumeMode(ccs, "middleware_only");
+      markDeferResumeMode(ccs, "middleware_only");
     }
 
     // Phase 4: Execute with possible override
-    await this.#executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, options.autoApplyMiddlewares);
+    await executeWithOverride(fynUnit, fynApp, runtime, ccs[0].kernel, options.autoApply);
 
     return "ready";
-  }
+  };
 
 
 
   /**
    * Use middleware on FynUnit
    */
-  async useMiddlewareOnFynUnit(
+  const useMiddlewareOnFynUnit = async (
     fynUnit: FynUnit,
     fynApp: FynApp,
     kernel: FynMeshKernel,
     createRuntime: () => FynUnitRuntime,
     getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
-    autoApplyMiddlewares?: {
+    autoApply?: {
       fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
+      mw: FynAppMiddlewareReg[];
     }
-  ): Promise<string> {
+  ): Promise<string> => {
     if (!fynUnit.__middlewareMeta) {
       return "";
     }
@@ -432,9 +479,9 @@ export class MiddlewareExecutor {
         console.debug("🔍 Object format meta:", meta);
 
         // Check for new format with middleware property containing the string
-        if ((meta as any).middleware && typeof (meta as any).middleware === 'string') {
+        if ((meta as any).mw && typeof (meta as any).mw === 'string') {
           cc = await parseMiddlewareString(
-            (meta as any).middleware,
+            (meta as any).mw,
             (meta as any).config || {},
             fynUnit,
             fynApp,
@@ -456,7 +503,6 @@ export class MiddlewareExecutor {
           cc = {
             meta: meta as MiddlewareUseMeta<unknown>,
             fynUnit,
-            fynMod: fynUnit, // deprecated compatibility
             fynApp,
             reg,
             kernel,
@@ -477,139 +523,117 @@ export class MiddlewareExecutor {
 
     console.debug("✅ Created", ccs.length, "middleware call contexts");
 
-    return this.callMiddlewares(ccs, { autoApplyMiddlewares });
-  }
-
-  /**
-   * @deprecated Use useMiddlewareOnFynUnit instead
-   */
-  async useMiddlewareOnFynModule(
-    fynMod: FynUnit,
-    fynApp: FynApp,
-    kernel: FynMeshKernel,
-    createRuntime: () => FynUnitRuntime,
-    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
-    loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
-    autoApplyMiddlewares?: {
-      fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
-    }
-  ): Promise<string> {
-    return this.useMiddlewareOnFynUnit(fynMod, fynApp, kernel, createRuntime, getMiddleware, loadMiddlewareFromDependency, autoApplyMiddlewares);
-  }
+    return callMiddlewares(ccs, { autoApply });
+  };
 
   /**
    * Apply auto-scope middlewares
    * @returns Array of errors that occurred during middleware application (empty if all succeeded)
    */
-  async applyAutoScopeMiddlewares(
+  const applyAutoScopeMiddlewares = async (
     fynApp: FynApp,
     fynUnit: FynUnit | undefined,
     kernel: FynMeshKernel,
-    autoApplyMiddlewares: {
+    autoApply: {
       fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
+      mw: FynAppMiddlewareReg[];
     } | undefined,
     createRuntime: () => FynUnitRuntime,
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>
-  ): Promise<MiddlewareError[]> {
+  ): Promise<MiddlewareError[]> => {
     const errors: MiddlewareError[] = [];
 
-    console.log(`🎯 Auto-apply check for ${fynApp.name}: autoApplyMiddlewares exists?`, !!autoApplyMiddlewares);
-    if (!autoApplyMiddlewares) {
+    console.log(`🎯 Auto-apply check for ${fynApp.name}: autoApply exists?`, !!autoApply);
+    if (!autoApply) {
       console.log(`⏭️ No auto-apply middlewares registered yet for ${fynApp.name}`);
       return errors;
     }
 
     // Apply middleware based on FynApp type
-    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
+    const targetMiddlewares = getTargetMiddlewares(fynApp, autoApply);
 
     for (const mwReg of targetMiddlewares) {
       // Check if middleware has a filter function and call it
-      if (mwReg.middleware.shouldApply) {
+      if (mwReg.mw.shouldApply) {
         try {
-          const shouldApply = mwReg.middleware.shouldApply(fynApp);
+          const shouldApply = mwReg.mw.shouldApply(fynApp);
           if (!shouldApply) {
             console.debug(`⏭️ Skipping middleware ${mwReg.regKey} for ${fynApp.name} (filtered out)`);
             continue;
           }
         } catch (error) {
-          const mwError = new MiddlewareError(
-            KernelErrorCode.MIDDLEWARE_FILTER_ERROR,
-            `Error in shouldApply for ${mwReg.regKey}: ${error instanceof Error ? error.message : String(error)}`,
-            {
-              middlewareName: mwReg.middleware.name,
-              provider: mwReg.hostFynApp.name,
-              fynAppName: fynApp.name,
-              cause: error instanceof Error ? error : undefined,
-            }
+          errors.push(
+            middlewareFailure(
+              KernelErrorCode.MIDDLEWARE_FILTER_ERROR,
+              `Error in shouldApply for ${mwReg.regKey}`,
+              mwReg,
+              fynApp,
+              error
+            )
           );
-          console.error(`❌ ${mwError.message}`);
-          errors.push(mwError);
           continue;
         }
       }
 
       console.debug(
-        `🔄 Auto-applying ${mwReg.middleware.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`
+        `🔄 Auto-applying ${mwReg.mw.autoApplyScope} middleware ${mwReg.regKey} to ${fynApp.name}`
       );
 
       const unit = fynUnit || noOpFynUnit;
       const context = createMiddlewareCallContext(mwReg, unit, fynApp, createRuntime(), kernel, {}, "ready");
 
       try {
-        if (mwReg.middleware.setup) {
-          const result = await mwReg.middleware.setup(context);
+        if (mwReg.mw.setup) {
+          const result = await mwReg.mw.setup(context);
           if (result?.status === "ready" && signalReady) {
             await signalReady(context, result.share);
           }
         }
-        if (mwReg.middleware.apply) {
-          await mwReg.middleware.apply(context);
+        if (mwReg.mw.apply) {
+          await mwReg.mw.apply(context);
         }
       } catch (error) {
-        const mwError = new MiddlewareError(
-          KernelErrorCode.MIDDLEWARE_APPLY_FAILED,
-          `Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}: ${error instanceof Error ? error.message : String(error)}`,
-          {
-            middlewareName: mwReg.middleware.name,
-            provider: mwReg.hostFynApp.name,
-            fynAppName: fynApp.name,
-            cause: error instanceof Error ? error : undefined,
-          }
-        );
-        this.telemetry.captureError(
+        tel.capErr(
           "auto_apply.failed",
-          { middleware: mwReg.regKey, app: fynApp.name },
+          { mw: mwReg.regKey, app: fynApp.name },
           error
         );
-        console.error(`❌ ${mwError.message}`);
-        errors.push(mwError);
+        errors.push(
+          middlewareFailure(
+            KernelErrorCode.MIDDLEWARE_APPLY_FAILED,
+            `Failed to apply auto-scope middleware ${mwReg.regKey} to ${fynApp.name}`,
+            mwReg,
+            fynApp,
+            error
+          )
+        );
       }
     }
 
     return errors;
-  }
+  };
 
   /**
    * Clear executor state
    */
-  clear(): void {
-    this.middlewareReady.clear();
-    this.deferInvoke = [];
-  }
+  const clear = (): void => {
+    middlewareReady.clear();
+    deferInvoke = [];
+  };
 
-  /**
-   * Get deferred invokes
-   */
-  getDeferredInvokes(): DeferredGroup[] {
-    return [...this.deferInvoke];
-  }
-
-  /**
-   * Get ready middleware
-   */
-  getReadyMiddleware(): Map<string, any> {
-    return new Map(this.middlewareReady);
-  }
-}
+  return {
+    middlewareReady,
+    get deferInvoke() {
+      return deferInvoke;
+    },
+    setMiddlewareReady,
+    checkSingleMiddlewareReady,
+    checkMiddlewareReady,
+    checkDeferCalls,
+    processReadyMiddleware,
+    callMiddlewares,
+    useMiddlewareOnFynUnit,
+    applyAutoScopeMiddlewares,
+    clear,
+  };
+} as unknown as new (telemetry?: KernelTelemetry) => MiddlewareExecutor;

@@ -1,4 +1,4 @@
-import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel } from "./types";
+import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel, MiddlewareInfo } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -23,37 +23,37 @@ export function isFynAppMiddlewareProvider(fynApp: FynApp): boolean {
 /**
  * Get the appropriate middleware list based on FynApp type
  * @param fynApp The FynApp to check
- * @param autoApplyMiddlewares The categorized middleware lists
+ * @param autoApply The categorized middleware lists
  * @returns The middleware list for the given FynApp type, or empty array if no auto-apply middlewares
  */
 export function getTargetMiddlewares(
   fynApp: FynApp,
-  autoApplyMiddlewares?: { fynapp: FynAppMiddlewareReg[]; middleware: FynAppMiddlewareReg[] }
+  autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] }
 ): FynAppMiddlewareReg[] {
-  if (!autoApplyMiddlewares) return [];
+  if (!autoApply) return [];
   return isFynAppMiddlewareProvider(fynApp)
-    ? autoApplyMiddlewares.middleware
-    : autoApplyMiddlewares.fynapp;
+    ? autoApply.mw
+    : autoApply.fynapp;
 }
 
 /**
  * Find the first middleware that can override execution for a given FynApp and FynUnit
  * @param fynApp The FynApp being executed
  * @param fynUnit The FynUnit being executed
- * @param autoApplyMiddlewares The categorized auto-apply middleware lists
+ * @param autoApply The categorized auto-apply middleware lists
  * @returns The middleware reg that can override execution, or null
  */
 export function findExecutionOverride(
   fynApp: FynApp,
   fynUnit: FynUnit,
-  autoApplyMiddlewares?: { fynapp: FynAppMiddlewareReg[]; middleware: FynAppMiddlewareReg[] }
+  autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] }
 ): FynAppMiddlewareReg | null {
-  if (!autoApplyMiddlewares) return null;
+  if (!autoApply) return null;
 
-  const targetMiddlewares = getTargetMiddlewares(fynApp, autoApplyMiddlewares);
+  const targetMiddlewares = getTargetMiddlewares(fynApp, autoApply);
 
   for (const mwReg of targetMiddlewares) {
-    if (mwReg.middleware.canOverrideExecution?.(fynApp, fynUnit)) {
+    if (mwReg.mw.canOverrideExecution?.(fynApp, fynUnit)) {
       return mwReg;
     }
   }
@@ -79,19 +79,21 @@ export function createMiddlewareCallContext(
   runtime: FynUnitRuntime,
   kernel: FynMeshKernel,
   config?: any,
-  status?: string
+  status?: string,
+  /** Overrides the identity taken from `mwReg` — the "-FYNAPP_MIDDLEWARE" string
+   * form carries its own name/provider/semver, which may differ from the reg. */
+  info?: MiddlewareInfo
 ): FynAppMiddlewareCallContext {
   return {
     meta: {
-      info: {
-        name: mwReg.middleware.name,
+      info: info ?? {
+        name: mwReg.mw.name,
         provider: mwReg.hostFynApp.name,
         version: mwReg.hostFynApp.version,
       },
       config: config ?? {},
     },
     fynUnit,
-    fynMod: fynUnit, // deprecated compatibility
     fynApp,
     reg: mwReg,
     runtime,
@@ -115,19 +117,19 @@ export async function executeMiddlewareOverride(
   runtime: FynUnitRuntime,
   kernel: FynMeshKernel
 ): Promise<void> {
-  console.debug(`🎭 Middleware ${executionOverride.middleware.name} is overriding execution for ${fynApp.name}`);
+  console.debug(`🎭 Middleware ${executionOverride.mw.name} is overriding execution for ${fynApp.name}`);
 
   const context = createMiddlewareCallContext(executionOverride, fynUnit, fynApp, runtime, kernel, {}, "ready");
 
-  if (executionOverride.middleware.overrideInitialize && fynUnit.initialize) {
+  if (executionOverride.mw.overrideInitialize && fynUnit.initialize) {
     console.debug(`🎭 Middleware overriding initialize for ${fynApp.name}`);
-    const initResult = await executionOverride.middleware.overrideInitialize(context);
+    const initResult = await executionOverride.mw.overrideInitialize(context);
     console.debug(`🎭 Initialize result:`, initResult);
   }
 
-  if (executionOverride.middleware.overrideExecute && typeof fynUnit.execute === "function") {
+  if (executionOverride.mw.overrideExecute && typeof fynUnit.execute === "function") {
     console.debug(`🎭 Middleware overriding execute for ${fynApp.name}`);
-    await executionOverride.middleware.overrideExecute(context);
+    await executionOverride.mw.overrideExecute(context);
   }
 }
 
@@ -179,21 +181,9 @@ export async function parseMiddlewareString(
     return null;
   }
 
-  return {
-    meta: {
-      info: {
-        name: middlewareName,
-        provider: packageName,
-        version: semver || "*"
-      },
-      config: config || {}
-    },
-    fynUnit,
-    fynMod: fynUnit, // deprecated compatibility
-    fynApp,
-    reg,
-    kernel,
-    runtime,
-    status: "",
-  };
+  return createMiddlewareCallContext(reg, fynUnit, fynApp, runtime, kernel, config, "", {
+    name: middlewareName,
+    provider: packageName,
+    version: semver || "*",
+  });
 }

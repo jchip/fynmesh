@@ -47,7 +47,7 @@ describe('bootstrapFynApp decomposition', () => {
 
   beforeEach(() => {
     kernel = new DecompTestKernel();
-    kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+    kernel.initRunTime({ apps: {}, middlewares: {} });
   });
 
   describe('checkBootstrapReadiness', () => {
@@ -98,7 +98,7 @@ describe('bootstrapFynApp decomposition', () => {
         } as any,
       });
 
-      const loadSpy = vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      const loadSpy = vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
 
       await kernel.testLoadMiddlewareModules(fynApp);
 
@@ -126,7 +126,7 @@ describe('bootstrapFynApp decomposition', () => {
         } as any,
       });
 
-      const loadSpy = vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      const loadSpy = vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
 
       await kernel.testLoadMiddlewareModules(fynApp);
       expect(loadSpy).not.toHaveBeenCalled();
@@ -168,11 +168,11 @@ describe('bootstrapFynApp decomposition', () => {
   });
 
   describe('executeFynUnit', () => {
-    it('should delegate to moduleLoader.invokeFynUnit', async () => {
+    it('should delegate to loader.invokeFynUnit', async () => {
       const fynUnit: FynUnit = { execute: vi.fn() };
       const fynApp = createTestFynApp('exec-app');
 
-      const invokeSpy = vi.spyOn(kernel.moduleLoader, 'invokeFynUnit').mockResolvedValue(undefined);
+      const invokeSpy = vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
       await kernel.testExecuteFynUnit(fynUnit, fynApp);
 
@@ -181,7 +181,7 @@ describe('bootstrapFynApp decomposition', () => {
       const callArgs = invokeSpy.mock.calls[0];
       expect(callArgs[0]).toBe(fynUnit);
       expect(callArgs[1]).toBe(fynApp);
-      // autoApplyMiddlewares may be undefined when none are registered
+      // autoApply may be undefined when none are registered
       expect(callArgs[3]).toBe(kernel);
     });
   });
@@ -231,14 +231,14 @@ describe('bootstrapFynApp decomposition', () => {
 
       vi.spyOn(kernel.bootstrapCoordinator, 'canBootstrap').mockReturnValue(true);
       vi.spyOn(kernel.bootstrapCoordinator, 'acquireBootstrapLock').mockReturnValue(true);
-      vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
       vi.spyOn(kernel.middlewareExecutor, 'applyAutoScopeMiddlewares').mockResolvedValue([]);
-      vi.spyOn(kernel.moduleLoader, 'invokeFynUnit').mockResolvedValue(undefined);
+      vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
       await kernel.bootstrapFynApp(fynApp);
 
       // Should have called invokeFynUnit (Path B - no middleware meta)
-      expect(kernel.moduleLoader.invokeFynUnit).toHaveBeenCalled();
+      expect(kernel.loader.invokeFynUnit).toHaveBeenCalled();
     });
 
     it('should skip execution for FynApp without main export', async () => {
@@ -254,13 +254,13 @@ describe('bootstrapFynApp decomposition', () => {
 
       vi.spyOn(kernel.bootstrapCoordinator, 'canBootstrap').mockReturnValue(true);
       vi.spyOn(kernel.bootstrapCoordinator, 'acquireBootstrapLock').mockReturnValue(true);
-      vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
-      vi.spyOn(kernel.moduleLoader, 'invokeFynUnit').mockResolvedValue(undefined);
+      vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
       await kernel.bootstrapFynApp(fynApp);
 
       // Should NOT have called invokeFynUnit since no main
-      expect(kernel.moduleLoader.invokeFynUnit).not.toHaveBeenCalled();
+      expect(kernel.loader.invokeFynUnit).not.toHaveBeenCalled();
     });
 
     it('should return early when readiness check fails', async () => {
@@ -269,7 +269,7 @@ describe('bootstrapFynApp decomposition', () => {
       vi.spyOn(kernel.bootstrapCoordinator, 'canBootstrap').mockReturnValue(true);
       vi.spyOn(kernel.bootstrapCoordinator, 'acquireBootstrapLock').mockReturnValue(false);
       vi.spyOn(kernel.bootstrapCoordinator, 'deferBootstrap').mockResolvedValue(undefined);
-      const loadSpy = vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      const loadSpy = vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
 
       await kernel.bootstrapFynApp(fynApp);
 
@@ -312,7 +312,7 @@ describe('bootstrapFynApp decomposition', () => {
       vi.spyOn(kernel.bootstrapCoordinator, 'canBootstrap').mockReturnValue(true);
       vi.spyOn(kernel.bootstrapCoordinator, 'acquireBootstrapLock').mockReturnValue(true);
       const releaseSpy = vi.spyOn(kernel.bootstrapCoordinator, 'releaseBootstrapLock');
-      vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockRejectedValue(new Error('load failed'));
+      vi.spyOn(kernel.loader, 'loadExposeModule').mockRejectedValue(new Error('load failed'));
 
       const emitSpy = vi.spyOn(kernel, 'emitAsync').mockResolvedValue(true);
 
@@ -345,7 +345,7 @@ describe('bootstrapFynApp decomposition', () => {
         } as any,
       });
 
-      const loadSpy = vi.spyOn(kernel.moduleLoader, 'loadExposeModule').mockResolvedValue(undefined as any);
+      const loadSpy = vi.spyOn(kernel.loader, 'loadExposeModule').mockResolvedValue(undefined as any);
 
       await kernel.testLoadMiddlewareModules(fynApp);
 

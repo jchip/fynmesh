@@ -56,7 +56,7 @@ class DesignTokensConsumerUnit implements FynUnit {
 export const main = useMiddleware(
   {
     // @ts-ignore - TS can't resolve module federation remote containers
-    middleware: import(
+    mw: import(
       "fynapp-design-tokens/middleware/design-tokens/design-tokens",
       { with: { type: "fynapp-middleware" } }
     ),

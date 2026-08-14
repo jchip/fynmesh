@@ -133,14 +133,14 @@ describe("KernelError", () => {
         KernelErrorCode.MANIFEST_FETCH_FAILED,
         "Failed to fetch manifest",
         {
-          manifestUrl: "http://example.com/manifest.json",
+          url: "http://example.com/manifest.json",
           packageName: "my-package",
         }
       );
 
       expect(error.name).toBe("ManifestError");
       expect(error.code).toBe(KernelErrorCode.MANIFEST_FETCH_FAILED);
-      expect(error.context?.manifestUrl).toBe("http://example.com/manifest.json");
+      expect(error.context?.url).toBe("http://example.com/manifest.json");
       expect(error.context?.packageName).toBe("my-package");
     });
   });
