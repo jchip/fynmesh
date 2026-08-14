@@ -20,7 +20,7 @@ FynApp 6 depends on the `basic-counter` middleware from `fynapp-react-middleware
 ```typescript
 export const main = useMiddleware(
   {
-    middleware: import('fynapp-react-middleware/main/basic-counter'),
+    mw: import('fynapp-react-middleware/main/basic-counter'),
     config: "consume-only", // Consumer only - uses shared counter from provider
   },
   new MiddlewareUser()
