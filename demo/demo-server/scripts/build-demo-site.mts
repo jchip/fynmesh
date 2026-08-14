@@ -49,6 +49,44 @@ function copyDirFiltered(src: string, dest: string, filter: (file: string) => bo
 }
 
 /**
+ * Verify every local asset a generated page references actually shipped.
+ *
+ * A missing file is not a soft failure in production: Cloudflare Pages answers
+ * an unknown path with its HTML 404 body, so the browser gets `text/html` for
+ * a `.js` request and refuses it on MIME grounds. The page then dies on an
+ * undefined global far from the real cause. Fail the build instead.
+ *
+ * @returns list of `page -> missing ref` descriptions (empty when all resolve)
+ */
+function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
+    const missing: string[] = [];
+    const pages = readdirSync(outputDir).filter(f => f.endsWith(".html"));
+
+    for (const page of pages) {
+        const html = readFileSync(path.join(outputDir, page), "utf8");
+        const refs = new Set<string>();
+
+        for (const [, ref] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
+            // Skip absolute URLs, protocol-relative, data/mailto, and fragments
+            if (/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(ref)) continue;
+            refs.add(ref.split(/[?#]/)[0]);
+        }
+
+        for (const ref of refs) {
+            if (!ref) continue;
+            const rel = ref.startsWith(pathPrefix)
+                ? ref.slice(pathPrefix.length)
+                : ref.replace(/^\//, "");
+            if (!existsSync(path.join(outputDir, rel))) {
+                missing.push(`${page} -> ${ref}`);
+            }
+        }
+    }
+
+    return missing;
+}
+
+/**
  * Build the demo site with configurable path prefix
  */
 async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolean> {
@@ -236,6 +274,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             // active, so those self-heal without a registration call. Removing
             // this file would strand them on a stale worker permanently.
             "sw.js",
+            "lazy-loader.js",  // Defines LazyLoader, used by the demo page's fynapp loader
             "favicon.ico",     // Favicon
             "sitemap.xml",     // SEO: XML Sitemap
             "robots.txt"       // SEO: Robots.txt
@@ -347,6 +386,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             log("⚠️  No content-hashed chunks found — skipped _headers");
         }
 
+        const missingRefs = findMissingLocalRefs(outputDir, pathPrefix);
+        if (missingRefs.length > 0) {
+            throw new Error(
+                `${missingRefs.length} referenced asset(s) missing from the build output:\n` +
+                missingRefs.map(m => `    ${m}`).join("\n") +
+                "\n  Add the file to `staticFiles` or to the `packages` copy list."
+            );
+        }
+        log("🔎 Verified: every referenced local asset is present");
+
         log("✅ Demo site built successfully with all assets!");
         log(`🌐 Path prefix: ${pathPrefix}`);
         log(`📁 Output directory: ${outputDir}`);
@@ -363,4 +412,4 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 }
 
 // ES module exports
-export { buildDemoSite };
+export { buildDemoSite, findMissingLocalRefs };
