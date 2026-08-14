@@ -256,7 +256,7 @@ describe("KernelTelemetry", () => {
       await transport.send(batch);
 
       // console.log is mocked in tests/setup.ts
-      expect(console.log).toHaveBeenCalledWith("[tel]", batch);
+      expect(console.log).toHaveBeenCalledWith("[telemetry]", batch);
     });
   });
 
@@ -408,7 +408,7 @@ describe("KernelTelemetry", () => {
 
       // console.log is mocked in setup.ts — verify it was called by the default transport
       expect(console.log).toHaveBeenCalledWith(
-        "[tel]",
+        "[telemetry]",
         expect.arrayContaining([
           expect.objectContaining({ type: "event", name: "default-transport-test" }),
         ])

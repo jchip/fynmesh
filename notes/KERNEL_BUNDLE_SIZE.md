@@ -5,8 +5,8 @@ Measurements are for `core/kernel/dist/fynmesh-browser-kernel.min.js`.
 | | raw |
 |---|---|
 | before | 36,716 |
-| after | 26,663 |
-| delta | **−10,053 (−27.4%)** |
+| after | 26,316 |
+| delta | **−10,400 (−28.3%)** |
 
 Measure with a **clean** build (`xrun -s clean compile-lib build-dist`). Running
 `rollup -c` alone reuses a stale `lib/*.d.ts` and under-reports: the reserved
@@ -120,6 +120,21 @@ minifier tricks but deleting Java-shaped code:
 - **Booleans as booleans.** `checkMiddlewareReady` returned `"ready"`/`"defer"`.
 
 Keep `const`. Do not reach for `let` to save two characters.
+
+## Second pass
+
+- **`waitFor` leaked every timed-out waiter.** The timeout handler matched with
+  `w.resolve === resolve`, but what is stored is the *wrapper*, never the
+  promise's `resolve` — so `findIndex` always returned −1 and the parked entry
+  stayed in `#pendingWaiters` forever. It now holds the waiter's identity.
+  Not observable through the public API, which is why no test caught it.
+- **`cleanContainerName` was dead public API** — declared on `FynMeshKernel`,
+  called by nothing in src, the demos or dev-tools. Removed (breaking).
+- **Preload strategy merge** was four repetitive `?? default` lines; it is now a
+  spread with explicit-undefined filtered out, which is the same behaviour.
+- **`findExecutionOverride`** hand-rolled a loop that `Array.find` expresses.
+- **`FynEventTarget`** had a `constructor() { super(); }` that does nothing and a
+  single-use type guard; `ObservableState.#notify` had one caller.
 
 ## Declaring a test seam costs bytes
 

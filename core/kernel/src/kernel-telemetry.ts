@@ -1,6 +1,6 @@
 /**
  * Kernel Telemetry Implementation
- * Ring-buffer backed tel with pluggable transports and scoping
+ * Ring-buffer backed telemetry with pluggable transports and scoping
  */
 
 import type {
@@ -17,7 +17,7 @@ const DEFAULT_MAX_BUFFER_SIZE = 500;
  */
 export class ConsoleTelemetryTransport implements TelemetryTransport {
   async send(batch: TelemetryEntry[]): Promise<void> {
-    console.log("[tel]", batch);
+    console.log("[telemetry]", batch);
   }
 }
 
@@ -77,12 +77,11 @@ export class KernelTelemetryImpl implements KernelTelemetry {
     // Fire-and-forget. Call send() synchronously (callers and tests rely on the
     // timing), but never leak: a synchronous throw is caught here and an async
     // rejection by .catch.
+    const failed = (err: unknown) => console.error("[telemetry] transport.send failed:", err);
     try {
-      void Promise.resolve(this.transport.send(batch)).catch((err) => {
-        console.error("[tel] transport.send failed:", err);
-      });
+      void Promise.resolve(this.transport.send(batch)).catch(failed);
     } catch (err) {
-      console.error("[tel] transport.send failed:", err);
+      failed(err);
     }
   }
 }
@@ -105,7 +104,7 @@ export function captureEvent(
 }
 
 /**
- * No-op tel instance for when tel is not configured.
+ * No-op telemetry instance for when telemetry is not configured.
  * All methods are silent no-ops.
  */
 export const noOpTelemetry: KernelTelemetry = {
