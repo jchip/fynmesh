@@ -372,15 +372,6 @@ export interface FynMeshKernel {
   getMiddlewareRegistry(scope: "global" | { region: string }): import("./middleware-state-registry").MiddlewareStateRegistry;
 
   /**
-   * Clean up a container name to ensure it's a valid identifier
-   * - this is needed so we can use npm package name as container name directly
-   * - replace all chars @/-. with _, and then remove leading _
-   *
-   * @param name
-   */
-  cleanContainerName(name: string): string;
-
-  /**
    * Load the basics of a fynapp federation entry into a FynApp object
    * - This only does loading, no execution of anything occurs here
    * Basics are:

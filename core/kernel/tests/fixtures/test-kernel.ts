@@ -131,10 +131,6 @@ export class TestKernel extends FynMeshKernelCore {
     return this.loader.loadMiddlewareFromDependency(packageName, middlewarePath, this.fynAppRegistry, scanner);
   }
 
-  testCleanContainerName(name: string) {
-    return (this as any).cleanContainerName(name);
-  }
-
   testBuildFynAppUrl(baseUrl: string, entryFile?: string) {
     return (this as any).buildFynAppUrl(baseUrl, entryFile);
   }

@@ -105,16 +105,6 @@ describe('KernelCore Advanced Functionality', () => {
         });
     });
 
-    describe('cleanContainerName utility', () => {
-        it('should clean container names correctly', () => {
-            // Test the actual behavior (replaces / with _)
-            expect(kernel.cleanContainerName('webpack/container/reference/app')).toBe('webpack_container_reference_app');
-            expect(kernel.cleanContainerName('org_example_app')).toBe('org_example_app');
-            expect(kernel.cleanContainerName('simple')).toBe('simple');
-            expect(kernel.cleanContainerName('')).toBe('');
-        });
-    });
-
     describe('runtime state verification', () => {
         it('should have proper runtime state initialized', () => {
             // Test that kernel starts with proper runtime state
