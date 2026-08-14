@@ -7,13 +7,13 @@ import { createMockOverrideMiddleware } from "./fixtures/mock-middleware";
  *
  * A FynUnit that defers at middleware setup is queued with resumeMode "full" and
  * resumed once the provider middleware signals ready. The resume loop forwards
- * `runTime.autoApplyMiddlewares` to MiddlewareExecutor.callMiddlewares, so a
+ * `runTime.autoApply` to MiddlewareExecutor.callMiddlewares, so a
  * deferred-then-resumed FynUnit honors a registered execution override (e.g. the
  * shell middleware's overrideExecute) exactly like a FynUnit that loads without
  * deferring.
  *
  * Before this was wired up the resume path passed `undefined` for
- * autoApplyMiddlewares, so findExecutionOverride() short-circuited to null and a
+ * autoApply, so findExecutionOverride() short-circuited to null and a
  * resumed FynUnit always ran its own execute() instead of the override — diverging
  * from the non-deferred load path. These tests pin both sides of that behavior.
  */
@@ -34,7 +34,7 @@ describe("Resume path execution overrides", () => {
       regKey: "fynapp-provider::basic-counter",
       fullKey: "fynapp-provider@1.0.0::basic-counter",
       hostFynApp: { name: "fynapp-provider", version: "1.0.0", middlewareContext: new Map() },
-      middleware: { name: "basic-counter", setup, apply },
+      mw: { name: "basic-counter", setup, apply },
     };
 
     const cc: any = {
@@ -64,9 +64,9 @@ describe("Resume path execution overrides", () => {
     // Register an auto-apply execution override (the "shell" middleware) in the runtime,
     // the way the kernel populates it during middleware registration.
     const overrideMw = createMockOverrideMiddleware();
-    (kernel as any).runTime.autoApplyMiddlewares = {
-      fynapp: [{ middleware: overrideMw, hostFynApp: { name: "fynapp-shell-mw", version: "1.0.0" } }],
-      middleware: [],
+    (kernel as any).runTime.autoApply = {
+      fynapp: [{ mw: overrideMw, hostFynApp: { name: "fynapp-shell-mw", version: "1.0.0" } }],
+      mw: [],
     };
 
     // First pass: setup defers (no shareKey) -> queues a "full" resume; nothing executes yet.
@@ -78,7 +78,7 @@ describe("Resume path execution overrides", () => {
     expect(kernel.testDeferInvoke).toHaveLength(1);
     expect((kernel.testDeferInvoke[0] as any).resumeMode).toBe("full");
 
-    // Provider becomes ready -> kernel resume loop runs with runTime.autoApplyMiddlewares.
+    // Provider becomes ready -> kernel resume loop runs with runTime.autoApply.
     await (kernel as any).handleMiddlewareReady(makeReadyEvent(cc));
 
     // The override takes over execution; the unit's own execute is skipped.
@@ -96,7 +96,7 @@ describe("Resume path execution overrides", () => {
 
     const { cc } = buildDeferringContext(kernel, fynUnit);
 
-    // No auto-apply override registered: runTime.autoApplyMiddlewares stays undefined.
+    // No auto-apply override registered: runTime.autoApply stays undefined.
 
     const first = await kernel.middlewareExecutor.callMiddlewares([cc]);
     expect(first).toBe("defer");

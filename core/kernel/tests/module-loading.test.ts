@@ -103,7 +103,7 @@ describe("Module Loading", () => {
         }
         return () => ({});
       });
-      (kernel as any).runTime.appsLoaded["dependency-app"] = dependencyApp;
+      (kernel as any).runTime.apps["dependency-app"] = dependencyApp;
 
       const fynApp = await kernel.testLoadFynAppBasics(mockEntry);
 
@@ -113,7 +113,7 @@ describe("Module Loading", () => {
     });
   });
 
-  describe("useMiddlewareOnFynModule", () => {
+  describe("useMiddlewareOnFynUnit", () => {
     it("should process middleware metadata in new string format", async () => {
       const testMw = createMockMiddlewareReg();
       kernel.registerMiddleware(testMw);
@@ -137,7 +137,7 @@ describe("Module Loading", () => {
       const fynApp = createMockFynApp();
       const fynModule = {
         __middlewareMeta: [{
-          middleware: "-FYNAPP_MIDDLEWARE test-app middleware/test-middleware",
+          mw: "-FYNAPP_MIDDLEWARE test-app middleware/test-middleware",
           config: { theme: "dark" }
         }]
       };
@@ -174,7 +174,7 @@ describe("Module Loading", () => {
         return () => ({});
       });
 
-      (kernel as any).runTime.appsLoaded["dep-app"] = dependencyApp;
+      (kernel as any).runTime.apps["dep-app"] = dependencyApp;
 
       await kernel.testLoadMiddlewareFromDependency("dep-app", "middleware/dep/dep-middleware");
 

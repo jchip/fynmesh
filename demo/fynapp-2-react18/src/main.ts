@@ -154,7 +154,7 @@ class MiddlewareUser implements FynUnit {
 export const main = useMiddleware(
   {
       // @ts-ignore - TS can't understand module federation remote containers
-    middleware: import('fynapp-react-middleware/main/basic-counter',
+    mw: import('fynapp-react-middleware/main/basic-counter',
         { with: { type: "fynapp-middleware" } }),
     config: "consume-only", // Consumer - uses config from provider
   },

@@ -113,7 +113,7 @@ export type FynModuleRuntime = FynUnitRuntime;
  * @example With middleware
  * ```typescript
  * export const main = useMiddleware(
- *   [{ middleware: import('...'), config: {...} }],
+ *   [{ mw: import('...'), config: {...} }],
  *   { execute(runtime) { ... } }
  * );
  * ```
@@ -198,8 +198,6 @@ export type FynAppMiddlewareCallContext = {
   runtime: FynUnitRuntime;
   kernel: FynMeshKernel;
   status: string;
-  /** @deprecated Use fynUnit instead */
-  fynMod?: FynUnit;
 };
 
 /**
@@ -239,7 +237,7 @@ export type FynAppMiddlewareReg = {
    */
   exportName: string;
 
-  middleware: FynAppMiddleware;
+  mw: FynAppMiddleware;
 };
 
 /**
@@ -257,16 +255,16 @@ export type MiddlewareRegistry = Record<string, FynAppMiddlewareVersionMap>;
  */
 export type FynMeshRuntimeData = {
   /** FynApps that have been loaded and initialized */
-  appsLoaded: Record<string, FynApp>;
+  apps: Record<string, FynApp>;
   /**
    * middlewares that the loaded fynapps registered
    * Key format: "provider::middleware-name"
    */
   middlewares: MiddlewareRegistry;
   /** Auto-applying middleware categorized by scope */
-  autoApplyMiddlewares?: {
+  autoApply?: {
     fynapp: FynAppMiddlewareReg[];
-    middleware: FynAppMiddlewareReg[];
+    mw: FynAppMiddlewareReg[];
   };
 };
 
@@ -324,7 +322,7 @@ export interface FynAppManifest {
 export interface RegistryResolverResult {
   name: string;
   version: string;
-  manifestUrl: string;
+  url: string;
   distBase?: string;
 }
 
@@ -404,7 +402,7 @@ export interface FynMeshKernel {
    * - Resolves to `null` when the per-app load/bootstrap fails (the remote
    *   entry fails to import, `loadFynAppBasics` rejects, or bootstrap throws).
    *   Failures are isolated so one bad FynApp does not abort callers loading
-   *   others; the failure is logged and captured via telemetry
+   *   others; the failure is logged and captured via tel
    *   (`fynapp.load_failed`). Note `bootstrapFynApp` additionally isolates its
    *   own errors internally (emitting `FYNAPP_BOOTSTRAP_FAILED`).
    * - Rejects (throws) only for environment/precondition errors that make
@@ -509,18 +507,28 @@ export interface FynMeshKernel {
 }
 
 /**
- * Preload priority levels for resource loading
+ * Preload priority levels for resource loading.
+ *
+ * A frozen object rather than a TS `enum`, for the same reason as
+ * `KernelErrorCode` in errors.ts: an enum compiles to a runtime IIFE that no
+ * bundler can drop, so all four member names ship in the browser kernel even
+ * though every read is a constant. As a plain object the reads inline to their
+ * string values and the table itself is tree-shaken away.
+ *
+ * The companion type alias keeps `PreloadPriority` usable in type position.
  */
-export enum PreloadPriority {
+export const PreloadPriority = {
   /** Critical: modulepreload with fetchpriority="high" */
-  CRITICAL = 'critical',
+  CRITICAL: 'critical',
   /** Important: modulepreload with fetchpriority="auto" */
-  IMPORTANT = 'important',
+  IMPORTANT: 'important',
   /** Deferred: prefetch (idle time only) */
-  DEFERRED = 'deferred',
+  DEFERRED: 'deferred',
   /** None: no preloading */
-  NONE = 'none'
-}
+  NONE: 'none',
+} as const;
+
+export type PreloadPriority = (typeof PreloadPriority)[keyof typeof PreloadPriority];
 
 /**
  * Preload strategy configuration
@@ -596,7 +604,7 @@ export interface Middleware {
 // --- Telemetry ---
 
 /**
- * A single telemetry entry captured by the kernel
+ * A single tel entry captured by the kernel
  */
 export interface TelemetryEntry {
   type: "event" | "metric" | "error";
@@ -610,13 +618,13 @@ export interface TelemetryEntry {
 }
 
 /**
- * Kernel telemetry capture interface
+ * Kernel tel capture interface
  */
 export interface KernelTelemetry {
-  /** Record a telemetry entry. Timestamp is auto-filled. */
+  /** Record a tel entry. Timestamp is auto-filled. */
   capture(entry: Omit<TelemetryEntry, "ts">): void;
-  /** Helper to quickly record an error telemetry entry. */
-  captureError(name: string, data: Record<string, unknown>, error: unknown): void;
+  /** Helper to quickly record an error tel entry. */
+  capErr(name: string, data: Record<string, unknown>, error: unknown): void;
   /** Return a child instance that auto-prepends `prefix.` to all entry names */
   scope(prefix: string): KernelTelemetry;
   /** Manually drain the buffer to the transport */
@@ -624,14 +632,14 @@ export interface KernelTelemetry {
 }
 
 /**
- * Pluggable transport backend for telemetry
+ * Pluggable transport backend for tel
  */
 export interface TelemetryTransport {
   send(batch: TelemetryEntry[]): Promise<void>;
 }
 
 /**
- * Configuration for the telemetry system
+ * Configuration for the tel system
  */
 export interface TelemetryConfig {
   /** Transport backend. Default: ConsoleTelemetryTransport */

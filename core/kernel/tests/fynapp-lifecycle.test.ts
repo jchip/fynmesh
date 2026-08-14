@@ -24,7 +24,7 @@ class FlowTestKernel extends FynMeshKernelCore {
 
 function createKernel(): FlowTestKernel {
   const kernel = new FlowTestKernel();
-  kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+  kernel.initRunTime({ apps: {}, middlewares: {} });
   return kernel;
 }
 

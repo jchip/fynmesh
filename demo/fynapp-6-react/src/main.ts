@@ -65,7 +65,7 @@ class MiddlewareUser implements FynUnit {
 
     // Get basic-counter middleware API
     const counterAPI = runtime.middlewareContext.get("basic-counter");
-    console.log('🔍 fynapp-6-react: Counter API from middleware:', !!counterAPI);
+    console.log('🔍 fynapp-6-react: Counter API from mw:', !!counterAPI);
 
     if (!counterAPI) {
       console.warn('⚠️ fynapp-6-react: Counter provider not available. App will render without counter functionality.');
@@ -130,7 +130,7 @@ class MiddlewareUser implements FynUnit {
 export const main = useMiddleware(
   {
     // @ts-ignore - TS can't understand module federation remote containers
-    middleware: import('fynapp-react-middleware/main/basic-counter',
+    mw: import('fynapp-react-middleware/main/basic-counter',
         { with: { type: "fynapp-middleware" } }),
     config: "consume-only", // Consumer only - uses shared counter from provider
   },

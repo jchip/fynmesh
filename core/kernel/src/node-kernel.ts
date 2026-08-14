@@ -22,7 +22,7 @@ export class NodeKernel extends FynMeshKernelCore {
     const urlPath = this.buildFynAppUrl(baseUrl);
 
     try {
-      captureEvent(this.telemetry, "fynapp.load_started", { url: baseUrl });
+      captureEvent(this.tel, "fynapp.load_started", { url: baseUrl });
 
       // Node.js-specific loading logic
       // This could use dynamic imports, require, or a Node.js federation library
@@ -38,10 +38,10 @@ export class NodeKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
-      captureEvent(this.telemetry, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
+      captureEvent(this.tel, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
       return fynApp;
     } catch (err) {
-      this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);
+      this.tel.capErr("fynapp.load_failed", { url: baseUrl }, err);
       console.error(`Failed to load FynApp from ${baseUrl} in Node.js:`, err);
       return null;
     }
@@ -56,7 +56,7 @@ export function createNodeKernel(): NodeKernel {
 
   // Initialize kernel runtime
   kernel.initRunTime({
-    appsLoaded: {},
+    apps: {},
     middlewares: {},
   });
 

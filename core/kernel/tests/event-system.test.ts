@@ -29,7 +29,7 @@ describe("Event System", () => {
     it("should handle MIDDLEWARE_READY events", async () => {
       const mwReg = createMockMiddlewareReg();
       const cc = {
-        reg: { fullKey: "test::middleware", middleware: mwReg.middleware }
+        reg: { fullKey: "test::middleware", mw: mwReg.mw }
       };
 
       const event = new CustomEvent("MIDDLEWARE_READY", {
@@ -76,7 +76,7 @@ describe("Event System", () => {
       const cc = {
         reg: {
           fullKey: "test::middleware",
-          middleware: { name: "test-middleware" }
+          mw: { name: "test-middleware" }
         }
       };
 
@@ -101,7 +101,7 @@ describe("Event System", () => {
       const cc = {
         reg: {
           fullKey: "test::middleware",
-          middleware: { name: "test-middleware" }
+          mw: { name: "test-middleware" }
         }
       };
 

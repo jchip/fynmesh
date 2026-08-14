@@ -32,7 +32,7 @@ describe("Middleware Execution", () => {
       ];
       
       const result = kernel.testCheckMiddlewareReady(ccs);
-      expect(result).toBe("ready");
+      expect(result).toBe(true);
     });
 
     it("should return defer when any middleware is defer", () => {
@@ -48,13 +48,13 @@ describe("Middleware Execution", () => {
       ];
       
       const result = kernel.testCheckMiddlewareReady(ccs);
-      expect(result).toBe("defer");
+      expect(result).toBe(false);
     });
 
     it("should handle empty array", () => {
       const ccs: any[] = [];
       const result = kernel.testCheckMiddlewareReady(ccs);
-      expect(result).toBe("ready");
+      expect(result).toBe(true);
     });
   });
 

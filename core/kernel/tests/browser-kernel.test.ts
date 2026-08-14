@@ -24,7 +24,7 @@ describe('BrowserKernel', () => {
         });
 
         it('should have empty runtime initially', () => {
-            expect(kernel['runTime'].appsLoaded).toEqual({});
+            expect(kernel['runTime'].apps).toEqual({});
             expect(kernel['runTime'].middlewares).toEqual({});
         });
     });
@@ -126,7 +126,7 @@ describe('createBrowserKernel', () => {
         const kernel = createBrowserKernel();
 
         expect(kernel).toBeInstanceOf(BrowserKernel);
-        expect(kernel['runTime'].appsLoaded).toEqual({});
+        expect(kernel['runTime'].apps).toEqual({});
         expect(kernel['runTime'].middlewares).toEqual({});
     });
 

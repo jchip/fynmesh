@@ -23,9 +23,9 @@ export class TestKernel extends FynMeshKernelCore {
   constructor(telemetryConfig?: TelemetryConfig) {
     super(telemetryConfig);
     // Replace with test fixtures that expose protected methods
-    // Pass scoped telemetry so capture points are active in tests
-    this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events, undefined, this.telemetry.scope("bootstrap"));
-    this.middlewareExecutor = new TestMiddlewareExecutor(this.telemetry.scope("executor"));
+    // Pass scoped tel so capture points are active in tests
+    this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events, undefined, this.tel.scope("bootstrap"));
+    this.middlewareExecutor = new TestMiddlewareExecutor(this.tel.scope("executor"));
   }
 
   async loadFynApp(baseUrl: string, loadId?: string): Promise<import("../../src/types").FynApp | null> {
@@ -61,8 +61,8 @@ export class TestKernel extends FynMeshKernelCore {
   testLoadExposeModule(fynApp: any, exposeName: string, loadMiddlewares?: boolean) {
     // Pass the middleware scanner to delegate to MiddlewareManager
     const scanner = (fa: any, en: string, em: any) =>
-      this.middlewareManager.scanAndRegisterMiddleware(fa, en, em);
-    return (this.moduleLoader as any).loadExposeModule(fynApp, exposeName, loadMiddlewares, scanner);
+      this.mwMgr.scanAndRegisterMiddleware(fa, en, em);
+    return (this.loader as any).loadExposeModule(fynApp, exposeName, loadMiddlewares, scanner);
   }
 
   testBootstrapFynApp(fynApp: any) {
@@ -98,28 +98,28 @@ export class TestKernel extends FynMeshKernelCore {
   testLoadFynAppBasics(entry: any) {
     // Pass the middleware scanner to delegate to MiddlewareManager
     const scanner = (fa: any, en: string, em: any) =>
-      this.middlewareManager.scanAndRegisterMiddleware(fa, en, em);
-    return (this.moduleLoader as any).loadFynAppBasics(entry, this.fynAppRegistry, scanner);
+      this.mwMgr.scanAndRegisterMiddleware(fa, en, em);
+    return (this.loader as any).loadFynAppBasics(entry, this.fynAppRegistry, scanner);
   }
 
   testUseMiddlewareOnFynModule(fynModule: any, fynApp: any) {
-    return (this.middlewareExecutor as any).useMiddlewareOnFynModule(
+    return (this.middlewareExecutor as any).useMiddlewareOnFynUnit(
       fynModule,
       fynApp,
       this,
-      () => this.moduleLoader.createFynModuleRuntime(fynApp),
+      () => this.loader.mkRuntime(fynApp),
       (name: string, provider?: string) => this.getMiddleware(name, provider)
     );
   }
 
   async testApplyAutoScopeMiddlewares(fynApp: any, fynModule?: any) {
-    const autoApplyMiddlewares = this.middlewareManager.getAutoApplyMiddlewares();
+    const autoApply = this.mwMgr.getAutoApply();
     return this.middlewareExecutor.applyAutoScopeMiddlewares(
       fynApp,
       fynModule,
       this,
-      autoApplyMiddlewares,
-      () => this.moduleLoader.createFynModuleRuntime(fynApp),
+      autoApply,
+      () => this.loader.mkRuntime(fynApp),
       async (cc, share) => this.signalMiddlewareReady(cc, { share })
     );
   }
@@ -127,8 +127,8 @@ export class TestKernel extends FynMeshKernelCore {
   testLoadMiddlewareFromDependency(packageName: string, middlewarePath: string) {
     // Pass the middleware scanner to delegate to MiddlewareManager
     const scanner = (fa: any, en: string, em: any) =>
-      this.middlewareManager.scanAndRegisterMiddleware(fa, en, em);
-    return this.moduleLoader.loadMiddlewareFromDependency(packageName, middlewarePath, this.fynAppRegistry, scanner);
+      this.mwMgr.scanAndRegisterMiddleware(fa, en, em);
+    return this.loader.loadMiddlewareFromDependency(packageName, middlewarePath, this.fynAppRegistry, scanner);
   }
 
   testCleanContainerName(name: string) {
@@ -140,7 +140,7 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testCreateFynModuleRuntime(fynApp: any) {
-    return this.moduleLoader.createFynModuleRuntime(fynApp);
+    return this.loader.mkRuntime(fynApp);
   }
 
   // Direct access to module properties (modules are now public)
@@ -190,7 +190,7 @@ export function createTestKernel(options?: {
 
   // Initialize runtime
   kernel.initRunTime({
-    appsLoaded: {},
+    apps: {},
     middlewares: {},
   });
 
@@ -199,7 +199,7 @@ export function createTestKernel(options?: {
     async (name: string, range?: string): Promise<RegistryResolverResult> => ({
       name,
       version: range || "1.0.0",
-      manifestUrl: `/test/${name}/manifest.json`,
+      url: `/test/${name}/manifest.json`,
       distBase: `/test/${name}/dist/`,
     })
   );

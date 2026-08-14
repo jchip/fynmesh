@@ -2,7 +2,7 @@
  * FynBus through REAL kernel execution flows (FYM-141)
  *
  * Complements tests/fyn-bus.test.ts (direct FynBusRoot coverage) and
- * tests/fyn-bus-lifecycle.test.ts (facade/dispose bookkeeping, telemetry,
+ * tests/fyn-bus-lifecycle.test.ts (facade/dispose bookkeeping, tel,
  * runtime stamping via ModuleLoader). This file drives the bus exclusively
  * through the kernel's own machinery:
  *  - loadFynAppBasics + bootstrapFynApp end-to-end (Path B direct execution)
@@ -43,7 +43,7 @@ class FlowTestKernel extends FynMeshKernelCore {
 
 function createKernel(): FlowTestKernel {
   const kernel = new FlowTestKernel();
-  kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+  kernel.initRunTime({ apps: {}, middlewares: {} });
   return kernel;
 }
 
@@ -81,7 +81,7 @@ async function bootApp(
 function makeMwReg(
   provider: string,
   name: string,
-  middleware: Partial<FynAppMiddleware>,
+  mw: Partial<FynAppMiddleware>,
 ): FynAppMiddlewareReg {
   const hostFynApp = {
     name: provider,
@@ -97,7 +97,7 @@ function makeMwReg(
     hostFynApp,
     exposeName: `./middleware/${name}`,
     exportName: `__middleware__${name}`,
-    middleware: { name, ...middleware } as FynAppMiddleware,
+    mw: { name, ...mw } as FynAppMiddleware,
   };
 }
 
@@ -232,7 +232,7 @@ describe("FynBus through real kernel bootstrap", () => {
     expect(buses[0]).toBe(buses[1]);
     // Facade identity is per name@version, not per runtime object: a freshly
     // created runtime still exposes the very same facade instance.
-    expect(kernel.moduleLoader.createFynUnitRuntime(fynApp).bus).toBe(buses[0]);
+    expect(kernel.loader.mkRuntime(fynApp).bus).toBe(buses[0]);
   });
 });
 
@@ -332,7 +332,7 @@ describe("FynBus in middleware call contexts", () => {
     );
   });
 
-  it("deferred middleware: bus subscriptions from setup survive, execute runs with the same bus after resume", async () => {
+  it("deferred mw: bus subscriptions from setup survive, execute runs with the same bus after resume", async () => {
     let deferredCC: FynAppMiddlewareCallContext | undefined;
     const earlySpy = vi.fn();
     const resumedSpy = vi.fn();

@@ -23,7 +23,7 @@ describe("Manifest Resolution", () => {
     mockResolver = vi.fn().mockImplementation(async (name, range) => ({
       name,
       version: range || "1.0.0",
-      manifestUrl: `http://localhost:3000/${name}/dist/fynapp.manifest.json`,
+      url: `http://localhost:3000/${name}/dist/fynapp.manifest.json`,
       distBase: `http://localhost:3000/${name}/dist/`,
     }));
 
@@ -44,7 +44,7 @@ describe("Manifest Resolution", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("should calculate distBase correctly from manifestUrl", async () => {
+    it("should calculate distBase correctly from url", async () => {
       const manifest = createMockManifest({ name: "app1", version: "1.0.0" });
 
       mockFetch.mockResolvedValueOnce({
@@ -56,7 +56,7 @@ describe("Manifest Resolution", () => {
       mockResolver = vi.fn().mockResolvedValue({
         name: "app1",
         version: "1.0.0",
-        manifestUrl: "http://localhost:3000/app1/dist/fynapp.manifest.json",
+        url: "http://localhost:3000/app1/dist/fynapp.manifest.json",
         // No distBase provided
       });
 
@@ -64,8 +64,8 @@ describe("Manifest Resolution", () => {
 
       const result = await kernel.testResolveAndFetch("app1");
 
-      // Should calculate distBase from manifestUrl
-      // Should calculate distBase from manifestUrl
+      // Should calculate distBase from url
+      // Should calculate distBase from url
       const nodeMeta = (kernel.manifestResolver as any).nodeMeta.get("app1@1.0.0");
       expect(nodeMeta.distBase).toBe("/app1/dist/");
     });
@@ -178,7 +178,7 @@ describe("Manifest Resolution", () => {
       expect(nodeMeta).toBeDefined();
       expect(nodeMeta.name).toBe("app1");
       expect(nodeMeta.version).toBe("2.0.0");
-      expect(nodeMeta.manifestUrl).toBe("http://localhost:3000/app1/dist/fynapp.manifest.json");
+      expect(nodeMeta.url).toBe("http://localhost:3000/app1/dist/fynapp.manifest.json");
     });
 
     it("should handle version from manifest vs resolver", async () => {

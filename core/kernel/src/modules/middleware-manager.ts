@@ -24,26 +24,36 @@ export type MiddlewareVersionMap = Record<string, FynAppMiddlewareReg> & {
 
 export interface AutoApplyMiddlewares {
   fynapp: FynAppMiddlewareReg[];
-  middleware: FynAppMiddlewareReg[];
+  mw: FynAppMiddlewareReg[];
 }
 
-export class MiddlewareManager {
-  protected telemetry: KernelTelemetry;
-  private middlewares: Record<string, MiddlewareVersionMap> = {};
-  private autoApplyMiddlewares?: AutoApplyMiddlewares;
-  #scannedModules: Set<string> = new Set();
+export interface MiddlewareManager {
+  registerMiddleware(mwReg: FynAppMiddlewareReg): void;
+  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg;
+  getAutoApply(): AutoApplyMiddlewares | undefined;
+  scanAndRegisterMiddleware(fynApp: FynApp, exposeName: string, exposedModule: any): string[];
+  initializeFromRuntime(runtime: FynMeshRuntimeData): void;
+  exportToRuntime(): Pick<FynMeshRuntimeData, "middlewares" | "autoApply">;
+  clear(): void;
+}
 
-  constructor(telemetry?: KernelTelemetry) {
-    this.telemetry = telemetry ?? noOpTelemetry;
-  }
+/**
+ * Built as a closure over its state rather than a class — see the note on
+ * `ManifestResolver` for why: closure variables mangle to a single character
+ * and unused helpers are dropped, neither of which a minifier can do to class
+ * members. The cast keeps `new MiddlewareManager(tel)` working at every
+ * existing call site.
+ */
+export const MiddlewareManager = function (telemetry?: KernelTelemetry): MiddlewareManager {
+  const tel = telemetry ?? noOpTelemetry;
+  const scannedModules = new Set<string>();
+  let middlewares: Record<string, MiddlewareVersionMap> = {};
+  let autoApply: AutoApplyMiddlewares | undefined;
 
-  /**
-   * Register a middleware implementation with enhanced error handling
-   */
-  registerMiddleware(mwReg: FynAppMiddlewareReg): void {
+  const registerMiddleware = (mwReg: FynAppMiddlewareReg): void => {
     const { regKey, hostFynApp } = mwReg;
 
-    const versionMap = this.middlewares[regKey] || Object.create(null);
+    const versionMap = middlewares[regKey] || Object.create(null);
 
     // Check if this exact middleware version is already registered
     if (versionMap[hostFynApp.version]) {
@@ -53,180 +63,131 @@ export class MiddlewareManager {
       return;
     }
 
-    console.log(`🔧 Registering middleware: ${regKey}, autoApplyScope:`, mwReg.middleware.autoApplyScope);
+    console.log(`🔧 Registering mw: ${regKey}, autoApplyScope:`, mwReg.mw.autoApplyScope);
 
     versionMap[hostFynApp.version] = mwReg;
     // set default version to the first version
     if (!versionMap.default) {
       versionMap.default = mwReg;
     }
-    this.middlewares[regKey] = versionMap;
+    middlewares[regKey] = versionMap;
 
-    const autoApplyScope = mwReg.middleware.autoApplyScope || [];
+    const autoApplyScope = mwReg.mw.autoApplyScope || [];
 
     if (autoApplyScope.length > 0) {
-      if (!this.autoApplyMiddlewares) {
-        this.autoApplyMiddlewares = { fynapp: [], middleware: [] };
+      if (!autoApply) {
+        autoApply = { fynapp: [], mw: [] };
       }
 
       if (autoApplyScope.includes("all") || autoApplyScope.includes("fynapp")) {
-        this.autoApplyMiddlewares.fynapp.push(mwReg);
+        autoApply.fynapp.push(mwReg);
       }
 
       if (autoApplyScope.includes("all") || autoApplyScope.includes("middleware")) {
-        this.autoApplyMiddlewares.middleware.push(mwReg);
+        autoApply.mw.push(mwReg);
       }
 
       console.debug(`🎯 Registered auto-apply middleware for [${autoApplyScope.join(', ')}]: ${regKey}@${hostFynApp.version}`);
     } else {
-      console.debug(`✅ Registered explicit-use middleware: ${regKey}@${hostFynApp.version}`);
+      console.debug(`✅ Registered explicit-use mw: ${regKey}@${hostFynApp.version}`);
     }
 
-    captureEvent(this.telemetry, "registered", { key: regKey, version: hostFynApp.version, autoApply: autoApplyScope.length > 0 });
-  }
+    captureEvent(tel, "registered", { key: regKey, version: hostFynApp.version, autoApply: autoApplyScope.length > 0 });
+  };
 
-  /**
-   * Get middleware by name and provider
-   */
-  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg {
-    // If provider is specified, try exact match first
-    if (provider) {
-      const middlewareKey = `${provider}::${name}`;
-      const versionMap = this.middlewares[middlewareKey];
-      if (versionMap) {
-        const mwReg = versionMap["default"];
-        if (mwReg) {
-          return mwReg;
+  const hasScannedModule = (scanCacheKey: string): boolean => scannedModules.has(scanCacheKey);
+
+  return {
+    registerMiddleware,
+
+    getMiddleware(name, provider) {
+      // If provider is specified, try exact match first
+      if (provider) {
+        const versionMap = middlewares[`${provider}::${name}`];
+        if (versionMap) {
+          const mwReg = versionMap["default"];
+          if (mwReg) {
+            return mwReg;
+          }
         }
       }
-    }
-    // Fallback: scan all providers for first available default match
-    for (const [key, versionMap] of Object.entries(this.middlewares)) {
-      if (key.endsWith(`::${name}`)) {
-        const mwReg = versionMap.default;
-        if (mwReg) return mwReg;
+      // Fallback: scan all providers for first available default match
+      for (const [key, versionMap] of Object.entries(middlewares)) {
+        if (key.endsWith(`::${name}`)) {
+          const mwReg = versionMap.default;
+          if (mwReg) return mwReg;
+        }
       }
-    }
-    return DummyMiddlewareReg;
-  }
+      return DummyMiddlewareReg;
+    },
 
-  /**
-   * Get auto-apply middlewares
-   */
-  getAutoApplyMiddlewares(): AutoApplyMiddlewares | undefined {
-    return this.autoApplyMiddlewares;
-  }
+    getAutoApply: () => autoApply,
 
-  /**
-   * Get middlewares for a specific FynApp type
-   */
-  getTargetMiddlewares(isMiddlewareProvider: boolean): FynAppMiddlewareReg[] {
-    if (!this.autoApplyMiddlewares) {
-      return [];
-    }
-    
-    return isMiddlewareProvider
-      ? this.autoApplyMiddlewares.middleware
-      : this.autoApplyMiddlewares.fynapp;
-  }
+    scanAndRegisterMiddleware(fynApp, exposeName, exposedModule) {
+      const scanCacheKey = `${fynApp.name}@${fynApp.version}::${exposeName}`;
 
-  /**
-   * Check if a module has been scanned for middleware
-   */
-  hasScannedModule(scanCacheKey: string): boolean {
-    return this.#scannedModules.has(scanCacheKey);
-  }
+      // Check if we've already scanned this module
+      if (hasScannedModule(scanCacheKey)) {
+        console.debug(
+          `⏭️  Skipping middleware scan for '${exposeName}' - already scanned for`,
+          fynApp.name,
+          fynApp.version,
+        );
+        return [];
+      }
 
-  /**
-   * Mark a module as scanned for middleware
-   */
-  markModuleScanned(scanCacheKey: string): void {
-    this.#scannedModules.add(scanCacheKey);
-  }
+      // Mark as scanned before processing to prevent duplicate scans
+      scannedModules.add(scanCacheKey);
 
-  /**
-   * Scan and register middleware exports from a module
-   */
-  scanAndRegisterMiddleware(
-    fynApp: FynApp,
-    exposeName: string,
-    exposedModule: any
-  ): string[] {
-    const scanCacheKey = `${fynApp.name}@${fynApp.version}::${exposeName}`;
-    
-    // Check if we've already scanned this module
-    if (this.hasScannedModule(scanCacheKey)) {
+      const mwExports: string[] = [];
+
+      for (const [exportName, exportValue] of Object.entries(exposedModule)) {
+        if (exportName.startsWith(MIDDLEWARE_EXPORT_PREFIX)) {
+          const mw = exportValue as FynAppMiddleware;
+          const mwName = mw.name;
+          registerMiddleware({
+            regKey: `${fynApp.name}::${mwName}`,
+            fullKey: `${fynApp.name}@${fynApp.version}::${mwName}`,
+            hostFynApp: fynApp,
+            exposeName,
+            exportName,
+            mw,
+          });
+          mwExports.push(exportName);
+        }
+      }
+
       console.debug(
-        `⏭️  Skipping middleware scan for '${exposeName}' - already scanned for`,
+        `✅ Expose module '${exposeName}' loaded for`,
         fynApp.name,
         fynApp.version,
+        mwExports.length > 0 ? "middlewares registered:" : "",
+        mwExports.join(", "),
       );
-      return [];
-    }
 
-    // Mark as scanned before processing to prevent duplicate scans
-    this.markModuleScanned(scanCacheKey);
+      captureEvent(tel, "scan.completed", { app: fynApp.name, expose: exposeName, count: mwExports.length });
 
-    const mwExports: string[] = [];
+      return mwExports;
+    },
 
-    for (const [exportName, exportValue] of Object.entries(exposedModule)) {
-      if (exportName.startsWith(MIDDLEWARE_EXPORT_PREFIX)) {
-        const middleware = exportValue as FynAppMiddleware;
-        const mwName = middleware.name;
-        const mwReg: FynAppMiddlewareReg = {
-          regKey: `${fynApp.name}::${mwName}`,
-          fullKey: `${fynApp.name}@${fynApp.version}::${mwName}`,
-          hostFynApp: fynApp,
-          exposeName: exposeName,
-          exportName,
-          middleware,
-        };
-        this.registerMiddleware(mwReg);
-        mwExports.push(exportName);
+    initializeFromRuntime(runtime) {
+      if (runtime.middlewares) {
+        middlewares = runtime.middlewares;
       }
-    }
+      if (runtime.autoApply) {
+        autoApply = runtime.autoApply;
+      }
+    },
 
-    console.debug(
-      `✅ Expose module '${exposeName}' loaded for`,
-      fynApp.name,
-      fynApp.version,
-      mwExports.length > 0 ? "middlewares registered:" : "",
-      mwExports.join(", "),
-    );
+    exportToRuntime: () => ({
+      middlewares,
+      autoApply: autoApply,
+    }),
 
-    captureEvent(this.telemetry, "scan.completed", { app: fynApp.name, expose: exposeName, count: mwExports.length });
-
-    return mwExports;
-  }
-
-  /**
-   * Initialize runtime with middleware data
-   */
-  initializeFromRuntime(runtime: FynMeshRuntimeData): void {
-    if (runtime.middlewares) {
-      this.middlewares = runtime.middlewares;
-    }
-    if (runtime.autoApplyMiddlewares) {
-      this.autoApplyMiddlewares = runtime.autoApplyMiddlewares;
-    }
-  }
-
-  /**
-   * Export middleware state to runtime
-   */
-  exportToRuntime(): Pick<FynMeshRuntimeData, 'middlewares' | 'autoApplyMiddlewares'> {
-    return {
-      middlewares: this.middlewares,
-      autoApplyMiddlewares: this.autoApplyMiddlewares,
-    };
-  }
-
-  /**
-   * Clear all middleware state
-   */
-  clear(): void {
-    this.middlewares = {};
-    this.autoApplyMiddlewares = undefined;
-    this.#scannedModules.clear();
-  }
-}
+    clear() {
+      middlewares = {};
+      autoApply = undefined;
+      scannedModules.clear();
+    },
+  };
+} as unknown as new (tel?: KernelTelemetry) => MiddlewareManager;

@@ -5,7 +5,7 @@
  * These tests pin edge behavior of requestFrom/registerHandler and the facade
  * request/handle: payload identity, self-RPC, concurrency isolation, handler
  * lifecycle races, park/flush details, timeout edges, duplicate-handler edges,
- * dispose-during-pending, and telemetry capture shape.
+ * dispose-during-pending, and tel capture shape.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { FynBusRoot, type FynBus } from "../src/fyn-bus.js";
@@ -22,7 +22,7 @@ function createFakeTelemetry(): KernelTelemetry & {
     captured,
     errors,
     capture: (entry: any) => captured.push(entry),
-    captureError: (name: string, data: any, error: unknown) =>
+    capErr: (name: string, data: any, error: unknown) =>
       errors.push({ name, data, error }),
     scope: () => fake,
     flush: () => {},
@@ -702,23 +702,23 @@ describe("FynBus RPC edge cases", () => {
     });
   });
 
-  describe("telemetry", () => {
+  describe("tel", () => {
     it('captures unprefixed "request" and "handle" events with topic/channel data', async () => {
-      const telemetry = createFakeTelemetry();
-      const busRoot = new FynBusRoot(telemetry);
+      const tel = createFakeTelemetry();
+      const busRoot = new FynBusRoot(tel);
       const tProvider = busRoot.forApp("provider", "1.0.0");
       const tConsumer = busRoot.forApp("consumer", "1.0.0");
 
       tProvider.channel("cart").handle("total", () => 99);
       await tConsumer.channel("cart").request("total");
 
-      // FYM-140: "handle" telemetry records the provider's identity too
-      expect(telemetry.captured).toContainEqual({
+      // FYM-140: "handle" tel records the provider's identity too
+      expect(tel.captured).toContainEqual({
         type: "event",
         name: "handle",
         data: { topic: "total", channel: "cart", source: "provider" },
       });
-      expect(telemetry.captured).toContainEqual({
+      expect(tel.captured).toContainEqual({
         type: "event",
         name: "request",
         data: { topic: "total", channel: "cart", source: "consumer" },
@@ -726,13 +726,13 @@ describe("FynBus RPC edge cases", () => {
     });
 
     it('captures "request" at call time even when the request parks', async () => {
-      const telemetry = createFakeTelemetry();
-      const busRoot = new FynBusRoot(telemetry);
+      const tel = createFakeTelemetry();
+      const busRoot = new FynBusRoot(tel);
       const tProvider = busRoot.forApp("provider", "1.0.0");
       const tConsumer = busRoot.forApp("consumer", "1.0.0");
 
       const pending = tConsumer.request("late");
-      expect(telemetry.captured).toContainEqual({
+      expect(tel.captured).toContainEqual({
         type: "event",
         name: "request",
         data: { topic: "late", channel: "", source: "consumer" },

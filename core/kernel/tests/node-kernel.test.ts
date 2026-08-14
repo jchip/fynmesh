@@ -17,7 +17,7 @@ describe('NodeKernel', () => {
         });
 
         it('should have empty runtime initially', () => {
-            expect(kernel['runTime'].appsLoaded).toEqual({});
+            expect(kernel['runTime'].apps).toEqual({});
             expect(kernel['runTime'].middlewares).toEqual({});
         });
     });
@@ -54,7 +54,7 @@ describe('createNodeKernel', () => {
         const kernel = createNodeKernel();
 
         expect(kernel).toBeInstanceOf(NodeKernel);
-        expect(kernel['runTime'].appsLoaded).toEqual({});
+        expect(kernel['runTime'].apps).toEqual({});
         expect(kernel['runTime'].middlewares).toEqual({});
     });
 

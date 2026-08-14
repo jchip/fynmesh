@@ -1076,7 +1076,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
           // Create a proper runtime for the FynApp with populated middlewareContext
           // This ensures the component has access to shared middleware APIs like basic-counter
-          const fynAppRuntime = this.kernel.moduleLoader.createFynUnitRuntime(fynApp);
+          const fynAppRuntime = this.kernel.loader.mkRuntime(fynApp);
 
           // Apply middlewares to populate the FynApp's middlewareContext
           // Look up any main FynUnit to get middleware metadata
@@ -1161,8 +1161,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
       console.log(`🔄 Re-executing FynUnit for ${fynApp.name}`);
 
-      // Create a runtime context using the kernel's moduleLoader for proper middleware support
-      const runtime = this.kernel.moduleLoader.createFynUnitRuntime(fynApp);
+      // Create a runtime context using the kernel's loader for proper middleware support
+      const runtime = this.kernel.loader.mkRuntime(fynApp);
 
       // Apply middlewares to populate the runtime.middlewareContext
       // This ensures the FynApp gets access to shared middleware APIs like basic-counter
@@ -1207,23 +1207,23 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
    */
   private async applyMiddlewaresForReExecution(fynApp: FynApp, fynUnit: any, runtime: any): Promise<void> {
     // Get auto-apply middlewares from the kernel's middleware manager
-    const autoApplyMiddlewares = this.kernel.middlewareManager?.getAutoApplyMiddlewares?.();
-    if (!autoApplyMiddlewares) {
+    const autoApply = this.kernel.mwMgr?.getAutoApply?.();
+    if (!autoApply) {
       console.debug(`📝 No auto-apply middlewares available for ${fynApp.name}`);
       return;
     }
 
     // Apply middlewares that target fynapps (not middleware providers)
-    const targetMiddlewares = autoApplyMiddlewares.fynapp || [];
+    const targetMiddlewares = autoApply.fynapp || [];
 
     for (const mwReg of targetMiddlewares) {
       // Skip the shell middleware - we handle it separately
-      if (mwReg.middleware.name === this.name) continue;
+      if (mwReg.mw.name === this.name) continue;
 
       // Check if middleware has a filter function
-      if (mwReg.middleware.shouldApply) {
+      if (mwReg.mw.shouldApply) {
         try {
-          if (!mwReg.middleware.shouldApply(fynApp)) {
+          if (!mwReg.mw.shouldApply(fynApp)) {
             continue;
           }
         } catch (error) {
@@ -1236,14 +1236,13 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       const context = {
         meta: {
           info: {
-            name: mwReg.middleware.name,
+            name: mwReg.mw.name,
             provider: mwReg.hostFynApp.name,
             version: mwReg.hostFynApp.version,
           },
           config: {},
         },
         fynUnit,
-        fynMod: fynUnit,
         fynApp,
         reg: mwReg,
         runtime,
@@ -1253,12 +1252,12 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
       try {
         // Call setup to initialize middleware state
-        if (mwReg.middleware.setup) {
-          await mwReg.middleware.setup(context);
+        if (mwReg.mw.setup) {
+          await mwReg.mw.setup(context);
         }
         // Call apply to populate middlewareContext
-        if (mwReg.middleware.apply) {
-          await mwReg.middleware.apply(context);
+        if (mwReg.mw.apply) {
+          await mwReg.mw.apply(context);
         }
       } catch (error) {
         console.warn(`Failed to apply middleware ${mwReg.regKey} for re-execution:`, error);
@@ -1268,9 +1267,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // Also apply middlewares from the FynUnit's __middlewareMeta if present
     if (fynUnit.__middlewareMeta) {
       for (const meta of fynUnit.__middlewareMeta) {
-        if (typeof meta === 'object' && meta.middleware) {
+        if (typeof meta === 'object' && meta.mw) {
           // Parse the middleware string to get the name
-          const parts = (meta.middleware as string).trim().split(' ');
+          const parts = (meta.mw as string).trim().split(' ');
           if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
             const middlewareName = parts[2].split('/').pop() || parts[2];
             const mwReg = this.kernel.getMiddleware(middlewareName, parts[1]);
@@ -1279,15 +1278,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
               const context = {
                 meta: {
                   info: {
-                    name: mwReg.middleware.name,
+                    name: mwReg.mw.name,
                     provider: mwReg.hostFynApp.name,
                     version: mwReg.hostFynApp.version,
                   },
                   config: meta.config || {},
                 },
                 fynUnit,
-                fynMod: fynUnit,
-                fynApp,
+                        fynApp,
                 reg: mwReg,
                 runtime,
                 kernel: this.kernel,
@@ -1295,11 +1293,11 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
               };
 
               try {
-                if (mwReg.middleware.setup) {
-                  await mwReg.middleware.setup(context);
+                if (mwReg.mw.setup) {
+                  await mwReg.mw.setup(context);
                 }
-                if (mwReg.middleware.apply) {
-                  await mwReg.middleware.apply(context);
+                if (mwReg.mw.apply) {
+                  await mwReg.mw.apply(context);
                 }
               } catch (error) {
                 console.warn(`Failed to apply declared middleware ${mwReg.regKey}:`, error);

@@ -165,7 +165,7 @@ describe("FynBus type contracts", () => {
     const root = new FynBusRoot();
     expectTypeOf(root.forKernel).returns.toEqualTypeOf<FynBus>();
     expectTypeOf(root.forApp).returns.toEqualTypeOf<FynBusFacade>();
-    expectTypeOf(FynBusFacade.prototype).toExtend<FynBus>();
+    expectTypeOf<FynBusFacade>().toExtend<FynBus>();
   });
 
   it("BusHandler and option types match the documented surface", () => {

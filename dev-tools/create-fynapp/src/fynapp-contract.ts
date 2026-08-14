@@ -56,7 +56,7 @@ export type FynAppMain = FynUnit;
 
 /**
  * A single consumer middleware declaration. At runtime the supported form is
- * `{ middleware: import("pkg/middleware/x/x", { with: { type: "fynapp-middleware" } }), config }`.
+ * `{ mw: import("pkg/middleware/x/x", { with: { type: "fynapp-middleware" } }), config }`.
  * The kernel resolves the dynamic federation import; `config` is passed to the
  * provider verbatim as `cc.meta.config`.
  */

@@ -49,7 +49,7 @@ export function createMockMiddlewareReg(
     hostFynApp,
     exposeName: "./middleware/test",
     exportName: "__middleware__test",
-    middleware,
+    mw: middleware,
     ...overrides,
   };
 }
@@ -66,7 +66,7 @@ export function createMockCallContext(
   return {
     meta: {
       info: {
-        name: reg.middleware.name,
+        name: reg.mw.name,
         provider: reg.hostFynApp.name,
         version: reg.hostFynApp.version,
       },
