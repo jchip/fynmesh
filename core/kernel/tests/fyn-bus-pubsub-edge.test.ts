@@ -721,11 +721,11 @@ describe("FynBus pub/sub edge cases", () => {
       busB: FynBus;
     } {
       const kernel = new TestKernel();
-      kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
-      const busA = kernel.moduleLoader.createFynUnitRuntime(
+      kernel.initRunTime({ apps: {}, middlewares: {} });
+      const busA = kernel.loader.mkRuntime(
         createTestFynApp("app-a", "1.0.0"),
       ).bus!;
-      const busB = kernel.moduleLoader.createFynUnitRuntime(
+      const busB = kernel.loader.mkRuntime(
         createTestFynApp("app-b", "1.0.0"),
       ).bus!;
       return { kernel, busA, busB };

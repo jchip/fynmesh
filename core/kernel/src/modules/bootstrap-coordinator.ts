@@ -10,208 +10,74 @@ import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 /** Default bootstrap timeout: 30 seconds */
 const DEFAULT_BOOTSTRAP_TIMEOUT = 30000;
 
-export interface BootstrapDependencies {
+type Deferred = {
+  fynApp: FynApp;
+  resolve: () => void;
+  timeoutId?: ReturnType<typeof setTimeout>;
+};
+
+export interface BootstrapCoordinator {
+  /** Name of the app currently holding the bootstrap lock, or null. */
   bootstrappingApp: string | null;
-  deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> }>;
+  deferredBootstraps: Deferred[];
   fynAppBootstrapStatus: Map<string, "bootstrapped">;
   fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">>;
+  events: FynEventTarget;
+  setTimeout(timeout: number): void;
+  canBootstrap(fynApp: FynApp): boolean;
+  acquireBootstrapLock(fynAppName: string): boolean;
+  releaseBootstrapLock(): void;
+  deferBootstrap(fynApp: FynApp): Promise<void>;
+  registerProviderMode(
+    fynAppName: string,
+    middlewareName: string,
+    mode: "provider" | "consumer",
+  ): void;
+  areBootstrapDependenciesSatisfied(fynApp: FynApp): boolean;
+  findProviderForMiddleware(middlewareName: string, excludeFynApp: string): string | null;
+  clear(): void;
 }
 
-export class BootstrapCoordinator {
-  public bootstrappingApp: string | null = null;
-  public deferredBootstraps: Array<{ fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> }> = [];
-  public fynAppBootstrapStatus: Map<string, "bootstrapped"> = new Map();
-  public fynAppProviderModes: Map<string, Map<string, "provider" | "consumer">> = new Map();
-  public events: FynEventTarget;
-  protected telemetry: KernelTelemetry;
+/**
+ * Built as a closure over its state rather than a class — see the note on
+ * `ManifestResolver`.
+ *
+ * The collections are declared once and handed out on the returned object, so
+ * internal code reaches them through a one-character closure variable while
+ * external readers still see the same live Map/Array. Only `bootstrappingApp`
+ * and `timeout` are reassigned primitives, so those get accessors — the
+ * telemetry tests set `bootstrappingApp` directly to simulate a busy lock.
+ */
+export const BootstrapCoordinator = function (
+  events: FynEventTarget,
+  timeoutMs?: number,
+  telemetry?: KernelTelemetry,
+): BootstrapCoordinator {
+  const tel = telemetry ?? noOpTelemetry;
+  const deferredBootstraps: Deferred[] = [];
+  const fynAppBootstrapStatus = new Map<string, "bootstrapped">();
+  const fynAppProviderModes = new Map<string, Map<string, "provider" | "consumer">>();
+  let bootstrappingApp: string | null = null;
+  let timeout = timeoutMs ?? DEFAULT_BOOTSTRAP_TIMEOUT;
 
-  /** Bootstrap timeout in milliseconds */
-  private timeout: number = DEFAULT_BOOTSTRAP_TIMEOUT;
-
-  constructor(events: FynEventTarget, timeout?: number, telemetry?: KernelTelemetry) {
-    this.events = events;
-    this.telemetry = telemetry ?? noOpTelemetry;
-    if (timeout !== undefined) {
-      this.timeout = timeout;
+  /** Find which FynApp is the provider for a given middleware */
+  const findProviderForMiddleware = (
+    middlewareName: string,
+    excludeFynApp: string,
+  ): string | null => {
+    for (const [fynAppName, modes] of fynAppProviderModes.entries()) {
+      if (fynAppName === excludeFynApp) continue;
+      if (modes.get(middlewareName) === "provider") {
+        return fynAppName;
+      }
     }
+    return null;
+  };
 
-    // Listen for bootstrap completion events
-    this.events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
-      this.#handleFynAppBootstrapped(event as CustomEvent);
-    });
-
-    // Also advance deferred queue on failures so the kernel doesn't stall
-    this.events.on("FYNAPP_BOOTSTRAP_FAILED", (event: Event) => {
-      this.#handleFynAppBootstrapFailed(event as CustomEvent);
-    });
-  }
-
-  /**
-   * Set bootstrap timeout
-   */
-  setTimeout(timeout: number): void {
-    this.timeout = timeout;
-  }
-
-  /**
-   * Get current bootstrap timeout
-   */
-  getTimeout(): number {
-    return this.timeout;
-  }
-
-  /**
-   * Get current bootstrap state
-   */
-  getBootstrapState(): BootstrapDependencies {
-    return {
-      bootstrappingApp: this.bootstrappingApp,
-      deferredBootstraps: [...this.deferredBootstraps],
-      fynAppBootstrapStatus: new Map(this.fynAppBootstrapStatus),
-      fynAppProviderModes: new Map(this.fynAppProviderModes),
-    };
-  }
-
-  /**
-   * Check if a FynApp can bootstrap
-   */
-  canBootstrap(fynApp: FynApp): boolean {
-    return this.bootstrappingApp === null && 
-           this.areBootstrapDependenciesSatisfied(fynApp);
-  }
-
-  /**
-   * Acquire bootstrap lock
-   */
-  acquireBootstrapLock(fynAppName: string): boolean {
-    if (this.bootstrappingApp !== null) {
-      return false;
-    }
-    this.bootstrappingApp = fynAppName;
-    console.debug(`🔒 ${fynAppName} acquired bootstrap lock`);
-    captureEvent(this.telemetry, "lock.acquired", { app: fynAppName });
-    return true;
-  }
-
-  /**
-   * Release bootstrap lock
-   */
-  releaseBootstrapLock(): void {
-    this.bootstrappingApp = null;
-  }
-
-  /**
-   * Defer a bootstrap until dependencies are ready
-   * If timeout is reached, the FynApp will be skipped with an error
-   */
-  deferBootstrap(fynApp: FynApp): Promise<void> {
-    const reason = this.bootstrappingApp !== null
-      ? `${this.bootstrappingApp} is currently bootstrapping`
-      : `waiting for provider dependencies`;
-
-    console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
-    captureEvent(this.telemetry, "deferred", { app: fynApp.name, reason });
-
-    return new Promise<void>((resolve, reject) => {
-      const deferred: { fynApp: FynApp; resolve: () => void; timeoutId?: ReturnType<typeof setTimeout> } = {
-        fynApp,
-        resolve: () => {
-          // Clear timeout when resolved normally
-          if (deferred.timeoutId) {
-            clearTimeout(deferred.timeoutId);
-          }
-          resolve();
-        },
-      };
-
-      // Set up timeout - party goes on even if this FynApp times out
-      deferred.timeoutId = setTimeout(() => {
-        // Remove from deferred queue
-        const idx = this.deferredBootstraps.indexOf(deferred);
-        if (idx >= 0) {
-          this.deferredBootstraps.splice(idx, 1);
-        }
-
-        // Log timeout error but don't reject - allow promise to resolve
-        // This prevents blocking the entire bootstrap process
-        console.error(
-          `⏰ Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}. ` +
-          `Skipping this FynApp - the party goes on!`
-        );
-
-        // Capture timeout error for telemetry
-        this.telemetry.captureError(
-          "timeout",
-          { app: fynApp.name, timeout: this.timeout, reason },
-          new Error(`Bootstrap timeout (${this.timeout}ms): ${fynApp.name} timed out waiting for ${reason}`)
-        );
-
-        // Emit timeout event for observability
-        this.events.dispatchEvent(
-          new CustomEvent("FYNAPP_BOOTSTRAP_TIMEOUT", {
-            detail: {
-              name: fynApp.name,
-              version: fynApp.version,
-              reason,
-              timeout: this.timeout,
-            },
-          })
-        );
-
-        // Resolve instead of reject - party goes on!
-        // The FynApp just won't be bootstrapped
-        resolve();
-      }, this.timeout);
-
-      this.deferredBootstraps.push(deferred);
-    });
-  }
-
-  /**
-   * Mark a FynApp as bootstrapped
-   */
-  markBootstrapped(fynAppName: string): void {
-    this.fynAppBootstrapStatus.set(fynAppName, "bootstrapped");
-  }
-
-  /**
-   * Register provider/consumer mode for a FynApp
-   */
-  registerProviderMode(
-    fynAppName: string, 
-    middlewareName: string, 
-    mode: "provider" | "consumer"
-  ): void {
-    if (!this.fynAppProviderModes.has(fynAppName)) {
-      this.fynAppProviderModes.set(fynAppName, new Map());
-    }
-    const modes = this.fynAppProviderModes.get(fynAppName)!;
-    modes.set(middlewareName, mode);
-    console.debug(`📝 ${fynAppName} registered as ${mode} for middleware ${middlewareName}`);
-  }
-
-  /**
-   * Handle FynApp bootstrap completion event
-   * Resume any deferred bootstraps that have their dependencies satisfied
-   */
-  async #handleFynAppBootstrapped(event: CustomEvent): Promise<void> {
-    const { name } = event.detail;
-
-    console.debug(`✅ FynApp ${name} bootstrap complete, checking deferred bootstraps`);
-    captureEvent(this.telemetry, "completed", { app: name });
-
-    // Mark this FynApp as bootstrapped
-    this.markBootstrapped(name);
-
-    this.#finishBootstrapAndResumeNext();
-  }
-
-  /**
-   * Check if a FynApp's bootstrap dependencies are satisfied
-   */
-  protected areBootstrapDependenciesSatisfied(fynApp: FynApp): boolean {
+  /** Check if a FynApp's bootstrap dependencies are satisfied */
+  const areBootstrapDependenciesSatisfied = (fynApp: FynApp): boolean => {
     // Get this FynApp's provider/consumer modes for each middleware
-    const modes = this.fynAppProviderModes.get(fynApp.name);
+    let modes = fynAppProviderModes.get(fynApp.name);
     if (!modes) {
       // No provider/consumer info, dependencies are satisfied
       return true;
@@ -221,12 +87,12 @@ export class BootstrapCoordinator {
     for (const [middlewareName, mode] of modes.entries()) {
       if (mode === "consumer") {
         // This FynApp is a consumer - find the provider
-        const providerName = this.findProviderForMiddleware(middlewareName, fynApp.name);
+        const providerName = findProviderForMiddleware(middlewareName, fynApp.name);
 
-        if (providerName && !this.fynAppBootstrapStatus.has(providerName)) {
+        if (providerName && !fynAppBootstrapStatus.has(providerName)) {
           // Provider exists but hasn't bootstrapped yet
           console.debug(
-            `⏳ ${fynApp.name} waiting for provider ${providerName} to bootstrap (middleware: ${middlewareName})`
+            `⏳ ${fynApp.name} waiting for provider ${providerName} to bootstrap (mw: ${middlewareName})`,
           );
           return false;
         }
@@ -235,84 +101,179 @@ export class BootstrapCoordinator {
 
     // All dependencies satisfied
     return true;
-  }
+  };
 
-  /**
-   * Find which FynApp is the provider for a given middleware
-   */
-  protected findProviderForMiddleware(middlewareName: string, excludeFynApp: string): string | null {
-    for (const [fynAppName, modes] of this.fynAppProviderModes.entries()) {
-      if (fynAppName === excludeFynApp) continue;
+  /** Release bootstrap lock and resume the next eligible deferred bootstrap. */
+  const finishBootstrapAndResumeNext = (): void => {
+    // Clear the currently bootstrapping app
+    bootstrappingApp = null;
 
-      const mode = modes.get(middlewareName);
-      if (mode === "provider") {
-        return fynAppName;
-      }
+    // Find the FIRST deferred bootstrap whose dependencies are now satisfied
+    const nextIndex = deferredBootstraps.findIndex((d) =>
+      areBootstrapDependenciesSatisfied(d.fynApp),
+    );
+
+    // Resume the ready FynApp and remove from queue
+    if (nextIndex >= 0) {
+      const next = deferredBootstraps.splice(nextIndex, 1)[0];
+      console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
+      captureEvent(tel, "resumed", { app: next.fynApp.name });
+      next.resolve();
+    } else if (deferredBootstraps.length > 0) {
+      console.debug(`⏸️ ${deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`);
     }
-    return null;
-  }
+  };
 
-  /**
-   * Handle a bootstrap failure event.
-   *
-   * This intentionally does not mark the app as bootstrapped; it only releases
-   * the bootstrap lock and advances the deferred queue for apps whose
-   * dependencies are already satisfied.
-   */
-  async #handleFynAppBootstrapFailed(event: CustomEvent): Promise<void> {
-    const { name, error } = event.detail;
+  // Listen for bootstrap completion events
+  events.on("FYNAPP_BOOTSTRAPPED", (event: Event) => {
+    const { name } = (event as CustomEvent).detail;
+    console.debug(`✅ FynApp ${name} bootstrap complete, checking deferred bootstraps`);
+    captureEvent(tel, "completed", { app: name });
+    fynAppBootstrapStatus.set(name, "bootstrapped");
+    finishBootstrapAndResumeNext();
+  });
+
+  // Also advance deferred queue on failures so the kernel doesn't stall.
+  // Intentionally does not mark the app as bootstrapped; it only releases the
+  // lock and advances apps whose dependencies are already satisfied.
+  events.on("FYNAPP_BOOTSTRAP_FAILED", (event: Event) => {
+    const { name, error } = (event as CustomEvent).detail;
     console.debug(`❌ FynApp ${name} bootstrap failed, checking deferred bootstraps`);
     // Only attach an error object when the event actually carries one; fabricating
     // one here would record a misleading coordinator-local stack and message.
     if (error) {
-      this.telemetry.captureError("failed", { app: name }, error);
+      tel.capErr("failed", { app: name }, error);
     } else {
-      this.telemetry.capture({ type: "error", name: "failed", data: { app: name } });
+      tel.capture({ type: "error", name: "failed", data: { app: name } });
     }
-    this.#finishBootstrapAndResumeNext();
-  }
+    finishBootstrapAndResumeNext();
+  });
 
-  /**
-   * Release bootstrap lock and resume the next eligible deferred bootstrap.
-   */
-  #finishBootstrapAndResumeNext(): void {
-    // Clear the currently bootstrapping app
-    this.releaseBootstrapLock();
+  return {
+    events,
+    deferredBootstraps,
+    fynAppBootstrapStatus,
+    fynAppProviderModes,
+    areBootstrapDependenciesSatisfied,
+    findProviderForMiddleware,
 
-    // Find the FIRST deferred bootstrap whose dependencies are now satisfied
-    let nextIndex = -1;
-    for (let i = 0; i < this.deferredBootstraps.length; i++) {
-      const deferred = this.deferredBootstraps[i];
-      if (this.areBootstrapDependenciesSatisfied(deferred.fynApp)) {
-        nextIndex = i;
-        break;
+    get bootstrappingApp() {
+      return bootstrappingApp;
+    },
+    set bootstrappingApp(value: string | null) {
+      bootstrappingApp = value;
+    },
+
+    setTimeout(value) {
+      timeout = value;
+    },
+
+    canBootstrap: (fynApp) =>
+      bootstrappingApp === null && areBootstrapDependenciesSatisfied(fynApp),
+
+    acquireBootstrapLock(fynAppName) {
+      if (bootstrappingApp !== null) {
+        return false;
       }
-    }
+      bootstrappingApp = fynAppName;
+      console.debug(`🔒 ${fynAppName} acquired bootstrap lock`);
+      captureEvent(tel, "lock.acquired", { app: fynAppName });
+      return true;
+    },
 
-    // Resume the ready FynApp and remove from queue
-    if (nextIndex >= 0) {
-      const next = this.deferredBootstraps.splice(nextIndex, 1)[0];
-      console.debug(`🔄 Resuming deferred bootstrap for ${next.fynApp.name} (dependencies satisfied)`);
-      captureEvent(this.telemetry, "resumed", { app: next.fynApp.name });
-      next.resolve();
-    } else if (this.deferredBootstraps.length > 0) {
-      console.debug(`⏸️ ${this.deferredBootstraps.length} deferred bootstrap(s) still waiting for dependencies`);
-    }
-  }
+    releaseBootstrapLock() {
+      bootstrappingApp = null;
+    },
 
-  /**
-   * Clear all bootstrap state
-   */
-  clear(): void {
-    this.bootstrappingApp = null;
-    // Clear any pending timeouts
-    for (const deferred of this.deferredBootstraps) {
-      if (deferred.timeoutId) {
-        clearTimeout(deferred.timeoutId);
+    /**
+     * Defer a bootstrap until dependencies are ready.
+     * If timeout is reached, the FynApp is skipped with an error.
+     */
+    deferBootstrap(fynApp) {
+      const reason =
+        bootstrappingApp !== null
+          ? `${bootstrappingApp} is currently bootstrapping`
+          : `waiting for provider dependencies`;
+
+      console.debug(`⏸️ Deferring bootstrap of ${fynApp.name} (${reason})`);
+      captureEvent(tel, "deferred", { app: fynApp.name, reason });
+
+      return new Promise<void>((resolve) => {
+        const deferred: Deferred = {
+          fynApp,
+          resolve: () => {
+            // Clear timeout when resolved normally
+            if (deferred.timeoutId) {
+              clearTimeout(deferred.timeoutId);
+            }
+            resolve();
+          },
+        };
+
+        // Set up timeout - party goes on even if this FynApp times out
+        deferred.timeoutId = setTimeout(() => {
+          // Remove from deferred queue
+          const idx = deferredBootstraps.indexOf(deferred);
+          if (idx >= 0) {
+            deferredBootstraps.splice(idx, 1);
+          }
+
+          const message = `Bootstrap timeout (${timeout}ms): ${fynApp.name} timed out waiting for ${reason}`;
+
+          // Log timeout error but don't reject - allow promise to resolve.
+          // This prevents blocking the entire bootstrap process.
+          console.error(`⏰ ${message}. Skipping this FynApp - the party goes on!`);
+
+          // Capture timeout error for tel
+          tel.capErr(
+            "timeout",
+            { app: fynApp.name, timeout, reason },
+            new Error(message),
+          );
+
+          // Emit timeout event for observability
+          events.dispatchEvent(
+            new CustomEvent("FYNAPP_BOOTSTRAP_TIMEOUT", {
+              detail: { name: fynApp.name, version: fynApp.version, reason, timeout },
+            }),
+          );
+
+          // Resolve instead of reject - party goes on!
+          // The FynApp just won't be bootstrapped.
+          resolve();
+        }, timeout);
+
+        deferredBootstraps.push(deferred);
+      });
+    },
+
+    registerProviderMode(fynAppName, middlewareName, mode) {
+      let modes = fynAppProviderModes.get(fynAppName);
+      if (!modes) {
+        modes = new Map();
+        fynAppProviderModes.set(fynAppName, modes);
       }
-    }
-    this.deferredBootstraps = [];
-    this.fynAppBootstrapStatus.clear();
-    this.fynAppProviderModes.clear();
-  }
-}
+      modes.set(middlewareName, mode);
+      console.debug(`📝 ${fynAppName} registered as ${mode} for middleware ${middlewareName}`);
+    },
+
+    clear() {
+      bootstrappingApp = null;
+      // Clear any pending timeouts
+      for (const deferred of deferredBootstraps) {
+        if (deferred.timeoutId) {
+          clearTimeout(deferred.timeoutId);
+        }
+      }
+      // Emptied in place rather than replaced: the array is also handed out on
+      // this object, so callers holding it must see the clear.
+      deferredBootstraps.length = 0;
+      fynAppBootstrapStatus.clear();
+      fynAppProviderModes.clear();
+    },
+  };
+} as unknown as new (
+  events: FynEventTarget,
+  timeout?: number,
+  tel?: KernelTelemetry,
+) => BootstrapCoordinator;

@@ -58,51 +58,51 @@ describe("Middleware Registration", () => {
 
     it("should handle auto-apply scope: fynapp", () => {
       const middleware = createMockAutoApplyMiddleware(["fynapp"]);
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       
       kernel.registerMiddleware(mwReg);
       
-      const autoApply = (kernel as any).runTime.autoApplyMiddlewares;
+      const autoApply = (kernel as any).runTime.autoApply;
       expect(autoApply).toBeDefined();
       expect(autoApply.fynapp).toContain(mwReg);
-      expect(autoApply.middleware).not.toContain(mwReg);
+      expect(autoApply.mw).not.toContain(mwReg);
     });
 
     it("should handle auto-apply scope: middleware", () => {
       const middleware = createMockAutoApplyMiddleware(["middleware"]);
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       
       kernel.registerMiddleware(mwReg);
       
-      const autoApply = (kernel as any).runTime.autoApplyMiddlewares;
+      const autoApply = (kernel as any).runTime.autoApply;
       expect(autoApply).toBeDefined();
-      expect(autoApply.middleware).toContain(mwReg);
+      expect(autoApply.mw).toContain(mwReg);
       expect(autoApply.fynapp).not.toContain(mwReg);
     });
 
     it("should handle auto-apply scope: all", () => {
       const middleware = createMockAutoApplyMiddleware(["all"]);
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       
       kernel.registerMiddleware(mwReg);
       
-      const autoApply = (kernel as any).runTime.autoApplyMiddlewares;
+      const autoApply = (kernel as any).runTime.autoApply;
       expect(autoApply).toBeDefined();
       expect(autoApply.fynapp).toContain(mwReg);
-      expect(autoApply.middleware).toContain(mwReg);
+      expect(autoApply.mw).toContain(mwReg);
     });
 
     it("should handle explicit-use middleware (no autoApplyScope)", () => {
       const middleware = createMockMiddleware(); // No autoApplyScope
-      const mwReg = createMockMiddlewareReg({ middleware });
+      const mwReg = createMockMiddlewareReg({ mw: middleware });
       
       kernel.registerMiddleware(mwReg);
       
-      const autoApply = (kernel as any).runTime.autoApplyMiddlewares;
-      // Should not create autoApplyMiddlewares if none have autoApplyScope
+      const autoApply = (kernel as any).runTime.autoApply;
+      // Should not create autoApply if none have autoApplyScope
       if (autoApply) {
         expect(autoApply.fynapp).not.toContain(mwReg);
-        expect(autoApply.middleware).not.toContain(mwReg);
+        expect(autoApply.mw).not.toContain(mwReg);
       }
     });
   });
@@ -111,7 +111,7 @@ describe("Middleware Registration", () => {
     it("should find middleware by name and provider", () => {
       const mwReg = createMockMiddlewareReg({
         regKey: "provider-app::middleware-name",
-        middleware: createMockMiddleware({ name: "middleware-name" })
+        mw: createMockMiddleware({ name: "middleware-name" })
       });
       
       kernel.registerMiddleware(mwReg);
@@ -123,7 +123,7 @@ describe("Middleware Registration", () => {
     it("should fallback to any provider when not specified", () => {
       const mwReg = createMockMiddlewareReg({
         regKey: "some-provider::middleware-name",
-        middleware: createMockMiddleware({ name: "middleware-name" })
+        mw: createMockMiddleware({ name: "middleware-name" })
       });
       
       kernel.registerMiddleware(mwReg);

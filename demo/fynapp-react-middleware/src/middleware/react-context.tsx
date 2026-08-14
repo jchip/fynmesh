@@ -52,7 +52,7 @@ export interface ContextConfig<T = any> {
   actions?: Record<string, ActionDefinition<T> | ((state: T, ...args: any[]) => Partial<T>)>;
   persistence?: PersistenceConfig;
   shared?: boolean;
-  middleware?: ContextMiddlewareHooks<T>;
+  mw?: ContextMiddlewareHooks<T>;
 }
 
 /**
@@ -311,7 +311,7 @@ function createContextProvider<T>(config: ContextConfig<T>, storageManager: Stor
               }
 
               // Validate current state if global validator provided
-              if (config.middleware?.validation && !config.middleware.validation(prevState, config.contextName)) {
+              if (config.mw?.validation && !config.mw.validation(prevState, config.contextName)) {
                 console.warn(`State validation failed for context ${config.contextName}`);
                 return prevState;
               }
@@ -322,15 +322,15 @@ function createContextProvider<T>(config: ContextConfig<T>, storageManager: Stor
                 : { ...prevState, ...result };
 
               // Call middleware hook
-              if (config.middleware?.onStateChange) {
-                config.middleware.onStateChange(prevState, newState, actionName, config.contextName);
+              if (config.mw?.onStateChange) {
+                config.mw.onStateChange(prevState, newState, actionName, config.contextName);
               }
 
               return newState;
             } catch (error) {
               console.error(`Error in action ${actionName} for context ${config.contextName}:`, error);
-              if (config.middleware?.onError) {
-                config.middleware.onError(error instanceof Error ? error : new Error(String(error)), config.contextName);
+              if (config.mw?.onError) {
+                config.mw.onError(error instanceof Error ? error : new Error(String(error)), config.contextName);
               }
               return prevState;
             }
@@ -352,8 +352,8 @@ function createContextProvider<T>(config: ContextConfig<T>, storageManager: Stor
         
         externalState.setState(newState);
         
-        if (config.middleware?.onStateChange) {
-          config.middleware.onStateChange(currentState, newState, 'setState', config.contextName);
+        if (config.mw?.onStateChange) {
+          config.mw.onStateChange(currentState, newState, 'setState', config.contextName);
         }
       } else {
         // Use internal React state
@@ -363,15 +363,15 @@ function createContextProvider<T>(config: ContextConfig<T>, storageManager: Stor
               ? { ...prevState, ...updater(prevState) }
               : { ...prevState, ...updater };
 
-            if (config.middleware?.onStateChange) {
-              config.middleware.onStateChange(prevState, newState, 'setState', config.contextName);
+            if (config.mw?.onStateChange) {
+              config.mw.onStateChange(prevState, newState, 'setState', config.contextName);
             }
 
             return newState;
           } catch (error) {
             console.error(`Error in setState for context ${config.contextName}:`, error);
-            if (config.middleware?.onError) {
-              config.middleware.onError(error instanceof Error ? error : new Error(String(error)), config.contextName);
+            if (config.mw?.onError) {
+              config.mw.onError(error instanceof Error ? error : new Error(String(error)), config.contextName);
             }
             return prevState;
           }
@@ -476,25 +476,25 @@ export class ReactContextMiddleware implements FynAppMiddleware {
 
       // Handle different configuration types
       if (!callContext.meta.config) {
-        console.log(`${this.name} middleware: No configuration found for ${callContext.fynApp.name}, skipping application`);
+        console.log(`${this.name} mw: No configuration found for ${callContext.fynApp.name}, skipping application`);
         return;
       }
 
       // Check if this is a secondary "consume-only" app
       if (typeof callContext.meta.config === 'string' && callContext.meta.config === 'consume-only') {
-        console.log(`${this.name} middleware: ${callContext.fynApp.name} is a secondary consumer, exposing shared contexts only`);
+        console.log(`${this.name} mw: ${callContext.fynApp.name} is a secondary consumer, exposing shared contexts only`);
         await this.handleSecondaryConsumer(callContext);
         return;
       }
 
       // Handle primary app with full configuration
       if (typeof callContext.meta.config === 'object' && callContext.meta.config.contexts) {
-        console.log(`${this.name} middleware: ${callContext.fynApp.name} is a primary provider, processing full configuration`);
+        console.log(`${this.name} mw: ${callContext.fynApp.name} is a primary provider, processing full configuration`);
         return;
       }
 
       // Handle empty/invalid configuration
-      console.log(`${this.name} middleware: Invalid configuration for ${callContext.fynApp.name}, skipping application`);
+      console.log(`${this.name} mw: Invalid configuration for ${callContext.fynApp.name}, skipping application`);
       return;
 
     } catch (error) {

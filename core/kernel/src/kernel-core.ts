@@ -57,13 +57,13 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   #regionRegistries: Map<string, MiddlewareStateRegistry> = new Map();
 
   // Telemetry
-  public telemetry: KernelTelemetry;
+  public tel: KernelTelemetry;
 
   // Extracted modules
   public manifestResolver: ManifestResolver;
   public bootstrapCoordinator: BootstrapCoordinator;
-  public middlewareManager: MiddlewareManager;
-  public moduleLoader: ModuleLoader;
+  public mwMgr: MiddlewareManager;
+  public loader: ModuleLoader;
   public middlewareExecutor: MiddlewareExecutor;
   public fynAppRegistry: FynAppRegistry;
   public fynAppLifecycle: FynAppLifecycle;
@@ -71,30 +71,30 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   constructor(telemetryConfig?: TelemetryConfig) {
     this.events = new FynEventTarget();
     this.runTime = {
-      appsLoaded: {},
+      apps: {},
       middlewares: {},
     };
-    this.fynAppRegistry = new FynAppRegistry(this.runTime.appsLoaded);
+    this.fynAppRegistry = new FynAppRegistry(this.runTime.apps);
     this.fynAppLifecycle = new FynAppLifecycle();
 
     // Initialize telemetry
-    this.telemetry = telemetryConfig
+    this.tel = telemetryConfig
       ? new KernelTelemetryImpl(telemetryConfig)
       : noOpTelemetry;
 
     // Initialize FynBus (separate from this.events, which stays lifecycle-only)
-    this.busRoot = new FynBusRoot(this.telemetry.scope("bus"));
+    this.busRoot = new FynBusRoot(this.tel.scope("bus"));
     this.bus = this.busRoot.forKernel();
 
     // Initialize extracted modules with scoped telemetry
-    this.manifestResolver = new ManifestResolver(this.telemetry.scope("manifest"));
-    this.bootstrapCoordinator = new BootstrapCoordinator(this.events, undefined, this.telemetry.scope("bootstrap"));
-    this.middlewareManager = new MiddlewareManager(this.telemetry.scope("middleware"));
-    this.moduleLoader = new ModuleLoader(
-      this.telemetry.scope("loader"),
+    this.manifestResolver = new ManifestResolver(this.tel.scope("manifest"));
+    this.bootstrapCoordinator = new BootstrapCoordinator(this.events, undefined, this.tel.scope("bootstrap"));
+    this.mwMgr = new MiddlewareManager(this.tel.scope("middleware"));
+    this.loader = new ModuleLoader(
+      this.tel.scope("loader"),
       (fynApp) => this.busRoot.forApp(fynApp.name, fynApp.version),
     );
-    this.middlewareExecutor = new MiddlewareExecutor(this.telemetry.scope("executor"));
+    this.middlewareExecutor = new MiddlewareExecutor(this.tel.scope("executor"));
 
     // Set up event handlers
     this.events.on("MIDDLEWARE_READY", (event: Event) => {
@@ -107,6 +107,54 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   async emitAsync(event: CustomEvent): Promise<boolean> {
     return this.events.dispatchEvent(event);
+  }
+
+  /** Auto-apply middleware lists, as the executor and loader expect them. */
+  #autoApply() {
+    return this.mwMgr.getAutoApply();
+  }
+
+  /** Fresh FynUnit runtime for a FynApp. */
+  #runtimeFor(fynApp: FynApp): FynUnitRuntime {
+    return this.loader.mkRuntime(fynApp);
+  }
+
+  /** Telemetry payload identifying a FynApp. */
+  #appData(fynApp: FynApp) {
+    return { app: fynApp.name, version: fynApp.version };
+  }
+
+  /** Drop the app's bus subscriptions and handlers. */
+  #disposeBus(fynApp: FynApp): void {
+    this.busRoot.disposeApp(fynApp.name, fynApp.version);
+  }
+
+  /**
+   * Invoke a FynUnit lifecycle hook on every expose that implements it.
+   * shutdown/suspend/resume all walk the exposes the same way and differ only
+   * in which hook they look for.
+   */
+  async #callUnitHook(fynApp: FynApp, hook: "shutdown" | "suspend" | "resume"): Promise<void> {
+    for (const exposeName of Object.keys(fynApp.exposes)) {
+      const fynUnit = fynApp.exposes[exposeName]?.main;
+      const fn = fynUnit?.[hook];
+      if (typeof fn === "function") {
+        await fn.call(fynUnit, this.#runtimeFor(fynApp));
+      }
+    }
+  }
+
+  /**
+   * Emit a FynApp lifecycle event. Every one of them identifies the app the
+   * same way — by name and version — so only the event type and any extra
+   * detail vary.
+   */
+  #emitLifecycle(type: string, fynApp: FynApp, extra?: Record<string, unknown>): Promise<boolean> {
+    return this.emitAsync(
+      new CustomEvent(type, {
+        detail: { name: fynApp.name, version: fynApp.version, ...extra },
+      })
+    );
   }
 
   /**
@@ -132,7 +180,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   ): Promise<void> {
     const event = new CustomEvent("MIDDLEWARE_READY", {
       detail: {
-        name: detail.name || cc.reg.middleware.name,
+        name: detail.name || cc.reg.mw.name,
         status: detail.status || "ready",
         share: detail.share,
         cc,
@@ -162,7 +210,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
           signalReady: async (cc, share) => this.signalMiddlewareReady(cc, { share }),
           providerModeRegistrar: (fynAppName, middlewareName, mode) =>
             this.bootstrapCoordinator.registerProviderMode(fynAppName, middlewareName, mode),
-          autoApplyMiddlewares: this.runTime.autoApplyMiddlewares,
+          autoApply: this.runTime.autoApply,
           skipFynUnit: resume.resumeMode === "middleware_only" ? true : undefined,
         }
       );
@@ -185,67 +233,51 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     requests: Array<{ name: string; range?: string }>,
     options?: import("./types").LoadFynAppsOptions
   ): Promise<void> {
-    captureEvent(this.telemetry, "load_batch.started", { count: requests.length });
+    captureEvent(this.tel, "load_batch.started", { count: requests.length });
 
-    // Preload initial FynApp entry files before building dependency graph
-    // This allows the initial batch to start loading in parallel
-    const preloadCallback = this.manifestResolver.getPreloadCallback();
-    const registryResolver = this.manifestResolver.getRegistryResolver();
-    if (preloadCallback && registryResolver) {
-      for (const req of requests) {
-        const res = await registryResolver(req.name, req.range);
-        const distBase = this.manifestResolver.getDistBase(res);
-        const entryUrl = `${distBase}fynapp-entry.js`;
-        preloadCallback(entryUrl, 0); // depth 0 for requested FynApps
-      }
-    }
+    await this.manifestResolver.warmPreload(requests);
 
     const graph = await this.manifestResolver.buildGraph(requests);
     const batches = this.manifestResolver.topoBatches(graph);
     const concurrency = Math.max(1, Math.min(options?.concurrency ?? 4, 8));
-    const allMeta = this.manifestResolver.getAllNodeMeta();
+    const allMeta = this.manifestResolver.nodeMeta;
 
     for (const batch of batches) {
-      // Derive baseUrl from nodeMeta
-      const tasks = batch.map((key) => {
-        const meta = allMeta.get(key)!;
-        const baseUrl = meta.distBase || meta.manifestUrl.replace(/\/[^/]*$/, "/");
-        return async () => {
-          console.debug(`📦 Loading ${meta.name}@${meta.version} from ${baseUrl}`);
-          await this.loadFynApp(baseUrl);
-        };
-      });
-
-      // Simple concurrency limiting
-      let i = 0;
-      const runners = new Array(Math.min(concurrency, tasks.length)).fill(0).map(async () => {
-        while (i < tasks.length) {
-          const t = tasks[i++];
-          await t();
-        }
-      });
-      await Promise.all(runners);
+      // Bounded-concurrency walk over the batch. Workers share one cursor, so
+      // each key is claimed once; there is no need to materialise a closure per
+      // key first — the worker derives the baseUrl from nodeMeta as it goes.
+      let next = 0;
+      await Promise.all(
+        Array.from({ length: Math.min(concurrency, batch.length) }, async () => {
+          while (next < batch.length) {
+            const meta = allMeta.get(batch[next++])!;
+            const baseUrl = meta.distBase || meta.url.replace(/\/[^/]*$/, "/");
+            console.debug(`📦 Loading ${meta.name}@${meta.version} from ${baseUrl}`);
+            await this.loadFynApp(baseUrl);
+          }
+        })
+      );
     }
 
-    this.telemetry.capture({ type: "event", name: "load_batch.completed" });
+    this.tel.capture({ type: "event", name: "load_batch.completed" });
   }
 
   /**
    * Register a middleware implementation
    */
   registerMiddleware(mwReg: FynAppMiddlewareReg): void {
-    this.middlewareManager.registerMiddleware(mwReg);
+    this.mwMgr.registerMiddleware(mwReg);
     // Update runtime
-    const exported = this.middlewareManager.exportToRuntime();
+    const exported = this.mwMgr.exportToRuntime();
     this.runTime.middlewares = exported.middlewares;
-    this.runTime.autoApplyMiddlewares = exported.autoApplyMiddlewares;
+    this.runTime.autoApply = exported.autoApply;
   }
 
   /**
    * Get middleware by name and provider
    */
   getMiddleware(name: string, provider?: string): FynAppMiddlewareReg {
-    return this.middlewareManager.getMiddleware(name, provider);
+    return this.mwMgr.getMiddleware(name, provider);
   }
 
   /**
@@ -271,8 +303,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   initRunTime(data: FynMeshRuntimeData): FynMeshRuntimeData {
     this.runTime = { ...data };
-    this.fynAppRegistry.initialize(this.runTime.appsLoaded);
-    this.middlewareManager.initializeFromRuntime(data);
+    this.fynAppRegistry.initialize(this.runTime.apps);
+    this.mwMgr.initializeFromRuntime(data);
     return this.runTime;
   }
 
@@ -289,14 +321,14 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    */
   protected createMiddlewareScanner(): (fynApp: FynApp, exposeName: string, exposedModule: any) => string[] {
     return (fynApp, exposeName, exposedModule) =>
-      this.middlewareManager.scanAndRegisterMiddleware(fynApp, exposeName, exposedModule);
+      this.mwMgr.scanAndRegisterMiddleware(fynApp, exposeName, exposedModule);
   }
 
   /**
    * Load FynApp basics
    */
   async loadFynAppBasics(fynAppEntry: FynAppEntry): Promise<FynApp> {
-    return this.moduleLoader.loadFynAppBasics(
+    return this.loader.loadFynAppBasics(
       fynAppEntry,
       this.fynAppRegistry,
       this.createMiddlewareScanner()
@@ -372,7 +404,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     const middlewareScanner = this.createMiddlewareScanner();
     for (const exposeName of Object.keys(fynApp.entry.container.$E)) {
       if (exposeName.startsWith(MIDDLEWARE_EXPOSE_PREFIX)) {
-        await this.moduleLoader.loadExposeModule(
+        await this.loader.loadExposeModule(
           fynApp,
           exposeName,
           true,
@@ -403,8 +435,8 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       fynApp,
       fynUnit,
       this,
-      this.middlewareManager.getAutoApplyMiddlewares(),
-      () => this.moduleLoader.createFynUnitRuntime(fynApp),
+      this.#autoApply(),
+      () => this.#runtimeFor(fynApp),
       async (cc, share) => this.signalMiddlewareReady(cc, { share })
     );
 
@@ -421,10 +453,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
    * Execute a FynUnit directly (Path B: no explicit middleware meta)
    */
   private async executeFynUnit(fynUnit: FynUnit, fynApp: FynApp): Promise<void> {
-    await this.moduleLoader.invokeFynUnit(
+    await this.loader.invokeFynUnit(
       fynUnit,
       fynApp,
-      this.middlewareManager.getAutoApplyMiddlewares(),
+      this.#autoApply(),
       this
     );
   }
@@ -442,7 +474,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return;
     }
 
-    captureEvent(this.telemetry, "bootstrap.started", { app: fynApp.name, version: fynApp.version });
+    captureEvent(this.tel, "bootstrap.started", this.#appData(fynApp));
 
     try {
       // Load middleware modules for all FynApps
@@ -463,17 +495,17 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
             fynUnit,
             fynApp,
             this,
-            () => this.moduleLoader.createFynUnitRuntime(fynApp),
+            () => this.#runtimeFor(fynApp),
             (name, provider) => this.getMiddleware(name, provider),
             async (packageName, middlewarePath) => {
-              await this.moduleLoader.loadMiddlewareFromDependency(
+              await this.loader.loadMiddlewareFromDependency(
                 packageName,
                 middlewarePath,
                 this.fynAppRegistry,
                 middlewareScanner
               );
             },
-            this.middlewareManager.getAutoApplyMiddlewares()
+            this.#autoApply()
           );
         } else {
           // Path B: Direct execution with auto-apply middleware only
@@ -486,16 +518,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       // Mount tracking: bootstrap succeeded — app is now mounted/running.
       this.fynAppLifecycle.set(fynApp.name, fynApp.version, "mounted");
 
-      captureEvent(this.telemetry, "bootstrap.completed", { app: fynApp.name, version: fynApp.version });
+      captureEvent(this.tel, "bootstrap.completed", this.#appData(fynApp));
 
       // Emit bootstrap complete event
-      await this.emitAsync(
-        new CustomEvent("FYNAPP_BOOTSTRAPPED", {
-          detail: { name: fynApp.name, version: fynApp.version },
-        })
-      );
+      await this.#emitLifecycle("FYNAPP_BOOTSTRAPPED", fynApp);
     } catch (error) {
-      this.telemetry.captureError("bootstrap.failed", { app: fynApp.name }, error);
+      this.tel.capErr("bootstrap.failed", { app: fynApp.name }, error);
 
       // Per-FynApp error boundary: record the failure as observable state
       // (queryable via getFynAppState) while keeping the app in the registry and
@@ -507,14 +535,10 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
       // Deafen the half-initialized app: drop its bus subscriptions and
       // handlers; a later re-bootstrap gets a fresh facade (FYM-140)
-      this.busRoot.disposeApp(fynApp.name, fynApp.version);
+      this.#disposeBus(fynApp);
 
       // Emit failure event so other systems can react
-      await this.emitAsync(
-        new CustomEvent("FYNAPP_BOOTSTRAP_FAILED", {
-          detail: { name: fynApp.name, version: fynApp.version, error },
-        })
-      );
+      await this.#emitLifecycle("FYNAPP_BOOTSTRAP_FAILED", fynApp, { error });
 
       // Release lock so other FynApps can continue - party goes on!
       this.bootstrapCoordinator.releaseBootstrapLock();
@@ -537,46 +561,35 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
 
     console.debug(`🛑 Shutting down FynApp ${name}`);
 
-    captureEvent(this.telemetry, "shutdown.started", { app: name });
+    captureEvent(this.tel, "shutdown.started", { app: name });
 
     // Mount tracking: mark the transient shutdown state so shutdown() hooks that
     // query state see it; removeFromRegistry() then stops tracking the app.
     this.fynAppLifecycle.set(fynApp.name, fynApp.version, "shutdown");
 
     try {
-      // Call shutdown on each FynUnit that has it
-      for (const exposeName of Object.keys(fynApp.exposes)) {
-        const fynUnit = fynApp.exposes[exposeName]?.main;
-        if (fynUnit?.shutdown) {
-          const runtime = this.moduleLoader.createFynUnitRuntime(fynApp);
-          await fynUnit.shutdown(runtime);
-        }
-      }
+      await this.#callUnitHook(fynApp, "shutdown");
 
       // Remove from registry (both versioned and unversioned keys)
       this.removeFromRegistry(fynApp, name);
 
       // Remove all of the app's bus subscriptions
-      this.busRoot.disposeApp(fynApp.name, fynApp.version);
+      this.#disposeBus(fynApp);
 
       // Emit shutdown event
-      await this.emitAsync(
-        new CustomEvent("FYNAPP_SHUTDOWN", {
-          detail: { name: fynApp.name, version: fynApp.version },
-        })
-      );
+      await this.#emitLifecycle("FYNAPP_SHUTDOWN", fynApp);
 
-      captureEvent(this.telemetry, "shutdown.completed", { app: fynApp.name, version: fynApp.version });
+      captureEvent(this.tel, "shutdown.completed", this.#appData(fynApp));
 
       console.debug(`✅ FynApp ${fynApp.name}@${fynApp.version} shutdown complete`);
       return true;
     } catch (error) {
-      this.telemetry.captureError("shutdown.failed", { app: name }, error);
+      this.tel.capErr("shutdown.failed", { app: name }, error);
 
       console.error(`❌ Error during shutdown of ${name}:`, error);
       // Still remove from registry and clean up bus even if shutdown fails
       this.removeFromRegistry(fynApp, name);
-      this.busRoot.disposeApp(fynApp.name, fynApp.version);
+      this.#disposeBus(fynApp);
       return false;
     }
   }
@@ -628,30 +641,19 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       return false;
     }
 
-    captureEvent(this.telemetry, `${opts.hook}.started`, { app: fynApp.name, version: fynApp.version });
+    captureEvent(this.tel, `${opts.hook}.started`, this.#appData(fynApp));
 
     try {
-      for (const exposeName of Object.keys(fynApp.exposes)) {
-        const fynUnit = fynApp.exposes[exposeName]?.main;
-        const fn = fynUnit?.[opts.hook];
-        if (typeof fn === "function") {
-          const runtime = this.moduleLoader.createFynUnitRuntime(fynApp);
-          await fn.call(fynUnit, runtime);
-        }
-      }
+      await this.#callUnitHook(fynApp, opts.hook);
 
       this.fynAppLifecycle.set(fynApp.name, fynApp.version, opts.to);
 
-      await this.emitAsync(
-        new CustomEvent(opts.event, {
-          detail: { name: fynApp.name, version: fynApp.version },
-        })
-      );
+      await this.#emitLifecycle(opts.event, fynApp);
 
-      captureEvent(this.telemetry, `${opts.hook}.completed`, { app: fynApp.name, version: fynApp.version });
+      captureEvent(this.tel, `${opts.hook}.completed`, this.#appData(fynApp));
       return true;
     } catch (error) {
-      this.telemetry.captureError(`${opts.hook}.failed`, { app: name }, error);
+      this.tel.capErr(`${opts.hook}.failed`, { app: name }, error);
       console.error(`❌ Error during ${opts.hook} of ${name}:`, error);
       return false;
     }

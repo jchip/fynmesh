@@ -1,6 +1,6 @@
 /**
  * Kernel Telemetry Implementation
- * Ring-buffer backed telemetry with pluggable transports and scoping
+ * Ring-buffer backed tel with pluggable transports and scoping
  */
 
 import type {
@@ -17,7 +17,7 @@ const DEFAULT_MAX_BUFFER_SIZE = 500;
  */
 export class ConsoleTelemetryTransport implements TelemetryTransport {
   async send(batch: TelemetryEntry[]): Promise<void> {
-    console.log("[telemetry]", batch);
+    console.log("[tel]", batch);
   }
 }
 
@@ -46,7 +46,7 @@ export class KernelTelemetryImpl implements KernelTelemetry {
     this.#buffer.push(full);
   }
 
-  captureError(name: string, data: Record<string, unknown>, error: unknown): void {
+  capErr(name: string, data: Record<string, unknown>, error: unknown): void {
     const err = error instanceof Error ? error : new Error(String(error));
     this.capture({
       type: "error",
@@ -59,10 +59,15 @@ export class KernelTelemetryImpl implements KernelTelemetry {
   scope(prefix: string): KernelTelemetry {
     return {
       capture: (entry) => this.capture({ ...entry, name: `${prefix}.${entry.name}` }),
-      captureError: (name, data, error) => this.captureError(`${prefix}.${name}`, data, error),
+      capErr: (name, data, error) => this.capErr(`${prefix}.${name}`, data, error),
       scope: (sub) => this.scope(`${prefix}.${sub}`),
       flush: () => this.flush(),
     };
+  }
+
+  /** Buffer length; the ring-buffer tests assert on it. */
+  get bufferSize(): number {
+    return this.#buffer.length;
   }
 
   flush(): void {
@@ -74,16 +79,11 @@ export class KernelTelemetryImpl implements KernelTelemetry {
     // rejection by .catch.
     try {
       void Promise.resolve(this.transport.send(batch)).catch((err) => {
-        console.error("[telemetry] transport.send failed:", err);
+        console.error("[tel] transport.send failed:", err);
       });
     } catch (err) {
-      console.error("[telemetry] transport.send failed:", err);
+      console.error("[tel] transport.send failed:", err);
     }
-  }
-
-  /** Expose buffer length for testing */
-  get bufferSize(): number {
-    return this.#buffer.length;
   }
 }
 
@@ -97,20 +97,20 @@ export class KernelTelemetryImpl implements KernelTelemetry {
  * class method's name is a property and can never be mangled.
  */
 export function captureEvent(
-  telemetry: KernelTelemetry,
+  tel: KernelTelemetry,
   name: string,
   data?: Record<string, unknown>,
 ): void {
-  telemetry.capture({ type: "event", name, data });
+  tel.capture({ type: "event", name, data });
 }
 
 /**
- * No-op telemetry instance for when telemetry is not configured.
+ * No-op tel instance for when tel is not configured.
  * All methods are silent no-ops.
  */
 export const noOpTelemetry: KernelTelemetry = {
   capture() {},
-  captureError() {},
+  capErr() {},
   scope() { return noOpTelemetry; },
   flush() {},
 };

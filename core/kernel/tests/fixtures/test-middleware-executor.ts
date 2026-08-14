@@ -1,29 +1,35 @@
 import { MiddlewareExecutor } from "../../src/modules/middleware-executor";
-import type { FynEventTarget } from "../../src/event-target";
+import type { KernelTelemetry } from "../../src/types";
 
 /**
- * Test implementation of MiddlewareExecutor that exposes protected/private members for testing
+ * Test view of MiddlewareExecutor, exposing its defer/ready bookkeeping under
+ * `test*` names.
+ *
+ * MiddlewareExecutor is a closure factory rather than a class, so this delegates
+ * through the prototype chain instead of extending. `deferInvoke` is reassigned
+ * internally (clear, and the resume partition), so it must be read live — a
+ * copied snapshot would go stale.
  */
-export class TestMiddlewareExecutor extends MiddlewareExecutor {
-  // Expose private properties for testing
-  public get testMiddlewareReady(): Map<string, any> {
-    return (this as any).middlewareReady;
-  }
-
-  public get testDeferInvoke(): { callContexts: any[] }[] {
-    return (this as any).deferInvoke;
-  }
-
-  // Expose private methods for testing
-  public testCheckSingleMiddlewareReady(cc: any): boolean {
-    return (this as any).checkSingleMiddlewareReady(cc);
-  }
-
-  public testCheckMiddlewareReady(ccs: any[]): string {
-    return (this as any).checkMiddlewareReady(ccs);
-  }
-
-  public testCheckDeferCalls(status: string, ccs: any[]): string {
-    return (this as any).checkDeferCalls(status, ccs);
-  }
+export interface TestMiddlewareExecutor extends MiddlewareExecutor {
+  readonly testMiddlewareReady: Map<string, any>;
+  readonly testDeferInvoke: { callContexts: any[] }[];
+  testCheckSingleMiddlewareReady(cc: any): boolean;
+  testCheckMiddlewareReady(ccs: any[]): boolean;
+  testCheckDeferCalls(status: string, ccs: any[]): string;
 }
+
+export const TestMiddlewareExecutor = function (tel?: KernelTelemetry): TestMiddlewareExecutor {
+  const exec = new MiddlewareExecutor(tel);
+  const view = Object.create(exec) as TestMiddlewareExecutor;
+
+  Object.defineProperties(view, {
+    testMiddlewareReady: { get: () => exec.middlewareReady },
+    testDeferInvoke: { get: () => exec.deferInvoke },
+  });
+
+  return Object.assign(view, {
+    testCheckSingleMiddlewareReady: (cc: any) => exec.checkSingleMiddlewareReady(cc),
+    testCheckMiddlewareReady: (ccs: any[]) => exec.checkMiddlewareReady(ccs),
+    testCheckDeferCalls: (status: string, ccs: any[]) => exec.checkDeferCalls(status, ccs),
+  });
+} as unknown as new (tel?: KernelTelemetry) => TestMiddlewareExecutor;

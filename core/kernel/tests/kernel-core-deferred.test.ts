@@ -30,8 +30,8 @@ describe('KernelCore Deferred Middleware Logic', () => {
             // Create middleware that will be found
             const testMiddleware = createMockMiddleware('defer-test');
             testMiddleware.regKey = 'provider::defer-test';
-            testMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            testMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            testMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            testMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(testMiddleware);
 
             const mockEntry: FynAppEntry = {
@@ -79,8 +79,8 @@ describe('KernelCore Deferred Middleware Logic', () => {
             // Register one valid middleware but use different name in metadata
             const validMiddleware = createMockMiddleware('different-name');
             validMiddleware.regKey = 'provider::different-name';
-            validMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            validMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            validMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            validMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(validMiddleware);
 
             const mockEntry: FynAppEntry = {
@@ -125,14 +125,14 @@ describe('KernelCore Deferred Middleware Logic', () => {
             expect(mainModule).toBeDefined();
             expect(mainModule!.initialize).toHaveBeenCalled();
             expect(mainModule!.execute).toHaveBeenCalled();
-            expect(validMiddleware.middleware.setup).toHaveBeenCalled();
+            expect(validMiddleware.mw.setup).toHaveBeenCalled();
         });
 
         it('should handle complex middleware orchestration scenarios', async () => {
             const orchestrationMiddleware = createMockMiddleware('orchestration-test');
             orchestrationMiddleware.regKey = 'provider::orchestration-test';
-            orchestrationMiddleware.middleware.setup = vi.fn().mockResolvedValue({ status: 'ready' });
-            orchestrationMiddleware.middleware.apply = vi.fn().mockResolvedValue(undefined);
+            orchestrationMiddleware.mw.setup = vi.fn().mockResolvedValue({ status: 'ready' });
+            orchestrationMiddleware.mw.apply = vi.fn().mockResolvedValue(undefined);
             kernel.registerMiddleware(orchestrationMiddleware);
 
             const mockEntry: FynAppEntry = {

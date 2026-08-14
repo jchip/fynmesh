@@ -33,17 +33,44 @@ export type MiddlewareScanner = (
   exposedModule: any
 ) => string[];
 
-export class ModuleLoader {
-  protected telemetry: KernelTelemetry;
-  protected busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus;
+export interface ModuleLoader {
+  loadExposeModule(
+    fynApp: FynApp,
+    exposeName: string,
+    required: boolean,
+    middlewareScanner?: MiddlewareScanner
+  ): Promise<Result<any, ModuleLoadError>>;
+  loadMiddlewareFromDependency(
+    packageName: string,
+    middlewarePath: string,
+    registry: FynAppRegistry,
+    middlewareScanner?: MiddlewareScanner
+  ): Promise<Result<void, ModuleLoadError>>;
+  loadFynAppBasics(
+    fynAppEntry: FynAppEntry,
+    registry: FynAppRegistry,
+    middlewareScanner?: MiddlewareScanner
+  ): Promise<FynApp>;
+  mkRuntime(fynApp: FynApp): FynUnitRuntime;
+  invokeFynUnit(
+    fynUnit: FynUnit,
+    fynApp: FynApp,
+    autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] },
+    kernel?: FynMeshKernel
+  ): Promise<void>;
+}
 
-  constructor(
-    telemetry?: KernelTelemetry,
-    busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus
-  ) {
-    this.telemetry = telemetry ?? noOpTelemetry;
-    this.busProvider = busProvider;
-  }
+
+
+/**
+ * Built as a closure over its state rather than a class — see the note on
+ * `ManifestResolver`.
+ */
+export const ModuleLoader = function (
+  telemetry?: KernelTelemetry,
+  busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus
+): ModuleLoader {
+  const tel = telemetry ?? noOpTelemetry;
 
   /**
    * Load an expose module from a FynApp
@@ -53,12 +80,12 @@ export class ModuleLoader {
    * @param middlewareScanner - Callback to scan and register middleware (delegates to MiddlewareManager)
    * @returns Result with the loaded module or an error
    */
-  async loadExposeModule(
+  const loadExposeModule = async (
     fynApp: FynApp,
     exposeName: string,
     loadMiddlewares?: boolean,
     middlewareScanner?: MiddlewareScanner
-  ): Promise<Result<any, ModuleLoadError>> {
+  ): Promise<Result<any, ModuleLoadError>> => {
     const container = fynApp.entry.container;
     if (!container?.$E[exposeName]) {
       const error = new ModuleLoadError(
@@ -70,7 +97,7 @@ export class ModuleLoader {
           exposeName,
         }
       );
-      this.telemetry.captureError(
+      tel.capErr(
         "expose.not_found",
         { app: fynApp.name, expose: exposeName },
         error
@@ -99,26 +126,26 @@ export class ModuleLoader {
 
     // Module loaded but no middleware processing needed
     return ok(exposedModule);
-  }
+  };
 
   /**
    * Load middleware from a dependency package
    * @param packageName - Name of the dependency package
    * @param middlewarePath - Path to the middleware within the package
-   * @param appsLoaded - Map of loaded FynApps
+   * @param apps - Map of loaded FynApps
    * @param middlewareScanner - Callback to scan and register middleware
    * @returns Result indicating success or error with details
    */
-  async loadMiddlewareFromDependency(
+  const loadMiddlewareFromDependency = async (
     packageName: string,
     middlewarePath: string,
-    appsLoaded: FynAppRegistry,
+    apps: FynAppRegistry,
     middlewareScanner?: MiddlewareScanner
-  ): Promise<Result<void, ModuleLoadError>> {
+  ): Promise<Result<void, ModuleLoadError>> => {
     console.debug(`📦 Loading middleware from dependency: ${packageName}/${middlewarePath}`);
 
     // Find the dependency fynapp
-    const dependencyApp = appsLoaded.get(packageName);
+    const dependencyApp = apps.get(packageName);
 
     if (!dependencyApp) {
       const error = new ModuleLoadError(
@@ -129,7 +156,7 @@ export class ModuleLoader {
           exposeName: middlewarePath,
         }
       );
-      this.telemetry.captureError(
+      tel.capErr(
         "dependency.not_found",
         { package: packageName, path: middlewarePath },
         error
@@ -146,26 +173,26 @@ export class ModuleLoader {
     const exposeName = `./${exposeModule}`;
 
     console.debug(`📦 Loading middleware module ${exposeName} from ${packageName} (full path: ${middlewarePath})`);
-    const result = await this.loadExposeModule(dependencyApp, exposeName, true, middlewareScanner);
+    const result = await loadExposeModule(dependencyApp, exposeName, true, middlewareScanner);
 
     if (!result.success) {
       return err(result.error);
     }
 
     return ok(undefined);
-  }
+  };
 
   /**
    * Load the basics of a FynApp
    * @param fynAppEntry - The FynApp entry point
-   * @param appsLoaded - Map of loaded FynApps
+   * @param apps - Map of loaded FynApps
    * @param middlewareScanner - Callback to scan and register middleware
    */
-  async loadFynAppBasics(
+  const loadFynAppBasics = async (
     fynAppEntry: FynAppEntry,
-    appsLoaded: FynAppRegistry,
+    apps: FynAppRegistry,
     middlewareScanner?: MiddlewareScanner
-  ): Promise<FynApp> {
+  ): Promise<FynApp> => {
     const container = fynAppEntry.container;
 
     if (!container?.name || !container?.version) {
@@ -177,7 +204,7 @@ export class ModuleLoader {
     // Step 1: Initialize the entry
     fynAppEntry.init();
 
-    captureEvent(this.telemetry, "fynapp.init", { app: container.name, version: container.version });
+    captureEvent(tel, "fynapp.init", { app: container.name, version: container.version });
 
     console.debug("🚀 Loading FynApp basics for", container.name, container.version);
 
@@ -204,7 +231,7 @@ export class ModuleLoader {
     }
 
     // Step 5: Load main module
-    const mainResult = await this.loadExposeModule(fynApp, "./main", true, middlewareScanner);
+    const mainResult = await loadExposeModule(fynApp, "./main", true, middlewareScanner);
     if (!mainResult.success) {
       // Main module not found is not fatal - some FynApps may not have a main module
       console.debug(`⚠️ Main module not loaded for ${fynApp.name}: ${mainResult.error.message}`);
@@ -229,11 +256,11 @@ export class ModuleLoader {
             if (moduleInfo && typeof moduleInfo === "object" && moduleInfo.type === "middleware") {
               // The modulePath key is already the correct exposed module path (e.g., "middleware/design-tokens")
               // which corresponds to the "./middleware/design-tokens" expose
-              console.debug(`📦 Proactively loading middleware: ${packageName}/${modulePath}`);
-              const depResult = await this.loadMiddlewareFromDependency(
+              console.debug(`📦 Proactively loading mw: ${packageName}/${modulePath}`);
+              const depResult = await loadMiddlewareFromDependency(
                 packageName,
                 modulePath,
-                appsLoaded,
+                apps,
                 middlewareScanner
               );
               if (!depResult.success) {
@@ -253,51 +280,44 @@ export class ModuleLoader {
 
     console.debug("✅ FynApp basics loaded for", fynApp.name, fynApp.version);
 
-    captureEvent(this.telemetry, "fynapp.basics_loaded", { app: fynApp.name, version: fynApp.version });
+    captureEvent(tel, "fynapp.basics_loaded", { app: fynApp.name, version: fynApp.version });
 
     // Record app in runtime registry for observability
-    appsLoaded.add(fynApp);
+    apps.add(fynApp);
 
     return fynApp;
-  }
+  };
 
   /**
    * Create a FynUnit runtime
    * Reuses the FynApp's middlewareContext to ensure consistency across multiple runtime creations
    */
-  createFynUnitRuntime(fynApp: FynApp): FynUnitRuntime {
+  const mkRuntime = (fynApp: FynApp): FynUnitRuntime => {
     return {
       fynApp,
       // Reuse the FynApp's middlewareContext to maintain consistency
       // This is critical for deferred loading scenarios where middlewares are resumed
       middlewareContext: fynApp.middlewareContext || new Map<string, Record<string, any>>(),
-      bus: this.busProvider?.(fynApp),
+      bus: busProvider?.(fynApp),
     };
-  }
-
-  /**
-   * @deprecated Use createFynUnitRuntime instead
-   */
-  createFynModuleRuntime(fynApp: FynApp): FynUnitRuntime {
-    return this.createFynUnitRuntime(fynApp);
-  }
+  };
 
   /**
    * Invoke a FynUnit
    */
-  async invokeFynUnit(
+  const invokeFynUnit = async (
     fynUnit: FynUnit,
     fynApp: FynApp,
-    autoApplyMiddlewares?: {
+    autoApply?: {
       fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
+      mw: FynAppMiddlewareReg[];
     },
     kernel?: FynMeshKernel
-  ): Promise<void> {
-    const runtime = this.createFynUnitRuntime(fynApp);
+  ): Promise<void> => {
+    const runtime = mkRuntime(fynApp);
 
     // Check for middleware execution overrides
-    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApplyMiddlewares);
+    const executionOverride = findExecutionOverride(fynApp, fynUnit, autoApply);
 
     if (executionOverride) {
       await executeMiddlewareOverride(executionOverride, fynUnit, fynApp, runtime, kernel!);
@@ -313,7 +333,7 @@ export class ModuleLoader {
 
     if (fynUnit.execute) {
       console.debug("🚀 Invoking unit.execute for", fynApp.name, fynApp.version);
-      captureEvent(this.telemetry, "fynunit.execute", { app: fynApp.name });
+      captureEvent(tel, "fynunit.execute", { app: fynApp.name });
       const executeResult = await fynUnit.execute(runtime);
 
       // Handle execution result - middleware defines contract, kernel just passes through
@@ -321,28 +341,10 @@ export class ModuleLoader {
         console.debug(`📦 FynUnit returned result:`, typeof executeResult === 'object' ? executeResult.type : typeof executeResult);
       }
     }
-  }
+  };
 
-  /**
-   * @deprecated Use invokeFynUnit instead
-   */
-  async invokeFynModule(
-    fynMod: FynUnit,
-    fynApp: FynApp,
-    autoApplyMiddlewares?: {
-      fynapp: FynAppMiddlewareReg[];
-      middleware: FynAppMiddlewareReg[];
-    },
-    kernel?: FynMeshKernel
-  ): Promise<void> {
-    return this.invokeFynUnit(fynMod, fynApp, autoApplyMiddlewares, kernel);
-  }
-
-  /**
-   * Clear module loader state
-   * Note: Middleware scanning state is now managed by MiddlewareManager
-   */
-  clear(): void {
-    // No local state to clear - middleware scanning delegated to MiddlewareManager
-  }
-}
+  return { loadExposeModule, loadMiddlewareFromDependency, loadFynAppBasics, mkRuntime, invokeFynUnit };
+} as unknown as new (
+  telemetry?: KernelTelemetry,
+  busProvider?: (fynApp: FynApp) => import("../fyn-bus").FynBus
+) => ModuleLoader;

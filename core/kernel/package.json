@@ -20,7 +20,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "xrun -s [clean, [compile-lib, build-dist]]",
+    "build": "xrun -s clean compile-lib build-dist",
     "clean": "rm -rf dist lib",
     "compile-lib": "tsc --build tsconfig.lib.json",
     "build-dist": "rollup -c",

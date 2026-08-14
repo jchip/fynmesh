@@ -15,7 +15,7 @@ function createFakeTelemetry(): KernelTelemetry & {
     captured,
     errors,
     capture: (entry: any) => captured.push(entry),
-    captureError: (name: string, data: any, error: unknown) =>
+    capErr: (name: string, data: any, error: unknown) =>
       errors.push({ name, data, error }),
     scope: () => fake,
     flush: () => {},
@@ -126,8 +126,8 @@ describe("FynBus pub/sub", () => {
 
   it("isolates handler errors: emit does not throw and other handlers still run", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const telemetry = createFakeTelemetry();
-    const busRoot = new FynBusRoot(telemetry);
+    const tel = createFakeTelemetry();
+    const busRoot = new FynBusRoot(tel);
     const appA = busRoot.forApp("app-a", "1.0.0");
     const appB = busRoot.forApp("app-b", "1.0.0");
     const appC = busRoot.forApp("app-c", "1.0.0");
@@ -140,8 +140,8 @@ describe("FynBus pub/sub", () => {
 
     expect(() => appA.emit("boom", 1)).not.toThrow();
     expect(good).toHaveBeenCalledTimes(1);
-    expect(telemetry.errors).toHaveLength(1);
-    expect(telemetry.errors[0].name).toBe("handler");
+    expect(tel.errors).toHaveLength(1);
+    expect(tel.errors[0].name).toBe("handler");
 
     consoleSpy.mockRestore();
   });
@@ -201,13 +201,13 @@ describe("FynBus pub/sub", () => {
     expect(received).toEqual([KERNEL_BUS_SOURCE]);
   });
 
-  it("captures telemetry for emits", () => {
-    const telemetry = createFakeTelemetry();
-    const busRoot = new FynBusRoot(telemetry);
+  it("captures tel for emits", () => {
+    const tel = createFakeTelemetry();
+    const busRoot = new FynBusRoot(tel);
 
     busRoot.forApp("app-a", "1.0.0").channel("cart").emit("update", { n: 1 });
 
-    expect(telemetry.captured).toContainEqual({
+    expect(tel.captured).toContainEqual({
       type: "event",
       name: "emit",
       data: { topic: "update", channel: "cart", source: "app-a" },
@@ -452,11 +452,11 @@ describe("FynBus kernel integration", () => {
 
   beforeEach(() => {
     kernel = new TestKernel();
-    kernel.initRunTime({ appsLoaded: {}, middlewares: {} });
+    kernel.initRunTime({ apps: {}, middlewares: {} });
   });
 
   it("exposes kernel.bus stamped with the kernel source", () => {
-    const appBus = kernel.moduleLoader.createFynUnitRuntime(
+    const appBus = kernel.loader.mkRuntime(
       createTestFynApp("app-a", "1.0.0"),
     ).bus!;
     const received: string[] = [];
@@ -468,10 +468,10 @@ describe("FynBus kernel integration", () => {
   });
 
   it("provides runtime.bus stamped with the FynApp as source", () => {
-    const runtimeA = kernel.moduleLoader.createFynUnitRuntime(
+    const runtimeA = kernel.loader.mkRuntime(
       createTestFynApp("app-a", "1.0.0"),
     );
-    const runtimeB = kernel.moduleLoader.createFynUnitRuntime(
+    const runtimeB = kernel.loader.mkRuntime(
       createTestFynApp("app-b", "1.0.0"),
     );
     const received: any[] = [];
@@ -486,18 +486,18 @@ describe("FynBus kernel integration", () => {
 
   it("reuses the same bus facade across runtime creations for an app", () => {
     const fynApp = createTestFynApp("app-a", "1.0.0");
-    const r1 = kernel.moduleLoader.createFynUnitRuntime(fynApp);
-    const r2 = kernel.moduleLoader.createFynUnitRuntime(fynApp);
+    const r1 = kernel.loader.mkRuntime(fynApp);
+    const r2 = kernel.loader.mkRuntime(fynApp);
     expect(r1.bus).toBe(r2.bus);
   });
 
   it("disposes an app's subscriptions on shutdownFynApp", async () => {
     const fynApp = createTestFynApp("app-a", "1.0.0");
     const rt = (kernel as any).runTime;
-    rt.appsLoaded["app-a"] = fynApp;
-    rt.appsLoaded["app-a@1.0.0"] = fynApp;
+    rt.apps["app-a"] = fynApp;
+    rt.apps["app-a@1.0.0"] = fynApp;
 
-    const runtime = kernel.moduleLoader.createFynUnitRuntime(fynApp);
+    const runtime = kernel.loader.mkRuntime(fynApp);
     const handler = vi.fn();
     runtime.bus!.on("data", handler);
 

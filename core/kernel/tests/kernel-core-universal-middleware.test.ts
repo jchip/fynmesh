@@ -11,13 +11,13 @@ class UniversalMiddlewareTestKernel extends FynMeshKernelCore {
 
     // Expose protected method for testing
     public async testApplyAutoScopeMiddlewares(fynApp: FynApp, fynModule?: FynModule): Promise<void> {
-        const autoApplyMiddlewares = this.middlewareManager.getAutoApplyMiddlewares();
+        const autoApply = this.mwMgr.getAutoApply();
         await this.middlewareExecutor.applyAutoScopeMiddlewares(
             fynApp,
             fynModule,
             this,
-            autoApplyMiddlewares,
-            () => this.moduleLoader.createFynModuleRuntime(fynApp),
+            autoApply,
+            () => this.loader.mkRuntime(fynApp),
             async (cc, share) => this.signalMiddlewareReady(cc, { share })
         );
     }
@@ -44,7 +44,7 @@ const createUniversalMiddleware = (
     autoApplyScope?: ("all" | "fynapp" | "middleware")[],
     shouldApply?: (fynApp: FynApp) => boolean
 ): FynAppMiddlewareReg => {
-    const middleware: FynAppMiddleware = {
+    const mw: FynAppMiddleware = {
         name,
         autoApplyScope,
         shouldApply,
@@ -58,7 +58,7 @@ const createUniversalMiddleware = (
         hostFynApp: createMockFynAppWithExposes(`provider-${name}`),
         exposeName: `./middleware/${name}`,
         exportName: `__middleware__${name}`,
-        middleware,
+        mw,
     };
 };
 
@@ -77,7 +77,7 @@ describe('Universal Middleware Support', () => {
 
             const runtime = kernel.getRunTime();
             expect(runtime.middlewares['provider::database']).toBeDefined();
-            expect(runtime.autoApplyMiddlewares).toBeUndefined();
+            expect(runtime.autoApply).toBeUndefined();
         });
 
         it('should register middleware with autoApplyScope: ["fynapp"]', () => {
@@ -86,8 +86,8 @@ describe('Universal Middleware Support', () => {
             kernel.registerMiddleware(middleware);
 
             const runtime = kernel.getRunTime();
-            expect(runtime.autoApplyMiddlewares?.fynapp).toContain(middleware);
-            expect(runtime.autoApplyMiddlewares?.middleware).not.toContain(middleware);
+            expect(runtime.autoApply?.fynapp).toContain(middleware);
+            expect(runtime.autoApply?.mw).not.toContain(middleware);
         });
 
         it('should register middleware with autoApplyScope: ["middleware"]', () => {
@@ -96,8 +96,8 @@ describe('Universal Middleware Support', () => {
             kernel.registerMiddleware(middleware);
 
             const runtime = kernel.getRunTime();
-            expect(runtime.autoApplyMiddlewares?.middleware).toContain(middleware);
-            expect(runtime.autoApplyMiddlewares?.fynapp).not.toContain(middleware);
+            expect(runtime.autoApply?.mw).toContain(middleware);
+            expect(runtime.autoApply?.fynapp).not.toContain(middleware);
         });
 
         it('should register middleware with autoApplyScope: ["all"]', () => {
@@ -106,8 +106,8 @@ describe('Universal Middleware Support', () => {
             kernel.registerMiddleware(middleware);
 
             const runtime = kernel.getRunTime();
-            expect(runtime.autoApplyMiddlewares?.fynapp).toContain(middleware);
-            expect(runtime.autoApplyMiddlewares?.middleware).toContain(middleware);
+            expect(runtime.autoApply?.fynapp).toContain(middleware);
+            expect(runtime.autoApply?.mw).toContain(middleware);
         });
 
         it('should register middleware with autoApplyScope: ["fynapp", "middleware"]', () => {
@@ -116,8 +116,8 @@ describe('Universal Middleware Support', () => {
             kernel.registerMiddleware(middleware);
 
             const runtime = kernel.getRunTime();
-            expect(runtime.autoApplyMiddlewares?.fynapp).toContain(middleware);
-            expect(runtime.autoApplyMiddlewares?.middleware).toContain(middleware);
+            expect(runtime.autoApply?.fynapp).toContain(middleware);
+            expect(runtime.autoApply?.mw).toContain(middleware);
         });
 
         it('should handle empty autoApplyScope array', () => {
@@ -126,7 +126,7 @@ describe('Universal Middleware Support', () => {
             kernel.registerMiddleware(middleware);
 
             const runtime = kernel.getRunTime();
-            expect(runtime.autoApplyMiddlewares).toBeUndefined();
+            expect(runtime.autoApply).toBeUndefined();
         });
     });
 
@@ -142,7 +142,7 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(regularFynApp);
 
-            expect(layoutMiddleware.middleware.setup).toHaveBeenCalledWith(
+            expect(layoutMiddleware.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({
                     fynApp: regularFynApp,
                 })
@@ -160,7 +160,7 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(middlewareProviderFynApp);
 
-            expect(devToolsMiddleware.middleware.setup).toHaveBeenCalledWith(
+            expect(devToolsMiddleware.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({
                     fynApp: middlewareProviderFynApp,
                 })
@@ -177,7 +177,7 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(middlewareProviderFynApp);
 
-            expect(layoutMiddleware.middleware.setup).not.toHaveBeenCalled();
+            expect(layoutMiddleware.mw.setup).not.toHaveBeenCalled();
         });
 
         it('should not apply middleware-scoped middleware to regular FynApps', async () => {
@@ -190,7 +190,7 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(regularFynApp);
 
-            expect(devToolsMiddleware.middleware.setup).not.toHaveBeenCalled();
+            expect(devToolsMiddleware.mw.setup).not.toHaveBeenCalled();
         });
     });
 
@@ -205,7 +205,7 @@ describe('Universal Middleware Support', () => {
             await kernel.testApplyAutoScopeMiddlewares(fynApp);
 
             expect(shouldApplyFn).toHaveBeenCalledWith(fynApp);
-            expect(filteredMiddleware.middleware.setup).toHaveBeenCalled();
+            expect(filteredMiddleware.mw.setup).toHaveBeenCalled();
         });
 
         it('should skip middleware when shouldApply returns false', async () => {
@@ -218,7 +218,7 @@ describe('Universal Middleware Support', () => {
             await kernel.testApplyAutoScopeMiddlewares(fynApp);
 
             expect(shouldApplyFn).toHaveBeenCalledWith(fynApp);
-            expect(filteredMiddleware.middleware.setup).not.toHaveBeenCalled();
+            expect(filteredMiddleware.mw.setup).not.toHaveBeenCalled();
         });
 
         it('should handle shouldApply function errors gracefully', async () => {
@@ -234,7 +234,7 @@ describe('Universal Middleware Support', () => {
             await expect(kernel.testApplyAutoScopeMiddlewares(fynApp)).resolves.not.toThrow();
 
             expect(shouldApplyFn).toHaveBeenCalledWith(fynApp);
-            expect(filteredMiddleware.middleware.setup).not.toHaveBeenCalled();
+            expect(filteredMiddleware.mw.setup).not.toHaveBeenCalled();
         });
 
         it('should apply middleware without shouldApply function', async () => {
@@ -245,7 +245,7 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(fynApp);
 
-            expect(middleware.middleware.setup).toHaveBeenCalled();
+            expect(middleware.mw.setup).toHaveBeenCalled();
         });
     });
 
@@ -259,11 +259,11 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(fynApp, fynModule);
 
-            expect(middleware.middleware.setup).toHaveBeenCalledBefore(middleware.middleware.apply as any);
-            expect(middleware.middleware.apply).toHaveBeenCalledWith(
+            expect(middleware.mw.setup).toHaveBeenCalledBefore(middleware.mw.apply as any);
+            expect(middleware.mw.apply).toHaveBeenCalledWith(
                 expect.objectContaining({
                     fynApp,
-                    fynMod: fynModule,
+                    fynUnit: fynModule,
                     reg: middleware,
                 })
             );
@@ -277,9 +277,9 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(fynApp);
 
-            expect(middleware.middleware.setup).toHaveBeenCalledWith(
+            expect(middleware.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    fynMod: expect.objectContaining({
+                    fynUnit: expect.objectContaining({
                         execute: expect.any(Function),
                     }),
                 })
@@ -288,7 +288,7 @@ describe('Universal Middleware Support', () => {
 
         it('should handle setup method errors gracefully', async () => {
             const middleware = createUniversalMiddleware('error-setup', ['fynapp']);
-            (middleware.middleware.setup as any).mockRejectedValue(new Error('Setup failed'));
+            (middleware.mw.setup as any).mockRejectedValue(new Error('Setup failed'));
             kernel.registerMiddleware(middleware);
 
             const fynApp = createMockFynAppWithExposes('test-app');
@@ -297,12 +297,12 @@ describe('Universal Middleware Support', () => {
             await expect(kernel.testApplyAutoScopeMiddlewares(fynApp)).resolves.not.toThrow();
 
             // Apply should not be called if setup fails
-            expect(middleware.middleware.apply).not.toHaveBeenCalled();
+            expect(middleware.mw.apply).not.toHaveBeenCalled();
         });
 
         it('should handle apply method errors gracefully', async () => {
             const middleware = createUniversalMiddleware('error-apply', ['fynapp']);
-            (middleware.middleware.apply as any).mockImplementation(() => {
+            (middleware.mw.apply as any).mockImplementation(() => {
                 throw new Error('Apply failed');
             });
             kernel.registerMiddleware(middleware);
@@ -328,9 +328,9 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(regularFynApp);
 
-            expect(layout.middleware.setup).toHaveBeenCalled();
-            expect(analytics.middleware.setup).toHaveBeenCalled();
-            expect(logger.middleware.setup).toHaveBeenCalled();
+            expect(layout.mw.setup).toHaveBeenCalled();
+            expect(analytics.mw.setup).toHaveBeenCalled();
+            expect(logger.mw.setup).toHaveBeenCalled();
         });
 
         it('should apply different middleware to different FynApp types', async () => {
@@ -351,23 +351,23 @@ describe('Universal Middleware Support', () => {
             await kernel.testApplyAutoScopeMiddlewares(middlewareFynApp);
 
             // Regular FynApp should get layout + logger
-            expect(layout.middleware.setup).toHaveBeenCalledWith(
+            expect(layout.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({ fynApp: regularFynApp })
             );
-            expect(logger.middleware.setup).toHaveBeenCalledWith(
+            expect(logger.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({ fynApp: regularFynApp })
             );
 
             // Middleware FynApp should get dev-tools + logger
-            expect(devTools.middleware.setup).toHaveBeenCalledWith(
+            expect(devTools.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({ fynApp: middlewareFynApp })
             );
-            expect(logger.middleware.setup).toHaveBeenCalledWith(
+            expect(logger.mw.setup).toHaveBeenCalledWith(
                 expect.objectContaining({ fynApp: middlewareFynApp })
             );
 
             // Regular FynApp should NOT get dev-tools
-            expect(devTools.middleware.setup).not.toHaveBeenCalledWith(
+            expect(devTools.mw.setup).not.toHaveBeenCalledWith(
                 expect.objectContaining({ fynApp: regularFynApp })
             );
         });
@@ -380,7 +380,7 @@ describe('Universal Middleware Support', () => {
 
             const runtime = kernel.getRunTime();
             expect(runtime.middlewares['provider::traditional']).toBeDefined();
-            expect(runtime.autoApplyMiddlewares).toBeUndefined();
+            expect(runtime.autoApply).toBeUndefined();
         });
 
         it('should continue to support explicit useMiddleware calls', () => {
@@ -395,7 +395,7 @@ describe('Universal Middleware Support', () => {
     });
 
     describe('Edge Cases', () => {
-        it('should handle empty runtime autoApplyMiddlewares gracefully', async () => {
+        it('should handle empty runtime autoApply gracefully', async () => {
             const fynApp = createMockFynAppWithExposes('test-app');
 
             // Should not throw when no auto-apply middleware registered
@@ -410,12 +410,12 @@ describe('Universal Middleware Support', () => {
 
             await kernel.testApplyAutoScopeMiddlewares(fynApp);
 
-            expect(middleware.middleware.setup).toHaveBeenCalled();
+            expect(middleware.mw.setup).toHaveBeenCalled();
         });
 
         it('should handle middleware without setup method', async () => {
             const middleware = createUniversalMiddleware('no-setup', ['fynapp']);
-            middleware.middleware.setup = undefined;
+            middleware.mw.setup = undefined;
             kernel.registerMiddleware(middleware);
 
             const fynApp = createMockFynAppWithExposes('test-app');
@@ -423,12 +423,12 @@ describe('Universal Middleware Support', () => {
             // Should not throw
             await expect(kernel.testApplyAutoScopeMiddlewares(fynApp)).resolves.not.toThrow();
 
-            expect(middleware.middleware.apply).toHaveBeenCalled();
+            expect(middleware.mw.apply).toHaveBeenCalled();
         });
 
         it('should handle middleware without apply method', async () => {
             const middleware = createUniversalMiddleware('no-apply', ['fynapp']);
-            middleware.middleware.apply = undefined;
+            middleware.mw.apply = undefined;
             kernel.registerMiddleware(middleware);
 
             const fynApp = createMockFynAppWithExposes('test-app');
@@ -436,7 +436,7 @@ describe('Universal Middleware Support', () => {
             // Should not throw
             await expect(kernel.testApplyAutoScopeMiddlewares(fynApp)).resolves.not.toThrow();
 
-            expect(middleware.middleware.setup).toHaveBeenCalled();
+            expect(middleware.mw.setup).toHaveBeenCalled();
         });
     });
 });

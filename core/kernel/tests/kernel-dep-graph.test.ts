@@ -29,7 +29,7 @@ describe("Kernel dependency graph and resolver", () => {
     kernel.setRegistryResolver(async (name: string): Promise<RegistryResolverResult> => ({
       name,
       version: "1.0.0",
-      manifestUrl: `http://test/${name}/dist/fynapp.manifest.json`,
+      url: `http://test/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     }));
 
@@ -57,7 +57,7 @@ describe("Kernel dependency graph and resolver", () => {
     kernel.setRegistryResolver(async (name: string) => ({
       name,
       version: "1.0.0",
-      manifestUrl: `http://test/${name}/dist/fynapp.manifest.json`,
+      url: `http://test/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     }));
 
@@ -81,7 +81,7 @@ describe("Kernel dependency graph and resolver", () => {
     kernel.setRegistryResolver(async (name: string) => ({
       name,
       version: "1.0.0",
-      manifestUrl: `http://test/${name}/dist/fynapp.manifest.json`,
+      url: `http://test/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     }));
 
@@ -96,7 +96,7 @@ describe("Kernel dependency graph and resolver", () => {
     kernel.setRegistryResolver(async (name: string) => ({
       name,
       version: "1.0.0",
-      manifestUrl: `http://test/${name}/dist/fynapp.manifest.json`,
+      url: `http://test/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     }));
     const fetchMock = vi.fn(async (url: string) => {

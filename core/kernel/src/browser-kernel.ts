@@ -130,7 +130,7 @@ export class BrowserKernel extends FynMeshKernelCore {
 
     try {
       loadId = loadId || baseUrl;
-      captureEvent(this.telemetry, "fynapp.load_started", { url: baseUrl });
+      captureEvent(this.tel, "fynapp.load_started", { url: baseUrl });
       const urlPath = this.buildFynAppUrl(baseUrl);
       console.debug("🚀 Loading FynApp from", urlPath);
       const fynAppEntry = await Federation.import(urlPath);
@@ -143,10 +143,10 @@ export class BrowserKernel extends FynMeshKernelCore {
 
       const fynApp = await this.loadFynAppBasics(fynAppEntry);
       await this.bootstrapFynApp(fynApp);
-      captureEvent(this.telemetry, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
+      captureEvent(this.tel, "fynapp.loaded", { app: fynApp.name, version: fynApp.version });
       return fynApp;
     } catch (err) {
-      this.telemetry.captureError("fynapp.load_failed", { url: baseUrl }, err);
+      this.tel.capErr("fynapp.load_failed", { url: baseUrl }, err);
       console.error(`Failed to load FynApp from ${baseUrl}:`, err);
       return null;
     }
@@ -161,7 +161,7 @@ export function createBrowserKernel(): BrowserKernel {
 
   // Initialize kernel runtime
   kernel.initRunTime({
-    appsLoaded: {},
+    apps: {},
     middlewares: {},
   });
 
@@ -170,7 +170,7 @@ export function createBrowserKernel(): BrowserKernel {
     return {
       name,
       version: "0.0.0", // version not critical for demo resolver; keying by name is fine
-      manifestUrl: `/${name}/dist/fynapp.manifest.json`,
+      url: `/${name}/dist/fynapp.manifest.json`,
       distBase: `/${name}/dist/`,
     };
   });
