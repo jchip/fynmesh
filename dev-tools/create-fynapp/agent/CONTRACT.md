@@ -159,7 +159,7 @@ import { useMiddleware } from "@fynmesh/kernel";
 export const main = useMiddleware(
   {
     // @ts-ignore — TS can't type module-federation remote containers
-    middleware: import("fynapp-design-tokens/middleware/design-tokens/design-tokens",
+    mw: import("fynapp-design-tokens/middleware/design-tokens/design-tokens",
       { with: { type: "fynapp-middleware" } }),
     config: { theme: "fynmesh-default", cssCustomProperties: true },
   },
@@ -314,4 +314,6 @@ an existing `dist/`. A change is not done until this passes.
 - `canOverrideExecution` argument order in `execution-override-architecture.md`
   (doc shows `(fynUnit, fynApp)`); the real signature is `(fynApp, fynUnit)`.
 - The `{ info: MiddlewareInfo }` form of a consumer declaration — the runtime uses
-  the `{ middleware: import(...), config }` form shown in §4.
+  the `{ mw: import(...), config }` form shown in §4.
+- Any `{ middleware: import(...) }` consumer declaration, or `cc.reg.middleware` /
+  `cc.fynMod` — the key is `mw`, and `fynMod` was removed (see MIGRATION.md).

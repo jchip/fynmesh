@@ -80,6 +80,56 @@ first. Use the template.
 - **Detection:** <compile error you'll see, or "runtime-only — see …">
 ```
 
+### 2026-08-13 — kernel 1.0.0: contract names shortened; deprecated aliases removed
+
+- **What changed:** breaking renames on the authoring contract, plus removal of
+  the deprecated `FynUnit`/`FynModule` twins. Driven by bundle size — see
+  `notes/KERNEL_BUNDLE_SIZE.md`. `name` and `version` are unchanged (they are
+  federation container fields and manifest JSON keys, not kernel API).
+
+  Consumer declaration key:
+  - `useMiddleware([{ middleware: import(...), config }])` → `{ mw: import(...), config }`
+
+  Middleware-provider registration (`FynAppMiddlewareReg`):
+  - `reg.middleware` → `reg.mw`
+
+  Kernel object:
+  - `kernel.telemetry` → `kernel.tel`
+  - `kernel.middlewareManager` → `kernel.mwMgr`
+  - `kernel.moduleLoader` → `kernel.loader`
+  - `kernel.cleanContainerName()` → **removed** (was called by nothing)
+
+  Types:
+  - `KernelTelemetry.captureError()` → `.capErr()`
+  - `ModuleLoader.createFynUnitRuntime()` → `.mkRuntime()`
+  - `MiddlewareManager.getAutoApplyMiddlewares()` → `.getAutoApply()`
+  - `FynMeshRuntimeData.appsLoaded` → `.apps`
+  - `FynMeshRuntimeData.autoApplyMiddlewares` → `.autoApply`
+  - `RegistryResolverResult.manifestUrl` → `.url`
+  - `PreloadPriority` is a frozen const object, no longer a TS `enum`
+    (still usable in type position; a bare string literal is now assignable)
+
+  Removed outright:
+  - `cc.fynMod` (use `cc.fynUnit`)
+  - `MiddlewareExecutor.useMiddlewareOnFynModule()`
+  - `ModuleLoader.createFynModuleRuntime()`, `ModuleLoader.invokeFynModule()`
+
+- **Anchor/contract edits:** `agent/CONTRACT.md` §4 example and the stale-sources
+  list. `src/fynapp-contract.ts` needed no change — it anchors `FynUnit`,
+  `FynUnitRuntime`, `FynApp`, `MiddlewareUseMeta`, `MiddlewareInfo`,
+  `FynAppMiddleware` and `FynAppMiddlewareCallContext`, none of whose anchored
+  members were renamed.
+- **App migration:** in each FynApp, rename the `middleware:` key to `mw:` in
+  every `useMiddleware([...])` declaration. In middleware providers, rename
+  `reg.middleware` → `reg.mw` and drop any `fynMod` from a hand-built call
+  context. Anything reading `kernel.moduleLoader` / `kernel.middlewareManager`
+  uses the new short names.
+- **Detection:** compile error on the provider side (`reg.middleware` no longer
+  exists). **The consumer key is runtime-only** — `useMiddleware` takes
+  `MiddlewareUseMeta`, whose members are loose, so a stale `middleware:` key
+  compiles and then silently fails to resolve the middleware at bootstrap.
+  Grep for `middleware: import(` when migrating.
+
 ### 2026-07-09 — baseline (kernel ^1.0.0)
 
 - **Contract surface anchored:** `FynUnit`, `FynUnitRuntime`, `FynApp`,
@@ -89,6 +139,7 @@ first. Use the template.
 - **Anchored members:** `FynUnit` lifecycle (`initialize`, `execute`, `shutdown`,
   `suspend`, `resume`) and `FynUnitRuntime` (`fynApp`, `middlewareContext`, `bus`).
 - **Known deprecated aliases** (still compile; don't use in new code):
-  `FynModule`, `FynModuleRuntime`, `noOpMiddlewareUser`, `cc.fynMod`.
+  `FynModule`, `FynModuleRuntime`, `noOpMiddlewareUser`. (`cc.fynMod` was
+  removed on 2026-08-13 — see the entry above.)
 - **Known stale sources to ignore:** `core/kernel/examples/simple-usage.ts`;
   any `runtime.kernel` reference; the `{ info: MiddlewareInfo }` consumer form.
