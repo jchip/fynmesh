@@ -106,6 +106,12 @@
         border: none;
     }
 
+    /* Buttons are anchors, so Spectre's `a:visited` (0,1,1) outranks the
+       class-only `.btn-*` rules below and repaints visited buttons #807fe2. */
+    .btn:visited {
+        color: white;
+    }
+
     .btn-primary {
         background: var(--primary);
         color: white;
