@@ -115,6 +115,16 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   ]);
   private selectedRegion: RegionName = 'main'; // Default region for loading
   private pendingRegionLoad = new Map<string, RegionName>(); // Track which region a FynApp is being loaded into
+  /**
+   * dist-directory ids of the loadIntoRegion calls currently in flight, counted
+   * so concurrent loads of the same app unwind correctly.
+   *
+   * Distinguishes "the shell asked for this FynApp" from "this FynApp showed up
+   * on its own" — a provider/library loading in the background bootstraps through
+   * the same auto-apply middleware as a user-picked app, but must not be given a
+   * region. See `isShellInitiated` and the fallback branch in manageAppLayout.
+   */
+  private activeRegionLoadIds = new Map<string, number>();
 
   // Per-region tracking of all loaded FynApps (for visibility toggle pattern)
   // Map<RegionName, Map<fynAppName, { container: HTMLElement, fynApp: FynApp }>>
@@ -525,6 +535,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
       console.log(`🔄 Loading FynApp: ${fynappId} from ${fynappUrl} into region: ${region}`);
 
+      // Idle-deferred providers must be registered before any picked FynApp loads.
+      await this.awaitDeferredProviders();
+
       // Use the new loadIntoRegion method
       const fynApp = await this.loadIntoRegion(fynappUrl, region);
 
@@ -698,9 +711,33 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   private loadApp(fynappUrl: string): void {
     console.log(`📱 loadApp called for ${fynappUrl}`);
     // Fire and forget - load into main region
-    this.loadIntoRegion(fynappUrl, 'main').catch(err => {
-      console.error(`❌ Failed to load app ${fynappUrl}:`, err);
-    });
+    this.awaitDeferredProviders()
+      .then(() => this.loadIntoRegion(fynappUrl, 'main'))
+      .catch(err => {
+        console.error(`❌ Failed to load app ${fynappUrl}:`, err);
+      });
+  }
+
+  /**
+   * The shell page defers the React 18 provider and fynapp-x1-v1 to browser idle
+   * time; neither is needed for first paint. See the loadDeferredProviders block
+   * in templates/pages/shell.html.
+   *
+   * The kernel cannot resolve a shared provider on demand — kernel.loadFynApp()
+   * imports the FynApp entry directly, so a consumer that arrives before its
+   * provider fails with SharedModuleNoProviderError, which the kernel swallows
+   * into a null return: a silently blank region. Awaiting here closes that race.
+   * A click landing before idle fires simply waits for the load it would have
+   * needed anyway.
+   *
+   * Deliberately NOT awaited inside loadIntoRegion: the sidebar is React 19 and
+   * auto-loads at first paint, so it must not block on the deferred set.
+   */
+  private async awaitDeferredProviders(): Promise<void> {
+    const pending = (globalThis as any).__fynmeshDeferredProviders;
+    if (pending) {
+      await pending;
+    }
   }
 
   private async loadIntoRegion(fynappUrl: string, region: RegionName): Promise<FynApp | null> {
@@ -715,12 +752,16 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       return null;
     }
 
+    // Extract FynApp ID from URL for pending tracking. Resolved before the load
+    // starts so a background load bootstrapping mid-flight can be told apart
+    // from this one.
+    const fynAppIdMatch = fynappUrl.match(/\/([^\/]+)\/dist\/?$/);
+    const fynAppId = fynAppIdMatch ? fynAppIdMatch[1] : fynappUrl;
+
+    this.activeRegionLoadIds.set(fynAppId, (this.activeRegionLoadIds.get(fynAppId) ?? 0) + 1);
     try {
       console.log(`🔄 Loading FynApp from ${fynappUrl} into region: ${region}`);
 
-      // Extract FynApp ID from URL for pending tracking
-      const fynAppIdMatch = fynappUrl.match(/\/([^\/]+)\/dist\/?$/);
-      const fynAppId = fynAppIdMatch ? fynAppIdMatch[1] : fynappUrl;
       if (fynAppIdMatch) {
         // Register the target region BEFORE loading so manageAppLayout knows where to render
         this.pendingRegionLoad.set(fynAppIdMatch[1], region);
@@ -772,7 +813,31 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     } catch (error) {
       console.error(`❌ Failed to load FynApp from ${fynappUrl}:`, (error as Error).message);
       throw error;
+    } finally {
+      const remaining = (this.activeRegionLoadIds.get(fynAppId) ?? 1) - 1;
+      if (remaining > 0) {
+        this.activeRegionLoadIds.set(fynAppId, remaining);
+      } else {
+        this.activeRegionLoadIds.delete(fynAppId);
+      }
     }
+  }
+
+  /**
+   * Did the shell ask for this FynApp, or did it load itself in the background?
+   *
+   * Matched against the dist-directory ids of in-flight loadIntoRegion calls,
+   * because a FynApp's federation name is not always its directory name — the
+   * versioned library dirs drop a suffix (`fynapp-x1-v1` -> `fynapp-x1`). A bare
+   * "is any load in flight" check would be too coarse: the sidebar auto-loads at
+   * first paint and its window overlaps the idle-deferred provider loads, which
+   * would let a background FynApp ride in on the sidebar's request.
+   */
+  private isShellInitiated(fynAppName: string): boolean {
+    for (const id of this.activeRegionLoadIds.keys()) {
+      if (id === fynAppName || id.startsWith(fynAppName)) return true;
+    }
+    return false;
   }
 
   private async renderFynAppIntoRegion(fynApp: FynApp, region: RegionName): Promise<void> {
@@ -906,6 +971,20 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       return;
     }
 
+    // Nothing pending, and the shell did not ask for this FynApp — it loaded
+    // itself in the background (a provider or library, e.g. the idle-deferred
+    // fynapp-x1-v1). Claiming the main region for it would plant an empty card
+    // over whatever the user is looking at.
+    //
+    // The fallback below still has to exist for shell-initiated loads, because
+    // pendingRegionLoad is keyed off the URL's directory name while the lookup
+    // above uses the container name — they differ whenever a FynApp's dist dir
+    // is not its federation name (fynapp-x1-v1 -> "fynapp-x1").
+    if (!this.isShellInitiated(fynApp.name)) {
+      console.debug(`⏭️ Skipping layout for ${fynApp.name} — loaded in background, no region requested`);
+      return;
+    }
+
     // Fallback: Use the main region by default for auto-managed apps (not loaded via loadIntoRegion)
     const mainRegion = this.regions.get('main');
     if (!mainRegion?.container) {
@@ -935,6 +1014,8 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
     try {
       console.log(`🔄 Loading FynApp from ${fynappUrl}`);
+      // Public API for FynApps — same idle-deferred provider guard as the picker.
+      await this.awaitDeferredProviders();
       const fynApp = await this.kernel.loadFynApp(fynappUrl);
 
       if (fynApp) {

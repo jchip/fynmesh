@@ -40,10 +40,11 @@ const distOf = () => path.join(demoRoot, "fynapp-sidebar", "dist");
 function fynapp(
     files: string[],
     bundles?: Record<string, string[]>,
-    where: "federation.bundles.json" | "federation.json" = "federation.bundles.json"
+    where: "federation.bundles.json" | "federation.json" = "federation.bundles.json",
+    appDir = "fynapp-sidebar"
 ) {
     demoRoot = mkdtempSync(path.join(tmpdir(), "preload-test-"));
-    const dist = path.join(demoRoot, "fynapp-sidebar", "dist");
+    const dist = path.join(demoRoot, appDir, "dist");
     mkdirSync(dist, { recursive: true });
     writeFileSync(path.join(dist, "fynapp-entry.js"), entryNaming(files));
     for (const f of files) {
@@ -55,17 +56,19 @@ function fynapp(
     writeFileSync(
         path.join(dist, "federation.json"),
         JSON.stringify({
-            name: "fynapp-sidebar",
+            name: appDir,
             filename: "fynapp-entry.js",
             ...(bundles && where === "federation.json" ? { bundles } : {}),
         })
     );
 }
 
-const hints = () =>
-    collectShellPreloadModules(demoRoot, "/", () => {}).filter((u) =>
-        u.startsWith("/fynapp-sidebar/")
+const hints = (appDir = "fynapp-sidebar") =>
+    collectShellPreloadModules(demoRoot, "/", () => {}).filter((hint) =>
+        hint.href.startsWith(`/${appDir}/`)
     );
+const hrefs = (appDir = "fynapp-sidebar") =>
+    hints(appDir).map((hint) => hint.href);
 
 afterEach(() => {
     demoRoot && rmSync(demoRoot, { recursive: true, force: true });
@@ -74,18 +77,19 @@ afterEach(() => {
 describe("collectShellPreloadModules with combined files", () => {
     it("preloads a chunk directly when nothing was combined", () => {
         fynapp(["main-AAAAAAAA.js", "other-BBBBBBBB.js"]);
-        expect(hints()).toEqual([
+        expect(hrefs()).toEqual([
             "/fynapp-sidebar/dist/fynapp-entry.js",
             "/fynapp-sidebar/dist/main-AAAAAAAA.js",
             "/fynapp-sidebar/dist/other-BBBBBBBB.js",
         ]);
+        expect(hints().every((hint) => hint.priority === undefined)).toBe(true);
     });
 
     it("preloads the combined file instead of its members", () => {
         fynapp(["main-AAAAAAAA.js", "other-BBBBBBBB.js", "combo-CCCCCCCC.js"], {
             "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"],
         });
-        const urls = hints();
+        const urls = hrefs();
 
         expect(urls).toContain("/fynapp-sidebar/dist/combo-CCCCCCCC.js");
         expect(urls).not.toContain("/fynapp-sidebar/dist/main-AAAAAAAA.js");
@@ -96,7 +100,7 @@ describe("collectShellPreloadModules with combined files", () => {
         fynapp(["main-AAAAAAAA.js", "other-BBBBBBBB.js", "third-DDDDDDDD.js", "combo-CCCCCCCC.js"], {
             "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js", "third-DDDDDDDD.js"],
         });
-        const urls = hints();
+        const urls = hrefs();
         expect(urls.filter((u) => u.includes("combo-CCCCCCCC.js"))).toHaveLength(1);
     });
 
@@ -104,7 +108,7 @@ describe("collectShellPreloadModules with combined files", () => {
         fynapp(["main-AAAAAAAA.js", "alone-EEEEEEEE.js", "other-BBBBBBBB.js", "combo-CCCCCCCC.js"], {
             "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"],
         });
-        const urls = hints();
+        const urls = hrefs();
         expect(urls).toContain("/fynapp-sidebar/dist/alone-EEEEEEEE.js");
         expect(urls).toContain("/fynapp-sidebar/dist/combo-CCCCCCCC.js");
     });
@@ -116,10 +120,31 @@ describe("collectShellPreloadModules with combined files", () => {
             "{ not json"
         );
         const warnings: string[] = [];
-        const urls = collectShellPreloadModules(demoRoot, "/", (m) => warnings.push(m));
+        const urls = collectShellPreloadModules(demoRoot, "/", (m) => warnings.push(m))
+            .map((hint) => hint.href);
 
         expect(urls).toContain("/fynapp-sidebar/dist/main-AAAAAAAA.js");
         expect(warnings.some((w) => w.includes("cannot read federation.json"))).toBe(true);
+    });
+
+    it("keeps low priority while deduplicating a shared carrier", () => {
+        fynapp(
+            ["main-AAAAAAAA.js", "other-BBBBBBBB.js", "combo-CCCCCCCC.js"],
+            { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"] },
+            "federation.bundles.json",
+            "fynapp-react-18"
+        );
+
+        expect(
+            hints("fynapp-react-18").filter((hint) =>
+                hint.href.endsWith("combo-CCCCCCCC.js")
+            )
+        ).toEqual([
+            {
+                href: "/fynapp-react-18/dist/combo-CCCCCCCC.js",
+                priority: "low",
+            },
+        ]);
     });
 });
 
@@ -139,7 +164,8 @@ describe("collectShellPreloadModules and stale dist chunks", () => {
         writeFileSync(path.join(distOf(), "main-STALE111.js"), "//old\n");
 
         const warnings: string[] = [];
-        const urls = collectShellPreloadModules(demoRoot, "/", (m) => warnings.push(m));
+        const urls = collectShellPreloadModules(demoRoot, "/", (m) => warnings.push(m))
+            .map((hint) => hint.href);
 
         expect(urls).toContain("/fynapp-sidebar/dist/main-AAAAAAAA.js");
         expect(urls).not.toContain("/fynapp-sidebar/dist/main-STALE111.js");
@@ -153,7 +179,7 @@ describe("collectShellPreloadModules and stale dist chunks", () => {
         writeFileSync(path.join(distOf(), "fynapp-entry.js"), entryNaming(["main-AAAAAAAA.js"]));
         writeFileSync(path.join(distOf(), "main-AAAAAAAA.js"), entryNaming(["deep-DDDDDDDD.js"]));
 
-        expect(hints()).toContain("/fynapp-sidebar/dist/deep-DDDDDDDD.js");
+        expect(hrefs()).toContain("/fynapp-sidebar/dist/deep-DDDDDDDD.js");
     });
 
     it("ignores a leftover sitting beside a combined file", () => {
@@ -163,7 +189,7 @@ describe("collectShellPreloadModules and stale dist chunks", () => {
         // a member of an earlier build's combined file, whose carrier is long gone
         writeFileSync(path.join(distOf(), "main-STALE111.js"), "//old\n");
 
-        const urls = hints();
+        const urls = hrefs();
         expect(urls).toEqual([
             "/fynapp-sidebar/dist/fynapp-entry.js",
             "/fynapp-sidebar/dist/combo-CCCCCCCC.js",
@@ -237,7 +263,7 @@ describe("collectShellBundleMaps", () => {
             },
         ]);
         // and the hints follow the same record
-        expect(hints()).toContain("/fynapp-sidebar/dist/combo-CCCCCCCC.js");
+        expect(hrefs()).toContain("/fynapp-sidebar/dist/combo-CCCCCCCC.js");
     });
 
     it("prefers the app-offered artifact over federation.json's older record", () => {
@@ -264,7 +290,7 @@ describe("collectShellBundleMaps", () => {
 
         const [{ base, bundles }] = maps();
         const carriers = Object.keys(bundles).map((file) => base + file);
-        const hinted = hints().filter((u) => !u.endsWith("fynapp-entry.js"));
+        const hinted = hrefs().filter((href) => !href.endsWith("fynapp-entry.js"));
 
         expect(hinted).toEqual(carriers);
     });
