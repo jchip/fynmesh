@@ -1,0 +1,82 @@
+{
+  "name": "fynapp-2-react18",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "-FYNAPP_MIDDLEWARE fynapp-react-middleware main/basic-counter ",
+        "main-D51JSsR7.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-AfqWEYFQ.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-ByOax-3_.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "node_modules/esm-react/src/react-esm-18.production.js"
+      ],
+      "chunks": [
+        "react-esm-18.production-yNNN9Nes.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-2-react18/src",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-2-react18/node_modules/esm-react-dom/dist",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+      ],
+      "chunks": [
+        "react-dom-esm-18-client.production-Cy2yZyZ_.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-2-react18/src",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-08-16T05:14:09.699Z",
+  "version": "1.0.0"
+}

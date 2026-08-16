@@ -1,0 +1,12 @@
+# FynMesh - Micro Frontend Framework
+# https://www.lm360.ai
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.lm360.ai/sitemap.xml
+
+# Disallow development/internal paths
+Disallow: /node_modules/
+Disallow: /*.map$

@@ -1,0 +1,15 @@
+{
+  "name": "fynapp-notes",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  }
+}

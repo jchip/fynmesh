@@ -1,0 +1,25 @@
+{
+  "name": "fynapp-3-marko",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-Dmm4On0z.js"
+      ]
+    }
+  },
+  "shared": {
+    "marko": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "singleton": true,
+        "semver": "^5.37.31"
+      }
+    }
+  },
+  "timestamp": "2026-08-16T05:14:07.333Z",
+  "version": "1.0.0"
+}

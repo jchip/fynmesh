@@ -1,0 +1,57 @@
+{
+  "name": "fynapp-ag-grid",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-B5UFnQ__.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-ag-grid": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^33.0.0"
+      }
+    },
+    "esm-ag-grid-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^33.0.0",
+        "requiredVersion": {
+          "esm-react": "^19.0.0",
+          "esm-ag-grid": "^33.0.0"
+        }
+      }
+    }
+  },
+  "timestamp": "2026-08-16T05:14:12.237Z",
+  "version": "1.0.0"
+}

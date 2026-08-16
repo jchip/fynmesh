@@ -1,0 +1,13 @@
+{
+  "name": "fynapp-4-vue",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.js"
+  },
+  "provide-shared": {
+    "vue": {
+      "singleton": true,
+      "semver": "^3.3.4"
+    }
+  }
+}

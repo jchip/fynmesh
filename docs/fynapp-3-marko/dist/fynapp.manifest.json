@@ -1,0 +1,13 @@
+{
+  "name": "fynapp-3-marko",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.js"
+  },
+  "provide-shared": {
+    "marko": {
+      "singleton": true,
+      "semver": "^5.37.31"
+    }
+  }
+}

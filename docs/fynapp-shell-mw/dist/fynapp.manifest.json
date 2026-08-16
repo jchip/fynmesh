@@ -1,0 +1,16 @@
+{
+  "name": "fynapp-shell-mw",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.tsx",
+    "./middleware/shell-layout": "./src/middleware/shell-layout.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "name": "fynapp-ag-grid-lib",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-ag-grid": {
+      "moduleIds": [
+        "node_modules/esm-ag-grid/dist/ag-grid.production.js"
+      ],
+      "chunks": [
+        "ag-grid.production-B452FIaH.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^33.0.0"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-ag-grid-lib/src",
+          "path": "node_modules/esm-ag-grid/dist/ag-grid.production.js"
+        },
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-ag-grid-lib/node_modules/esm-ag-grid-react/dist",
+          "path": "node_modules/esm-ag-grid/dist/ag-grid.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "33.3.2",
+          "path": "node_modules/esm-ag-grid/dist/ag-grid.production.js"
+        }
+      ]
+    },
+    "esm-ag-grid-react": {
+      "moduleIds": [
+        "node_modules/esm-ag-grid-react/dist/ag-grid-react.production.js"
+      ],
+      "chunks": [
+        "ag-grid-react.production-DVnfMXEM.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^33.0.0",
+        "requiredVersion": {
+          "esm-react": "^19.0.0",
+          "esm-react-dom": "^19.0.0",
+          "esm-ag-grid": "^33.0.0"
+        }
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-ag-grid-lib/src",
+          "path": "node_modules/esm-ag-grid-react/dist/ag-grid-react.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "33.3.2",
+          "path": "node_modules/esm-ag-grid-react/dist/ag-grid-react.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-08-16T05:14:09.539Z",
+  "version": "33.3.2"
+}

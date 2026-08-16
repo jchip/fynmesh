@@ -1,0 +1,41 @@
+{
+  "name": "fynapp-4-vue",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-BtC9pvsF.js"
+      ]
+    }
+  },
+  "shared": {
+    "vue": {
+      "moduleIds": [
+        "node_modules/vue/dist/vue.runtime.esm-bundler.js"
+      ],
+      "chunks": [
+        "vue.runtime.esm-bundler-BMrfm2qP.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^3.3.4"
+      },
+      "importers": [
+        {
+          "dir": "/Users/jc/dev/fynmesh/demo/fynapp-4-vue/src",
+          "path": "node_modules/vue/dist/vue.runtime.esm-bundler.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "3.5.13",
+          "path": "node_modules/vue/dist/vue.runtime.esm-bundler.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-08-16T05:14:07.346Z",
+  "version": "1.0.0"
+}
