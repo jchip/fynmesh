@@ -17,14 +17,19 @@ const templateDir = path.join(
 );
 
 type BundleMaps = Array<{ base: string; bundles: Record<string, string[]> }>;
+type PreloadHints = Array<{ href: string; priority?: "low" }>;
 
-function shell(bundleMaps: BundleMaps, isProduction = false): string {
+function shell(
+    bundleMaps: BundleMaps,
+    isProduction = false,
+    preloadModules: PreloadHints = []
+): string {
     const env = nunjucks.configure(templateDir, { autoescape: true, noCache: true });
     return env.render("pages/shell.html", {
         title: "FynMesh Shell Demo",
         isProduction,
         pathPrefix: "/",
-        preloadModules: [],
+        preloadModules,
         bundleMaps,
     });
 }
@@ -35,6 +40,9 @@ const MAPS: BundleMaps = [
         bundles: { "combo-CCCCCCCC.js": ["hello-AAAAAAAA.js", "getInfo-BBBBBBBB.js"] },
     },
 ];
+
+const preloadLinks = (html: string): string[] =>
+    html.match(/<link rel="preload" as="script"[^>]*>/g) ?? [];
 
 describe("the shell's bundle-map declaration", () => {
     it("declares an app's map against its dist base", () => {
@@ -73,5 +81,32 @@ describe("the shell's bundle-map declaration", () => {
 
     it("emits nothing at all when no startup app was combined", () => {
         expect(shell([])).not.toContain("declareBundles");
+    });
+});
+
+describe("the shell's preload hints", () => {
+    it("renders low-priority hints as classic-script preloads", () => {
+        const html = shell([], false, [
+            { href: "/fynapp-react-18/dist/fynapp-entry.js", priority: "low" },
+        ]);
+        const links = preloadLinks(html);
+
+        expect(links).toContain(
+            '<link rel="preload" as="script" href="/fynapp-react-18/dist/fynapp-entry.js" fetchpriority="low">'
+        );
+        expect(html).not.toContain('rel="modulepreload"');
+        expect(links.join("\n")).not.toContain("crossorigin");
+    });
+
+    it("omits fetchpriority from critical-path hints", () => {
+        const html = shell([], false, [
+            { href: "/fynapp-react-19/dist/fynapp-entry.js" },
+        ]);
+        const links = preloadLinks(html);
+
+        expect(links).toContain(
+            '<link rel="preload" as="script" href="/fynapp-react-19/dist/fynapp-entry.js">'
+        );
+        expect(links.join("\n")).not.toContain("fetchpriority=");
     });
 });

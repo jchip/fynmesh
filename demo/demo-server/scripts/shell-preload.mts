@@ -24,6 +24,20 @@ interface ShellStartupFynApp {
     /** Package directory name under `demo/` (also the URL path segment). */
     dir: string;
     chunks: StartupChunks;
+    /**
+     * `low` marks a FynApp the shell loads at browser idle rather than on the
+     * critical path. The hint still warms the cache, but behind everything
+     * needed for first paint. Must stay in sync with `loadDeferredProviders`
+     * in `templates/pages/shell.html` — a `low` hint for something the startup
+     * chain still awaits would just slow that chain down.
+     */
+    priority?: "low";
+}
+
+/** One `<link rel="preload" as="script">` to emit. */
+interface ShellPreloadHint {
+    href: string;
+    priority?: "low";
 }
 
 /**
@@ -38,12 +52,17 @@ interface ShellStartupFynApp {
  * Keep in sync with the loader in `templates/pages/shell.html`.
  */
 const SHELL_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
-    { dir: "fynapp-react-18", chunks: "all" },
+    // React 18 and its only consumer, `fynapp-x1-v1`, are not on the first-paint
+    // path — everything the shell renders up front is React 19. Both load at
+    // browser idle, so their hints are demoted rather than dropped: the bytes are
+    // still wanted (`fynapp-2-react18` import-exposes `fynapp-x1@^1`), just not
+    // ahead of the shell.
+    { dir: "fynapp-react-18", chunks: "all", priority: "low" },
     { dir: "fynapp-react-19", chunks: "all" },
     // `useSharedCounter` is a lazy demo chunk, not part of startup.
     { dir: "fynapp-react-middleware", chunks: ["main", "react-context"] },
     { dir: "fynapp-design-tokens", chunks: "all" },
-    { dir: "fynapp-x1-v1", chunks: "all" },
+    { dir: "fynapp-x1-v1", chunks: "all", priority: "low" },
     { dir: "fynapp-x1-v2", chunks: "all" },
     // Entry only — the grid bundle loads on demand. See note above.
     { dir: "fynapp-ag-grid-lib", chunks: "none" },
@@ -199,14 +218,14 @@ function liveChunks(
  * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
  * @param pathPrefix deployment path prefix, e.g. `/`
  * @param warn      called with a human-readable message per skipped item
- * @returns absolute URL paths, in load order, entry-first per FynApp
+ * @returns hints in load order, entry-first per FynApp
  */
 function collectShellPreloadModules(
     demoRoot: string,
     pathPrefix: string,
     warn: (message: string) => void = () => {}
-): string[] {
-    const urls: string[] = [];
+): ShellPreloadHint[] {
+    const urls: ShellPreloadHint[] = [];
     const prefix = pathPrefix.endsWith("/") ? pathPrefix : `${pathPrefix}/`;
 
     for (const app of SHELL_STARTUP_FYNAPPS) {
@@ -222,7 +241,7 @@ function collectShellPreloadModules(
 
         // The federation entry always comes first — it is what the kernel imports.
         if (files.includes("fynapp-entry.js")) {
-            urls.push(`${base}fynapp-entry.js`);
+            urls.push({ href: `${base}fynapp-entry.js`, priority: app.priority });
         } else {
             warn(`skipping ${app.dir}: no fynapp-entry.js`);
             continue;
@@ -249,8 +268,8 @@ function collectShellPreloadModules(
              */
             const carrier = bundles.get(file);
             const href = `${base}${carrier || file}`;
-            if (!urls.includes(href)) {
-                urls.push(href);
+            if (!urls.some((hint) => hint.href === href)) {
+                urls.push({ href, priority: app.priority });
             }
         }
 
@@ -315,3 +334,4 @@ export {
     SHELL_STARTUP_FYNAPPS,
     HASHED_CHUNK_RE,
 };
+export type { ShellPreloadHint, ShellStartupFynApp };
