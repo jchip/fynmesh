@@ -39,6 +39,38 @@ The demo server provides local development and Cloudflare Pages deployment for t
    - Shell Demo: http://localhost:3000/shell.html
    - HTTPS: https://localhost:3443
 
+### Switching the federation-js loader
+
+The demo can run on either loader pair, selected with `FEDERATION`:
+
+```bash
+fyn start                      # FEDERATION=fork (default)
+FEDERATION=standard fyn start  # stock SystemJS + pre-overhaul federation-js
+```
+
+| variant | `system.js` + `federation-js` served from | freshness |
+|---|---|---|
+| `fork` (default) | `../../rollup-federation/{systemjs,federation-js}/dist` | live — rebuild there, restart here |
+| `standard` | `public/loaders/standard/` (committed) | frozen — pinned to tag `standard-systemjs-base` |
+
+`federation-js` and the loader under it are **one unit** and always switch
+together: the fork keeps its module registry in `System.registrations`, which
+stock SystemJS does not have, so a crossed pair fails. The proxy mounts both
+halves from the selected variant, so crossing them is not reachable.
+
+The server prints the variant and each file's mtime at startup — check that
+first when the demo behaves like code you didn't build:
+
+```
+federation loader variant: fork
+  .../rollup-federation/systemjs/dist/system.js  built 2026-08-20T00:45:48.695Z
+  .../rollup-federation/federation-js/dist/federation-js.dev.js  built 2026-08-20T01:20:14.737Z
+```
+
+`FEDERATION=fork` requires the `rollup-federation` checkout (gitignored here) to
+be built; the server exits with the missing path if it isn't. `standard` needs
+nothing outside this repo — see `public/loaders/standard/PROVENANCE.md`.
+
 ### Development Server Features
 
 - **Hot Template Reloading**: Templates are rebuilt on server start
