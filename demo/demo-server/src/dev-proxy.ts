@@ -1,4 +1,5 @@
 import { startDevProxy } from "./proxy.js";
+import * as Fs from "node:fs";
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,41 +8,77 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
 
 /*
- * TEST BRANCH WIRING -- serve the demo from the live rollup-federation build
- * outputs instead of the stale installed copies.
+ * Which loader pair to serve, chosen by FEDERATION:
  *
- * Two of the things being served had nothing to do with the current source:
- * `public/system.js` is a checked-in copy of *stock* SystemJS 6.14.2, and
- * `node_modules/federation-js` was last installed 2026-08-14. federation-js now
- * requires the fynmesh systemjs fork -- it keeps its module registry, name->url,
- * url->module and per-version qualifiers in `System.registrations`, which stock
- * systemjs does not have -- so the demo could not have been exercising any of it.
+ *   FEDERATION=fork      (default) the systemjs fork + federation-js, live from
+ *                        the sibling rollup-federation build outputs, so a
+ *                        rebuild there shows up on a restart with no copies to
+ *                        keep in sync.
+ *   FEDERATION=standard  stock SystemJS 6.14.2 + the last federation-js built
+ *                        before the overhaul, committed under
+ *                        public/loaders/standard and frozen. Needs nothing
+ *                        outside this repo. See that directory's PROVENANCE.md.
  *
- * Serving straight from the sibling repo's dist means a rebuild there shows up on
- * a restart, with no copies to keep in sync.
+ * federation-js and the loader under it are one unit: the fork keeps its module
+ * registry, name->url, url->module and per-version qualifiers in
+ * `System.registrations`, which stock systemjs does not have. So both halves
+ * always come from the same variant, and a crossed pair is unreachable here by
+ * construction -- the demo spent 2026-08-17 to 08-19 serving stock SystemJS
+ * against a fork-era federation-js, and the breakage was invisible because the
+ * two stale halves agreed with each other.
  */
 const fedRepo = Path.join(__dirname, "../../../rollup-federation");
 
-// Determine which federation-js file to serve based on NODE_ENV
-const isProduction = process.env.NODE_ENV === "production";
-const federationJsPath = isProduction
-  ? Path.join(fedRepo, "federation-js/dist/federation-js.min.js")
-  : Path.join(fedRepo, "federation-js/dist/federation-js.js");
+const variant = process.env.FEDERATION ?? "fork";
+if (variant !== "fork" && variant !== "standard") {
+  console.error(`FEDERATION=${variant} is not a loader variant; use "fork" or "standard"`);
+  process.exit(1);
+}
+
+const standardDir = Path.join(__dirname, "../public/loaders/standard");
+const loader =
+  variant === "standard"
+    ? { systemDir: standardDir, federationDist: standardDir }
+    : {
+        systemDir: Path.join(fedRepo, "systemjs/dist"),
+        federationDist: Path.join(fedRepo, "federation-js/dist"),
+      };
+
+// Report what is actually being served, with mtimes -- a stale build should be
+// readable off the startup log rather than inferred from browser symptoms.
+const systemJs = Path.join(loader.systemDir, "system.js");
+const federationJs = Path.join(loader.federationDist, "federation-js.dev.js");
+console.log(`federation loader variant: ${variant}`);
+for (const file of [systemJs, federationJs]) {
+  if (!Fs.existsSync(file)) {
+    const remedy =
+      variant === "fork"
+        ? "Build rollup-federation (fyn build in systemjs/ and federation-js/)," +
+          " or fall back with FEDERATION=standard."
+        : "public/loaders/standard is committed and should be complete; restore it from git.";
+    console.error(`  MISSING ${file}\nFEDERATION=${variant} cannot be served. ${remedy}`);
+    process.exit(1);
+  }
+  console.log(`  ${file}  built ${Fs.statSync(file).mtime.toISOString()}`);
+}
 
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
   [{ path: "/fynmesh" }, { protocol: "file", path: Path.join(__dirname, "../../../docs") }],
-  // the fork, not public/system.js -- see the note above
+  // the selected variant, not public/system.js -- see the note above. Both
+  // halves are mounted from `loader`, so they cannot be switched independently.
+  [{ path: "/system.js" }, { protocol: "file", path: systemJs }],
   [
-    { path: "/system.js" },
-    { protocol: "file", path: Path.join(fedRepo, "systemjs/dist/system.js") },
+    { path: "/system.min.js" },
+    { protocol: "file", path: Path.join(loader.systemDir, "system.min.js") },
   ],
-  [{ path: "/federation-js/dist/federation-js.js" }, { protocol: "file", path: federationJsPath }],
   [
-    { path: "/federation-js" },
-    { protocol: "file", path: Path.join(fedRepo, "federation-js") },
+    { path: "/system.min.js.map" },
+    { protocol: "file", path: Path.join(loader.systemDir, "system.min.js.map") },
   ],
+  // whole dist dir: the page picks .dev.js or .min.js by URL
+  [{ path: "/federation-js/dist" }, { protocol: "file", path: loader.federationDist }],
   [
     { path: "/spectre.css" },
     { protocol: "file", path: Path.join(__dirname, "../node_modules/spectre.css") },
