@@ -6,20 +6,41 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
 
+/*
+ * TEST BRANCH WIRING -- serve the demo from the live rollup-federation build
+ * outputs instead of the stale installed copies.
+ *
+ * Two of the things being served had nothing to do with the current source:
+ * `public/system.js` is a checked-in copy of *stock* SystemJS 6.14.2, and
+ * `node_modules/federation-js` was last installed 2026-08-14. federation-js now
+ * requires the fynmesh systemjs fork -- it keeps its module registry, name->url,
+ * url->module and per-version qualifiers in `System.registrations`, which stock
+ * systemjs does not have -- so the demo could not have been exercising any of it.
+ *
+ * Serving straight from the sibling repo's dist means a rebuild there shows up on
+ * a restart, with no copies to keep in sync.
+ */
+const fedRepo = Path.join(__dirname, "../../../rollup-federation");
+
 // Determine which federation-js file to serve based on NODE_ENV
 const isProduction = process.env.NODE_ENV === "production";
 const federationJsPath = isProduction
-  ? Path.join(__dirname, "../node_modules/federation-js/dist/federation-js.min.js")
-  : Path.join(__dirname, "../node_modules/federation-js/dist/federation-js.js");
+  ? Path.join(fedRepo, "federation-js/dist/federation-js.min.js")
+  : Path.join(fedRepo, "federation-js/dist/federation-js.js");
 
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
   [{ path: "/fynmesh" }, { protocol: "file", path: Path.join(__dirname, "../../../docs") }],
+  // the fork, not public/system.js -- see the note above
+  [
+    { path: "/system.js" },
+    { protocol: "file", path: Path.join(fedRepo, "systemjs/dist/system.js") },
+  ],
   [{ path: "/federation-js/dist/federation-js.js" }, { protocol: "file", path: federationJsPath }],
   [
     { path: "/federation-js" },
-    { protocol: "file", path: Path.join(__dirname, "../node_modules/federation-js") },
+    { protocol: "file", path: Path.join(fedRepo, "federation-js") },
   ],
   [
     { path: "/spectre.css" },
