@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectShellPreloadModules } from "./shell-preload.mts";
 import { generateCacheHeaders } from "./cache-headers.mts";
+import { resolveLoaderVariant } from "../src/loader-variant.ts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -264,9 +265,6 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 
         // Copy static files from public directory
         let staticFiles = [
-            "system.js",
-            "system.min.js",
-            "system.min.js.map",
             // No page registers a service worker any more, but sw.js must keep
             // shipping: a caching service worker was deployed here previously,
             // and sw.js is the unregister stub that tears it down. Browsers
@@ -296,6 +294,22 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             }
         });
 
+        // The loader ships from the FEDERATION variant (fork by default), the
+        // same source the dev server mounts -- never from public/ or from
+        // node_modules/federation-js, which is whatever `fyn install` happened
+        // to lay down. system.js and federation-js are one unit and always ship
+        // together; see src/loader-variant.ts.
+        const loader = resolveLoaderVariant(log);
+        ["system.js", "system.min.js", "system.min.js.map"]
+            .filter(file => !(isProduction && file.endsWith(".map")))
+            .forEach(file => {
+                const src = path.join(loader.systemDir, file);
+                if (existsSync(src)) {
+                    writeFileSync(path.join(outputDir, file), readFileSync(src));
+                    log(`📄 Copied: ${file} (${loader.name})`);
+                }
+            });
+
         // Note: no CNAME file — Cloudflare Pages configures the custom domain
         // (www.lm360.ai) in its dashboard, so a CNAME file is not used.
 
@@ -309,8 +323,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 
         // Copy dist directories from various packages
         const packages = [
-            // node_modules packages
-            { name: "federation-js", basePath: path.join(__dirname, "../node_modules") },
+            // node_modules packages (federation-js is not here: it ships from
+            // the loader variant, paired with the system.js copied above)
             { name: "spectre.css", basePath: path.join(__dirname, "../node_modules") },
             // core packages
             { name: "kernel", basePath: path.join(__dirname, "../../../core") },
@@ -368,12 +382,23 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             const srcDist = path.join(pkg.basePath, pkg.name, "dist");
             const dest = path.join(outputDir, pkg.name, "dist");
             if (existsSync(srcDist)) {
-                // Use special filter for federation-js
-                const filter = pkg.name === "federation-js" ? federationFilter : fileFilter;
-                copyDirFiltered(srcDist, dest, filter);
+                copyDirFiltered(srcDist, dest, fileFilter);
                 log(`📁 Copied: ${pkg.name}/dist/`);
             }
         });
+
+        // federation-js, the other half of the loader pair. In the `standard`
+        // variant both halves live in one directory, so skip the system.js
+        // copies (already shipped at the root above) and the provenance note.
+        copyDirFiltered(
+            loader.federationDist,
+            path.join(outputDir, "federation-js", "dist"),
+            fileName =>
+                !fileName.startsWith("system.") &&
+                !fileName.endsWith(".md") &&
+                federationFilter(fileName)
+        );
+        log(`📁 Copied: federation-js/dist/ (${loader.name})`);
 
         // Emit _headers last: it is derived from the dist files just copied, so
         // it always describes what actually shipped.

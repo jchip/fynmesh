@@ -27,9 +27,11 @@ committed bundle is the known-good one, not a fresh guess at it.
 
 ## SystemJS
 
-Stock **SystemJS 6.14.2**, copied from `demo-server/public/system.js`. Those
-root-level copies stay where they are because `scripts/build-demo-site.mts`
-reads them by name for the static site build.
+Stock **SystemJS 6.14.2**, copied from what used to be
+`demo-server/public/system.js`. Those root-level copies are gone: both the dev
+server and `scripts/build-demo-site.mts` now take `system.js` from the selected
+variant, so a stock copy sitting at the served path would only be another way to
+serve a loader nobody chose.
 
 ## Why this pair must switch together
 

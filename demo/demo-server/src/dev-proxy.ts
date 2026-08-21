@@ -1,73 +1,30 @@
 import { startDevProxy } from "./proxy.js";
-import * as Fs from "node:fs";
 import * as Path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveLoaderVariant, type LoaderVariant } from "./loader-variant.js";
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
 
-/*
- * Which loader pair to serve, chosen by FEDERATION:
- *
- *   FEDERATION=fork      (default) the systemjs fork + federation-js, live from
- *                        the sibling rollup-federation build outputs, so a
- *                        rebuild there shows up on a restart with no copies to
- *                        keep in sync.
- *   FEDERATION=standard  stock SystemJS 6.14.2 + the last federation-js built
- *                        before the overhaul, committed under
- *                        public/loaders/standard and frozen. Needs nothing
- *                        outside this repo. See that directory's PROVENANCE.md.
- *
- * federation-js and the loader under it are one unit: the fork keeps its module
- * registry, name->url, url->module and per-version qualifiers in
- * `System.registrations`, which stock systemjs does not have. So both halves
- * always come from the same variant, and a crossed pair is unreachable here by
- * construction -- the demo spent 2026-08-17 to 08-19 serving stock SystemJS
- * against a fork-era federation-js, and the breakage was invisible because the
- * two stale halves agreed with each other.
- */
-const fedRepo = Path.join(__dirname, "../../../rollup-federation");
-
-const variant = process.env.FEDERATION ?? "fork";
-if (variant !== "fork" && variant !== "standard") {
-  console.error(`FEDERATION=${variant} is not a loader variant; use "fork" or "standard"`);
+// FEDERATION picks which system.js + federation-js pair is served, defaulting
+// to the fork; both halves always come from that one variant -- see
+// ./loader-variant.ts for why they cannot be split.
+let loader: LoaderVariant;
+try {
+  loader = resolveLoaderVariant();
+} catch (err) {
+  console.error((err as Error).message);
   process.exit(1);
 }
-
-const standardDir = Path.join(__dirname, "../public/loaders/standard");
-const loader =
-  variant === "standard"
-    ? { systemDir: standardDir, federationDist: standardDir }
-    : {
-        systemDir: Path.join(fedRepo, "systemjs/dist"),
-        federationDist: Path.join(fedRepo, "federation-js/dist"),
-      };
-
-// Report what is actually being served, with mtimes -- a stale build should be
-// readable off the startup log rather than inferred from browser symptoms.
 const systemJs = Path.join(loader.systemDir, "system.js");
-const federationJs = Path.join(loader.federationDist, "federation-js.dev.js");
-console.log(`federation loader variant: ${variant}`);
-for (const file of [systemJs, federationJs]) {
-  if (!Fs.existsSync(file)) {
-    const remedy =
-      variant === "fork"
-        ? "Build rollup-federation (fyn build in systemjs/ and federation-js/)," +
-          " or fall back with FEDERATION=standard."
-        : "public/loaders/standard is committed and should be complete; restore it from git.";
-    console.error(`  MISSING ${file}\nFEDERATION=${variant} cannot be served. ${remedy}`);
-    process.exit(1);
-  }
-  console.log(`  ${file}  built ${Fs.statSync(file).mtime.toISOString()}`);
-}
 
 // Start the dev proxy
 startDevProxy([
   [{ path: "/" }, { protocol: "file", path: Path.join(__dirname, "../public") }],
   [{ path: "/fynmesh" }, { protocol: "file", path: Path.join(__dirname, "../../../docs") }],
-  // the selected variant, not public/system.js -- see the note above. Both
-  // halves are mounted from `loader`, so they cannot be switched independently.
+  // the selected variant, never a copy under public/ -- both halves are mounted
+  // from `loader`, so they cannot be switched independently.
   [{ path: "/system.js" }, { protocol: "file", path: systemJs }],
   [
     { path: "/system.min.js" },
