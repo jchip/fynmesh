@@ -41,25 +41,32 @@ The demo server provides local development and Cloudflare Pages deployment for t
 
 ### Switching the federation-js loader
 
-The demo can run on either loader pair, selected with `FEDERATION`:
+The demo runs on the **systemjs fork by default**, both locally and in the
+deployed site. `FEDERATION` picks the pair:
 
 ```bash
 fyn start                      # FEDERATION=fork (default)
 FEDERATION=standard fyn start  # stock SystemJS + pre-overhaul federation-js
+
+fyn publish-demo                     # deploys the fork too
+FEDERATION=standard fyn publish-demo # deploys the frozen pair
 ```
 
-| variant | `system.js` + `federation-js` served from | freshness |
+| variant | `system.js` + `federation-js` come from | freshness |
 |---|---|---|
 | `fork` (default) | `../../rollup-federation/{systemjs,federation-js}/dist` | live — rebuild there, restart here |
 | `standard` | `public/loaders/standard/` (committed) | frozen — pinned to tag `standard-systemjs-base` |
 
 `federation-js` and the loader under it are **one unit** and always switch
 together: the fork keeps its module registry in `System.registrations`, which
-stock SystemJS does not have, so a crossed pair fails. The proxy mounts both
-halves from the selected variant, so crossing them is not reachable.
+stock SystemJS does not have, so a crossed pair fails. Both the dev server and
+`build-demo-site` resolve the pair in `src/loader-variant.ts` and take both
+halves from one variant, so crossing them is not reachable — and there is no
+`system.js` under `public/` any more, because a committed stock copy at the
+served path was exactly how the halves drifted apart before.
 
-The server prints the variant and each file's mtime at startup — check that
-first when the demo behaves like code you didn't build:
+Both print the variant and each file's mtime at startup — check that first when
+the demo behaves like code you didn't build:
 
 ```
 federation loader variant: fork
@@ -68,8 +75,9 @@ federation loader variant: fork
 ```
 
 `FEDERATION=fork` requires the `rollup-federation` checkout (gitignored here) to
-be built; the server exits with the missing path if it isn't. `standard` needs
-nothing outside this repo — see `public/loaders/standard/PROVENANCE.md`.
+be built; the dev server and the site build both fail with the missing path if it
+isn't. `standard` needs nothing outside this repo — see
+`public/loaders/standard/PROVENANCE.md`.
 
 ### Development Server Features
 
@@ -228,8 +236,10 @@ xrun build-demo-site
 - **Includes**:
   - Rendered HTML templates
   - All FynApp `dist/` directories
-  - Static assets (system.js, sw.js, sw-utils.js)
-  - Dependencies (kernel, federation-js, spectre.css)
+  - The loader pair — `system.js` + `federation-js/dist` — from the `FEDERATION`
+    variant, the fork by default ([above](#switching-the-federation-js-loader))
+  - Static assets (sw.js, lazy-loader.js, favicon, sitemap, robots)
+  - Dependencies (kernel, spectre.css)
   - Google site-verification file
 - **Script**: `scripts/build-demo-site.mts`
 
@@ -268,6 +278,7 @@ NODE_ENV=production fyn _gh-publish   # or: fyn publish-demo (clean + build-prod
 demo/demo-server/
 ├── src/
 │   ├── dev-proxy.ts         # Development proxy server entry point
+│   ├── loader-variant.ts    # Resolves the FEDERATION loader pair (fork default)
 │   └── proxy.ts             # Redbird proxy configuration
 ├── scripts/
 │   ├── build-templates.mts  # Local development template builder
@@ -283,7 +294,7 @@ demo/demo-server/
 ├── public/
 │   ├── index.html           # Generated HTML (local dev)
 │   ├── shell.html           # Shell middleware demo page
-│   ├── system.js            # SystemJS loader
+│   ├── loaders/standard/    # Frozen stock SystemJS + pre-overhaul federation-js
 │   ├── sw.js                # Service Worker
 │   └── sw-utils.js          # Service Worker utilities
 ├── dist/                    # Compiled TypeScript output
