@@ -41,6 +41,29 @@ export class BrowserKernel extends FynMeshKernelCore {
     };
   }
 
+  /** urls already hinted, so N members of one combined file cost one link tag */
+  #hinted = new Set<string>();
+
+  /**
+   * The url the runtime will actually request for a module.
+   *
+   * A module the build folded into a combined file is never fetched under its
+   * own url — federation's `instantiate` hook pulls the file carrying it
+   * instead — so hinting the module's own url wastes the hint and leaves the
+   * file that is really needed to be fetched cold.
+   *
+   * Fails safe in every direction: no Federation yet, a Federation without the
+   * lookup, or a throw all mean "hint what you were given". A preload is an
+   * optimization, and must never be the thing that breaks a load.
+   */
+  #preloadTarget(url: string): string {
+    try {
+      return (globalThis as any).Federation?.bundleUrlFor?.(url) || url;
+    } catch {
+      return url;
+    }
+  }
+
   /**
    * Inject a preload link tag into the document head
    * @private
@@ -51,13 +74,25 @@ export class BrowserKernel extends FynMeshKernelCore {
       return;
     }
 
+    const target = this.#preloadTarget(url);
+    if (target !== url) {
+      console.debug(`📦 Preloading ${target}, the file carrying ${url}`);
+    }
+
+    // One tag per file actually fetched: several members of one combined file
+    // translate to the same target, and re-hinting it buys nothing.
+    if (this.#hinted.has(target)) {
+      return;
+    }
+    this.#hinted.add(target);
+
     // Classic script preload, not modulepreload: entry files are System.register
     // output and SystemJS loads them via an injected classic <script>. A
     // modulepreload is fetched as a module in CORS mode, which never matches the
     // no-cors classic load that follows — the entry would be fetched twice.
     const link = document.createElement("link");
     link.rel = "preload";
-    link.href = url;
+    link.href = target;
     link.as = "script";
 
     // Append to head

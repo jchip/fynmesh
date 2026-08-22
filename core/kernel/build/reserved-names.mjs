@@ -48,6 +48,14 @@ const EXTERNAL_CONTRACT = [
   "Federation",
   // Injected into a FynApp's federation entry by the build tooling.
   "__FYNAPP_MANIFEST__",
+  // Federation's combined-bundle lookup, called optionally so the kernel works
+  // against a federation-js that predates it. Listed here rather than left to
+  // the derived list below, because that list reflects the *installed*
+  // federation-js: building against an older copy would mangle the call and the
+  // optional chaining would then swallow it, silently disabling carrier-aware
+  // preloading with nothing failing. Reservation must not depend on the
+  // dependency's version.
+  "bundleUrlFor",
   // Result of `FynUnit.initialize()`, authored by FynApps.
   "deferOk",
   // `signalMiddlewareReady` detail bag, authored by middleware.
