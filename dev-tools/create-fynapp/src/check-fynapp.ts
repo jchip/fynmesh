@@ -88,6 +88,12 @@ export async function checkFynApp(
     }
   }
 
+  // A built FynApp's contract lives in dist/fynapp.manifest.json -- identity,
+  // exposes, and the dependency fields the kernel resolves from. Checked below.
+  //
+  // Note the gap, documented in notes/BUILD-ARTIFACTS.md: the same manifest is also
+  // embedded in the entry file as `__FYNAPP_MANIFEST__`, and that copy is the one
+  // the kernel reads without a fallback. Nothing here checks that it is present.
   const entryPath = path.join(distDir, fynappEntryFilename);
   const manifestPath = path.join(distDir, "fynapp.manifest.json");
 
