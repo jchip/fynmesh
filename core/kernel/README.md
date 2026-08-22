@@ -11,6 +11,21 @@ The kernel provides:
 3. **Bootstrap Coordination**: Dependency resolution between FynApps
 4. **Lifecycle Management**: Setup, apply, execute phases for FynUnits
 
+### What the kernel reads about a FynApp
+
+Everything the kernel knows before running a FynApp comes from that FynApp's **manifest**,
+which the build emits in two copies with identical content: embedded in `fynapp-entry.js` as
+`__FYNAPP_MANIFEST__`, and as `dist/fynapp.manifest.json`. The embedded copy is preferred
+because the entry file is fetched regardless, so reading it costs no extra request.
+
+The manifest fields that drive loading are `requires`, `import-exposed`, and
+`shared-providers` — `manifest-resolver.ts` walks them to build the dependency graph, and
+`module-loader.ts` re-reads `import-exposed` off the container to register middleware from
+provider FynApps. That second read has **no fallback**; the rest of the chain does.
+
+**→ [Build artifacts reference](../../notes/BUILD-ARTIFACTS.md)** for the exact shapes, the
+four-tier resolution chain, and what each fallback does and does not recover.
+
 ## Installation
 
 ```bash

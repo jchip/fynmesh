@@ -24,9 +24,14 @@ conform to this contract and then run `cfa check` (see §8).
 │   ├── main.ts | main.tsx   # exports `const main` = a FynUnit  (the entry)
 │   └── ...                   # App.tsx, middleware/, hooks/, styles.css, …
 └── dist/                 # build output
-    ├── fynapp-entry.js       # the federation entry the kernel loads (fixed name)
-    └── fynapp.manifest.json  # generated manifest (name/version/exposes/…)
+    ├── fynapp-entry.js       # the federation entry the kernel loads (fixed name);
+    │                         #   also carries the manifest as `__FYNAPP_MANIFEST__`
+    ├── fynapp.manifest.json  # generated manifest (name/version/exposes/…)
+    └── federation.json       # build plumbing: expose→chunk map, share config
 ```
+
+The two manifest copies hold identical content and both matter — see
+[build artifacts](https://github.com/jchip/fynmesh/blob/main/notes/BUILD-ARTIFACTS.md).
 
 Two invariants hold for **every** FynApp:
 1. `rollup.config.ts` declares a federation `name` and exposes `./main`. For
@@ -132,7 +137,10 @@ It always emits SystemJS output to `dist/` with share scope `fynmesh`, input
   and `setupReactAliasPlugins` helpers exist for that demo mode.
 - `renderDynamicImport` enables the `import(..., { with: { type: "fynapp-middleware" } })`
   syntax used by consumers (§4).
-- `enrichManifest` + `emitFederationMeta` produce `dist/fynapp.manifest.json`.
+- `enrichManifest` + `emitFederationMeta` produce the manifest — both the copy
+  embedded in `fynapp-entry.js` and `dist/fynapp.manifest.json`. `enrichManifest`
+  is what computes `import-exposed` and `shared-providers`, the fields the kernel
+  resolves dependencies from.
 
 **Escape hatch (advanced):** the low-level form — call
 `setupDummyEntryPlugins`, `setupReactFederationPlugins`/`setupFederationPlugins`,

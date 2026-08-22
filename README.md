@@ -93,6 +93,23 @@ This is a colorepo managed with [fynpo](https://jchip.github.io/fynpo/) where ea
 - Packages can import from each other easily within the colorepo
 - The kernel provides runtime integration between independently deployed fynapps
 
+## Build Artifacts — the JSON in `dist/`
+
+A built fynapp ships JSON alongside its JavaScript, and the difference between the files
+matters: one is a contract, one is plumbing, one is debug output, and one copy of the
+contract is read at runtime with no fallback.
+
+| Artifact | What it is |
+| --- | --- |
+| `fynapp.manifest.json` | The fynapp's **public contract** — identity, exposes, shared modules, dependencies. What other builds and the kernel read to know how to load it. |
+| `__FYNAPP_MANIFEST__` in `fynapp-entry.js` | The **same manifest, embedded** in the entry file, so resolving it costs no extra request. Load bearing for middleware registration. |
+| `federation.json` | Build/serving **plumbing** — which chunks back which expose, and the combined-bundle map preload hints are generated from. |
+| `__collected_shares.json` | Debug dump. Nothing reads it. |
+
+**→ [notes/BUILD-ARTIFACTS.md](./notes/BUILD-ARTIFACTS.md)** — full reference: exact shapes,
+every producer and consumer with file references, the kernel's four-tier resolution chain,
+and what breaks if each one goes missing.
+
 ## Getting Started
 
 1. Clone the repository
@@ -138,6 +155,9 @@ The typical workflow for developing with FynMesh includes:
 - **Various Frontend Frameworks**: Support for React, Vue, Marko, Preact, and Solid
 
 ## Documentation
+
+- [Build artifacts reference](./notes/BUILD-ARTIFACTS.md) — the JSON files a fynapp build
+  emits, who produces each one, and who reads it
 
 For more detailed documentation on how to use FynMesh, please check the documentation within each module.
 

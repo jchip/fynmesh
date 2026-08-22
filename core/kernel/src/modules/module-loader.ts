@@ -238,8 +238,18 @@ export const ModuleLoader = function (
     }
 
     // Step 6: Proactively load middleware from dependencies
-    // Get the embedded manifest from the container
-    // The manifest is exported directly on the container, not as an expose module
+    //
+    // `__FYNAPP_MANIFEST__` is the FynApp's manifest, embedded in its entry file
+    // by the build and assigned onto the container -- read directly here, not as
+    // an expose module. Same content as `dist/fynapp.manifest.json`; see
+    // notes/BUILD-ARTIFACTS.md.
+    //
+    // This read is the one place in the kernel with NO fallback. If the embedded
+    // manifest is absent, `importExposed` is undefined and the block below is
+    // skipped in silence: the provider FynApps still load (buildGraph walks
+    // `import-exposed` too, and that path can fall back to fetching the JSON),
+    // but their middleware is never pulled out and registered. The failure then
+    // surfaces at a consumer, far from here, as middleware that does not exist.
     const manifest = (container as any).__FYNAPP_MANIFEST__ || null;
 
     const importExposed = manifest?.["import-exposed"];

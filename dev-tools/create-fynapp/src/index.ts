@@ -264,7 +264,22 @@ export function setupFederationPlugins(
 /**
  * Creates an enrichManifest callback that enriches the base manifest with FynApp-specific data
  * This hook is called during entry code generation with base manifest data (exposes, shared, dynamicImports).
- * The enriched manifest will be embedded in the entry file and also emitted as fynapp.manifest.json.
+ *
+ * This callback is where a FynApp's public contract is actually computed. It turns raw
+ * build data into the four fields the kernel resolves dependencies from:
+ *
+ * - `consume-shared` / `provide-shared` -- split out of `shared` by its `import` flag.
+ * - `import-exposed`   -- modules pulled from other FynApps, derived from dynamic imports
+ *                         tagged `mf-expose` or `fynapp-middleware`. The kernel walks this
+ *                         to build the load graph, and pre-registers the `middleware`
+ *                         entries at load time.
+ * - `shared-providers` -- which peer FynApp provides each consumed shared module, found by
+ *                         reading the peers' own manifests off disk (detectSharedProviders).
+ *
+ * The result lands in two places, with identical content: embedded in the entry file as
+ * `__FYNAPP_MANIFEST__`, and emitted as `dist/fynapp.manifest.json` by
+ * {@link createEmitFederationMeta}. Both matter, for different reasons --
+ * see notes/BUILD-ARTIFACTS.md.
  *
  * @example
  * ```ts
@@ -424,7 +439,17 @@ export function createEnrichManifest() {
 }
 
 /**
- * Creates an emitFederationMeta callback that generates fynapp.manifest.json
+ * Creates an emitFederationMeta callback that generates fynapp.manifest.json --
+ * a FynApp's public contract, written where other builds and the kernel can read it
+ * without executing anything. See notes/BUILD-ARTIFACTS.md.
+ *
+ * Three consumers depend on this file: the kernel fetches it when a FynApp's
+ * embedded manifest is unavailable,
+ * `cfa check` inspects it, and -- load bearing at build time -- peer FynApps read it
+ * out of `node_modules/<dep>/dist/` or `../<dep>/dist/` to work out their own
+ * `shared-providers`. A dependency built after its consumer has no manifest to read,
+ * so the consumer ships without knowing who provides its shared modules.
+ *
  * Use this with rollup-plugin-federation when you need custom configuration
  *
  * @example
@@ -455,7 +480,8 @@ export function createEmitFederationMeta() {
 
     debug("emitFederationMeta - Using manifest:", JSON.stringify(manifest, null, 2));
 
-    // Still emit the manifest file for backwards compatibility and debugging
+    // Emit the manifest as a file too, next to the copy embedded in the entry:
+    // peer builds and `cfa check` need to read it without executing the entry.
     context.emitFile({
       type: "asset",
       fileName: "fynapp.manifest.json",
@@ -465,7 +491,13 @@ export function createEmitFederationMeta() {
 }
 
 /**
- * Detects which FynApps provide the shared modules consumed by this FynApp
+ * Detects which FynApps provide the shared modules consumed by this FynApp.
+ *
+ * Works by reading each dependency's own `dist/fynapp.manifest.json` off disk and
+ * looking at its `provide-shared`. That makes this a build-order dependency: a peer
+ * FynApp that has not been built yet has no manifest to read, and its shared modules
+ * silently go unattributed -- the kernel then never learns to load the provider.
+ * See notes/BUILD-ARTIFACTS.md.
  *
  * @param consumeShared - Map of consumed shared modules
  * @param cwd - Current working directory

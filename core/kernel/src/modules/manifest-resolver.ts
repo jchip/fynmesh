@@ -149,8 +149,20 @@ export const ManifestResolver = function (telemetry?: KernelTelemetry): Manifest
       return { key: cacheKey, res, manifest: cached };
     }
 
-    // Try to extract embedded manifest from entry file first (zero HTTP overhead)
-    // Use Federation.import() to load the SystemJS module and extract the manifest export
+    // Manifest resolution has four tiers, first success wins. See
+    // notes/BUILD-ARTIFACTS.md for what each source contains.
+    //
+    //   1. `__FYNAPP_MANIFEST__` embedded in the entry file -- free, since the
+    //      entry has to be imported anyway to get the container.
+    //   2. `fynapp.manifest.json` -- same content, one extra request per app.
+    //   3. `federation.json` -- PARTIAL. It has no `import-exposed` and no
+    //      `shared-providers`, so an app resolved this way comes up with no
+    //      dependency edges: it loads, nothing it depends on loads with it.
+    //   4. A synthesized empty manifest, so the demo can proceed regardless.
+    //
+    // Tier 1 first: extract the embedded manifest from the entry file (zero HTTP
+    // overhead). Federation.import() loads the SystemJS module so the manifest
+    // export can be read off it.
     try {
       const entryUrl = res.url.replace(/fynapp\.manifest\.json$/, "fynapp-entry.js");
       const entryModule = await getFederation().import(entryUrl);
@@ -166,7 +178,7 @@ export const ManifestResolver = function (telemetry?: KernelTelemetry): Manifest
       manifest = await fetchJson(res.url);
     } catch (err1) {
       try {
-        // fallback to federation.json in same dist
+        // Tier 3: fallback to federation.json in same dist -- partial, see above
         manifest = await fetchJson(
           res.url.replace(/fynapp\.manifest\.json$/, "federation.json"),
         );

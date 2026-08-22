@@ -77,6 +77,25 @@ cfa check --no-build
 required identity and `./main` expose. `--no-build` checks an existing
 `dist/`.
 
+### What a build emits
+
+`dist/` gets JSON as well as JavaScript, and the files are not interchangeable:
+
+- **`fynapp.manifest.json`** — this FynApp's public contract: identity, `exposes`,
+  `consume-shared` / `provide-shared`, `import-exposed`, `shared-providers`. Other
+  FynApps' builds read it off disk to discover who provides their shared modules, so
+  **build order matters** — a dependency built after its consumer leaves the consumer's
+  `shared-providers` empty.
+- **`__FYNAPP_MANIFEST__`** inside `fynapp-entry.js` — the same manifest embedded in the
+  entry, which is how the kernel reads it without an extra request. Middleware
+  registration depends on it and has no fallback.
+- **`federation.json`** — build plumbing: expose-to-chunk mapping, share config, and the
+  combined-bundle map that preload hints are generated from.
+- **`__collected_shares.json`** — debug output. Nothing reads it.
+
+Full reference, including every consumer:
+[notes/BUILD-ARTIFACTS.md](https://github.com/jchip/fynmesh/blob/main/notes/BUILD-ARTIFACTS.md).
+
 ### Install coding-agent skills
 
 ```bash
