@@ -138,9 +138,14 @@ On by default; suppressed by `emitFederationJson: false`.
   and writes the `bundles` map back into it.
 - `scripts/xrun-tasks.ts:34` — its *presence* is the test for "this `demo/*` directory is a
   built FynApp", used instead of a hardcoded list.
-- `demo/demo-server/scripts/shell-preload.mts:75` — inverts `bundles` into a
-  chunk-to-carrier-file map, so preload tags name the file the runtime will actually request.
-  Without it, the shell preloads chunk files that combining already folded away.
+- `demo/demo-server/scripts/shell-preload.mts` — reads `bundles` twice over, for the two
+  things a page needs it for. `collectShellPreloadModules` inverts it so preload tags name
+  the file the runtime will actually request (without it, the shell preloads chunk files
+  that combining already folded away). `collectShellBundleMaps` passes it through as the
+  build emitted it, and the shell declares it with `Federation.declareBundles(bundles,
+  distBase)` — which is what makes carriers known *before* any FynApp entry has run, since
+  the entry-appended `_B` call is otherwise the only source. Both read the same file, so a
+  page cannot preload one file while telling the runtime another.
 - `demo/demo-server/scripts/cache-headers.mts` — excluded from immutable caching, same reason
   as the manifest.
 - `core/kernel/src/modules/manifest-resolver.ts:171` — last-ditch runtime fallback, and only
