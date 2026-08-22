@@ -136,10 +136,22 @@
       next — before its chunks can be requested at all. These hints let the
       browser pull the whole set off the initial HTML parse instead.
 
+      `preload as="script"`, not `modulepreload`: nothing here is an ES module.
+      Rollup's `system` output is classic-script syntax the SystemJS runtime
+      interprets, and SystemJS loads it with a plain `document.createElement(
+      'script')` — no `type="module"` (systemjs `features/script-load.ts`). A
+      modulepreload warms the module map, which nothing ever reads, and it
+      fetches in CORS mode while a same-origin classic script does not, so the
+      two requests land in different cache entries — the startup chunk was
+      observed being downloaded twice, once per mode. No `crossorigin` for the
+      same reason: these hrefs are
+      path-relative, so the script tag that follows them is same-origin and
+      carries no crossOrigin attribute to match.
+
       Generated at build time from the FynApps' dist dirs by
       scripts/shell-preload.mts. Keep that list in sync with the loader below.
     -->
-    {% for href in preloadModules %}<link rel="modulepreload" href="{{ href }}" crossorigin>
+    {% for href in preloadModules %}<link rel="preload" as="script" href="{{ href }}">
     {% endfor %}
     {% endif %}
 

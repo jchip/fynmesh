@@ -249,7 +249,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             pathPrefix,
             msg => log(`⚠️  preload: ${msg}`)
         );
-        log(`🔗 Shell modulepreload hints: ${preloadModules.length}`);
+        log(`🔗 Shell preload hints: ${preloadModules.length}`);
         const shellHtml = env.render("pages/shell.html", {
             title: "FynMesh Shell Demo",
             isProduction,
