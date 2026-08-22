@@ -88,7 +88,7 @@ function readBundleMap(
 }
 
 /**
- * Build the `<link rel="modulepreload">` URL list for the shell page.
+ * Build the `<link rel="preload" as="script">` URL list for the shell page.
  *
  * Without these hints the shell's startup is a serial waterfall: each FynApp
  * costs a round trip for its ~500-byte `fynapp-entry.js` (which only declares
