@@ -8,7 +8,8 @@
   "scripts": {
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "fynpo",
-    "build-prod": "NODE_ENV=production fynpo",
+    "build-prod": "NODE_ENV=production xrun -s build combine-demo _shell-templates",
+    "_shell-templates": "cd demo/demo-server && xrun build-templates",
     "clean:demo": "rm -rf demo/*/dist",
     "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
     "_gh-publish": "cd demo/demo-server && xrun gh-publish",
