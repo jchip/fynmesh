@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 
 /**
@@ -53,6 +53,41 @@ const SHELL_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
 ];
 
 /**
+ * Which chunks a FynApp's build folded into combined files.
+ *
+ * `federation-combine` records this in `federation.json` as `bundles`, mapping a
+ * combined fileName to the chunk fileNames inside it. Inverted here, because the
+ * question this file asks is "given a chunk, what should I actually preload?".
+ *
+ * Absent for an app that was never combined, which is the ordinary case.
+ *
+ * @param distDir the app's dist directory
+ * @param appDir the app directory name, for messages
+ * @param warn called on unreadable metadata
+ * @returns member fileName -> the combined file carrying it
+ */
+function readBundleMap(
+    distDir: string,
+    appDir: string,
+    warn: (message: string) => void
+): Map<string, string> {
+    const carrierOf = new Map<string, string>();
+    const jsonPath = path.join(distDir, "federation.json");
+    if (!existsSync(jsonPath)) return carrierOf;
+    try {
+        const bundles = JSON.parse(readFileSync(jsonPath, "utf8")).bundles;
+        for (const bundleFile in bundles || {}) {
+            for (const member of bundles[bundleFile]) {
+                carrierOf.set(member, bundleFile);
+            }
+        }
+    } catch (err) {
+        warn(`${appDir}: cannot read federation.json (${(err as Error).message}) — preloading chunks individually`);
+    }
+    return carrierOf;
+}
+
+/**
  * Build the `<link rel="modulepreload">` URL list for the shell page.
  *
  * Without these hints the shell's startup is a serial waterfall: each FynApp
@@ -86,6 +121,7 @@ function collectShellPreloadModules(
 
         const files = readdirSync(distDir);
         const base = `${prefix}${app.dir}/dist/`;
+        const bundles = readBundleMap(distDir, app.dir, warn);
 
         // The federation entry always comes first — it is what the kernel imports.
         if (files.includes("fynapp-entry.js")) {
@@ -105,7 +141,18 @@ function collectShellPreloadModules(
             if (!stem) continue; // not content-hashed -> not a startup chunk
             if (wanted && !wanted.has(stem)) continue;
             matched.add(stem);
-            urls.push(`${base}${file}`);
+            /*
+             * A chunk folded into a combined file must be preloaded as that
+             * file, never as itself: the runtime loads the combined file and
+             * never requests the member, so preloading the member downloads
+             * bytes nobody uses AND gives back the round trip the hint exists to
+             * remove. Deduped, since several members share one file.
+             */
+            const carrier = bundles.get(file);
+            const href = `${base}${carrier || file}`;
+            if (!urls.includes(href)) {
+                urls.push(href);
+            }
         }
 
         // A renamed chunk would silently drop out of the preload set, quietly
