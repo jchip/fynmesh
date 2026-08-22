@@ -52,37 +52,47 @@ const SHELL_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
     { dir: "fynapp-sidebar", chunks: "all" },
 ];
 
+/** combined fileName -> the fileNames it carries, as the build emitted it */
+type BundleMap = Record<string, string[]>;
+
 /**
- * Which chunks a FynApp's build folded into combined files.
+ * Which chunks a FynApp's build folded into combined files, as
+ * `federation-combine` recorded it in `federation.json`.
  *
- * `federation-combine` records this in `federation.json` as `bundles`, mapping a
- * combined fileName to the chunk fileNames inside it. Inverted here, because the
- * question this file asks is "given a chunk, what should I actually preload?".
- *
- * Absent for an app that was never combined, which is the ordinary case.
+ * Empty for an app that was never combined, which is the ordinary case.
  *
  * @param distDir the app's dist directory
  * @param appDir the app directory name, for messages
  * @param warn called on unreadable metadata
- * @returns member fileName -> the combined file carrying it
+ * @returns combined fileName -> the fileNames it carries
  */
-function readBundleMap(
+function readBundles(
     distDir: string,
     appDir: string,
     warn: (message: string) => void
-): Map<string, string> {
-    const carrierOf = new Map<string, string>();
+): BundleMap {
     const jsonPath = path.join(distDir, "federation.json");
-    if (!existsSync(jsonPath)) return carrierOf;
+    if (!existsSync(jsonPath)) return {};
     try {
-        const bundles = JSON.parse(readFileSync(jsonPath, "utf8")).bundles;
-        for (const bundleFile in bundles || {}) {
-            for (const member of bundles[bundleFile]) {
-                carrierOf.set(member, bundleFile);
-            }
-        }
+        return JSON.parse(readFileSync(jsonPath, "utf8")).bundles || {};
     } catch (err) {
         warn(`${appDir}: cannot read federation.json (${(err as Error).message}) — preloading chunks individually`);
+        return {};
+    }
+}
+
+/**
+ * The same map inverted, because the question the preload pass asks is "given a
+ * chunk, what should I actually preload?".
+ *
+ * @returns member fileName -> the combined file carrying it
+ */
+function carriersOf(bundles: BundleMap): Map<string, string> {
+    const carrierOf = new Map<string, string>();
+    for (const bundleFile in bundles) {
+        for (const member of bundles[bundleFile]) {
+            carrierOf.set(member, bundleFile);
+        }
     }
     return carrierOf;
 }
@@ -121,7 +131,7 @@ function collectShellPreloadModules(
 
         const files = readdirSync(distDir);
         const base = `${prefix}${app.dir}/dist/`;
-        const bundles = readBundleMap(distDir, app.dir, warn);
+        const bundles = carriersOf(readBundles(distDir, app.dir, warn));
 
         // The federation entry always comes first — it is what the kernel imports.
         if (files.includes("fynapp-entry.js")) {
@@ -169,4 +179,50 @@ function collectShellPreloadModules(
     return urls;
 }
 
-export { collectShellPreloadModules, SHELL_STARTUP_FYNAPPS, HASHED_CHUNK_RE };
+/**
+ * The combined-bundle maps for the shell to declare to the runtime.
+ *
+ * The runtime otherwise learns which file carries which module from a statement
+ * `federation-combine` appends to each container entry, so it knows nothing
+ * until that entry has run. Declaring the same maps in the page moves that
+ * knowledge earlier — before any FynApp is loaded — which is what lets a
+ * preload decision name the file that will really be fetched rather than a
+ * member url the runtime never requests.
+ *
+ * Read from the same `federation.json` as the hints above, so the page cannot
+ * declare a map that disagrees with what it preloads. Declaring a map the entry
+ * later declares again is a no-op: both come from the same build.
+ *
+ * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
+ * @param pathPrefix deployment path prefix, e.g. `/`
+ * @param warn      called with a human-readable message per unreadable app
+ * @returns dist base url and its map, for each startup FynApp that has one
+ */
+function collectShellBundleMaps(
+    demoRoot: string,
+    pathPrefix: string,
+    warn: (message: string) => void = () => {}
+): Array<{ base: string; bundles: BundleMap }> {
+    const prefix = pathPrefix.endsWith("/") ? pathPrefix : `${pathPrefix}/`;
+    const maps: Array<{ base: string; bundles: BundleMap }> = [];
+
+    for (const app of SHELL_STARTUP_FYNAPPS) {
+        const distDir = path.join(demoRoot, app.dir, "dist");
+        // A missing dist is already reported by the preload pass; stay quiet here.
+        if (!existsSync(distDir)) continue;
+
+        const bundles = readBundles(distDir, app.dir, warn);
+        if (Object.keys(bundles).length > 0) {
+            maps.push({ base: `${prefix}${app.dir}/dist/`, bundles });
+        }
+    }
+
+    return maps;
+}
+
+export {
+    collectShellPreloadModules,
+    collectShellBundleMaps,
+    SHELL_STARTUP_FYNAPPS,
+    HASHED_CHUNK_RE,
+};

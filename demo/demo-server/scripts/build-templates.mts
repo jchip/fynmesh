@@ -2,7 +2,7 @@ import nunjucks from "nunjucks";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectShellPreloadModules } from "./shell-preload.mts";
+import { collectShellPreloadModules, collectShellBundleMaps } from "./shell-preload.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -193,11 +193,20 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             msg => log(`⚠️  preload: ${msg}`)
         );
         log(`🔗 Shell preload hints: ${preloadModules.length}`);
+        // The maps behind those hints, declared in the page so the runtime knows
+        // which file carries which module before any FynApp entry has run.
+        const bundleMaps = collectShellBundleMaps(
+            path.join(__dirname, "../.."),
+            pathPrefix,
+            msg => log(`⚠️  bundle map: ${msg}`)
+        );
+        log(`📦 Shell bundle maps: ${bundleMaps.length}`);
         const shellHtml = env.render("pages/shell.html", {
             title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
             preloadModules,
+            bundleMaps,
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
         writeFileSync(shellOutputPath, shellHtml);
