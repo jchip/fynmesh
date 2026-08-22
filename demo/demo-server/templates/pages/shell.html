@@ -165,6 +165,31 @@
     <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
     {% endif %}
 
+    {% if bundleMaps | length %}
+    <!--
+      Which file carries which module, for the FynApps this page starts with.
+
+      federation-combine appends this same map to each FynApp's container entry,
+      so the runtime would learn it anyway — but not until that entry has run,
+      which is after every preload decision has already been made. Declared here
+      it is known before the first FynApp loads, so a hint can name the file that
+      will really be fetched instead of a member url the runtime never requests.
+
+      Same federation.json the preload hints above come from, so the two cannot
+      disagree; the entry declaring it again later is a no-op.
+
+      Guarded: FEDERATION=standard serves a frozen federation-js that predates
+      declareBundles, and a missing map costs a request, not a page.
+
+      Generated at build time by scripts/shell-preload.mts.
+    -->
+    <script>
+        if (Federation.declareBundles) {
+            {% for map in bundleMaps %}Federation.declareBundles({{ map.bundles | dump | safe }}, "{{ map.base }}");
+            {% endfor %}}
+    </script>
+    {% endif %}
+
     <script>
         (async () => {
             console.log("🏠 Starting FynMesh Shell Demo");

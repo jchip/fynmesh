@@ -10,7 +10,10 @@ import { describe, it, expect, afterEach } from "vitest";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { collectShellPreloadModules } from "../scripts/shell-preload.mts";
+import {
+    collectShellPreloadModules,
+    collectShellBundleMaps,
+} from "../scripts/shell-preload.mts";
 
 let demoRoot: string;
 
@@ -90,5 +93,70 @@ describe("collectShellPreloadModules with combined files", () => {
 
         expect(urls).toContain("/fynapp-sidebar/dist/main-AAAAAAAA.js");
         expect(warnings.some((w) => w.includes("cannot read federation.json"))).toBe(true);
+    });
+});
+
+/**
+ * The maps the page declares to the runtime. Same federation.json the hints are
+ * read from, so a page cannot preload one file while telling the runtime
+ * another: what is pinned down here is that they stay the same data, and that an
+ * app with nothing combined contributes nothing to declare.
+ */
+describe("collectShellBundleMaps", () => {
+    const maps = () => collectShellBundleMaps(demoRoot, "/", () => {});
+
+    it("declares the map as the build emitted it, against the app's dist base", () => {
+        fynapp(["main-AAAAAAAA.js", "other-BBBBBBBB.js", "combo-CCCCCCCC.js"], {
+            "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"],
+        });
+
+        expect(maps()).toEqual([
+            {
+                base: "/fynapp-sidebar/dist/",
+                bundles: {
+                    "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"],
+                },
+            },
+        ]);
+    });
+
+    it("declares nothing for an app that was never combined", () => {
+        fynapp(["main-AAAAAAAA.js"]);
+
+        expect(maps()).toEqual([]);
+    });
+
+    it("declares nothing when the metadata is broken, and says so", () => {
+        fynapp(["main-AAAAAAAA.js"]);
+        writeFileSync(
+            path.join(demoRoot, "fynapp-sidebar", "dist", "federation.json"),
+            "{ not json"
+        );
+        const warnings: string[] = [];
+
+        expect(collectShellBundleMaps(demoRoot, "/", (m) => warnings.push(m))).toEqual([]);
+        expect(warnings.some((w) => w.includes("cannot read federation.json"))).toBe(true);
+    });
+
+    it("carries the deployment path prefix into the base", () => {
+        fynapp(["main-AAAAAAAA.js", "combo-CCCCCCCC.js"], {
+            "combo-CCCCCCCC.js": ["main-AAAAAAAA.js"],
+        });
+
+        expect(collectShellBundleMaps(demoRoot, "/fynmesh", () => {})[0].base).toBe(
+            "/fynmesh/fynapp-sidebar/dist/"
+        );
+    });
+
+    it("agrees with the preload hints about which file to fetch", () => {
+        fynapp(["main-AAAAAAAA.js", "other-BBBBBBBB.js", "combo-CCCCCCCC.js"], {
+            "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "other-BBBBBBBB.js"],
+        });
+
+        const [{ base, bundles }] = maps();
+        const carriers = Object.keys(bundles).map((file) => base + file);
+        const hinted = hints().filter((u) => !u.endsWith("fynapp-entry.js"));
+
+        expect(hinted).toEqual(carriers);
     });
 });
