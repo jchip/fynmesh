@@ -89,8 +89,11 @@ required identity and `./main` expose. `--no-build` checks an existing
 - **`__FYNAPP_MANIFEST__`** inside `fynapp-entry.js` — the same manifest embedded in the
   entry, which is how the kernel reads it without an extra request. Middleware
   registration depends on it and has no fallback.
-- **`federation.json`** — build plumbing: expose-to-chunk mapping, share config, and the
-  combined-bundle map that preload hints are generated from.
+- **`federation.json`** — build plumbing: expose-to-chunk mapping and share config. Optional;
+  nothing at runtime needs it.
+- **`federation.bundles.json`** — only when the build's chunks were combined into one file:
+  the map of which file carries which module, which a host reads to preload the file that
+  will really be fetched.
 - **`__collected_shares.json`** — debug output. Nothing reads it.
 
 Full reference, including every consumer:

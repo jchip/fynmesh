@@ -56,8 +56,17 @@ const SHELL_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
 type BundleMap = Record<string, string[]>;
 
 /**
- * Which chunks a FynApp's build folded into combined files, as
- * `federation-combine` recorded it in `federation.json`.
+ * Which chunks a FynApp's build folded into combined files.
+ *
+ * `federation-combine` publishes this as `federation.bundles.json` — the map on
+ * its own, which is what an app offers to whoever loads it. Read in preference
+ * to anything else, because it is the only source a host can count on: a real
+ * host fetches it from an app it did not build, and `federation.json` is
+ * optional for a federation build.
+ *
+ * Falls back to `federation.json`'s `bundles` field for a dist combined before
+ * that artifact existed. Not speculative generality: a host consumes apps built
+ * by tooling it does not control, so it meets both.
  *
  * Empty for an app that was never combined, which is the ordinary case.
  *
@@ -71,14 +80,22 @@ function readBundles(
     appDir: string,
     warn: (message: string) => void
 ): BundleMap {
-    const jsonPath = path.join(distDir, "federation.json");
-    if (!existsSync(jsonPath)) return {};
-    try {
-        return JSON.parse(readFileSync(jsonPath, "utf8")).bundles || {};
-    } catch (err) {
-        warn(`${appDir}: cannot read federation.json (${(err as Error).message}) — preloading chunks individually`);
-        return {};
-    }
+    const read = (file: string, pick: (json: any) => BundleMap): BundleMap | undefined => {
+        const jsonPath = path.join(distDir, file);
+        if (!existsSync(jsonPath)) return undefined;
+        try {
+            return pick(JSON.parse(readFileSync(jsonPath, "utf8"))) || {};
+        } catch (err) {
+            warn(`${appDir}: cannot read ${file} (${(err as Error).message}) — preloading chunks individually`);
+            return {};
+        }
+    };
+
+    return (
+        read("federation.bundles.json", (json) => json) ??
+        read("federation.json", (json) => json.bundles) ??
+        {}
+    );
 }
 
 /**
@@ -189,9 +206,9 @@ function collectShellPreloadModules(
  * preload decision name the file that will really be fetched rather than a
  * member url the runtime never requests.
  *
- * Read from the same `federation.json` as the hints above, so the page cannot
- * declare a map that disagrees with what it preloads. Declaring a map the entry
- * later declares again is a no-op: both come from the same build.
+ * Read through the same {@link readBundles} as the hints above, so the page
+ * cannot declare a map that disagrees with what it preloads. Declaring a map the
+ * entry later declares again is a no-op: both come from the same build.
  *
  * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
  * @param pathPrefix deployment path prefix, e.g. `/`
