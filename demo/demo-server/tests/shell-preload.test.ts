@@ -20,8 +20,16 @@ let demoRoot: string;
 /**
  * A demo root holding one FynApp's dist. `fynapp-sidebar` is used because it is
  * in SHELL_STARTUP_FYNAPPS with `chunks: "all"`.
+ *
+ * `bundles` lands in `federation.bundles.json`, where `federation-combine`
+ * publishes it. `where: "federation.json"` puts it in that file's `bundles`
+ * field instead, which is what a dist combined by an older version looks like.
  */
-function fynapp(files: string[], bundles?: Record<string, string[]>) {
+function fynapp(
+    files: string[],
+    bundles?: Record<string, string[]>,
+    where: "federation.bundles.json" | "federation.json" = "federation.bundles.json"
+) {
     demoRoot = mkdtempSync(path.join(tmpdir(), "preload-test-"));
     const dist = path.join(demoRoot, "fynapp-sidebar", "dist");
     mkdirSync(dist, { recursive: true });
@@ -29,9 +37,16 @@ function fynapp(files: string[], bundles?: Record<string, string[]>) {
     for (const f of files) {
         writeFileSync(path.join(dist, f), "//chunk\n");
     }
+    if (bundles && where === "federation.bundles.json") {
+        writeFileSync(path.join(dist, where), JSON.stringify(bundles));
+    }
     writeFileSync(
         path.join(dist, "federation.json"),
-        JSON.stringify({ name: "fynapp-sidebar", filename: "fynapp-entry.js", ...(bundles ? { bundles } : {}) })
+        JSON.stringify({
+            name: "fynapp-sidebar",
+            filename: "fynapp-entry.js",
+            ...(bundles && where === "federation.json" ? { bundles } : {}),
+        })
     );
 }
 
@@ -146,6 +161,40 @@ describe("collectShellBundleMaps", () => {
         expect(collectShellBundleMaps(demoRoot, "/fynmesh", () => {})[0].base).toBe(
             "/fynmesh/fynapp-sidebar/dist/"
         );
+    });
+
+    it("reads a dist combined before federation.bundles.json existed", () => {
+        fynapp(
+            ["main-AAAAAAAA.js", "combo-CCCCCCCC.js"],
+            { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js"] },
+            "federation.json"
+        );
+
+        expect(maps()).toEqual([
+            {
+                base: "/fynapp-sidebar/dist/",
+                bundles: { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js"] },
+            },
+        ]);
+        // and the hints follow the same record
+        expect(hints()).toContain("/fynapp-sidebar/dist/combo-CCCCCCCC.js");
+    });
+
+    it("prefers the app-offered artifact over federation.json's older record", () => {
+        fynapp(["main-AAAAAAAA.js", "combo-CCCCCCCC.js"], {
+            "combo-CCCCCCCC.js": ["main-AAAAAAAA.js"],
+        });
+        // a stale field left in federation.json naming a file that is long gone
+        writeFileSync(
+            path.join(demoRoot, "fynapp-sidebar", "dist", "federation.json"),
+            JSON.stringify({
+                name: "fynapp-sidebar",
+                filename: "fynapp-entry.js",
+                bundles: { "combo-STALE111.js": ["gone-XXXXXXXX.js"] },
+            })
+        );
+
+        expect(maps()[0].bundles).toEqual({ "combo-CCCCCCCC.js": ["main-AAAAAAAA.js"] });
     });
 
     it("agrees with the preload hints about which file to fetch", () => {

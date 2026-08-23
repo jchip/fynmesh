@@ -54,7 +54,8 @@ load({
          * Must run after every app has built and before anything reads the
          * chunk filenames. The preload list in demo-server is the reader that
          * matters: it resolves a chunk to the file that actually carries it, so
-         * it has to see `bundles` in federation.json. fynpo builds demo-server
+         * it has to see the `federation.bundles.json` this step writes into each
+         * app's dist -- the map an app offers. fynpo builds demo-server
          * as just another package, i.e. before this runs, which is why
          * `build-prod` regenerates the shell templates afterwards -- without
          * that step it leaves a shell.html preloading chunks the runtime no

@@ -7,7 +7,8 @@ file is, who writes it, who reads it, and what breaks if it goes missing.
 | --- | --- | --- | --- | --- |
 | `fynapp.manifest.json` | The FynApp's **public contract**: identity, exposes, shared modules, dependencies | `create-fynapp` via the plugin's `emitFederationMeta` hook | kernel (fallback), peer builds, `cfa check` | peer builds lose `shared-providers`; runtime falls back |
 | `__FYNAPP_MANIFEST__` (embedded in `fynapp-entry.js`) | The **same manifest**, carried inside the entry file so resolution costs zero extra requests | the plugin, spliced into the container chunk after render | kernel manifest resolver, kernel module loader | **middleware pre-loading silently stops working** |
-| `federation.json` | Build/serving **plumbing**: which chunks back which expose, share config, combined-bundle map | the plugin, always unless disabled | `federation-combine`, demo-server preload + cache headers, xrun tasks | preload hints and chunk combining break |
+| `federation.json` | Build/serving **plumbing**: which chunks back which expose, share config | the plugin, unless `emitFederationJson: false` | xrun tasks, demo-server cache headers | nothing required — every runtime path works without it |
+| `federation.bundles.json` | The **combined-bundle map an app offers**: which file carries which module, readable without executing anything | `federation-combine`, only when it combined something | demo-server preload + shell declaration | preloads name files the runtime never requests |
 | `__collected_shares.json` | Debug dump of collected share records | the plugin, only under `debugging: true` | nothing | nothing |
 
 The two manifests always carry identical content — they are serialized from the same
@@ -132,24 +133,48 @@ Not a contract between FynApps; a record of what the build actually produced.
 **Produced by** `emitFederationJson()` — `rollup-federation/rollup-plugin-federation/src/code-generation/federation-json.mts:207`.
 On by default; suppressed by `emitFederationJson: false`.
 
-**Read by:**
+**Nothing requires it.** No runtime path needs it, and `emitFederationJson: false` is a
+legal way to build a FynApp. Its readers are all tooling:
 
-- `combine.mts:183` — `federation-combine` reads it to identify a dist as a federation build,
-  and writes the `bundles` map back into it.
 - `scripts/xrun-tasks.ts:34` — its *presence* is the test for "this `demo/*` directory is a
   built FynApp", used instead of a hardcoded list.
-- `demo/demo-server/scripts/shell-preload.mts` — reads `bundles` twice over, for the two
-  things a page needs it for. `collectShellPreloadModules` inverts it so preload tags name
-  the file the runtime will actually request (without it, the shell preloads chunk files
-  that combining already folded away). `collectShellBundleMaps` passes it through as the
-  build emitted it, and the shell declares it with `Federation.declareBundles(bundles,
-  distBase)` — which is what makes carriers known *before* any FynApp entry has run, since
-  the entry-appended `_B` call is otherwise the only source. Both read the same file, so a
-  page cannot preload one file while telling the runtime another.
 - `demo/demo-server/scripts/cache-headers.mts` — excluded from immutable caching, same reason
   as the manifest.
+- `combine.mts` — keeps its `bundles` record current when the file is there, and reads it as
+  a fallback for a dist combined before `federation.bundles.json` existed. Neither required.
 - `core/kernel/src/modules/manifest-resolver.ts:171` — last-ditch runtime fallback, and only
   a partial one. See the resolution chain below.
+
+## `federation.bundles.json` — the map an app offers
+
+Which physical file carries which module, after `federation-combine` folded a dist's small
+chunks together:
+
+```json
+{ "startup-xyz89iL6.js": ["index.js", "react-esm-19.production-CG2aTnPt.js"] }
+```
+
+An ordinary import needs none of this: `federation-combine` appends a `_B(...)` statement to
+the container entry, so the runtime resolves a member to its carrier as soon as that entry
+has run (see the embedded-manifest section for the same trick applied to the manifest).
+
+This file exists for the decisions that happen *before* anything has run. A preload hint
+naming a member's own url names a file the runtime will never request — the carrier is
+fetched instead, so the hint is wasted and the round trip it was meant to remove comes back.
+Reading this file answers "what will actually be fetched?" without executing a line, and
+without the app having to emit `federation.json` at all. A host hands it to the runtime with
+`Federation.declareBundles(map, distBase)`.
+
+**Produced by** `federation-combine`, only when a run actually combined something, and
+removed again when a run does not — so its presence is itself the signal that a dist has
+bundles to offer.
+
+**Read by** `demo/demo-server/scripts/shell-preload.mts`, for the two things a page needs it
+for: `collectShellPreloadModules` inverts it so preload tags name the carrier, and
+`collectShellBundleMaps` passes it through for the shell to declare. Both go through one
+reader, so a page cannot preload one file while telling the runtime another. It falls back to
+`federation.json`'s `bundles` field for a dist built by older tooling — which is the ordinary
+condition for a host that consumes apps it did not build.
 
 ## `__collected_shares.json` — debug only
 

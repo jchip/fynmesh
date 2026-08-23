@@ -103,7 +103,8 @@ contract is read at runtime with no fallback.
 | --- | --- |
 | `fynapp.manifest.json` | The fynapp's **public contract** — identity, exposes, shared modules, dependencies. What other builds and the kernel read to know how to load it. |
 | `__FYNAPP_MANIFEST__` in `fynapp-entry.js` | The **same manifest, embedded** in the entry file, so resolving it costs no extra request. Load bearing for middleware registration. |
-| `federation.json` | Build/serving **plumbing** — which chunks back which expose, and the combined-bundle map preload hints are generated from. |
+| `federation.json` | Build/serving **plumbing** — which chunks back which expose, and each shared module's config. Optional: no runtime path needs it. |
+| `federation.bundles.json` | The **combined-bundle map a fynapp offers**, when its chunks were folded together — which file carries which module, readable without executing anything. What lets a preload name the file that will really be fetched. |
 | `__collected_shares.json` | Debug dump. Nothing reads it. |
 
 **→ [notes/BUILD-ARTIFACTS.md](./notes/BUILD-ARTIFACTS.md)** — full reference: exact shapes,
