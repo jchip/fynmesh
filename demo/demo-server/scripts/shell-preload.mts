@@ -115,6 +115,76 @@ function carriersOf(bundles: BundleMap): Map<string, string> {
 }
 
 /**
+ * A content-hashed chunk filename anywhere inside a file's text.
+ *
+ * The unanchored twin of {@link HASHED_CHUNK_RE}: chunks name each other in
+ * import specifiers (`./main-Bq-b5w3U.js`), in the share table the container
+ * entry declares, and in the `_B` bundle map `federation-combine` appends to
+ * that entry. All three are plain string literals, so one pattern finds them
+ * all without parsing anything.
+ */
+const CHUNK_REF_RE = /[A-Za-z0-9_.$-]+-[A-Za-z0-9_-]{8}\.js/g;
+
+/**
+ * The hashed chunks *this* build produced, as opposed to whatever is lying in
+ * `dist/`.
+ *
+ * Rollup content-hashes chunk filenames, so an incremental build leaves the
+ * previous generation behind: `main-C9XGg3Go.js` sitting next to the live
+ * `main-Bq-b5w3U.js`. Both return 200, which is exactly why hinting the dead one
+ * ships unnoticed — it costs a download nobody uses plus a browser "preloaded
+ * but not used" warning, and the staleness warning further down never fires,
+ * because that one only catches a chunk that is *missing*.
+ *
+ * A live chunk is one the build still refers to. `fynapp-entry.js` is rewritten
+ * every build and names the chunks it reaches directly; those name the ones they
+ * import; the closure over that is this build's output, and anything in `dist/`
+ * outside it belongs to an earlier one.
+ *
+ * @param distDir the app's dist directory
+ * @param files everything in that directory
+ * @param appDir the app directory name, for messages
+ * @param warn called once per leftover chunk
+ * @returns the fileNames reachable from the entry
+ */
+function liveChunks(
+    distDir: string,
+    files: string[],
+    appDir: string,
+    warn: (message: string) => void
+): Set<string> {
+    const hashed = new Set(files.filter((f) => HASHED_CHUNK_RE.test(f)));
+    const live = new Set<string>();
+    const queue = ["fynapp-entry.js"];
+
+    while (queue.length) {
+        let text: string;
+        try {
+            text = readFileSync(path.join(distDir, queue.pop()!), "utf8");
+        } catch {
+            continue; // a named chunk that is not on disk is the other bug; skip it
+        }
+        for (const ref of text.match(CHUNK_REF_RE) || []) {
+            if (hashed.has(ref) && !live.has(ref)) {
+                live.add(ref);
+                queue.push(ref);
+            }
+        }
+    }
+
+    for (const file of hashed) {
+        if (!live.has(file)) {
+            warn(
+                `${appDir}: ${file} is not referenced by this build — left over ` +
+                    `from an earlier one, so it is not being preloaded (clean dist/ to remove it)`
+            );
+        }
+    }
+
+    return live;
+}
+
+/**
  * Build the `<link rel="preload" as="script">` URL list for the shell page.
  *
  * Without these hints the shell's startup is a serial waterfall: each FynApp
@@ -162,10 +232,12 @@ function collectShellPreloadModules(
 
         const wanted = app.chunks === "all" ? null : new Set(app.chunks);
         const matched = new Set<string>();
+        const live = liveChunks(distDir, files, app.dir, warn);
 
         for (const file of files.sort()) {
             const stem = file.match(HASHED_CHUNK_RE)?.[1];
             if (!stem) continue; // not content-hashed -> not a startup chunk
+            if (!live.has(file)) continue; // an earlier build's leftover, already warned
             if (wanted && !wanted.has(stem)) continue;
             matched.add(stem);
             /*
