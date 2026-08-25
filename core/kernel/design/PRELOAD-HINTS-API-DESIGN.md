@@ -1,8 +1,36 @@
 # Preload Hints API & Automation Design
 
-**Status:** FINAL - Ready for Implementation
-**Date:** 2025-11-26
+**Status:** PROPOSED — none of this is implemented
+**Date:** 2025-11-26 (status corrected 2026-08-24)
 **Consolidated from:** API design, review, automation design
+
+---
+
+## 0. What exists today
+
+Neither `preloadHintUrls` nor `preloadHints` exists, and neither does
+`fyn generate-preload` or `preload-manifest.json`. The document below was
+previously headed "FINAL - Ready for Implementation", which read as a record of
+shipped behaviour rather than a proposal. It is a proposal.
+
+What the kernel actually has is `BrowserFynMeshKernel.tryPreload(url, depth)`
+(`core/kernel/src/browser-kernel.ts`), gated by a depth-based `PreloadStrategy`
+and fed nothing but entry-file urls from `manifest-resolver.ts`. Route-driven
+hinting, name resolution and dependency graphs are all absent.
+
+Two things have been settled since this was written, and anything built from
+§2 has to honour them:
+
+- **A hint must name the file that will really be fetched.** After the build
+  combines chunks, the runtime requests the *carrier*, never the member, so
+  `tryPreload` translates every url through `Federation.bundleUrlFor` before
+  injecting a tag and dedupes on the result (FYM-206). A bulk API taking a list
+  of urls inherits that requirement wholesale.
+- **`modulepreload` is the wrong hint kind here**, so §5's priority mapping is
+  stale. FynApp entries are `System.register` output and SystemJS loads them by
+  injecting a classic `<script>`; a modulepreload is fetched as a module in CORS
+  mode and never matches the no-cors load that follows, so the file is fetched
+  twice. The kernel and the demo shell both emit `rel="preload" as="script"`.
 
 ---
 
