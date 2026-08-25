@@ -290,10 +290,15 @@ export interface FynAppRequireEdge {
 export interface FynAppManifest {
   name: string;
   version: string;
-  exposes?: Record<string, {
-    path: string;
-    chunk: string;
-  }>;
+  /**
+   * Expose key -> the source module behind it, e.g. `"./main": "./src/main.ts"`.
+   *
+   * A plain string map, which is what `fynapp.manifest.json` actually holds. Not
+   * to be confused with `federation.json`'s `exposes`, which keys the same names
+   * to `{ path, chunks }` — a different artifact for a different reader, and the
+   * only one that names build output.
+   */
+  exposes?: Record<string, string>;
   "provide-shared"?: Record<string, {
     singleton?: boolean;
     semver?: string;
