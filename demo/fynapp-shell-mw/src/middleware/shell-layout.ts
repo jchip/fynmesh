@@ -681,7 +681,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     if (mainExport?.shutdown) {
       try {
         console.debug(`🔄 Calling shutdown for ${fynAppName}`);
-        mainExport.shutdown();
+        mainExport.shutdown(this.kernel.loader.mkRuntime(fynApp));
       } catch (error) {
         console.warn(`Failed to shutdown FynUnit for ${fynAppName}:`, error);
       }
