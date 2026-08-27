@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ShellLayoutMiddleware } from "../../fynapp-shell-mw/src/middleware/shell-layout.ts";
 
 type MiddlewareHarness = ShellLayoutMiddleware & {
-    kernel: { loadFynApp: ReturnType<typeof vi.fn> } | null;
+    kernel: {
+        loadFynApp?: ReturnType<typeof vi.fn>;
+        loader?: { mkRuntime: ReturnType<typeof vi.fn> };
+    } | null;
     regions: Map<string, { container: unknown; fynAppId: string | null; fynApp: unknown }>;
     loadedFynApps: Map<string, unknown>;
     activeRegionLoadIds: Map<string, number>;
@@ -12,6 +15,7 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     loadIntoRegion(url: string, region: string): Promise<unknown>;
     manageAppLayout(fynApp: unknown): Promise<void>;
     renderFynAppIntoRegion(fynApp: unknown, region: string): Promise<void>;
+    cleanupFynApp(fynAppName: string, fynApp: unknown): void;
     updateLoadedCount(): void;
 };
 
@@ -133,5 +137,28 @@ describe("ShellLayoutMiddleware background layout classification", () => {
         expect(render).toHaveBeenCalledWith(provider, "main");
         expect(middleware.regions.get("main")!.fynApp).toBe(provider);
         expect(middleware.loadedFynApps.get(provider.name)).toBe(provider);
+    });
+});
+
+describe("ShellLayoutMiddleware cleanup", () => {
+    it("passes the kernel-created target-app runtime to shutdown", () => {
+        const middleware = createMiddleware();
+        const middlewareContext = new Map();
+        const shutdown = vi.fn();
+        const fynApp = {
+            name: "fynapp-cleanup",
+            version: "1.0.0",
+            middlewareContext,
+            exposes: { "./main": { main: { shutdown } } },
+        };
+        const runtime = { fynApp, middlewareContext };
+        const mkRuntime = vi.fn(() => runtime);
+        middleware.kernel = { loader: { mkRuntime } };
+
+        middleware.cleanupFynApp(fynApp.name, fynApp);
+
+        expect(mkRuntime).toHaveBeenCalledOnce();
+        expect(mkRuntime).toHaveBeenCalledWith(fynApp);
+        expect(shutdown).toHaveBeenCalledWith(runtime);
     });
 });
