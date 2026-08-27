@@ -199,10 +199,22 @@ export const ModuleLoader = function (
       throw new Error(`Invalid FynApp container: ${JSON.stringify(container)}`);
     }
 
-    console.debug("🚀 Initializing FynApp entry", container.name, container.version);
-
-    // Step 1: Initialize the entry
-    fynAppEntry.init();
+    // Step 1: Initialize the entry, unless federation already did.
+    //
+    // A container keeps its share scope for the life of the page — federation-js
+    // exposes no teardown, so shutdownFynApp can only clear kernel-side state.
+    // Re-loading a shut-down app therefore hands back an initialized container,
+    // and calling init() again only warns: Container._mfInit returns undefined
+    // once $SS is set, which makes the generated entry skip re-registering its
+    // shares and exposes and return the existing scope. Skipping the call here
+    // reaches the same state without the warning. init() is typed void, so
+    // nothing consumes what it would have returned.
+    if (container.$SS) {
+      console.debug("🚀 FynApp entry already initialized", container.name, container.version);
+    } else {
+      console.debug("🚀 Initializing FynApp entry", container.name, container.version);
+      fynAppEntry.init();
+    }
 
     captureEvent(tel, "fynapp.init", { app: container.name, version: container.version });
 

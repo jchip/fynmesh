@@ -48,6 +48,49 @@ describe("Module Loading", () => {
       expect(fynApp.exposes["./main"]).toBeDefined();
     });
 
+    it("should not re-init a container federation already initialized", async () => {
+      // A re-load after shutdownFynApp hands back a live container: federation-js
+      // has no teardown, so $SS survives. Calling init() again would only warn.
+      const mockEntry = {
+        container: {
+          name: "test-app",
+          version: "1.0.0",
+          $SS: { "esm-react": {} },
+          $E: { "./main": "./main" }
+        } as any,
+        init: vi.fn(),
+        get: vi.fn().mockImplementation(() => {
+          return () => ({ main: { execute: vi.fn() } });
+        })
+      };
+
+      const fynApp = await kernel.testLoadFynAppBasics(mockEntry);
+
+      expect(mockEntry.init).not.toHaveBeenCalled();
+      // Skipping init must not cost the app anything else
+      expect(fynApp.name).toBe("test-app");
+      expect(fynApp.version).toBe("1.0.0");
+      expect(fynApp.exposes["./main"]).toBeDefined();
+    });
+
+    it("should init a container that has no share scope yet", async () => {
+      const mockEntry = {
+        container: {
+          name: "test-app",
+          version: "1.0.0",
+          $E: { "./main": "./main" }
+        } as any,
+        init: vi.fn(),
+        get: vi.fn().mockImplementation(() => {
+          return () => ({ main: { execute: vi.fn() } });
+        })
+      };
+
+      await kernel.testLoadFynAppBasics(mockEntry);
+
+      expect(mockEntry.init).toHaveBeenCalledOnce();
+    });
+
     it("should handle entry without setup function", async () => {
       const mockEntry = {
         container: {
