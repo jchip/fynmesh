@@ -5,9 +5,13 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     kernel: {
         loadFynApp?: ReturnType<typeof vi.fn>;
         loader?: { mkRuntime: ReturnType<typeof vi.fn> };
+        shutdownFynApp?: ReturnType<typeof vi.fn>;
     } | null;
     regions: Map<string, { container: unknown; fynAppId: string | null; fynApp: unknown }>;
+    regionFynApps: Map<string, Map<string, { container: unknown; fynApp: unknown }>>;
     loadedFynApps: Map<string, unknown>;
+    fynappContainers: Map<string, unknown>;
+    reactRoots: Map<string, unknown>;
     activeRegionLoadIds: Map<string, number>;
     awaitDeferredProviders(): Promise<void>;
     loadApp(url: string): void;
@@ -15,7 +19,9 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     loadIntoRegion(url: string, region: string): Promise<unknown>;
     manageAppLayout(fynApp: unknown): Promise<void>;
     renderFynAppIntoRegion(fynApp: unknown, region: string): Promise<void>;
-    cleanupFynApp(fynAppName: string, fynApp: unknown): void;
+    cleanupFynApp(fynAppName: string, fynApp: unknown): Promise<void>;
+    unloadFynAppFromRegion(fynAppName: string, region: string): Promise<void>;
+    clearRegion(region: string): Promise<void>;
     updateLoadedCount(): void;
 };
 
@@ -140,25 +146,162 @@ describe("ShellLayoutMiddleware background layout classification", () => {
     });
 });
 
+function createFynApp(name = "fynapp-cleanup") {
+    return {
+        name,
+        version: "1.0.0",
+        middlewareContext: new Map(),
+        exposes: { "./main": { main: { shutdown: vi.fn() } } },
+    };
+}
+
+/**
+ * Stage a FynApp in a region the way manageAppLayout leaves it, so the unload
+ * paths have a container to drop and tracking entries to clear.
+ */
+function stageInRegion(
+    middleware: MiddlewareHarness,
+    fynApp: { name: string },
+    region: "main" | "sidebar",
+) {
+    const container = { remove: vi.fn(), style: {} as Record<string, string> };
+    exposeRegion(middleware, region);
+    const regionInfo = middleware.regions.get(region)!;
+    regionInfo.fynAppId = fynApp.name;
+    regionInfo.fynApp = fynApp;
+    middleware.regionFynApps.get(region)!.set(fynApp.name, { container, fynApp });
+    middleware.loadedFynApps.set(fynApp.name, fynApp);
+    middleware.fynappContainers.set(fynApp.name, container);
+    vi.spyOn(middleware, "updateLoadedCount").mockImplementation(() => {});
+    return container;
+}
+
 describe("ShellLayoutMiddleware cleanup", () => {
-    it("passes the kernel-created target-app runtime to shutdown", () => {
+    it("routes unload through the kernel's complete shutdown lifecycle", async () => {
         const middleware = createMiddleware();
-        const middlewareContext = new Map();
-        const shutdown = vi.fn();
-        const fynApp = {
-            name: "fynapp-cleanup",
-            version: "1.0.0",
-            middlewareContext,
-            exposes: { "./main": { main: { shutdown } } },
+        const fynApp = createFynApp();
+        const shutdownFynApp = vi.fn().mockResolvedValue(true);
+        const mkRuntime = vi.fn();
+        middleware.kernel = { shutdownFynApp, loader: { mkRuntime } };
+
+        await middleware.cleanupFynApp(fynApp.name, fynApp);
+
+        expect(shutdownFynApp).toHaveBeenCalledOnce();
+        expect(shutdownFynApp).toHaveBeenCalledWith(fynApp.name);
+        // The kernel owns the hook call now — the shell must not invoke ./main itself
+        expect(fynApp.exposes["./main"].main.shutdown).not.toHaveBeenCalled();
+        expect(mkRuntime).not.toHaveBeenCalled();
+    });
+
+    it("clears shell tracking only after the kernel shutdown settles", async () => {
+        const middleware = createMiddleware();
+        const fynApp = createFynApp();
+        const shutdownGate = deferred();
+        middleware.kernel = {
+            shutdownFynApp: vi.fn(() => shutdownGate.promise),
         };
-        const runtime = { fynApp, middlewareContext };
-        const mkRuntime = vi.fn(() => runtime);
-        middleware.kernel = { loader: { mkRuntime } };
+        const root = { unmount: vi.fn() };
+        middleware.reactRoots.set(fynApp.name, root);
+        middleware.loadedFynApps.set(fynApp.name, fynApp);
 
-        middleware.cleanupFynApp(fynApp.name, fynApp);
+        const cleanup = middleware.cleanupFynApp(fynApp.name, fynApp);
+        await Promise.resolve();
 
-        expect(mkRuntime).toHaveBeenCalledOnce();
-        expect(mkRuntime).toHaveBeenCalledWith(fynApp);
-        expect(shutdown).toHaveBeenCalledWith(runtime);
+        expect(root.unmount).not.toHaveBeenCalled();
+        expect(middleware.loadedFynApps.has(fynApp.name)).toBe(true);
+
+        shutdownGate.resolve();
+        await cleanup;
+
+        expect(root.unmount).toHaveBeenCalledOnce();
+        expect(middleware.loadedFynApps.has(fynApp.name)).toBe(false);
+        expect(middleware.reactRoots.has(fynApp.name)).toBe(false);
+    });
+
+    it("holds the FynApp's DOM in place until an async shutdown completes", async () => {
+        const middleware = createMiddleware();
+        const fynApp = createFynApp();
+        const shutdownGate = deferred();
+        middleware.kernel = {
+            shutdownFynApp: vi.fn(() => shutdownGate.promise),
+        };
+        const container = stageInRegion(middleware, fynApp, "main");
+
+        const unload = middleware.unloadFynAppFromRegion(fynApp.name, "main");
+        await Promise.resolve();
+
+        // A shutdown hook still needs the tree it rendered into
+        expect(container.remove).not.toHaveBeenCalled();
+
+        shutdownGate.resolve();
+        await unload;
+
+        expect(container.remove).toHaveBeenCalledOnce();
+        expect(middleware.regionFynApps.get("main")!.has(fynApp.name)).toBe(false);
+        expect(middleware.regions.get("main")!.fynAppId).toBeNull();
+    });
+
+    it("absorbs a rejected shutdown and still finishes the unload", async () => {
+        const middleware = createMiddleware();
+        const fynApp = createFynApp();
+        const failure = new Error("shutdown exploded");
+        middleware.kernel = {
+            shutdownFynApp: vi.fn().mockRejectedValue(failure),
+        };
+        const container = stageInRegion(middleware, fynApp, "main");
+
+        await expect(
+            middleware.unloadFynAppFromRegion(fynApp.name, "main"),
+        ).resolves.toBeUndefined();
+
+        expect(console.warn).toHaveBeenCalledWith(
+            `Failed to shutdown FynApp ${fynApp.name}:`,
+            failure,
+        );
+        expect(container.remove).toHaveBeenCalledOnce();
+        expect(middleware.loadedFynApps.has(fynApp.name)).toBe(false);
+        expect(middleware.regionFynApps.get("main")!.has(fynApp.name)).toBe(false);
+    });
+
+    it("keeps a re-load that lands while the shutdown is still in flight", async () => {
+        const middleware = createMiddleware();
+        const fynApp = createFynApp("fynapp-churn");
+        const gate = deferred();
+        middleware.kernel = { shutdownFynApp: vi.fn(() => gate.promise) };
+        const staleContainer = stageInRegion(middleware, fynApp, "main");
+        const regionApps = middleware.regionFynApps.get("main")!;
+
+        const unload = middleware.unloadFynAppFromRegion(fynApp.name, "main");
+        await Promise.resolve();
+
+        // The user re-loads the same FynApp before its shutdown resolves
+        const freshContainer = { remove: vi.fn(), style: {} as Record<string, string> };
+        const freshEntry = { container: freshContainer, fynApp };
+        regionApps.set(fynApp.name, freshEntry);
+
+        gate.resolve();
+        await unload;
+
+        // The stale container goes, the live re-loaded entry stays tracked
+        expect(staleContainer.remove).toHaveBeenCalledOnce();
+        expect(freshContainer.remove).not.toHaveBeenCalled();
+        expect(regionApps.get(fynApp.name)).toBe(freshEntry);
+    });
+
+    it("shuts every FynApp in a region down before clearing it", async () => {
+        const middleware = createMiddleware();
+        const first = createFynApp("fynapp-first");
+        const second = createFynApp("fynapp-second");
+        const shutdownFynApp = vi.fn().mockResolvedValue(true);
+        middleware.kernel = { shutdownFynApp };
+        const firstContainer = stageInRegion(middleware, first, "main");
+        const secondContainer = stageInRegion(middleware, second, "main");
+
+        await middleware.clearRegion("main");
+
+        expect(shutdownFynApp.mock.calls).toEqual([[first.name], [second.name]]);
+        expect(firstContainer.remove).toHaveBeenCalledOnce();
+        expect(secondContainer.remove).toHaveBeenCalledOnce();
+        expect(middleware.regionFynApps.get("main")!.size).toBe(0);
     });
 });

@@ -517,7 +517,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
     if (clearAllBtn) {
       clearAllBtn.addEventListener('click', () => {
-        this.clearContent();
+        this.clearContent().catch((error) => {
+          console.error('❌ Failed to clear shell content:', error);
+        });
       });
     }
   }
@@ -565,24 +567,27 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
   }
 
-  private clearContent(): void {
+  private async clearContent(): Promise<void> {
     // Clear all regions (this also clears regionFynApps for each region)
-    this.clearRegion('main');
-    this.clearRegion('sidebar');
+    await this.clearRegion('main');
+    await this.clearRegion('sidebar');
     // Note: loadedFynApps and fynappContainers are cleaned up by cleanupFynApp in clearRegion
     this.updateLoadedCount();
     console.log("🧹 All content cleared");
   }
 
-  private clearRegion(region: RegionName): void {
+  private async clearRegion(region: RegionName): Promise<void> {
     const regionInfo = this.regions.get(region);
     if (!regionInfo?.container) return;
 
     const regionApps = this.regionFynApps.get(region)!;
 
-    // Clean up ALL FynApps in this region (not just the current one)
-    for (const [appName, entry] of regionApps) {
-      this.cleanupFynApp(appName, entry.fynApp);
+    // Clean up ALL FynApps in this region (not just the current one). Snapshot
+    // first: shutdown is awaited per app, and a concurrent single-app unload can
+    // mutate regionApps while this loop is suspended.
+    const destroyed = regionApps.size;
+    for (const [appName, entry] of Array.from(regionApps)) {
+      await this.cleanupFynApp(appName, entry.fynApp);
       entry.container.remove();
     }
 
@@ -612,14 +617,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
 
     this.updateLoadedCount();
-    console.log(`🧹 Region ${region} cleared (${regionApps.size} FynApps destroyed)`);
+    console.log(`🧹 Region ${region} cleared (${destroyed} FynApps destroyed)`);
   }
 
   /**
    * Unload a specific FynApp from a region without clearing the entire region.
    * If it's the currently visible FynApp, show the most recently loaded one or empty state.
    */
-  private unloadFynAppFromRegion(fynAppName: string, region: RegionName): void {
+  private async unloadFynAppFromRegion(fynAppName: string, region: RegionName): Promise<void> {
     const regionInfo = this.regions.get(region);
     if (!regionInfo?.container) return;
 
@@ -631,8 +636,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
 
     // Clean up the FynApp
-    this.cleanupFynApp(fynAppName, entry.fynApp);
+    await this.cleanupFynApp(fynAppName, entry.fynApp);
     entry.container.remove();
+    if (regionApps.get(fynAppName) !== entry) {
+      // The region moved on while the shutdown was in flight: a concurrent
+      // clearRegion took the entry, or a re-load of the same FynApp replaced it
+      // with a live one. Deleting by name here would drop that live entry.
+      return;
+    }
     regionApps.delete(fynAppName);
 
     // If this was the currently visible FynApp, show another one or empty state
@@ -673,17 +684,22 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   }
 
   /**
-   * Clean up a FynApp's resources (shutdown, React roots, tracking maps)
+   * Clean up a FynApp's resources (kernel shutdown, React roots, tracking maps)
+   *
+   * Unloading from the shell is a full unload — the container is removed and the
+   * React root unmounted — so it goes through the kernel's complete shutdown
+   * lifecycle instead of calling the `./main` shutdown hook directly: hooks on
+   * every expose, registry removal, app-scoped bus disposal, lifecycle state,
+   * the FYNAPP_SHUTDOWN event and telemetry. Callers await this before dropping
+   * the container so a shutdown hook still sees the DOM it rendered into.
    */
-  private cleanupFynApp(fynAppName: string, fynApp: FynApp): void {
-    // Call shutdown on the FynApp's FynUnit if it has one
-    const mainExport = fynApp.exposes?.["./main"]?.main;
-    if (mainExport?.shutdown) {
+  private async cleanupFynApp(fynAppName: string, fynApp: FynApp): Promise<void> {
+    if (this.kernel) {
       try {
-        console.debug(`🔄 Calling shutdown for ${fynAppName}`);
-        mainExport.shutdown(this.kernel.loader.mkRuntime(fynApp));
+        console.debug(`🔄 Shutting down ${fynAppName} through the kernel`);
+        await this.kernel.shutdownFynApp(fynApp.name);
       } catch (error) {
-        console.warn(`Failed to shutdown FynUnit for ${fynAppName}:`, error);
+        console.warn(`Failed to shutdown FynApp ${fynAppName}:`, error);
       }
     }
 
@@ -936,7 +952,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     const unloadBtn = header.querySelector('.btn-clear') as HTMLButtonElement;
     if (unloadBtn) {
       unloadBtn.addEventListener('click', () => {
-        this.unloadFynAppFromRegion(fynApp.name, region);
+        this.unloadFynAppFromRegion(fynApp.name, region).catch((error) => {
+          console.error(`❌ Failed to unload ${fynApp.name} from ${region}:`, error);
+        });
       });
     }
 
@@ -1036,7 +1054,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // Find which region contains this FynApp and clear it
     for (const [regionName, regionInfo] of this.regions) {
       if (regionInfo.fynAppId === fynappName) {
-        this.clearRegion(regionName);
+        await this.clearRegion(regionName);
         console.log(`✅ Unloaded FynApp: ${fynappName} from ${regionName}`);
         return;
       }
