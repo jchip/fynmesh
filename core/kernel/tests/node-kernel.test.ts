@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NodeKernel, createNodeKernel } from '../src/node-kernel.js';
+import { KERNEL_VERSION } from '../src/kernel-version.js';
 
 describe('NodeKernel', () => {
     let kernel: NodeKernel;
@@ -12,7 +13,7 @@ describe('NodeKernel', () => {
     describe('initialization', () => {
         it('should create a node kernel instance', () => {
             expect(kernel).toBeInstanceOf(NodeKernel);
-            expect(kernel.version).toBe('1.0.0');
+            expect(kernel.version).toBe(KERNEL_VERSION);
             expect(kernel.shareScopeName).toBe('fynmesh');
         });
 

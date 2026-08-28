@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FynMeshKernelCore } from '../src/kernel-core.js';
 import { FynEventTarget } from '../src/event-target.js';
 import { createMockFynApp, createMockMiddleware } from './setup';
+import { KERNEL_VERSION } from '../src/kernel-version.js';
 import type { FynAppEntry } from '../src/types.js';
 
 // Create a concrete implementation for testing
@@ -21,7 +22,7 @@ describe('FynMeshKernelCore', () => {
 
     describe('initialization', () => {
         it('should initialize with correct properties', () => {
-            expect(kernel.version).toBe('1.0.0');
+            expect(kernel.version).toBe(KERNEL_VERSION);
             expect(kernel.shareScopeName).toBe('fynmesh');
             expect(kernel.events).toBeInstanceOf(FynEventTarget);
         });
