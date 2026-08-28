@@ -448,7 +448,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
             <span id="active-fynapp">No active FynApp</span>
           </div>
           <div class="shell-footer-right">
-            <span>FynMesh Kernel v1.0.0</span>
+            <span id="kernel-version">FynMesh Kernel</span>
             <span>|</span>
             <span id="middleware-count">0 middlewares</span>
           </div>
@@ -1105,6 +1105,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     const statusText = document.getElementById('status-text');
     const activeFynapp = document.getElementById('active-fynapp');
     const middlewareCount = document.getElementById('middleware-count');
+    const kernelVersion = document.getElementById('kernel-version');
+
+    // Ask the kernel what it is, rather than restating it here -- a literal in
+    // this file goes stale on every kernel release and nothing catches it.
+    if (kernelVersion && this.kernel) {
+      const v = this.kernel.version;
+      kernelVersion.textContent = v ? `FynMesh Kernel v${v}` : 'FynMesh Kernel';
+    }
 
     if (loading) {
       statusDot?.classList.add('loading');

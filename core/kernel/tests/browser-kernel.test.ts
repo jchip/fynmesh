@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserKernel, createBrowserKernel } from '../src/browser-kernel.js';
+import { KERNEL_VERSION } from '../src/kernel-version.js';
 
 // Mock global Federation object
 const mockFederation = {
@@ -19,7 +20,7 @@ describe('BrowserKernel', () => {
     describe('initialization', () => {
         it('should create a browser kernel instance', () => {
             expect(kernel).toBeInstanceOf(BrowserKernel);
-            expect(kernel.version).toBe('1.0.0');
+            expect(kernel.version).toBe(KERNEL_VERSION);
             expect(kernel.shareScopeName).toBe('fynmesh');
         });
 

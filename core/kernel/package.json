@@ -20,8 +20,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "xrun -s clean compile-lib build-dist",
+    "build": "xrun -s clean gen-version compile-lib build-dist",
     "clean": "rm -rf dist lib",
+    "gen-version": "node build/gen-version.mjs",
     "compile-lib": "tsc --build tsconfig.lib.json",
     "build-dist": "rollup -c",
     "test": "vitest run",

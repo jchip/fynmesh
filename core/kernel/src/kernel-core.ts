@@ -36,6 +36,7 @@ import type {
   TelemetryConfig,
 } from "./types";
 import { KernelTelemetryImpl, noOpTelemetry, captureEvent } from "./kernel-telemetry";
+import { KERNEL_VERSION } from "./kernel-version";
 
 /**
  * Abstract base class for FynMesh kernel implementations
@@ -43,7 +44,7 @@ import { KernelTelemetryImpl, noOpTelemetry, captureEvent } from "./kernel-telem
  */
 export abstract class FynMeshKernelCore implements FynMeshKernel {
   public readonly events: FynEventTarget;
-  public readonly version: string = "1.0.0";
+  public readonly version: string = KERNEL_VERSION;
   public readonly shareScopeName: string = fynMeshShareScope;
 
   /** Inter-FynApp messaging (see notes/FYNBUS_DESIGN.md) */
