@@ -319,10 +319,10 @@ $pkg:
    '@babel/helper-string-parser': ^7.27.1
    '@babel/helper-validator-identifier': ^7.27.1
 '@fynmesh/kernel':
- _latest: 1.0.0-fynlocal_h
+ _latest: 1.1.0-fynlocal_h
  _:
-  ../../core/kernel: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
+  ../../core/kernel: 1.1.0-fynlocal_h
+ 1.1.0-fynlocal_h:
   $: local
   _: ../../core/kernel
   dependencies:
@@ -886,10 +886,10 @@ convert-source-map:
   $: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==
   _: 'https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz'
 create-fynapp:
- _latest: 1.0.0-fynlocal_h
+ _latest: 1.1.0-fynlocal_h
  _:
-  ../../dev-tools/create-fynapp: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
+  ../../dev-tools/create-fynapp: 1.1.0-fynlocal_h
+ 1.1.0-fynlocal_h:
   top: 1
   $: local
   _: ../../dev-tools/create-fynapp
@@ -1190,10 +1190,10 @@ external-editor:
    iconv-lite: ^0.4.24
    tmp: ^0.0.33
 federation-js:
- _latest: 1.0.0-fynlocal_h
+ _latest: 1.1.0-fynlocal_h
  _:
-  ../../rollup-federation/federation-js: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
+  ../../rollup-federation/federation-js: 1.1.0-fynlocal_h
+ 1.1.0-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js
 find-up:
@@ -2408,10 +2408,10 @@ rollup-plugin-dts:
    rollup: '^3.29.4 || ^4'
    typescript: '^4.5 || ^5.0'
 rollup-plugin-federation:
- _latest: 1.0.0-fynlocal_h
+ _latest: 1.1.0-fynlocal_h
  _:
-  ../../rollup-federation/rollup-plugin-federation: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
+  ../../rollup-federation/rollup-plugin-federation: 1.1.0-fynlocal_h
+ 1.1.0-fynlocal_h:
   top: 1
   $: local
   _: ../../rollup-federation/rollup-plugin-federation
