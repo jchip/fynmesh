@@ -1,3 +1,99 @@
+# 8/28/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.0` `(1.0.0 => 1.1.0)`
+-   `create-fynapp@1.1.0` `(1.0.0 => 1.1.0)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-236: skip federation container init when the share scope already exists
+    -   FYM-211: stop the preload-hints design reading as shipped
+    -   FYM-210: type the manifests exposes as what the build emits
+    -   FYM-206: preload the file a combined module will really be fetched as
+    -   docs: make the dist JSON artifacts and their uses explicit
+    -   Trim remaining kernel code; fix waitFor waiter leak (26,663 -> 26,316)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+    -   FYM-196: correct license in kernel and create-fynapp READMEs
+
+-   `packages/create-fynapp`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit
+    -   docs: make the dist JSON artifacts and their uses explicit
+    -   Migrate FynApp authoring docs to the renamed kernel contract
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+    -   FYM-196: correct license in kernel and create-fynapp READMEs
+
+-   `packages/demo-server`
+
+    -   FYM-231,FYM-233: route shell unload through the kernel shutdown lifecycle
+    -   FYM-230: eliminate shell middleware TypeScript warnings
+    -   FYM-202: defer React 18 provider and fynapp-x1-v1 to browser idle
+    -   FYM-203: preload only the chunks this build actually produced
+    -   FYM-213: read the map an app offers, not a file it may not emit
+    -   FYM-207: declare the combined-bundle maps in the shell page
+    -   demo: preload the shell chunks as scripts, not as modules
+    -   demo: preload the file the runtime will actually request
+    -   demo: pick the loader variant in the site build too, not just dev-proxy
+    -   demo: switch the loader pair with FEDERATION, frozen standard vs live fork
+    -   demo: serve systemjs and federation-js from the live rollup-federation build
+    -   FYM-201: keep landing page buttons white after they are visited
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+    -   FYM-200: replace dead jest scaffolding with vitest and test findMissingLocalRefs
+    -   FYM-199: ship lazy-loader.js and fail build on missing asset refs
+
+-   `packages/esm-pkg`
+
+    -   FYM-194: normalize package.json formatting from fynpo prepare
+
+-   `packages/test-rollup-externals`
+
+    -   FYM-194: normalize package.json formatting from fynpo prepare
+
+-   `packages/fynapp-2-react18`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `packages/fynapp-6-react`
+
+    -   Migrate FynApp authoring docs to the renamed kernel contract
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `packages/fynapp-react-middleware`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-231,FYM-233: route shell unload through the kernel shutdown lifecycle
+    -   FYM-230: eliminate shell middleware TypeScript warnings
+    -   FYM-202: defer React 18 provider and fynapp-x1-v1 to browser idle
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `packages/shared-demo-utils`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `notes`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit
+    -   docs: record the second reader of federation.json bundles
+    -   docs: make the dist JSON artifacts and their uses explicit
+    -   Migrate FynApp authoring docs to the renamed kernel contract
+    -   Trim remaining kernel code; fix waitFor waiter leak (26,663 -> 26,316)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%)
+
+-   `scripts`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit
+    -   demo: combine each FynApps tiny chunks in the production build
+
+-   `MISC`
+
+    -   FYM-198: update fyn/fynpo to 2.1.6 and drop local fynpo link
+
 # 8/12/2026
 
 ## Packages
