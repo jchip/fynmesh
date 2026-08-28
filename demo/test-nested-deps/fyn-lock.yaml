@@ -708,10 +708,10 @@ rollup-plugin-dts:
    rollup: '^3.29.4 || ^4'
    typescript: '^4.5 || ^5.0'
 rollup-plugin-federation:
- _latest: 1.0.0-fynlocal_h
+ _latest: 1.1.0-fynlocal_h
  _:
-  ../../rollup-federation/rollup-plugin-federation: 1.0.0-fynlocal_h
- 1.0.0-fynlocal_h:
+  ../../rollup-federation/rollup-plugin-federation: 1.1.0-fynlocal_h
+ 1.1.0-fynlocal_h:
   top: 1
   $: local
   _: ../../rollup-federation/rollup-plugin-federation
