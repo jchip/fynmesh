@@ -1,3 +1,99 @@
+# 8/28/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.0` `(1.0.0 => 1.1.0)`
+-   `create-fynapp@1.1.0` `(1.0.0 => 1.1.0)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-236: skip federation container init when the share scope already exists [commit](/commit/7f8dc195ea8ae99ef1181d41ac006fb008e5d119)
+    -   FYM-211: stop the preload-hints design reading as shipped [commit](/commit/40a709616ba8ef202d6bd1cf1e694c1d01f7b305)
+    -   FYM-210: type the manifests exposes as what the build emits [commit](/commit/83f2c29a2fcd9003e46105fd83baeb9e24d86213)
+    -   FYM-206: preload the file a combined module will really be fetched as [commit](/commit/fb66340bcf7f451a366b0ca960a7e21d2ea4f290)
+    -   docs: make the dist JSON artifacts and their uses explicit [commit](/commit/446f5c5ff1628c81aed55d7af61ba4fc70d0f4ae)
+    -   Trim remaining kernel code; fix waitFor waiter leak (26,663 -> 26,316) [commit](/commit/f62efd35186a1dec3a3abdb86af1ff2dbc4ff863)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+    -   FYM-196: correct license in kernel and create-fynapp READMEs [commit](/commit/66a2875053781e16d7d22644abb15f61ae1e2a4e)
+
+-   `packages/create-fynapp`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit [commit](/commit/a5a1875a0c28ca3fe13d6a622d948a17c1a4b9cb)
+    -   docs: make the dist JSON artifacts and their uses explicit [commit](/commit/446f5c5ff1628c81aed55d7af61ba4fc70d0f4ae)
+    -   Migrate FynApp authoring docs to the renamed kernel contract [commit](/commit/0d6912fda32a1f60cdac20cff33e166e84e97393)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+    -   FYM-196: correct license in kernel and create-fynapp READMEs [commit](/commit/66a2875053781e16d7d22644abb15f61ae1e2a4e)
+
+-   `packages/demo-server`
+
+    -   FYM-231,FYM-233: route shell unload through the kernel shutdown lifecycle [commit](/commit/b9287c23aeea7715f3c1f7ec503ea2ed152725df)
+    -   FYM-230: eliminate shell middleware TypeScript warnings [commit](/commit/c7d4baaf31046ba5016599b017d1971ec98df201)
+    -   FYM-202: defer React 18 provider and fynapp-x1-v1 to browser idle [commit](/commit/75baba456151557463e7822634d24c2b5152d16a)
+    -   FYM-203: preload only the chunks this build actually produced [commit](/commit/190fba0249296d55975286e47d7ade7798854054)
+    -   FYM-213: read the map an app offers, not a file it may not emit [commit](/commit/a5a1875a0c28ca3fe13d6a622d948a17c1a4b9cb)
+    -   FYM-207: declare the combined-bundle maps in the shell page [commit](/commit/ac760dc62ccdbea7f85a25635cd910a508d8bb77)
+    -   demo: preload the shell chunks as scripts, not as modules [commit](/commit/90a319962c1c5ea60c5a4037e567cd09c8026026)
+    -   demo: preload the file the runtime will actually request [commit](/commit/453fc6d2a91aba28f658c8ef9429375c20b5d1b1)
+    -   demo: pick the loader variant in the site build too, not just dev-proxy [commit](/commit/fab7b445ea9d2e85c3eee491a1d77604a4ef009d)
+    -   demo: switch the loader pair with FEDERATION, frozen standard vs live fork [commit](/commit/c64c26eede8ec37af3655763e126f37a77b8de21)
+    -   demo: serve systemjs and federation-js from the live rollup-federation build [commit](/commit/4239ecc5791f49feebb945396744992d4f8643e6)
+    -   FYM-201: keep landing page buttons white after they are visited [commit](/commit/336c13a055921d190e12ff047907f1b56c16e57a)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+    -   FYM-200: replace dead jest scaffolding with vitest and test findMissingLocalRefs [commit](/commit/5b2ebadf918592c752f581e5d4eb8a3687e0d8cc)
+    -   FYM-199: ship lazy-loader.js and fail build on missing asset refs [commit](/commit/0118ab096f40d5ff4cd155a38da2af529a30a816)
+
+-   `packages/esm-pkg`
+
+    -   FYM-194: normalize package.json formatting from fynpo prepare [commit](/commit/5212171d5d9c783f7e4292c505ec5bbd19400ba6)
+
+-   `packages/test-rollup-externals`
+
+    -   FYM-194: normalize package.json formatting from fynpo prepare [commit](/commit/5212171d5d9c783f7e4292c505ec5bbd19400ba6)
+
+-   `packages/fynapp-2-react18`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `packages/fynapp-6-react`
+
+    -   Migrate FynApp authoring docs to the renamed kernel contract [commit](/commit/0d6912fda32a1f60cdac20cff33e166e84e97393)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `packages/fynapp-react-middleware`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-231,FYM-233: route shell unload through the kernel shutdown lifecycle [commit](/commit/b9287c23aeea7715f3c1f7ec503ea2ed152725df)
+    -   FYM-230: eliminate shell middleware TypeScript warnings [commit](/commit/c7d4baaf31046ba5016599b017d1971ec98df201)
+    -   FYM-202: defer React 18 provider and fynapp-x1-v1 to browser idle [commit](/commit/75baba456151557463e7822634d24c2b5152d16a)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `packages/shared-demo-utils`
+
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `notes`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit [commit](/commit/a5a1875a0c28ca3fe13d6a622d948a17c1a4b9cb)
+    -   docs: record the second reader of federation.json bundles [commit](/commit/b193f6fa59abb00bd2630adda4620d5af2d7f928)
+    -   docs: make the dist JSON artifacts and their uses explicit [commit](/commit/446f5c5ff1628c81aed55d7af61ba4fc70d0f4ae)
+    -   Migrate FynApp authoring docs to the renamed kernel contract [commit](/commit/0d6912fda32a1f60cdac20cff33e166e84e97393)
+    -   Trim remaining kernel code; fix waitFor waiter leak (26,663 -> 26,316) [commit](/commit/f62efd35186a1dec3a3abdb86af1ff2dbc4ff863)
+    -   Shrink browser kernel bundle by 10 KB (36,716 -> 26,663, -27.4%) [commit](/commit/700dd413b1def14eb4e90bf54e8541187d6b1fba)
+
+-   `scripts`
+
+    -   FYM-213: read the map an app offers, not a file it may not emit [commit](/commit/a5a1875a0c28ca3fe13d6a622d948a17c1a4b9cb)
+    -   demo: combine each FynApps tiny chunks in the production build [commit](/commit/3439927af5e521687b60fdd0ebdbf95289ba4778)
+
+-   `MISC`
+
+    -   FYM-198: update fyn/fynpo to 2.1.6 and drop local fynpo link [commit](/commit/995c243a548585d4e23da10d4c51364aee890bb4)
+
 # 8/12/2026
 
 ## Packages
