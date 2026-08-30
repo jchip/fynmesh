@@ -91,5 +91,58 @@ load({
             }
             console.log(`[combine] ${apps.length} FynApps, ${saved} fewer requests`);
         }
-    }
+    },
+    "release-gate": {
+        desc: "Refuse to publish local fyn dependency overrides",
+        /*
+         * fyn honors `fyn` dependency overrides from *published* metadata, and
+         * the monorepo-relative paths they hold don't exist on a consumer's
+         * machine (FYM-244). Per-package tests only guard the packages that
+         * carry them, so this walks fynpo's own publish set (fynpo.json
+         * command.publish.includePackages) to gate every publishable package.
+         */
+        task: () => {
+            const fynpoConfig = JSON.parse(fs.readFileSync("fynpo.json", "utf-8"));
+            const includePackages: string[] =
+                fynpoConfig.command?.publish?.includePackages ?? [];
+
+            const offenders: string[] = [];
+            let checked = 0;
+
+            for (const entry of includePackages) {
+                // entries look like "path:core/*"; only this simple form is used here
+                const pattern = entry.replace(/^path:/, "");
+                const parent = path.dirname(pattern);
+                const dirs =
+                    path.basename(pattern) === "*"
+                        ? fs
+                              .readdirSync(parent, { withFileTypes: true })
+                              .filter((d) => d.isDirectory())
+                              .map((d) => path.join(parent, d.name))
+                        : [pattern];
+
+                for (const dir of dirs) {
+                    const pkgFile = path.join(dir, "package.json");
+                    if (!fs.existsSync(pkgFile)) continue;
+                    const pkg = JSON.parse(fs.readFileSync(pkgFile, "utf-8"));
+                    if (pkg.private) continue;
+                    checked++;
+                    if ("fyn" in pkg) offenders.push(pkgFile);
+                }
+            }
+
+            if (!checked) {
+                throw new Error(
+                    "release-gate: no publishable packages found - check fynpo.json includePackages",
+                );
+            }
+            if (offenders.length) {
+                for (const f of offenders) console.error(`[release-gate] offender: ${f}`);
+                throw new Error(
+                    `release-gate: ${offenders.length} publishable package(s) carry a \`fyn\` key (local dev overrides)`,
+                );
+            }
+            console.log(`[release-gate] OK - ${checked} publishable packages carry no fyn overrides`);
+        },
+    },
 });
