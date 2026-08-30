@@ -318,16 +318,6 @@ $pkg:
   dependencies:
    '@babel/helper-string-parser': ^7.27.1
    '@babel/helper-validator-identifier': ^7.27.1
-'@fynmesh/kernel':
- _latest: 1.1.0-fynlocal_h
- _:
-  ../../core/kernel: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
-  $: local
-  _: ../../core/kernel
-  dependencies:
-   federation-js: ^1.0.0
-   tslib: ^2.6.2
 '@inquirer/figures':
  _latest: 1.0.12
  _:
@@ -1189,13 +1179,6 @@ external-editor:
    chardet: ^0.7.0
    iconv-lite: ^0.4.24
    tmp: ^0.0.33
-federation-js:
- _latest: 1.1.0-fynlocal_h
- _:
-  ../../rollup-federation/federation-js: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
-  $: local
-  _: ../../rollup-federation/federation-js
 find-up:
  _latest: 7.0.0
  _:
