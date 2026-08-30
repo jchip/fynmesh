@@ -107,11 +107,5 @@
       "typedoc",
       "typescript"
     ]
-  },
-  "fyn": {
-    "dependencies": {
-      "rollup-plugin-federation": "../../rollup-federation/rollup-plugin-federation",
-      "@fynmesh/kernel": "../../core/kernel"
-    }
   }
 }

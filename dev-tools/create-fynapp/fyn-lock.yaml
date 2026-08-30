@@ -19,7 +19,6 @@ $pkg:
   rollup-plugin-no-emit: ^1.3.0
   rollup-wrap-plugin: ../rollup-wrap-plugin
   tslib: ^2.6.2
-  '@fynmesh/kernel': ../../core/kernel
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@istanbuljs/nyc-config-typescript': ^1.0.2
