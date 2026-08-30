@@ -13,6 +13,7 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     fynappContainers: Map<string, unknown>;
     reactRoots: Map<string, unknown>;
     activeRegionLoadIds: Map<string, number>;
+    pendingRegionLoad: Map<string, { region: string; token: number }>;
     awaitDeferredProviders(): Promise<void>;
     loadApp(url: string): void;
     loadFynApp(url: string): Promise<unknown>;
@@ -303,5 +304,78 @@ describe("ShellLayoutMiddleware cleanup", () => {
         expect(firstContainer.remove).toHaveBeenCalledOnce();
         expect(secondContainer.remove).toHaveBeenCalledOnce();
         expect(middleware.regionFynApps.get("main")!.size).toBe(0);
+    });
+});
+
+describe("ShellLayoutMiddleware pending-region bookkeeping", () => {
+    it("clears the pending region when the kernel load throws", async () => {
+        const middleware = createMiddleware();
+        const failure = new Error("entry blew up");
+        middleware.kernel = { loadFynApp: vi.fn().mockRejectedValue(failure) };
+        exposeRegion(middleware, "main");
+
+        await expect(
+            middleware.loadIntoRegion("/fynapp-notes/dist", "main"),
+        ).rejects.toBe(failure);
+
+        expect(middleware.pendingRegionLoad.has("fynapp-notes")).toBe(false);
+    });
+
+    it("clears the pending region when the kernel load returns null", async () => {
+        const middleware = createMiddleware();
+        middleware.kernel = { loadFynApp: vi.fn().mockResolvedValue(null) };
+        exposeRegion(middleware, "main");
+
+        await expect(
+            middleware.loadIntoRegion("/fynapp-notes/dist", "main"),
+        ).resolves.toBeNull();
+
+        expect(middleware.pendingRegionLoad.has("fynapp-notes")).toBe(false);
+    });
+
+    it("does not let a failed load hand its region to a later background app", async () => {
+        const middleware = createMiddleware();
+        middleware.kernel = { loadFynApp: vi.fn().mockResolvedValue(null) };
+        exposeRegion(middleware, "sidebar");
+        exposeRegion(middleware, "main");
+        const render = vi
+            .spyOn(middleware, "renderFynAppIntoRegion")
+            .mockResolvedValue(undefined);
+        vi.spyOn(middleware, "updateLoadedCount").mockImplementation(() => {});
+
+        await middleware.loadIntoRegion("/fynapp-notes/dist", "sidebar");
+
+        // Same FynApp bootstraps on its own afterwards — nothing asked for it now
+        await middleware.manageAppLayout({ name: "fynapp-notes", version: "1.0.0" });
+
+        expect(render).not.toHaveBeenCalled();
+        expect(middleware.regions.get("sidebar")!.fynApp).toBeNull();
+    });
+
+    it("keeps the region a newer concurrent request claimed when the older load fails", async () => {
+        const middleware = createMiddleware();
+        const firstLoad = deferred();
+        const kernelLoad = vi
+            .fn()
+            .mockImplementationOnce(() => firstLoad.promise.then(() => null))
+            .mockResolvedValue(null);
+        middleware.kernel = { loadFynApp: kernelLoad };
+        exposeRegion(middleware, "sidebar");
+        exposeRegion(middleware, "main");
+
+        const stale = middleware.loadIntoRegion("/fynapp-notes/dist", "sidebar");
+        await Promise.resolve();
+
+        // A second request for the same app takes over the pending entry...
+        middleware.pendingRegionLoad.set("fynapp-notes", { region: "main", token: 99 });
+
+        // ...and the first one failing must not delete it
+        firstLoad.resolve();
+        await stale;
+
+        expect(middleware.pendingRegionLoad.get("fynapp-notes")).toEqual({
+            region: "main",
+            token: 99,
+        });
     });
 });

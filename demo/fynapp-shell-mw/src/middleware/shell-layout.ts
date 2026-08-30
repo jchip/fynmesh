@@ -114,7 +114,16 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     ['main', { container: null, fynAppId: null, fynApp: null }],
   ]);
   private selectedRegion: RegionName = 'main'; // Default region for loading
-  private pendingRegionLoad = new Map<string, RegionName>(); // Track which region a FynApp is being loaded into
+  /**
+   * Which region a FynApp is being loaded into, keyed by the id the request was
+   * made under: the URL's dist-directory name until the kernel resolves the
+   * FynApp, its container name after.
+   *
+   * Each entry carries the token of the request that wrote it, so a cleanup can
+   * tell its own entry from one a newer concurrent request has since installed.
+   */
+  private pendingRegionLoad = new Map<string, { region: RegionName; token: number }>();
+  private nextPendingRegionToken = 0;
   /**
    * dist-directory ids of the loadIntoRegion calls currently in flight, counted
    * so concurrent loads of the same app unwind correctly.
@@ -756,6 +765,25 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
   }
 
+  /** Record the region a load is targeting; returns the token identifying this request. */
+  private setPendingRegion(key: string, region: RegionName): number {
+    const token = ++this.nextPendingRegionToken;
+    this.pendingRegionLoad.set(key, { region, token });
+    return token;
+  }
+
+  /**
+   * Drop a pending entry. Given a token, only the entry that token wrote is
+   * dropped, so a failed load cannot cancel the region a newer concurrent
+   * request for the same id has already claimed.
+   */
+  private clearPendingRegion(key: string, token?: number): void {
+    const entry = this.pendingRegionLoad.get(key);
+    if (!entry) return;
+    if (token !== undefined && entry.token !== token) return;
+    this.pendingRegionLoad.delete(key);
+  }
+
   private async loadIntoRegion(fynappUrl: string, region: RegionName): Promise<FynApp | null> {
     if (!this.kernel) {
       console.error("❌ Kernel not available for dynamic loading");
@@ -775,12 +803,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     const fynAppId = fynAppIdMatch ? fynAppIdMatch[1] : fynappUrl;
 
     this.activeRegionLoadIds.set(fynAppId, (this.activeRegionLoadIds.get(fynAppId) ?? 0) + 1);
+    let pendingToken: number | undefined;
+    let rendered = false;
     try {
       console.log(`🔄 Loading FynApp from ${fynappUrl} into region: ${region}`);
 
       if (fynAppIdMatch) {
         // Register the target region BEFORE loading so manageAppLayout knows where to render
-        this.pendingRegionLoad.set(fynAppIdMatch[1], region);
+        pendingToken = this.setPendingRegion(fynAppIdMatch[1], region);
       }
 
       // Update footer status to loading
@@ -809,17 +839,16 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
         if (!currentRegionInfo?.fynApp || currentRegionInfo.fynAppId !== fynApp.name) {
           console.log(`🔧 Manually managing layout for ${fynApp.name} (auto-apply didn't run)`);
-          // Clear the pending load first
-          this.pendingRegionLoad.delete(fynApp.name);
-          // Re-add it for manageAppLayout to pick up
-          this.pendingRegionLoad.set(fynApp.name, region);
+          // (Re-)register under the container name for manageAppLayout to pick up
+          this.setPendingRegion(fynApp.name, region);
           await this.manageAppLayout(fynApp);
         } else {
           console.log(`✓ Layout already managed for ${fynApp.name} via auto-apply`);
           // Clear pending if still set (in case manageAppLayout didn't run)
-          this.pendingRegionLoad.delete(fynApp.name);
+          this.clearPendingRegion(fynApp.name);
         }
         console.log(`✅ Successfully loaded ${fynApp.name} into ${region}`);
+        rendered = true;
         return fynApp;
       } else {
         console.warn(`⚠️ kernel.loadFynApp returned null for ${fynappUrl}`);
@@ -830,6 +859,13 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       console.error(`❌ Failed to load FynApp from ${fynappUrl}:`, (error as Error).message);
       throw error;
     } finally {
+      // A load that never produced a rendered FynApp must not leave its region
+      // reserved: the next app to bootstrap under the same id — a background
+      // provider, or an auto-applied re-load — would claim the region this
+      // failed request asked for.
+      if (!rendered && fynAppIdMatch) {
+        this.clearPendingRegion(fynAppIdMatch[1], pendingToken);
+      }
       const remaining = (this.activeRegionLoadIds.get(fynAppId) ?? 1) - 1;
       if (remaining > 0) {
         this.activeRegionLoadIds.set(fynAppId, remaining);
@@ -965,10 +1001,10 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
   private async manageAppLayout(fynApp: FynApp): Promise<void> {
     // Check if this FynApp is being loaded via loadIntoRegion (has a pending region)
-    const targetRegion = this.pendingRegionLoad.get(fynApp.name);
+    const targetRegion = this.pendingRegionLoad.get(fynApp.name)?.region;
     if (targetRegion) {
       // Clear the pending load - the loadIntoRegion will handle rendering
-      this.pendingRegionLoad.delete(fynApp.name);
+      this.clearPendingRegion(fynApp.name);
       console.debug(`🎨 Managing layout for ${fynApp.name} in ${targetRegion} region (via loadIntoRegion)`);
 
       const regionInfo = this.regions.get(targetRegion);
