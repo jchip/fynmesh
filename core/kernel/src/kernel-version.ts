@@ -2,4 +2,4 @@
 // Run `fyn run gen-version` (or any build) to refresh.
 
 /** The version of `@fynmesh/kernel` this build was produced from. */
-export const KERNEL_VERSION = "1.1.0";
+export const KERNEL_VERSION = "1.1.1";
