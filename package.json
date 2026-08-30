@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
-    "build": "fynpo",
+    "build": "xrun -s release-gate _fynpo",
     "build-prod": "NODE_ENV=production xrun -s build combine-demo _shell-templates",
     "_shell-templates": "cd demo/demo-server && xrun build-templates",
     "clean:demo": "rm -rf demo/*/dist",
@@ -15,7 +15,8 @@
     "_gh-publish": "cd demo/demo-server && xrun gh-publish",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
-    "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git"
+    "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git",
+    "_fynpo": "fynpo"
   },
   "author": "",
   "files": [
