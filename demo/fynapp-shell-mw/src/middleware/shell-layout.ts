@@ -95,6 +95,12 @@ interface RegionInfo {
   fynApp: FynApp | null;
 }
 
+/**
+ * What a dist directory may add to its container name and still be the same
+ * FynApp: a version suffix, as in `fynapp-x1-v1` for container `fynapp-x1`.
+ */
+const VERSIONED_DIST_SUFFIX = /^-v\d+(?:[._-]\d+)*$/;
+
 export class ShellLayoutMiddleware implements FynAppMiddleware {
   public readonly name = "shell-layout";
 
@@ -887,7 +893,14 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
    */
   private isShellInitiated(fynAppName: string): boolean {
     for (const id of this.activeRegionLoadIds.keys()) {
-      if (id === fynAppName || id.startsWith(fynAppName)) return true;
+      if (id === fynAppName) return true;
+      // Only the versioned-dist spelling counts as the same app. A bare prefix
+      // test would also fuse unrelated siblings — an active `fynapp-1-b` load
+      // would make a background `fynapp-1` look shell-initiated and let it take
+      // the region the user asked `fynapp-1-b` for.
+      if (id.startsWith(fynAppName) && VERSIONED_DIST_SUFFIX.test(id.slice(fynAppName.length))) {
+        return true;
+      }
     }
     return false;
   }

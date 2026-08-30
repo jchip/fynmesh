@@ -13,6 +13,7 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     fynappContainers: Map<string, unknown>;
     reactRoots: Map<string, unknown>;
     activeRegionLoadIds: Map<string, number>;
+    isShellInitiated(fynAppName: string): boolean;
     pendingRegionLoad: Map<string, { region: string; token: number }>;
     awaitDeferredProviders(): Promise<void>;
     loadApp(url: string): void;
@@ -129,6 +130,24 @@ describe("ShellLayoutMiddleware background layout classification", () => {
         expect(middleware.loadedFynApps.has(provider.name)).toBe(false);
     });
 
+    it("does not let a prefix-sharing sibling ride in on another app's load", async () => {
+        const middleware = createMiddleware();
+        const background = { name: "fynapp-1", version: "1.0.0" };
+        exposeRegion(middleware, "main");
+        // The user asked for fynapp-1-b; fynapp-1 is a different app entirely
+        middleware.activeRegionLoadIds.set("fynapp-1-b", 1);
+        const render = vi
+            .spyOn(middleware, "renderFynAppIntoRegion")
+            .mockResolvedValue(undefined);
+        vi.spyOn(middleware, "updateLoadedCount").mockImplementation(() => {});
+
+        await middleware.manageAppLayout(background);
+
+        expect(render).not.toHaveBeenCalled();
+        expect(middleware.regions.get("main")!.fynApp).toBeNull();
+        expect(middleware.loadedFynApps.has(background.name)).toBe(false);
+    });
+
     it("keeps a versioned dist load shell-initiated when its container name drops the suffix", async () => {
         const middleware = createMiddleware();
         const provider = { name: "fynapp-x1", version: "1.0.0" };
@@ -144,6 +163,17 @@ describe("ShellLayoutMiddleware background layout classification", () => {
         expect(render).toHaveBeenCalledWith(provider, "main");
         expect(middleware.regions.get("main")!.fynApp).toBe(provider);
         expect(middleware.loadedFynApps.get(provider.name)).toBe(provider);
+    });
+
+    it("treats only a version suffix as the same app", () => {
+        const middleware = createMiddleware();
+        middleware.activeRegionLoadIds.set("fynapp-x1-v2", 1);
+
+        expect(middleware.isShellInitiated("fynapp-x1")).toBe(true);
+        expect(middleware.isShellInitiated("fynapp-x1-v2")).toBe(true);
+        expect(middleware.isShellInitiated("fynapp-x1-v")).toBe(false);
+        expect(middleware.isShellInitiated("fynapp-x")).toBe(false);
+        expect(middleware.isShellInitiated("fynapp")).toBe(false);
     });
 });
 
