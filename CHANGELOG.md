@@ -1,3 +1,122 @@
+# 8/30/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.1` `(1.1.0 => 1.1.1)`
+-   `create-fynapp@1.1.1` `(1.1.0 => 1.1.1)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-242: derive the kernel version from package.json instead of hardcoding it [commit](/commit/4957ed57f152dc3fe58119276ac1b92e57c3dfe5)
+
+-   `packages/create-fynapp`
+
+    -   FYM-246: repo-level publish gate for fyn overrides, release-gate test cleanups [commit](/commit/2311c9a43131a3050cc7bd8dcea4d1bca32011c3)
+    -   FYM-245: harden release gate: whole fyn key, framework publish check, portable scan [commit](/commit/a8ff2f912c611e3a21607699208606d6be56807d)
+    -   FYM-244: remove local fyn dependency overrides from published create-fynapp and templates [commit](/commit/7a7cd8a5a3b6492c6391a92b3af634dcb10e7884)
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/demo-server`
+
+    -   FYM-229: match only exact or versioned dist ids for shell-initiated FynApps [commit](/commit/cfba9a5e199378c1303fe9b43812b0e00c2f9454)
+    -   FYM-228: clear stale pending shell region after a failed FynApp load [commit](/commit/272376262c707e710c06c49ad5f4af068aebbb79)
+
+-   `packages/fynapp-1`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-1-b`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-2-react18`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-3-marko`
+
+    -   resync demo fyn-lock.yaml files after verification build [commit](/commit/1628144f97653a2a96793312de72779b67e569e9)
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-4-vue`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-5-preact`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-6-react`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-7-solid`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-8-svelte`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-ag-grid`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-ag-grid-lib`
+
+    -   resync demo fyn-lock.yaml files after verification build [commit](/commit/1628144f97653a2a96793312de72779b67e569e9)
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-design-tokens`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-notes`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-react-18`
+
+    -   resync demo fyn-lock.yaml files after verification build [commit](/commit/1628144f97653a2a96793312de72779b67e569e9)
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-react-middleware`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-229: match only exact or versioned dist ids for shell-initiated FynApps [commit](/commit/cfba9a5e199378c1303fe9b43812b0e00c2f9454)
+    -   FYM-228: clear stale pending shell region after a failed FynApp load [commit](/commit/272376262c707e710c06c49ad5f4af068aebbb79)
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+    -   FYM-242: derive the kernel version from package.json instead of hardcoding it [commit](/commit/4957ed57f152dc3fe58119276ac1b92e57c3dfe5)
+
+-   `packages/fynapp-sidebar`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-test-shared`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/fynapp-x1-v1`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/shared-demo-utils`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `packages/test-nested-deps`
+
+    -   resync fyn-lock.yaml files after the 1.1.0 release [commit](/commit/1e51191b40e391f6a59b4a7ddbd64495f39e1245)
+
+-   `scripts`
+
+    -   FYM-246: repo-level publish gate for fyn overrides, release-gate test cleanups [commit](/commit/2311c9a43131a3050cc7bd8dcea4d1bca32011c3)
+
 # 8/28/2026
 
 ## Packages
