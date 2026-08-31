@@ -14,7 +14,8 @@
   "scripts": {
     "build": "rollup -c",
     "start": "node dist/index.js",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
