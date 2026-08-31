@@ -317,6 +317,27 @@ describe('createFynAppRollupConfig', () => {
     expect(fedPlugin?.shared?.react).toBeUndefined();
   });
 
+  // The react path injects "./main" for you; the vanilla path passes exposes
+  // through verbatim. A non-react config that omits it exposes nothing at all,
+  // which is why templates/vue lists it explicitly (CONTRACT.md section 3).
+  it('should not inject a default ./main expose for non-react frameworks', () => {
+    const bare = createFynAppRollupConfig({ name: 'test-app', framework: 'vue' });
+    const barePlugin = (bare[0].plugins as any[]).find((p: any) => p?.name === 'federation');
+    expect(barePlugin?.exposes).toEqual({});
+
+    const listed = createFynAppRollupConfig({
+      name: 'test-app',
+      framework: 'vue',
+      exposes: { './main': './src/main.ts' },
+      shared: { vue: { singleton: true, semver: '^3.3.4' } },
+    });
+    const listedPlugin = (listed[0].plugins as any[]).find((p: any) => p?.name === 'federation');
+    expect(listedPlugin?.exposes).toEqual({ './main': './src/main.ts' });
+    expect(listedPlugin?.shared).toEqual({ vue: { singleton: true, semver: '^3.3.4' } });
+    // Vue is bundled and provided, so it must not be marked external.
+    expect(listed[0].external).toEqual([]);
+  });
+
   it('should pass entry options to federation plugins', () => {
     const config = createFynAppRollupConfig({
       name: 'test-app',
