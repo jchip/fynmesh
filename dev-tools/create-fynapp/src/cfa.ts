@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { NixClap } from "nix-clap";
+import { NixClap } from "@fynjs/cli-args";
 import path from "path";
 import { pathToFileURL } from "url";
 import fs from "fs";
@@ -36,8 +36,8 @@ export async function main() {
                     argDefault: "true",
                 }
             },
-            exec: (command, commandNodes) =>
-                buildCommand(getCommandOptions(command, commandNodes))
+            exec: (command) =>
+                buildCommand(getCommandOptions(command))
         },
         check: {
             desc: "Build a FynApp and check its federation output (entry + manifest)",
@@ -48,8 +48,8 @@ export async function main() {
                     argDefault: "true",
                 }
             },
-            exec: (command, commandNodes) =>
-                checkCommand(getCommandOptions(command, commandNodes))
+            exec: (command) =>
+                checkCommand(getCommandOptions(command))
         },
         "install-skills": {
             desc: "Install the bundled Claude Code skills into <dir>/.claude/skills",
@@ -61,8 +61,8 @@ export async function main() {
                     argDefault: "false",
                 }
             },
-            exec: (command, commandNodes) =>
-                installSkillsCommand(getCommandOptions(command, commandNodes))
+            exec: (command) =>
+                installSkillsCommand(getCommandOptions(command))
         }
     };
 

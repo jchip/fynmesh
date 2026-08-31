@@ -769,12 +769,12 @@ acorn:
   $: sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==
   _: 'https://registry.npmjs.org/acorn/-/acorn-8.14.1.tgz'
 aveazul:
- _latest: 2.0.0
+ _latest: 2.0.1
  _:
-  ^2.0.0: 2.0.0
- 2.0.0:
-  $: sha512-RCJVYV8BFI6Xmkk/51dWFxPzJfkyrQkgaVb2bzHuCPCqmD/20U9ur8pTyKgKP3dVvv+uXmm3jwiPfk6BCGgqLg==
-  _: 'https://registry.npmjs.org/aveazul/-/aveazul-2.0.0.tgz'
+  ^2.0.0: 2.0.1
+ 2.0.1:
+  $: sha512-iOipmrwx5+v+ovdZB2rIpR75RWlaTxbMtTfeUXuSIWPrpDy+xlQZS2ZTllWx9jOt6x4yKW5KZgOP1bRnlc81EQ==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-2.0.1.tgz'
   dependencies:
    '@jchip/error': ^2.0.0
    xaa: ^3.0.0

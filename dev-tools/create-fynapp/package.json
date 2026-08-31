@@ -61,6 +61,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@fynjs/cli-args": "^1.0.1",
     "@rollup/plugin-alias": "^5.1.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
@@ -70,7 +71,6 @@
     "aveazul": "^2.0.0",
     "esbuild": "^0.25.12",
     "inquirer": "^9.2.10",
-    "nix-clap": "2.0.0",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-esbuild": "^6.2.1",
