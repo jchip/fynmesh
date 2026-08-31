@@ -1,5 +1,5 @@
 import nodeResolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import { defineConfig, type RollupOptions, type Plugin } from "rollup";
 import type { FederationPluginOptions } from "rollup-plugin-federation";
@@ -181,13 +181,12 @@ export function createFynAppRollupConfig(options: FynAppRollupConfigOptions): Ro
     // 7. TypeScript plugin (if configured)
     ...(options.typescript
       ? [
-          newRollupPlugin(typescript)(
+          newRollupPlugin(esbuild)(
             typeof options.typescript === "object"
               ? options.typescript
               : {
                   tsconfig: "./tsconfig.json",
                   sourceMap: true,
-                  inlineSources: true,
                 },
           ),
         ]

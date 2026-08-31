@@ -1,5 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
@@ -49,10 +49,9 @@ console.log('fynapp-1 entry footer');
         },
       }),
       ...setupReactAliasPlugins(),
-      newRollupPlugin(typescript)({
+      newRollupPlugin(esbuild)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
-        inlineSources: true,
       }),
       ...setupMinifyPlugins(),
     ],

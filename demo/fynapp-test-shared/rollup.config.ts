@@ -1,5 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -38,10 +38,9 @@ export default [
           },
         },
       }),
-      newRollupPlugin(typescript)({
+      newRollupPlugin(esbuild)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
-        inlineSources: true,
       }),
     ],
   }),

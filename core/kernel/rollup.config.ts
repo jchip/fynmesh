@@ -1,4 +1,4 @@
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 import terser from "@rollup/plugin-terser";
 import { reservedNames } from "./build/reserved-names.mjs";
 
@@ -12,7 +12,7 @@ export default [
       inlineDynamicImports: true,
     },
     plugins: [
-      typescript({
+      esbuild({
         tsconfig: "./tsconfig.json",
       }),
     ],
@@ -60,7 +60,7 @@ export default [
       ],
     },
     plugins: [
-      typescript({
+      esbuild({
         tsconfig: "./tsconfig.json",
       }),
     ],
@@ -76,7 +76,7 @@ export default [
       },
     ],
     plugins: [
-      typescript({
+      esbuild({
         tsconfig: "./tsconfig.json",
       }),
     ],
@@ -92,7 +92,7 @@ export default [
       },
     ],
     plugins: [
-      typescript({
+      esbuild({
         tsconfig: "./tsconfig.json",
       }),
     ],
