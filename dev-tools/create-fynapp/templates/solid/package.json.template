@@ -1,0 +1,36 @@
+{
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "FynApp micro frontend using Solid",
+  "type": "module",
+  "main": "dist/fynapp-entry.js",
+  "exports": {
+    ".": "./dist/fynapp-entry.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "dev": "rollup -c -w",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.15"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.9",
+    "@babel/preset-env": "^7.22.9",
+    "@fynmesh/kernel": "^1.0.0",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/node": "^20.8.9",
+    "babel-preset-solid": "^1.8.11",
+    "create-fynapp": "^1.0.0",
+    "esbuild": "^0.25.12",
+    "postcss": "^8.5.3",
+    "rollup": "^4.9.1",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-wrap-plugin": "^1.0.0",
+    "typescript": "^5.2.2"
+  }
+}

@@ -1,0 +1,72 @@
+<script>
+  // The FynUnitRuntime handed down from main.ts. Optional so the component can
+  // also be mounted on its own, outside the kernel.
+  export let appName;
+  export let runtime = undefined;
+
+  let count = 0;
+</script>
+
+<div class="fynapp-container">
+  <h2 class="fynapp-title">{appName} - Svelte</h2>
+
+  <div class="fynapp-content">
+    <p>Welcome to your new FynApp!</p>
+
+    <div class="counter-section">
+      <p>Count: <strong>{count}</strong></p>
+      <button class="fynapp-button" on:click={() => (count += 1)}>Increment</button>
+    </div>
+
+    {#if runtime}
+      <div class="runtime-info">
+        <p>
+          <small>Running as: {runtime.fynApp.name} v{runtime.fynApp.version}</small>
+        </p>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .fynapp-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .fynapp-title {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .fynapp-content {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .counter-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .fynapp-button {
+    background: #ff3e00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+  }
+
+  .runtime-info {
+    margin-top: 1rem;
+    color: #666;
+  }
+</style>

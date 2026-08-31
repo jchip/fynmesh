@@ -1,0 +1,46 @@
+import { h } from "preact";
+import { useState } from "preact/hooks";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import "./styles.css";
+
+interface AppProps {
+  appName: string;
+  runtime?: FynUnitRuntime;
+}
+
+// Classic JSX with the `h` pragma (see tsconfig jsxFactory): every import stays
+// a bare "preact" specifier, which is what the federation `shared` entry covers.
+const App = ({ appName, runtime }: AppProps) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div className="fynapp-container">
+      <h2 className="fynapp-title">{appName} - Preact</h2>
+
+      <div className="fynapp-content">
+        <p>Welcome to your new FynApp!</p>
+
+        <div className="counter-section">
+          <p>
+            Count: <strong>{count}</strong>
+          </p>
+          <button className="fynapp-button" onClick={() => setCount((c) => c + 1)}>
+            Increment
+          </button>
+        </div>
+
+        {runtime && (
+          <div className="runtime-info">
+            <p>
+              <small>
+                Running as: {runtime.fynApp.name} v{runtime.fynApp.version}
+              </small>
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;
