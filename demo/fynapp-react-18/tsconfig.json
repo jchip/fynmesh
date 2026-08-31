@@ -17,6 +17,14 @@
     "jsxFactory": "React.createElement",
     "jsxFragmentFactory": "React.Fragment"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "files": [
+    "node_modules/create-fynapp/federation.d.ts"
+  ]
 }

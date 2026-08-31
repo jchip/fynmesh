@@ -27,5 +27,8 @@
   "exclude": [
     "node_modules",
     "dist"
+  ],
+  "files": [
+    "node_modules/create-fynapp/federation.d.ts"
   ]
 }

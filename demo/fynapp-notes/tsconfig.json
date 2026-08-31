@@ -3,7 +3,11 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
     "jsx": "react",
     "strict": true,
     "esModuleInterop": true,
@@ -15,8 +19,18 @@
     "sourceMap": true,
     "outDir": "./dist/types",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "files": [
+    "node_modules/create-fynapp/federation.d.ts"
+  ]
 }

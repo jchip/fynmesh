@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2018",
     "module": "ESNext",
-    "lib": ["ES2018", "DOM"],
+    "lib": [
+      "ES2018",
+      "DOM"
+    ],
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -16,6 +19,14 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-} 
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "files": [
+    "node_modules/create-fynapp/federation.d.ts"
+  ]
+}

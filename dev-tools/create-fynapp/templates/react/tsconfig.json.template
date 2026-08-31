@@ -24,6 +24,7 @@
       "*": ["node_modules/*"]
     }
   },
+  "files": ["node_modules/create-fynapp/federation.d.ts"],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

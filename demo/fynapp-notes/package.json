@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "rm -rf dist && rollup -c",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",

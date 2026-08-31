@@ -28,6 +28,7 @@
   },
   "author": "Joel Chen",
   "files": [
+    "federation.d.ts",
     "LICENSE",
     "dist",
     "lib",
