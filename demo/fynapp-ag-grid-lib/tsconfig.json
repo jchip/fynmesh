@@ -11,7 +11,12 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "esm-ag-grid": [
+        "./node_modules/ag-grid-community"
+      ]
+    }
   },
   "include": [
     "src/**/*"

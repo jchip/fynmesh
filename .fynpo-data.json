@@ -136,6 +136,22 @@
           "path": "demo/fynapp-1"
         },
         "onPkg": {
+          "name": "fynapp-shell-mw",
+          "version": "1.0.0",
+          "path": "demo/fynapp-shell-mw"
+        },
+        "depSection": "dev",
+        "indirectSteps": [
+          "fynapp-1@1.0.0(pkg)"
+        ]
+      },
+      {
+        "fromPkg": {
+          "name": "fynapp-1",
+          "version": "1.0.0",
+          "path": "demo/fynapp-1"
+        },
+        "onPkg": {
           "name": "fynapp-x1",
           "version": "1.0.0",
           "path": "demo/fynapp-x1-v1"
@@ -229,5 +245,5 @@
       }
     ]
   },
-  "__timestamp": 1788156038579
+  "__timestamp": 1788161738255
 }

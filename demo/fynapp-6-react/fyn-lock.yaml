@@ -19,6 +19,7 @@ $pkg:
   esbuild: ^0.25.12
   esm-react: ../../misc/esm-react-19
   esm-react-dom: ../../misc/esm-react-dom-19
+  fynapp-shell-mw: ../fynapp-shell-mw
   postcss: ^8.5.3
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
@@ -1436,6 +1437,18 @@ fynapp-react-lib:
   top: 1
   $: local
   _: ../fynapp-react-19
+fynapp-shell-mw:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../fynapp-shell-mw: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-shell-mw
+  dependencies:
+   '@fynmesh/kernel': ^1.0.0
+   create-fynapp: ^1.0.0
+   rollup-wrap-plugin: ^1.0.0
 generic-names:
  _latest: 4.0.0
  _:

@@ -22,12 +22,17 @@
     "baseUrl": ".",
     "paths": {
       "react": [
-        "./node_modules/esm-react"
+        "./node_modules/@types/react"
       ],
       "@fynmesh/kernel": [
         "./node_modules/@fynmesh/kernel"
+      ],
+      "esm-react": [
+        "./node_modules/@types/react"
       ]
-    }
+    },
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src/**/*",

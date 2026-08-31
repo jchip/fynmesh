@@ -469,9 +469,14 @@ export class ReactContextMiddleware implements FynAppMiddleware {
 
   async apply(callContext: FynAppMiddlewareCallContext): Promise<void> {
     try {
-      // Store ready callback for signaling when shared contexts are created
-      if (callContext.meta.requireReady && !this.readyCallback) {
-        this.readyCallback = callContext.meta.requireReady;
+      // Store ready callback for signaling when shared contexts are created.
+      //
+      // The kernel does not declare (or currently supply) `requireReady` on MiddlewareUseMeta,
+      // so this is read off the meta defensively rather than through the published type - see
+      // FYM-269. Adding it to the kernel type would advertise an API the kernel never sets.
+      const readyHook = (callContext.meta as { requireReady?: () => void }).requireReady;
+      if (readyHook && !this.readyCallback) {
+        this.readyCallback = readyHook;
       }
 
       // Handle different configuration types
@@ -488,7 +493,9 @@ export class ReactContextMiddleware implements FynAppMiddleware {
       }
 
       // Handle primary app with full configuration
-      if (typeof callContext.meta.config === 'object' && callContext.meta.config.contexts) {
+      // config is ConfigT = unknown on the kernel type; this middleware owns its own shape
+      const middlewareConfig = callContext.meta.config as ReactContextMiddlewareConfig | undefined;
+      if (typeof callContext.meta.config === 'object' && middlewareConfig?.contexts) {
         console.log(`${this.name} mw: ${callContext.fynApp.name} is a primary provider, processing full configuration`);
         return;
       }

@@ -56,8 +56,8 @@ export function useSharedCounter(
     syncWithSharedData();
 
     // Set up event listener for changes from other apps
-    const handleCounterChange = (event: CustomEvent) => {
-      const { count, source } = event.detail;
+    const handleCounterChange = (event: Event) => {
+      const { count, source } = (event as CustomEvent).detail;
       if (source !== runtime?.fynApp?.name) {
         setCounter({ count });
         console.debug(
@@ -76,8 +76,9 @@ export function useSharedCounter(
         if (currentEventTarget) {
           currentEventTarget.removeEventListener("counterChanged", handleCounterChange);
         }
-        currentEventTarget = sharedData.eventTarget;
-        currentEventTarget.addEventListener("counterChanged", handleCounterChange);
+        const nextEventTarget: EventTarget = sharedData.eventTarget;
+        currentEventTarget = nextEventTarget;
+        nextEventTarget.addEventListener("counterChanged", handleCounterChange);
         syncWithSharedData();
         console.debug(`\u2705 ${runtime?.fynApp?.name}: Subscribed to counter events`);
       }

@@ -98,7 +98,9 @@ class MiddlewareUser implements FynUnit {
 
     // Render the React component with middleware config
     if (!this.root) {
-      this.root = ReactDOMClient.createRoot ? ReactDOMClient.createRoot(targetDiv) : ReactDOMClient.default.createRoot(targetDiv);
+      this.root = ReactDOMClient.createRoot
+        ? ReactDOMClient.createRoot(targetDiv)
+        : (ReactDOMClient as any).default.createRoot(targetDiv);
     }
 
     const renderApp = () => {
@@ -107,7 +109,7 @@ class MiddlewareUser implements FynUnit {
       this.root!.render(
         React.createElement(App, {
           appName: runtime.fynApp.name,
-          components: this.componentLibrary,
+          components: this.componentLibrary!,
           middlewareConfig: config,
           runtime, // Pass runtime for middleware context access
         })

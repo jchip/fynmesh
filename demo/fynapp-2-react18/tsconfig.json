@@ -19,7 +19,29 @@
       "DOM",
       "DOM.Iterable",
       "ESNext"
-    ]
+    ],
+    "paths": {
+      "fynapp-shell-mw/middleware/*": [
+        "./node_modules/fynapp-shell-mw/src/middleware/*"
+      ],
+      "react": [
+        "./node_modules/@types/react"
+      ],
+      "react-dom/client": [
+        "./node_modules/@types/react-dom/client.d.ts"
+      ],
+      "react-dom": [
+        "./node_modules/@types/react-dom"
+      ],
+      "esm-react": [
+        "./node_modules/@types/react"
+      ],
+      "esm-react-dom": [
+        "./node_modules/@types/react-dom/client.d.ts"
+      ]
+    },
+    "rewriteRelativeImportExtensions": true,
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src/**/*",

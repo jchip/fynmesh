@@ -11,7 +11,8 @@
   "scripts": {
     "build": "rollup -c --failAfterWarnings",
     "dev": "rollup -c -w",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "check": "tsc --noEmit"
   },
   "keywords": [
     "fynmesh",
