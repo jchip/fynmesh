@@ -12,7 +12,7 @@ $pkg:
   '@rollup/plugin-virtual': ^3.0.2
   aveazul: ^1.0.1
   inquirer: ^9.2.10
-  nix-clap: ^2.0.0
+  nix-clap: 2.0.0
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
@@ -466,10 +466,10 @@ $pkg:
   $: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
   _: 'https://registry.npmjs.org/@eslint/js/-/js-8.57.1.tgz'
 '@fynmesh/kernel':
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.1-fynlocal_h
  _:
-  ../../core/kernel: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../core/kernel: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   top: 1
   $: local
   _: ../../core/kernel
@@ -2371,10 +2371,10 @@ fb-watchman:
   dependencies:
    bser: 2.1.1
 federation-js:
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.1-fynlocal_h
  _:
-  ../../rollup-federation/federation-js: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../rollup-federation/federation-js: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js
 file-entry-cache:
@@ -3720,8 +3720,8 @@ natural-compare:
 nix-clap:
  _latest: 1.3.13
  _:
+  2.0.0: 2.0.0
   ^1.3.12: 1.3.13
-  ^2.0.0: 2.0.0
  2.0.0:
   top: 1
   $: sha512-gnXW/VUPTpL8E+y+aTCfmJxiWIGIS4L7OCEVnW+/RQIOMIzsdlSOQcYnfS2RTy1tVCpbOEZJ6V8MIhZKBG61+A==
