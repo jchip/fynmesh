@@ -55,6 +55,20 @@ describe("release gate configuration", () => {
     expect(pkg.devDependencies.typedoc).toBe("^0.28.7");
   });
 
+  // The CLI binds to nix-clap through untyped exec callbacks, so an API change
+  // inside the range is a runtime break with no compile-time signal. 2.4.5
+  // changed exec's second argument from an array of command nodes to a
+  // parse-result object and stopped honoring `defaultCommand`, which broke
+  // every command of both published bins (FYM-247). The monorepo lockfile hid
+  // it: the repo resolved 2.0.0 while a public install of `^2.0.0` resolved
+  // 2.4.5. Pin exactly until the CLI is migrated to the 2.4.x API. Check the
+  // resolved copy too, so a lockfile that drifted fails here rather than only
+  // in a consumer's install.
+  it("pins nix-clap to the exact version the CLI's exec signature binds to", () => {
+    expect(pkg.dependencies["nix-clap"]).toBe("2.0.0");
+    expect(readJson(require.resolve("nix-clap/package.json")).version).toBe("2.0.0");
+  });
+
   it("uses fyn for the global install script", () => {
     expect(pkg.scripts["install-cfa"]).toBe("fyn run build && fyn global add .");
   });
