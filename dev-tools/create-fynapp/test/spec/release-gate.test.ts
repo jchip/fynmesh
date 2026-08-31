@@ -74,18 +74,21 @@ describe("release gate configuration", () => {
     expect(pkg.devDependencies.typedoc).toBe("^0.28.7");
   });
 
-  // The CLI binds to nix-clap through untyped exec callbacks, so an API change
-  // inside the range is a runtime break with no compile-time signal. 2.4.5
-  // changed exec's second argument from an array of command nodes to a
-  // parse-result object and stopped honoring `defaultCommand`, which broke
-  // every command of both published bins (FYM-247). The monorepo lockfile hid
-  // it: the repo resolved 2.0.0 while a public install of `^2.0.0` resolved
-  // 2.4.5. Pin exactly until the CLI is migrated to the 2.4.x API. Check the
-  // resolved copy too, so a lockfile that drifted fails here rather than only
-  // in a consumer's install.
-  it("pins nix-clap to the exact version the CLI's exec signature binds to", () => {
-    expect(pkg.dependencies["nix-clap"]).toBe("2.0.0");
-    expect(readJson(require.resolve("nix-clap/package.json")).version).toBe("2.0.0");
+  // The CLI binds to @fynjs/cli-args through untyped exec callbacks, so an API
+  // change inside the range is a runtime break with no compile-time signal.
+  // cli-args 1.0.0 counted an option's separated value as a command argument
+  // while pre-scanning argv, so `create-fynapp --name x --framework vue` died
+  // with "No command given" and FYM-256 reverted to nix-clap 2.0.0. FJM-137
+  // fixed the pre-scan in 1.0.1, so that is the floor. Check the resolved copy
+  // too, so a lockfile that drifted below it fails here rather than only in a
+  // consumer's install.
+  it("requires the @fynjs/cli-args release whose defaultCommand survives option values", () => {
+    expect(pkg.dependencies["@fynjs/cli-args"]).toBe("^1.0.1");
+    expect(pkg.dependencies["nix-clap"]).toBeUndefined();
+    const resolved = readJson(require.resolve("@fynjs/cli-args/package.json")).version;
+    const [major, minor, patch] = resolved.split(".").map(Number);
+    expect([major, minor, patch]).toEqual([1, 0, expect.any(Number)]);
+    expect(patch).toBeGreaterThanOrEqual(1);
   });
 
   it("uses fyn for the global install script", () => {
