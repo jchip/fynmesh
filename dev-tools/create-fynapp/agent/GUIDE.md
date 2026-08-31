@@ -24,14 +24,16 @@ From the monorepo root:
 ```bash
 create-fynapp --name my-fynapp --framework react
 # options: --name/-n, --framework/-f (react),
-#          --dir/-d (relative to demo/), --skip-install
+#          --dir/-d (defaults to the name), --skip-install
 ```
 
 The release CLI scaffolds React only. Other framework demos and build-helper
 settings are references for manually authored apps; additional static templates
 remain roadmap work.
 
-This scaffolds `demo/my-fynapp/` from static React templates: `package.json`,
+Run from the monorepo root this scaffolds `demo/my-fynapp/`; run anywhere else
+it scaffolds `my-fynapp/` in the current directory. Either way from static
+React templates: `package.json`,
 `tsconfig.json`, `rollup.config.ts` (the `createFynAppRollupConfig` factory
 form), and a starter `src/`. It does **not** reason about your code — it just
 stamps out a known-good skeleton that already conforms to

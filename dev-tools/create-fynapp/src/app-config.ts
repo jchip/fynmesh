@@ -39,18 +39,43 @@ function isInside(parent: string, child: string): boolean {
   );
 }
 
-export function resolveTargetDir(rootDir: string, dir: string): string {
+/**
+ * Where new FynApps go, given the directory the CLI was run from.
+ *
+ * This repository keeps every FynApp under `demo/`, and both the docs and the
+ * agent guides say so, so running `create-fynapp` at the monorepo root has to
+ * keep landing there. A public install has no such convention -- scaffolding
+ * into `./demo/<name>` in someone else's project is the repository's layout
+ * leaking into their tree (FYM-248), so there the base is simply the current
+ * directory.
+ *
+ * The test is fynpo.json beside a `demo` directory rather than the package's
+ * own location, because `fyn global add` and `npx` both put the CLI outside
+ * the repo it is scaffolding into. Requiring both markers keeps an unrelated
+ * fynpo monorepo from silently acquiring a `demo/` convention it never had.
+ *
+ * @param rootDir directory the CLI was invoked from
+ * @returns the directory new FynApps are created under
+ */
+export function resolveBaseDir(rootDir: string): string {
   const demoDir = path.resolve(rootDir, "demo");
-  const targetDir = path.resolve(demoDir, dir);
-  if (!isInside(demoDir, targetDir)) {
-    throw new Error(`Target directory must stay inside ${demoDir}.`);
+  const inFynmeshMonorepo =
+    fs.existsSync(path.resolve(rootDir, "fynpo.json")) && fs.existsSync(demoDir);
+  return inFynmeshMonorepo ? demoDir : path.resolve(rootDir);
+}
+
+export function resolveTargetDir(rootDir: string, dir: string): string {
+  const baseDir = resolveBaseDir(rootDir);
+  const targetDir = path.resolve(baseDir, dir);
+  if (!isInside(baseDir, targetDir)) {
+    throw new Error(`Target directory must stay inside ${baseDir}.`);
   }
 
   if (fs.existsSync(targetDir)) {
-    const realDemoDir = fs.realpathSync(demoDir);
+    const realBaseDir = fs.realpathSync(baseDir);
     const realTargetDir = fs.realpathSync(targetDir);
-    if (!isInside(realDemoDir, realTargetDir)) {
-      throw new Error(`Target directory must stay inside ${demoDir}.`);
+    if (!isInside(realBaseDir, realTargetDir)) {
+      throw new Error(`Target directory must stay inside ${baseDir}.`);
     }
   }
 

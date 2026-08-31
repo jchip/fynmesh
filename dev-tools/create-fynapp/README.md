@@ -2,7 +2,7 @@
 
 `create-fynapp` provides two commands:
 
-- `create-fynapp` creates a React FynApp under a repository's `demo/` directory.
+- `create-fynapp` creates a React FynApp in the current directory.
 - `cfa` builds and checks an existing FynApp or installs the bundled coding-agent skills.
 
 ## Installation
@@ -26,8 +26,9 @@ fyn run build
 
 ## Create a FynApp
 
-Run the command from the FynMesh repository root. The target is always created
-under `demo/`.
+The app is created in the directory you run the command from. At the root of
+the FynMesh monorepo it is created under `demo/` instead, which is where that
+repository keeps its FynApps.
 
 ```bash
 create-fynapp --name my-app --framework react
@@ -40,7 +41,7 @@ Options:
 
 - `--name, -n <string>`: package and federation name.
 - `--framework, -f <string>`: `react`.
-- `--dir, -d <string>`: directory relative to `demo/` (defaults to the name).
+- `--dir, -d <string>`: directory to create (defaults to the name).
 - `--skip-install`: create files without running `fyn install`.
 
 The command creates `package.json`, `tsconfig.json`, `rollup.config.ts`, and
