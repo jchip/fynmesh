@@ -79,34 +79,93 @@ describe("published ESM runtime", () => {
   // this asserts the *scaffolder's* allowlist rejects what it has no template
   // for, rather than asserting some framework is unrunnable. Move this to the
   // next unscaffolded framework whenever templates/svelte lands.
-  it("rejects an unsupported framework before creating its target", () => {
+  // Every framework name is accepted now (FYM-273). A name with a template
+  // scaffolds that framework; anything else scaffolds the generic skeleton.
+  it("scaffolds a templated framework with no agent brief", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-framework-"));
     const targetDir = path.join(tmpRoot, "svelte-app");
 
     try {
-      const result = spawnSync(
-        process.execPath,
-        [
-          path.join(distDir, "create-cli.js"),
-          "--name",
-          "svelte-app",
-          "--framework",
-          "svelte",
-          "--dir",
-          "svelte-app",
-          "--skip-install",
-        ],
-        { cwd: tmpRoot, input: "\n", encoding: "utf8", timeout: 5_000 },
-      );
+      const result = runCreate(tmpRoot, [
+        "--name",
+        "svelte-app",
+        "--framework",
+        "svelte",
+        "--dir",
+        "svelte-app",
+        "--skip-install",
+      ]);
 
       expect(result.error).toBeUndefined();
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain("Unsupported framework: svelte");
-      expect(fs.existsSync(targetDir)).toBe(false);
+      expect(result.status).toBe(0);
+      expect(fs.existsSync(path.join(targetDir, "src/App.svelte"))).toBe(true);
+      // The brief belongs only to the generic scaffold — a real template has
+      // nothing left for an agent to convert.
+      expect(fs.existsSync(path.join(targetDir, "AGENT-TODO.md"))).toBe(false);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
+
+  it("scaffolds an untemplated framework from the generic template, with a brief", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-generic-"));
+    const targetDir = path.join(tmpRoot, "qwik-app");
+
+    try {
+      const result = runCreate(tmpRoot, [
+        "--name",
+        "qwik-app",
+        "--framework",
+        "qwik",
+        "--dir",
+        "qwik-app",
+        "--skip-install",
+      ]);
+
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(0);
+      expect(fs.existsSync(path.join(targetDir, "src/main.ts"))).toBe(true);
+
+      const brief = fs.readFileSync(path.join(targetDir, "AGENT-TODO.md"), "utf8");
+      expect(brief).toContain("Convert qwik-app to qwik");
+
+      // The scaffold has to name the framework the user asked for, not the
+      // template it came from, or the agent's first step is undoing ours.
+      const rollup = fs.readFileSync(path.join(targetDir, "rollup.config.ts"), "utf8");
+      expect(rollup).toContain('framework: "qwik"');
+      expect(rollup).toContain('"./main": "./src/main.ts"');
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  // The framework name is a path segment under templates/, so it is validated
+  // before it is joined -- otherwise `--framework ../..` reads outside them.
+  it.each(["../escape", "_generic", "Vue!"])(
+    "rejects the invalid framework name %s before creating its target",
+    (framework) => {
+      const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-bad-framework-"));
+      const targetDir = path.join(tmpRoot, "some-app");
+
+      try {
+        const result = runCreate(tmpRoot, [
+          "--name",
+          "some-app",
+          "--framework",
+          framework,
+          "--dir",
+          "some-app",
+          "--skip-install",
+        ]);
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain("Framework must start with a letter");
+        expect(fs.existsSync(targetDir)).toBe(false);
+      } finally {
+        fs.rmSync(tmpRoot, { recursive: true, force: true });
+      }
+    },
+  );
 
   it("rejects an invalid direct app name before writing files", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-name-"));

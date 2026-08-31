@@ -23,21 +23,25 @@ From the monorepo root:
 
 ```bash
 create-fynapp --name my-fynapp --framework react
-# options: --name/-n, --framework/-f (react | vue),
+# options: --name/-n, --framework/-f (any framework name; templates:
+#            react | react18 | preact | vue | solid | svelte | marko | vanilla),
 #          --dir/-d (defaults to the name), --skip-install
 ```
 
-The release CLI scaffolds React and Vue. Other framework demos and build-helper
-settings are references for manually authored apps; additional static templates
-remain roadmap work.
+**`--framework` accepts any name.** Eight frameworks ship a hand-authored
+template and scaffold a complete working app. Any other name — `qwik`, `lit`,
+`alpine`, whatever you can work with — scaffolds the framework-generic skeleton
+instead, plus an `AGENT-TODO.md` in the new app. That scaffold is not a stub:
+it installs, builds and passes `cfa check` before you touch it, so you convert
+it one step at a time from a green baseline. Converting it is a **modify** task
+(§2) and `AGENT-TODO.md` is its checklist.
 
 Run from the monorepo root this scaffolds `demo/my-fynapp/`; run anywhere else
 it scaffolds `my-fynapp/` in the current directory. Either way from static
-templates for the chosen framework: `package.json`,
-`tsconfig.json`, `rollup.config.ts` (the `createFynAppRollupConfig` factory
-form), and a starter `src/`. It does **not** reason about your code — it just
-stamps out a known-good skeleton that already conforms to
-[`CONTRACT.md`](./CONTRACT.md).
+templates: `package.json`, `tsconfig.json`, `rollup.config.ts` (the
+`createFynAppRollupConfig` factory form), and a starter `src/`. It does **not**
+reason about your code — it just stamps out a known-good skeleton that already
+conforms to [`CONTRACT.md`](./CONTRACT.md).
 
 ### Register the new app in the demo server
 

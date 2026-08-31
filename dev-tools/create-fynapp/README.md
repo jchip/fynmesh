@@ -34,14 +34,17 @@ repository keeps its FynApps.
 create-fynapp --name my-app --framework react
 ```
 
-The release scaffold supports React and Vue. Other framework demos and
-low-level build configuration exist in FynMesh, but their generator templates
-are roadmap work.
+`--framework` takes **any** framework name. Eight ship a complete template —
+`react`, `react18`, `preact`, `vue`, `solid`, `svelte`, `marko`, `vanilla` —
+and scaffold a working app for it. Any other name (`qwik`, `lit`, `alpine`, …)
+scaffolds the framework-generic skeleton: it installs, builds and passes
+`cfa check` as it stands, and comes with an `AGENT-TODO.md` checklist for the
+coding agent that converts it. Nothing is rejected for being unfamiliar.
 
 Options:
 
 - `--name, -n <string>`: package and federation name.
-- `--framework, -f <string>`: `react` or `vue`.
+- `--framework, -f <string>`: any framework name; the eight above have templates.
 - `--dir, -d <string>`: directory to create (defaults to the name).
 - `--skip-install`: create files without running `fyn install`.
 

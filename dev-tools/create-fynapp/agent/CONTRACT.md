@@ -9,7 +9,10 @@ conform to this contract and then run `cfa check` (see §8).
 
 > Scope note: creating a *new* FynApp is a static, mechanical operation — run the
 > `create-fynapp` CLI (see `GUIDE.md`). This document is for *modifying* an
-> existing app, which requires understanding the code.
+> existing app, which requires understanding the code. `--framework` accepts any
+> name: one without a template scaffolds a generic skeleton that already
+> conforms to this contract, plus an `AGENT-TODO.md`. Finishing that conversion
+> is a *modify* task, so it is governed by this document.
 
 ---
 

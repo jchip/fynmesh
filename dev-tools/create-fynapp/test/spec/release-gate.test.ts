@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { AppConfig, BuildOptions, GeneratorConfig } from "../../src/index";
-import { supportedFrameworks } from "../../src/frameworks";
+import { genericTemplateName, templatedFrameworks } from "../../src/frameworks";
 
 type _PublicConfigTypes = AppConfig | BuildOptions | GeneratorConfig;
 
@@ -111,10 +111,11 @@ describe("release gate configuration", () => {
   // So every framework we claim to support must have its template directory
   // published -- otherwise the npm tarball can't scaffold it even though this
   // gate validated the working-tree copy.
-  it("publishes a template directory for every supported framework", () => {
-    for (const framework of supportedFrameworks) {
+  it("publishes a template directory for every templated framework", () => {
+    for (const framework of templatedFrameworks) {
       expect(pkg.files).toContain(`templates/${framework}`);
     }
+    expect(pkg.files).toContain(`templates/${genericTemplateName}`);
   });
 
   it("finds scaffold templates to gate", () => {
