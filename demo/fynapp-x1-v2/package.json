@@ -23,7 +23,7 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.8.9",
     "@types/react": "^19.1.4",
-    "aveazul": "^1.0.1",
+    "aveazul": "^2.0.0",
     "create-fynapp": "^1.0.0",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",

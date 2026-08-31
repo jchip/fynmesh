@@ -1,6 +1,12 @@
-import { load, exec } from "@xarc/run";
+import xrun from "@fynjs/run";
 import * as fs from "node:fs";
 import * as path from "node:path";
+
+//
+// @fynjs/run exports the xrun instance as the default only, so its task helpers
+// are destructured off it rather than imported by name.
+//
+const { load, exec } = xrun;
 
 /**
  * Explicit combine groups, by demo app directory.

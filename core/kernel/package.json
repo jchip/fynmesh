@@ -43,13 +43,13 @@
     "directory": "core/kernel"
   },
   "devDependencies": {
+    "@fynjs/run": "^1.0.0",
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/node": "^24.0.10",
     "@vitest/coverage-v8": "^3.2.4",
-    "@xarc/run": "^2.1.2",
     "jsdom": "^25.0.1",
     "prettier": "^3.6.2",
     "rollup": "^4.44.2",
