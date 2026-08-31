@@ -75,9 +75,13 @@ describe("published ESM runtime", () => {
     }
   });
 
+  // svelte is deliberate: demo/fynapp-8-svelte proves the platform runs it, so
+  // this asserts the *scaffolder's* allowlist rejects what it has no template
+  // for, rather than asserting some framework is unrunnable. Move this to the
+  // next unscaffolded framework whenever templates/svelte lands.
   it("rejects an unsupported framework before creating its target", () => {
     const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-framework-"));
-    const targetDir = path.join(tmpRoot, "vue-app");
+    const targetDir = path.join(tmpRoot, "svelte-app");
 
     try {
       const result = spawnSync(
@@ -85,11 +89,11 @@ describe("published ESM runtime", () => {
         [
           path.join(distDir, "create-cli.js"),
           "--name",
-          "vue-app",
+          "svelte-app",
           "--framework",
-          "vue",
+          "svelte",
           "--dir",
-          "vue-app",
+          "svelte-app",
           "--skip-install",
         ],
         { cwd: tmpRoot, input: "\n", encoding: "utf8", timeout: 5_000 },
@@ -97,7 +101,7 @@ describe("published ESM runtime", () => {
 
       expect(result.error).toBeUndefined();
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain("Unsupported framework: vue");
+      expect(result.stderr).toContain("Unsupported framework: svelte");
       expect(fs.existsSync(targetDir)).toBe(false);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
@@ -245,6 +249,51 @@ describe("published ESM runtime", () => {
         rootDir: tmpRoot,
       });
       expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("scaffolds a complete vue app", () => {
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cfa-vue-gen-"));
+    const targetDir = path.join(tmpRoot, "demo", "vue-app");
+    try {
+      runBuiltGenerator({
+        name: "vue-app",
+        framework: "vue",
+        targetDir,
+        rootDir: tmpRoot,
+      });
+
+      // Every file rollup needs to build; a template missing any of these is
+      // what made vue unscaffoldable before (FYM-270).
+      for (const file of [
+        "package.json",
+        "rollup.config.ts",
+        "tsconfig.json",
+        "src/main.ts",
+        "src/App.vue",
+        "src/vue-shims.d.ts",
+      ]) {
+        expect(fs.existsSync(path.join(targetDir, file))).toBe(true);
+      }
+
+      const main = fs.readFileSync(path.join(targetDir, "src/main.ts"), "utf-8");
+      expect(main).toContain("class VueAppUnit implements FynUnit");
+      expect(main).toContain('import AppComponent from "./App.vue"');
+
+      // The generator substitutes `{{appName}}`, and Vue's own interpolation is
+      // also `{{ … }}` -- App.vue relies on the spaced form to survive it. Guard
+      // that here rather than discovering it as a blank heading at runtime.
+      const app = fs.readFileSync(path.join(targetDir, "src/App.vue"), "utf-8");
+      expect(app).toContain("{{ appName }}");
+      expect(app).not.toContain("vue-app - Vue");
+
+      // Non-React federation exposes nothing by default, so the config has to
+      // list ./main itself (CONTRACT.md §3).
+      const config = fs.readFileSync(path.join(targetDir, "rollup.config.ts"), "utf-8");
+      expect(config).toContain('framework: "vue"');
+      expect(config).toContain('"./main": "./src/main.ts"');
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
     }

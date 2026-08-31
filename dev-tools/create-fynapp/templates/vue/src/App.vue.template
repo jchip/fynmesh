@@ -1,0 +1,91 @@
+<template>
+  <div class="fynapp-container">
+    <h2 class="fynapp-title">{{ appName }} - Vue {{ vueVersion }}</h2>
+
+    <div class="fynapp-content">
+      <p>Welcome to your new FynApp!</p>
+
+      <div class="counter-section">
+        <p>
+          Count: <strong>{{ count }}</strong>
+        </p>
+        <button class="fynapp-button" @click="count++">Increment</button>
+      </div>
+
+      <div v-if="runtime" class="runtime-info">
+        <p>
+          <small>
+            Running as: {{ runtime.fynApp.name }} v{{ runtime.fynApp.version }}
+          </small>
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { version } from "vue";
+
+export default {
+  name: "App",
+  props: {
+    appName: { type: String, required: true },
+    // The FynUnitRuntime handed down from main.ts. Optional so the component
+    // can also be mounted on its own, outside the kernel.
+    runtime: { type: Object, default: undefined },
+  },
+  data() {
+    return { count: 0, vueVersion: version };
+  },
+};
+</script>
+
+<style>
+.fynapp-container {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.fynapp-title {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.fynapp-content {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.counter-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.fynapp-button {
+  background: #42b883;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.fynapp-button:hover {
+  background: #369870;
+}
+
+.runtime-info {
+  margin-top: 1rem;
+  color: #666;
+  text-align: center;
+}
+</style>

@@ -1,0 +1,7 @@
+// TypeScript has no built-in understanding of single-file components; the
+// rollup vue plugin compiles them, so tell tsc what the import yields.
+declare module "*.vue" {
+  import type { DefineComponent } from "vue";
+  const component: DefineComponent<{}, {}, any>;
+  export default component;
+}

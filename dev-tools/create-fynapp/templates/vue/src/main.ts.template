@@ -1,0 +1,113 @@
+import { useMiddleware } from "@fynmesh/kernel";
+import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
+import { createApp, version as vueVersion } from "vue";
+import type { App as VueApp } from "vue";
+import AppComponent from "./App.vue";
+
+/**
+ * FynUnit implementation for {{appName}}
+ *
+ * This handles the FynApp lifecycle:
+ * - initialize: Called first to determine readiness
+ * - execute: Called when middleware is ready, mounts the app
+ * - shutdown: Called when the FynApp is being unloaded
+ */
+class {{appNamePascal}}Unit implements FynUnit {
+  private app?: VueApp<Element>;
+  private target?: HTMLElement;
+
+  /**
+   * Initialize - tell the kernel what mode we're in
+   */
+  initialize(runtime: FynUnitRuntime) {
+    console.debug(`📋 ${runtime.fynApp.name} initialize called`);
+    return {
+      status: "ready" as const,
+      mode: "standalone" as const,
+    };
+  }
+
+  /**
+   * Execute - mount the Vue app
+   *
+   * Vue always renders itself, so this returns "self-managed" in both modes.
+   * The "component-factory" result is React-only — it hands the shell a
+   * factory taking React (CONTRACT.md §5). What changes under a shell is
+   * only where we mount: the shell's renderTarget instead of our own node.
+   */
+  async execute(runtime: FynUnitRuntime) {
+    console.debug(`🚀 ${runtime.fynApp.name} executing`);
+
+    const shellMiddleware = runtime.middlewareContext.get("shell-layout");
+    const target = shellMiddleware?.isShellManaged
+      ? (shellMiddleware.renderTarget as HTMLElement)
+      : this.getOrCreateTarget();
+
+    console.debug(
+      `🚀 ${runtime.fynApp.name} mounting in ${
+        shellMiddleware?.isShellManaged ? "shell-managed" : "standalone"
+      } mode`,
+    );
+
+    // A re-execute (app switch under a shell) can hand back a node we already
+    // populated, so drop the previous mount before claiming it again.
+    this.unmount();
+    target.innerHTML = "";
+
+    this.app = createApp(AppComponent, {
+      appName: runtime.fynApp.name,
+      runtime,
+    });
+    this.app.mount(target);
+    this.target = target;
+
+    return {
+      type: "self-managed",
+      target,
+      cleanup: () => this.shutdown(),
+      metadata: {
+        framework: "vue",
+        version: vueVersion,
+        capabilities: ["self-managed"],
+      },
+    };
+  }
+
+  /**
+   * Shutdown - cleanup when FynApp is unloaded
+   */
+  shutdown(): void {
+    console.debug(`🛑 {{appName}} shutting down`);
+    this.unmount();
+    this.target = undefined;
+  }
+
+  private unmount(): void {
+    this.app?.unmount();
+    this.app = undefined;
+  }
+
+  /** Standalone mode: render into our own node, creating it if needed. */
+  private getOrCreateTarget(): HTMLElement {
+    let element = document.getElementById("{{appName}}");
+    if (!element) {
+      element = document.createElement("div");
+      element.id = "{{appName}}";
+      document.body.appendChild(element);
+    }
+    return element;
+  }
+}
+
+// Export the main entry point wrapped with middleware support
+export const main = useMiddleware(
+  [
+    // Add middleware here, e.g.:
+    // {
+    //   middleware: import('fynapp-design-tokens/middleware/design-tokens/design-tokens',
+    //     { with: { type: "fynapp-middleware" } }),
+    //   config: { theme: "fynmesh-default" },
+    // },
+  ],
+  new {{appNamePascal}}Unit()
+);

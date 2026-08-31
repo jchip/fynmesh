@@ -34,13 +34,14 @@ repository keeps its FynApps.
 create-fynapp --name my-app --framework react
 ```
 
-The release scaffold supports React. Other framework demos and low-level build
-configuration exist in FynMesh, but their generator templates are roadmap work.
+The release scaffold supports React and Vue. Other framework demos and
+low-level build configuration exist in FynMesh, but their generator templates
+are roadmap work.
 
 Options:
 
 - `--name, -n <string>`: package and federation name.
-- `--framework, -f <string>`: `react`.
+- `--framework, -f <string>`: `react` or `vue`.
 - `--dir, -d <string>`: directory to create (defaults to the name).
 - `--skip-install`: create files without running `fyn install`.
 
