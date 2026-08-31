@@ -58,6 +58,24 @@ describe("published package artifact", () => {
     }
   );
 
+  // A scaffolded React app has to render on a page that provides nothing. The
+  // factory's React default marks react external AND consume-only
+  // (`import: false`), which needs a page-level provider -- so the template
+  // overrides both and bundles React itself. Browser-verified 2026-08-31;
+  // without this the app dies with SharedModuleNoProviderError.
+  it.each(["react", "react18"])("makes a %s app provide its own React", (framework) => {
+    const dir = path.join(packageDir, "templates", framework);
+    const rollup = fs.readFileSync(path.join(dir, "rollup.config.ts.template"), "utf-8");
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json.template"), "utf-8"));
+
+    expect(rollup).toContain("external: []");
+    expect(rollup).toMatch(/react: \{ singleton: true/);
+    // React's CJS build needs both of these to survive bundling.
+    expect(rollup).toContain('"process.env.NODE_ENV"');
+    expect(pkg.devDependencies["@rollup/plugin-commonjs"]).toBeDefined();
+    expect(pkg.devDependencies["@rollup/plugin-replace"]).toBeDefined();
+  });
+
   it("pins the framework runtime each template scaffolds against", () => {
     const readTemplatePkg = (framework: string) =>
       JSON.parse(

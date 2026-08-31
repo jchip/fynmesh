@@ -1,6 +1,8 @@
+import commonjs from "@rollup/plugin-commonjs";
+import replace from "@rollup/plugin-replace";
 import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
-import { createFynAppRollupConfig } from "create-fynapp";
+import { createFynAppRollupConfig, env } from "create-fynapp";
 
 // High-level factory form — the preferred FynApp rollup config.
 // See create-fynapp/agent/CONTRACT.md §3 for the full contract, and
@@ -12,6 +14,27 @@ export default createFynAppRollupConfig({
   // "./main" is exposed automatically. Add more exposes here, e.g. a middleware:
   //   exposes: { "./middleware/foo": "./src/middleware/foo.ts" },
   exposes: {},
-  // postcss handles `import "./styles.css"` in components.
-  extraPlugins: [newRollupPlugin(postcss)({ inject: true, extract: false })],
+  // Bundle React into this app so it renders on any page. The factory's React
+  // default instead marks react external and consume-only
+  // (`import: false`), which only works where something else on the page
+  // provides React — as the FynMesh demo does with its esm-react adapters.
+  // These two options together make the app its own provider.
+  external: [],
+  shared: {
+    react: { singleton: true, semver: "^19.0.0" },
+    "react-dom": { singleton: true, semver: "^19.0.0" },
+    "react-dom/client": { singleton: true, semver: "^19.0.0" },
+  },
+  extraPlugins: [
+    // React's CommonJS build branches on process.env.NODE_ENV, which does not
+    // exist in a browser — it has to be substituted at build time.
+    newRollupPlugin(replace)({
+      preventAssignment: true,
+      "process.env.NODE_ENV": JSON.stringify(env),
+    }),
+    // React's entry points are CommonJS, so bundling them needs this.
+    newRollupPlugin(commonjs)({ transformMixedEsModules: true }),
+    // postcss handles `import "./styles.css"` in components.
+    newRollupPlugin(postcss)({ inject: true, extract: false }),
+  ],
 });
