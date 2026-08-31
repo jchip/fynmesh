@@ -32,6 +32,7 @@ import noEmit from "rollup-plugin-no-emit";
 import alias from "@rollup/plugin-alias";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import terser from "@rollup/plugin-terser";
+import esbuild from "rollup-plugin-esbuild";
 import federation from "rollup-plugin-federation";
 
 // Debug logging - enabled via DEBUG=create-fynapp or DEBUG=*
@@ -103,6 +104,53 @@ export function setupFynAppOutputConfig(
       sourcemap: sourceMap,
     },
   };
+}
+
+/**
+ * esbuild options every FynApp build needs, whatever else it configures.
+ *
+ * A FynApp declares its middleware as `import("pkg/middleware/x/x", { with: {
+ * type: "fynapp-middleware" } })`. Those attributes are the whole mechanism:
+ * `rollup-plugin-federation` reads them in `resolveDynamicImport` and rewrites
+ * the import into an id string the kernel resolves, and `create-fynapp` reads
+ * them again to write `import-exposed` into the manifest.
+ *
+ * esbuild drops import attributes for every target below `esnext`, silently and
+ * without a warning. What reaches rollup is then an ordinary dynamic import, so
+ * the plugin never sees a middleware declaration, the app ships a real `import()`
+ * that resolves to a Promise, and the kernel -- which expects an id string --
+ * discards the entry. The FynUnit's `execute` is never called and the app
+ * renders nothing, with no error anywhere (FYM-283).
+ *
+ * `supported` overrides that one feature without raising the target, so the
+ * output syntax stays whatever the app's tsconfig asked for.
+ */
+export const fynappEsbuildSupported = {
+  "import-attributes": true,
+} as const;
+
+/**
+ * Setup the TypeScript/JSX transform plugin for a FynApp.
+ *
+ * Use this rather than configuring `rollup-plugin-esbuild` directly: it carries
+ * `fynappEsbuildSupported`, without which the app's middleware declarations are
+ * silently stripped before rollup ever sees them.
+ *
+ * @param options - esbuild plugin options, merged over the defaults
+ * @returns Rollup plugins for the TypeScript transform.
+ */
+export function setupTypeScriptPlugins(options: Record<string, any> = {}) {
+  return [
+    newRollupPlugin(esbuild)({
+      tsconfig: "./tsconfig.json",
+      sourceMap: true,
+      ...options,
+      supported: {
+        ...fynappEsbuildSupported,
+        ...options.supported,
+      },
+    }),
+  ];
 }
 
 /**

@@ -434,6 +434,45 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
 
 
   /**
+   * Builds the error for a middleware declaration the kernel cannot read.
+   *
+   * This used to be a `console.debug` and a `continue`. The meta was dropped,
+   * `callMiddlewares` found no contexts and returned "ready" without ever
+   * calling the unit's `execute`, and bootstrap reported success -- so a FynApp
+   * that rendered nothing looked exactly like one that had rendered. The build
+   * defect behind it (esbuild stripping the `fynapp-middleware` import
+   * attributes) survived that way through several releases (FYM-283).
+   *
+   * A declaration whose *shape* the kernel cannot read is always a build or
+   * authoring defect, never a runtime condition to wait out, so it throws. A
+   * readable declaration naming middleware that has not registered yet is a
+   * different case and stays non-fatal.
+   *
+   * @param fynApp - The FynApp whose declaration this is
+   * @param meta - The unusable declaration
+   * @returns The error to throw
+   */
+  const unusableMiddlewareMeta = (fynApp: FynApp, meta: unknown) => {
+    const shape =
+      meta && typeof meta === "object"
+        ? Object.entries(meta as Record<string, unknown>)
+            .map(([k, v]) => `${k}: ${v === null ? "null" : typeof v}`)
+            .join(", ")
+        : typeof meta;
+
+    return new MiddlewareError(
+      KernelErrorCode.MIDDLEWARE_NOT_FOUND,
+      `${fynApp.name} declared a middleware the kernel cannot read: {${shape}}. ` +
+        `\`mw\` must be the id string that rollup-plugin-federation writes for an ` +
+        `import tagged \`with { type: "fynapp-middleware" }\`. Getting a Promise ` +
+        `here means those import attributes were stripped before the plugin saw ` +
+        `them - check that the build's TypeScript transform preserves them ` +
+        `(create-fynapp's setupTypeScriptPlugins does).`,
+      { fynAppName: fynApp.name }
+    );
+  };
+
+  /**
    * Use middleware on FynUnit
    */
   const useMiddlewareOnFynUnit = async (
@@ -510,15 +549,35 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
             status: "",
           };
         } else {
-          console.debug("❌ Object format missing both middleware and info properties:", meta);
+          throw unusableMiddlewareMeta(fynApp, meta);
         }
+      } else {
+        // neither the id string nor an object - nothing here to read
+        throw unusableMiddlewareMeta(fynApp, meta);
       }
 
       if (cc) {
         ccs.push(cc);
       } else {
-        console.debug("❌ Unrecognized middleware meta format:", meta);
+        /*
+         * The shape was readable but named middleware that is not registered.
+         * That can be a legitimate wait, so it is not fatal - but it is not
+         * something to whisper either: with no context the unit's `execute` is
+         * never reached, and the app renders nothing.
+         */
+        console.error(
+          `\u26A0\uFE0F ${fynApp.name}: no middleware resolved for declaration`,
+          meta,
+          "- this FynApp will not execute unless another declaration resolves"
+        );
       }
+    }
+
+    if (fynUnit.__middlewareMeta.length > 0 && ccs.length === 0) {
+      console.error(
+        `\u274C ${fynApp.name} declared ${fynUnit.__middlewareMeta.length} middleware(s)` +
+          ` and resolved none, so its execute will not run and it will render nothing`
+      );
     }
 
     console.debug("✅ Created", ccs.length, "middleware call contexts");

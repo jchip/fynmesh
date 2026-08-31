@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 // import commonjs from "@rollup/plugin-commonjs";
-import esbuild from "rollup-plugin-esbuild";
 import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
@@ -13,6 +12,7 @@ import {
   setupMinifyPlugins,
   setupReactAliasPlugins,
   setupReactFederationPlugins,
+  setupTypeScriptPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -45,10 +45,7 @@ export default [
         shared: {},
         debugging: true,
       }),
-      newRollupPlugin(esbuild)({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-      }),
+      ...setupTypeScriptPlugins(),
       ...setupReactAliasPlugins(),
       ...setupMinifyPlugins(),
     ],

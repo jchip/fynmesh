@@ -1,6 +1,5 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 // import commonjs from "@rollup/plugin-commonjs";
-import esbuild from "rollup-plugin-esbuild";
 import replace from "@rollup/plugin-replace";
 
 import { newRollupPlugin } from "rollup-wrap-plugin";
@@ -10,6 +9,7 @@ import {
   fynappEntryFilename,
   setupMinifyPlugins,
   setupFederationPlugins,
+  setupTypeScriptPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -34,10 +34,7 @@ export default [
         "process.env.NODE_ENV": JSON.stringify(env),
       }),
       // commonjs({ transformMixedEsModules: true }),
-      newRollupPlugin(esbuild)({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-      }),
+      ...setupTypeScriptPlugins(),
       ...setupFederationPlugins({
         name: "fynapp-react-lib",
         exposes: {},
