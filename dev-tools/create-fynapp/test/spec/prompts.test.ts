@@ -1,7 +1,7 @@
-jest.mock("inquirer", () => ({
+vi.mock("inquirer", () => ({
   __esModule: true,
   default: {
-    prompt: jest.fn().mockResolvedValue({ components: [] }),
+    prompt: vi.fn().mockResolvedValue({ components: [] }),
   },
 }));
 

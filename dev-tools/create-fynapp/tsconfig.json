@@ -14,7 +14,7 @@
     "declaration": true,
     "types": [
       "node",
-      "jest"
+      "vitest/globals"
     ],
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,

@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { EventEmitter } from "node:events";
 import { spawn } from "node:child_process";
 import { runFynCommand } from "../../src/run-fyn";
 
-jest.mock("node:child_process", () => ({ spawn: jest.fn() }));
+vi.mock("node:child_process", () => ({ spawn: vi.fn() }));
 
 describe("runFynCommand", () => {
   it("spawns fyn with inherited stdio and the supplied environment", async () => {
     const child = new EventEmitter();
-    (spawn as jest.Mock).mockReturnValue(child);
+    (spawn as Mock).mockReturnValue(child);
 
     const result = runFynCommand("/app", ["run", "build"], { NODE_ENV: "production" });
     child.emit("close", 0);
@@ -22,7 +23,7 @@ describe("runFynCommand", () => {
 
   it("rejects a nonzero fyn exit", async () => {
     const child = new EventEmitter();
-    (spawn as jest.Mock).mockReturnValue(child);
+    (spawn as Mock).mockReturnValue(child);
 
     const result = runFynCommand("/app", ["install"]);
     child.emit("close", 2);

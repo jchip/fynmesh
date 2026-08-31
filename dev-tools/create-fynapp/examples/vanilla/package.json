@@ -1,6 +1,9 @@
 {
   "name": "example-vanilla",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Minimal framework-agnostic FynApp (no React)",
   "type": "module",
   "main": "dist/index.js",

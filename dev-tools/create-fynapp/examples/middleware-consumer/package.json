@@ -1,6 +1,9 @@
 {
   "name": "example-middleware-consumer",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "React FynApp that consumes the design-tokens middleware",
   "type": "module",
   "main": "dist/index.js",

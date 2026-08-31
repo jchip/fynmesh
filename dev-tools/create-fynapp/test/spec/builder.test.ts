@@ -1,11 +1,12 @@
+import type { Mock } from "vitest";
 import { buildFynApp } from "../../src/builder";
 import { runFynCommand } from "../../src/run-fyn";
 
-jest.mock("../../src/run-fyn", () => ({ runFynCommand: jest.fn() }));
+vi.mock("../../src/run-fyn", () => ({ runFynCommand: vi.fn() }));
 
 describe("buildFynApp", () => {
   beforeEach(() => {
-    (runFynCommand as jest.Mock).mockResolvedValue(undefined);
+    (runFynCommand as Mock).mockResolvedValue(undefined);
   });
 
   it("runs the app build through fyn with production environment", async () => {

@@ -7,6 +7,9 @@
   "homepage": "",
   "type": "module",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "rm -rf dist && rollup -c"
   },

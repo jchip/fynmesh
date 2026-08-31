@@ -1,5 +1,5 @@
 // Mock the index module to avoid loading CLI dependencies (inquirer, etc.)
-jest.mock('../../src/index', () => {
+vi.mock('../../src/index', () => {
   const env = process.env.NODE_ENV || 'development';
   const isProduction = env === 'production';
   return {
@@ -29,22 +29,22 @@ jest.mock('../../src/index', () => {
 });
 
 // Mock rollup-wrap-plugin
-jest.mock('rollup-wrap-plugin', () => ({
+vi.mock('rollup-wrap-plugin', () => ({
   newRollupPlugin: (pluginFn: any) => (...args: any[]) => pluginFn(...args),
 }));
 
 // Mock rollup plugins
-jest.mock('@rollup/plugin-node-resolve', () => ({
+vi.mock('@rollup/plugin-node-resolve', () => ({
   __esModule: true,
   default: (config: any) => ({ name: 'node-resolve', ...config }),
 }));
 
-jest.mock('@rollup/plugin-typescript', () => ({
+vi.mock('@rollup/plugin-typescript', () => ({
   __esModule: true,
   default: (config: any) => ({ name: 'typescript', ...config }),
 }));
 
-jest.mock('rollup', () => ({
+vi.mock('rollup', () => ({
   defineConfig: (config: any) => config,
 }));
 

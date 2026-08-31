@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-test-shared",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Test FynApp for shared module detection - consume-only with no provider",
   "type": "module",
   "main": "dist/index.js",

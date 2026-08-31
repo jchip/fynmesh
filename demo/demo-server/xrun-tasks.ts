@@ -1,6 +1,5 @@
-import { loadTasks } from "@xarc/module-dev";
+import xrun from "@fynjs/run";
 
-const xrun = loadTasks();
 const { load, exec, serial } = xrun;
 
 load({

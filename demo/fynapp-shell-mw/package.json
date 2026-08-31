@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-shell-mw",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "FynMesh Shell Middleware Provider - Dynamic FynApp loading and layout management",
   "type": "module",
   "main": "dist/fynapp-entry.js",

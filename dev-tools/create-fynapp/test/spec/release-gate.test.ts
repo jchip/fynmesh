@@ -45,10 +45,29 @@ describe("release gate configuration", () => {
     expect(fs.existsSync(path.join(packageDir, "xrun-tasks.ts"))).toBe(false);
   });
 
-  it("enables ESLint in the prepublish check", () => {
-    expect(pkg["@xarc/module-dev"].features).toContain("eslint");
-    expect(pkg.scripts.prepublishOnly).toContain("xarc/check");
-    expect(fs.existsSync(path.join(packageDir, ".eslintrc.cjs"))).toBe(true);
+  // FYM-262 dropped @xarc/module-dev and eslint here, following what fynjs did
+  // across its own packages. module-dev also carried a second @xarc/run, which
+  // fought the @fynjs/run the rest of the repo now runs on (FYM-255), so this
+  // asserts it stays gone rather than merely absent by accident.
+  it("carries no @xarc/module-dev or eslint remnants", () => {
+    expect(pkg["@xarc/module-dev"]).toBeUndefined();
+    expect(pkg.devDependencies["@xarc/module-dev"]).toBeUndefined();
+    expect(pkg.devDependencies.eslint).toBeUndefined();
+    expect(pkg.devDependencies["@typescript-eslint/eslint-plugin"]).toBeUndefined();
+    expect(pkg.devDependencies["@typescript-eslint/parser"]).toBeUndefined();
+    expect(fs.existsSync(path.join(packageDir, ".eslintrc.cjs"))).toBe(false);
+    expect(pkg.scripts.prepublishOnly).not.toContain("xarc/");
+  });
+
+  // The suite moved from jest to vitest with the module-dev drop, so nothing
+  // should still reach for the jest toolchain.
+  it("runs its tests on vitest, not jest", () => {
+    expect(pkg.scripts.test).toBe("vitest run");
+    expect(pkg.jest).toBeUndefined();
+    expect(pkg.devDependencies.jest).toBeUndefined();
+    expect(pkg.devDependencies["ts-jest"]).toBeUndefined();
+    expect(pkg.devDependencies["@types/jest"]).toBeUndefined();
+    expect(fs.existsSync(path.join(packageDir, "vitest.config.ts"))).toBe(true);
   });
 
   it("uses a TypeDoc release compatible with the resolved TypeScript", () => {

@@ -7,18 +7,19 @@
   "type": "module",
   "homepage": "",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "compile": "tsc",
     "build:templates": "xrun build-templates",
-    "gh-publish": "xrun gh-publish",
     "build": "xrun build:templates compile",
     "start": "xrun build:templates && tsx src/dev-proxy.ts",
     "dev": "xrun build:templates && tsc -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "xrun --serial [[build, docs], xarc/check]",
-    "docs": "xrun xarc/docs"
+    "docs": "typedoc --out docs src"
   },
   "author": "",
   "files": [
@@ -36,7 +37,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@jchip/redbird": "^1.4.0",
     "@types/node": "^20.8.9",
-    "@xarc/module-dev": "^5.0.0",
+    "@fynjs/run": "^1.0.0",
     "chalk": "^6.0.0",
     "chalker": "^2.0.0",
     "federation-js": "^1.0.0",
@@ -65,12 +66,5 @@
   },
   "prettier": {
     "printWidth": 100
-  },
-  "@xarc/module-dev": {
-    "features": [
-      "prettier",
-      "typedoc",
-      "typescript"
-    ]
   }
 }

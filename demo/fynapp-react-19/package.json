@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-react-lib",
   "version": "19.2.8",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "FynApp that provides React 19 Library",
   "type": "module",
   "scripts": {

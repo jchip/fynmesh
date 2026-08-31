@@ -3,7 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-jest.mock("../../src/index", () => ({ fynappEntryFilename: "fynapp-entry.js" }));
+vi.mock("../../src/index", () => ({ fynappEntryFilename: "fynapp-entry.js" }));
 
 import { checkFynApp } from "../../src/check-fynapp";
 

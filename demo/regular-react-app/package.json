@@ -4,8 +4,12 @@
   "version": "1.0.0",
   "description": "A regular React app using React 19 with TypeScript",
   "main": "dist/index.js",
+  "type": "module",
   "homepage": "",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "dev": "rollup -c -w",
     "build": "rm -rf dist && rollup -c",
