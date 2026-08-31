@@ -1,0 +1,17 @@
+import postcss from "rollup-plugin-postcss";
+import { newRollupPlugin } from "rollup-wrap-plugin";
+import { createFynAppRollupConfig } from "create-fynapp";
+
+// High-level factory form — the preferred FynApp rollup config.
+// See create-fynapp/agent/CONTRACT.md §3 for the full contract, and
+// createFynAppRollupConfig options (framework, exposes, extraPlugins, …).
+export default createFynAppRollupConfig({
+  name: "{{appName}}",
+  framework: "react18",
+  typescript: true,
+  // "react18" is a React framework, so "./main" is exposed automatically. Add more exposes here, e.g. a middleware:
+  //   exposes: { "./middleware/foo": "./src/middleware/foo.ts" },
+  exposes: {},
+  // postcss handles `import "./styles.css"` in components.
+  extraPlugins: [newRollupPlugin(postcss)({ inject: true, extract: false })],
+});

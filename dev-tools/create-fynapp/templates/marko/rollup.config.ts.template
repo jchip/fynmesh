@@ -1,0 +1,35 @@
+import markoPlugin from "@marko/rollup";
+import commonjs from "@rollup/plugin-commonjs";
+import { newRollupPlugin } from "rollup-wrap-plugin";
+import { createFynAppRollupConfig } from "create-fynapp";
+
+// High-level factory form — the preferred FynApp rollup config.
+// See create-fynapp/agent/CONTRACT.md §3 for the full contract, and
+// createFynAppRollupConfig options (framework, exposes, extraPlugins, …).
+export default createFynAppRollupConfig({
+  name: "{{appName}}",
+  framework: "marko",
+  typescript: true,
+  // Only "react"/"react18" auto-expose "./main"; every other framework has to
+  // list it here (CONTRACT.md §3).
+  exposes: {
+    "./main": "./src/main.ts",
+  },
+  shared: {
+    marko: { singleton: true, semver: "^5.37.31" },
+  },
+  // resolve .marko without the extension, e.g. `import App from "./App"`.
+  resolve: {
+    browser: true,
+    extensions: [".mjs", ".js", ".json", ".node", ".ts", ".marko"],
+  },
+  extraPlugins: [
+    // Marko's browser-side template compiler.
+    newRollupPlugin(markoPlugin.browser)(),
+    // Marko's runtime still ships CommonJS, so it has to be converted.
+    newRollupPlugin(commonjs)({
+      transformMixedEsModules: true,
+      extensions: [".js", ".marko"],
+    }),
+  ],
+});

@@ -1,0 +1,35 @@
+import svelte from "rollup-plugin-svelte";
+import postcss from "rollup-plugin-postcss";
+import { newRollupPlugin } from "rollup-wrap-plugin";
+import { createFynAppRollupConfig, isProduction } from "create-fynapp";
+
+// High-level factory form — the preferred FynApp rollup config.
+// See create-fynapp/agent/CONTRACT.md §3 for the full contract, and
+// createFynAppRollupConfig options (framework, exposes, extraPlugins, …).
+export default createFynAppRollupConfig({
+  name: "{{appName}}",
+  framework: "svelte",
+  typescript: true,
+  // Only "react"/"react18" auto-expose "./main"; every other framework has to
+  // list it here (CONTRACT.md §3).
+  exposes: {
+    "./main": "./src/main.ts",
+  },
+  shared: {
+    svelte: { singleton: true, semver: "^4.0.0" },
+  },
+  // resolve .svelte without the extension, e.g. `import App from "./App"`.
+  resolve: {
+    browser: true,
+    extensions: [".mjs", ".js", ".json", ".node", ".ts", ".svelte"],
+  },
+  extraPlugins: [
+    // SFC compiler. emitCss:false keeps <style> blocks inside the JS bundle
+    // rather than emitting a css asset the kernel would have to load.
+    newRollupPlugin(svelte)({
+      compilerOptions: { dev: !isProduction },
+      emitCss: false,
+    }),
+    newRollupPlugin(postcss)({ inject: true, extract: false }),
+  ],
+});

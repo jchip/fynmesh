@@ -1,0 +1,48 @@
+import React, { useState } from "react";
+import type { FynUnitRuntime } from "@fynmesh/kernel";
+import "./styles.css";
+
+interface AppProps {
+  appName: string;
+  runtime?: FynUnitRuntime;
+}
+
+const App: React.FC<AppProps> = ({ appName, runtime }) => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div className="fynapp-container">
+      <h2 className="fynapp-title">
+        {appName} - React {React.version}
+      </h2>
+
+      <div className="fynapp-content">
+        <p>Welcome to your new FynApp!</p>
+
+        <div className="counter-section">
+          <p>
+            Count: <strong>{count}</strong>
+          </p>
+          <button
+            className="fynapp-button"
+            onClick={() => setCount((c) => c + 1)}
+          >
+            Increment
+          </button>
+        </div>
+
+        {runtime && (
+          <div className="runtime-info">
+            <p>
+              <small>
+                Running as: {runtime.fynApp.name} v{runtime.fynApp.version}
+              </small>
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;

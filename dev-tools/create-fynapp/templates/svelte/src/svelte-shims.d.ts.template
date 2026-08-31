@@ -1,0 +1,7 @@
+// TypeScript has no built-in understanding of single-file components; the
+// rollup svelte plugin compiles them, so tell tsc what the import yields.
+declare module "*.svelte" {
+  import type { SvelteComponent } from "svelte";
+  const component: typeof SvelteComponent<any>;
+  export default component;
+}

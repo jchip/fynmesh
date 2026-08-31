@@ -1,0 +1,33 @@
+{
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "FynApp micro frontend using Marko",
+  "type": "module",
+  "main": "dist/fynapp-entry.js",
+  "exports": {
+    ".": "./dist/fynapp-entry.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "dev": "rollup -c -w",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "marko": "^5.37.31"
+  },
+  "devDependencies": {
+    "@fynmesh/kernel": "^1.0.0",
+    "@marko/compiler": "^5.33.0",
+    "@marko/rollup": "^4.0.3",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/node": "^20.8.9",
+    "create-fynapp": "^1.0.0",
+    "esbuild": "^0.25.12",
+    "rollup": "^4.9.1",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.0",
+    "typescript": "^5.2.2"
+  }
+}

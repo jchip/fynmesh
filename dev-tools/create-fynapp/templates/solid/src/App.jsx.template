@@ -1,0 +1,42 @@
+import { createSignal } from "solid-js";
+import "./styles.css";
+
+/**
+ * Solid component. This is a .jsx file, not .tsx: Solid's JSX is compiled by
+ * babel-preset-solid into reactive DOM calls (see rollup.config.ts), which is
+ * not something the TypeScript JSX transform can produce.
+ */
+const App = (props) => {
+  const [count, setCount] = createSignal(0);
+
+  return (
+    <div class="fynapp-container">
+      <h2 class="fynapp-title">{props.appName} - Solid</h2>
+
+      <div class="fynapp-content">
+        <p>Welcome to your new FynApp!</p>
+
+        <div class="counter-section">
+          <p>
+            Count: <strong>{count()}</strong>
+          </p>
+          <button class="fynapp-button" onClick={() => setCount(count() + 1)}>
+            Increment
+          </button>
+        </div>
+
+        {props.runtime && (
+          <div class="runtime-info">
+            <p>
+              <small>
+                Running as: {props.runtime.fynApp.name} v{props.runtime.fynApp.version}
+              </small>
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;

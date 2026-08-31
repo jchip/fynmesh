@@ -1,0 +1,8 @@
+// TypeScript has no built-in understanding of Marko templates; the rollup
+// marko plugin compiles them, so tell tsc what the import yields.
+declare module "*.marko" {
+  const template: {
+    renderSync(input: Record<string, any>): { appendTo(target: Element): { destroy(): void } };
+  };
+  export default template;
+}
