@@ -2,6 +2,18 @@
 
 ## Packages
 
+-   `create-fynapp@1.1.2` `(1.1.1 => 1.1.2)`
+
+## Commits
+
+-   `packages/create-fynapp`
+
+    -   FYM-247: pin nix-clap to 2.0.0 so published bins match the exec API they use [commit](/commit/9a9a59f83924af74098c50545789d20a5fd9136e)
+
+# 8/30/2026
+
+## Packages
+
 -   `@fynmesh/kernel@1.1.1` `(1.1.0 => 1.1.1)`
 -   `create-fynapp@1.1.1` `(1.1.0 => 1.1.1)`
 
