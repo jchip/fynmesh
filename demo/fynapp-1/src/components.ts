@@ -24,7 +24,11 @@ export const preloadComponents = async (): Promise<ComponentLibrary> => {
   try {
     // dynamic import exposed modules from module federation remote container
     // @ts-ignore - TS can't understand module federation remote containers
-    const components = await import<ComponentLibrary>('fynapp-x1/main', {with: {type: "mf-expose", semver: "^2.0.0"}});
+    // Cast rather than a type argument on import(): type arguments on a dynamic
+    // import are not standard TypeScript, and esbuild rejects them outright.
+    const components = (await import('fynapp-x1/main', {
+      with: { type: "mf-expose", semver: "^2.0.0" },
+    })) as ComponentLibrary;
 
     // Return the components library
     return components;

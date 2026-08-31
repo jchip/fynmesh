@@ -17,14 +17,14 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^11.1.6",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^24.0.4",
     "create-fynapp": "^1.0.0",
+    "esbuild": "^0.25.12",
     "rollup": "^4.9.1",
+    "rollup-plugin-esbuild": "^6.2.1",
     "rollup-plugin-federation": "^1.0.0",
     "rollup-wrap-plugin": "^1.0.0",
-    "tslib": "^2.8.1",
     "typescript": "^5.2.2"
   }
 }

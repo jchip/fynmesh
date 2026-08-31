@@ -1,6 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 
 export default [
   {
@@ -15,10 +15,9 @@ export default [
     plugins: [
       resolve(),
       commonjs({ transformMixedEsModules: true }),
-      typescript({
+      esbuild({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
-        inlineSources: true,
       }),
     ],
     external: ["react", "react-dom"],

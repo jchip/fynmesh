@@ -39,9 +39,9 @@ vi.mock('@rollup/plugin-node-resolve', () => ({
   default: (config: any) => ({ name: 'node-resolve', ...config }),
 }));
 
-vi.mock('@rollup/plugin-typescript', () => ({
+vi.mock('rollup-plugin-esbuild', () => ({
   __esModule: true,
-  default: (config: any) => ({ name: 'typescript', ...config }),
+  default: (config: any) => ({ name: 'esbuild', ...config }),
 }));
 
 vi.mock('rollup', () => ({
@@ -148,7 +148,7 @@ describe('createFynAppRollupConfig', () => {
     });
 
     const plugins = config[0].plugins as any[];
-    const tsPlugin = plugins.find((p: any) => p?.name === 'typescript');
+    const tsPlugin = plugins.find((p: any) => p?.name === 'esbuild');
     expect(tsPlugin).toBeDefined();
   });
 
@@ -158,7 +158,7 @@ describe('createFynAppRollupConfig', () => {
     });
 
     const plugins = config[0].plugins as any[];
-    const tsPlugin = plugins.find((p: any) => p?.name === 'typescript');
+    const tsPlugin = plugins.find((p: any) => p?.name === 'esbuild');
     expect(tsPlugin).toBeUndefined();
   });
 
@@ -360,7 +360,7 @@ describe('createFynAppRollupConfig', () => {
     });
 
     const plugins = config[0].plugins as any[];
-    const tsPlugin = plugins.find((p: any) => p?.name === 'typescript');
+    const tsPlugin = plugins.find((p: any) => p?.name === 'esbuild');
     expect(tsPlugin?.tsconfig).toBe('./custom-tsconfig.json');
     expect(tsPlugin?.sourceMap).toBe(false);
   });

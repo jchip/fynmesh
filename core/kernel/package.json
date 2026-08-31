@@ -50,20 +50,20 @@
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
-    "@rollup/plugin-typescript": "^11.0.0",
     "@types/node": "^24.0.10",
     "@vitest/coverage-v8": "^3.2.4",
+    "esbuild": "^0.25.12",
     "jsdom": "^25.0.1",
     "prettier": "^3.6.2",
     "rollup": "^4.44.2",
+    "rollup-plugin-esbuild": "^6.2.1",
     "tsx": "^4.20.3",
     "typedoc": "^0.28.7",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "federation-js": "^1.0.0",
-    "tslib": "^2.6.2"
+    "federation-js": "^1.0.0"
   },
   "prettier": {
     "printWidth": 100

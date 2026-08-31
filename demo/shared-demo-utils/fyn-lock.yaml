@@ -14,7 +14,6 @@ $pkg:
   _: ../../core/kernel
   dependencies:
    federation-js: ^1.0.0
-   tslib: ^2.6.2
 federation-js:
  _latest: 1.1.1-fynlocal_h
  _:
@@ -22,10 +21,3 @@ federation-js:
  1.1.1-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js
-tslib:
- _latest: 2.8.1
- _:
-  ^2.6.2: 2.8.1
- 2.8.1:
-  $: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
-  _: 'https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz'

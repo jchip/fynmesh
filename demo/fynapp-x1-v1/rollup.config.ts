@@ -1,6 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 // import commonjs from "@rollup/plugin-commonjs";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 // import alias from "@rollup/plugin-alias";
 // import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
@@ -58,10 +58,9 @@ export default [
         },
         debugging: true,
       }),
-      newRollupPlugin(typescript)({
+      newRollupPlugin(esbuild)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
-        inlineSources: true,
       }),
       ...setupReactAliasPlugins(),
       ...setupMinifyPlugins(),

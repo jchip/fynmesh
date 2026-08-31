@@ -1,6 +1,6 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import typescript from "@rollup/plugin-typescript";
+import esbuild from "rollup-plugin-esbuild";
 import postcss from "rollup-plugin-postcss";
 import alias from "@rollup/plugin-alias";
 
@@ -84,10 +84,9 @@ export default [
           { find: "ag-grid-react", replacement: "esm-ag-grid-react" },
         ],
       }),
-      newRollupPlugin(typescript)({
+      newRollupPlugin(esbuild)({
         tsconfig: "./tsconfig.json",
         sourceMap: true,
-        inlineSources: true,
       }),
       ...setupMinifyPlugins(),
     ].filter(Boolean) as Plugin[],
