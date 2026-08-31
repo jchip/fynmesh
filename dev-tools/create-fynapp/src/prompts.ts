@@ -1,10 +1,24 @@
 import inquirer from "inquirer";
+import path from "path";
 import { assertSupportedFramework, supportedFrameworks } from "./frameworks.js";
 import {
     assertCreationValuesAllowed,
     checkAppName,
     checkDirectoryName,
+    resolveBaseDir,
 } from "./app-config.js";
+
+/**
+ * Names the directory the new FynApp will be created under, when that is not
+ * simply where the user is standing. Inside this monorepo that is `demo`; a
+ * public install creates in the current directory, and saying so adds nothing
+ * (FYM-248).
+ */
+function baseDirHint(): string {
+    const cwd = process.cwd();
+    const rel = path.relative(cwd, resolveBaseDir(cwd));
+    return rel ? ` (under ${rel}/)` : "";
+}
 
 export interface AppConfig {
     name: string;
@@ -60,7 +74,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
         questions.push({
             type: "input",
             name: "dir",
-            message: "Directory name to create (relative to demo/)",
+            message: `Directory name to create${baseDirHint()}`,
             default: (answers: any) => answers.name || args.name,
             validate: checkDirectoryName
         });
