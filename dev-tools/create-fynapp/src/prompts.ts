@@ -1,6 +1,6 @@
 import inquirer from "inquirer";
 import path from "path";
-import { assertSupportedFramework, supportedFrameworks } from "./frameworks.js";
+import { checkFrameworkName, normalizeFrameworkName, templatedFrameworks } from "./frameworks.js";
 import {
     assertCreationValuesAllowed,
     checkAppName,
@@ -19,6 +19,21 @@ function baseDirHint(): string {
     const rel = path.relative(cwd, resolveBaseDir(cwd));
     return rel ? ` (under ${rel}/)` : "";
 }
+
+/** Sentinel value for the "type your own" entry in the framework list. */
+const otherFrameworkChoice = "__other__";
+
+/** Display names for the frameworks that ship a template. */
+const frameworkLabels: Record<string, string> = {
+    react: "React 19",
+    react18: "React 18",
+    preact: "Preact",
+    vue: "Vue",
+    solid: "Solid",
+    svelte: "Svelte",
+    marko: "Marko",
+    vanilla: "Vanilla (no framework)",
+};
 
 export interface AppConfig {
     name: string;
@@ -40,7 +55,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
         if (result !== true) throw new Error(result);
     }
     if (args.framework) {
-        assertSupportedFramework(args.framework);
+        normalizeFrameworkName(args.framework);
     }
 
     const questions = [];
@@ -62,10 +77,25 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
             type: "list",
             name: "framework",
             message: "Which framework would you like to use?",
-            choices: supportedFrameworks.map((framework) => ({
-                name: framework[0].toUpperCase() + framework.slice(1),
-                value: framework,
-            }))
+            choices: [
+                ...templatedFrameworks.map((framework) => ({
+                    name: frameworkLabels[framework],
+                    value: framework,
+                })),
+                {
+                    name: "Other (any framework — scaffolds a generic skeleton to convert)",
+                    value: otherFrameworkChoice,
+                },
+            ]
+        });
+        // Anything without a template still scaffolds, so the list is a
+        // convenience rather than the set of legal answers (FYM-273).
+        questions.push({
+            type: "input",
+            name: "otherFramework",
+            message: "Framework name (e.g. qwik, lit, alpine)",
+            when: (answers: any) => answers.framework === otherFrameworkChoice,
+            validate: checkFrameworkName,
         });
     }
 
@@ -84,9 +114,12 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
     const answers = questions.length > 0 ? await inquirer.prompt(questions) : {};
 
     // Combine command line args with prompted answers
+    const chosenFramework =
+        answers.framework === otherFrameworkChoice ? answers.otherFramework : answers.framework;
+
     const config = {
         name: args.name || answers.name,
-        framework: args.framework || answers.framework,
+        framework: normalizeFrameworkName(args.framework || chosenFramework),
         dir: args.dir || answers.dir,
         skipInstall: args["skip-install"] || false,
     };

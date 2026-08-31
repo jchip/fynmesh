@@ -1,0 +1,75 @@
+# Convert {{appName}} to {{framework}}
+
+`create-fynapp` has no built-in template for **{{framework}}**, so it scaffolded
+the framework-generic FynApp skeleton. **It builds and passes `cfa check` right
+now** — that is the point: you start from green and make one change at a time,
+so anything that breaks is attributable to the step you just took.
+
+Your job is to convert it. Delete this file when you are done.
+
+```bash
+fyn install
+cfa check     # green before you start — keep it that way
+```
+
+## What must not change
+
+These are the FynApp invariants ([CONTRACT.md](https://github.com/jchip/fynmesh/blob/main/dev-tools/create-fynapp/agent/CONTRACT.md) is authoritative):
+
+- `rollup.config.ts` declares the federation `name` and exposes `./main`.
+  Non-React frameworks must list `"./main"` explicitly — only `react`/`react18`
+  get it injected (§3).
+- `src/main.ts` exports `const main` implementing `FynUnit` — `execute` is the
+  only required method (§2).
+- `execute` returns a **`self-managed`** render result. `component-factory` is
+  React-only: it hands the shell a factory taking `React` (§5). Whatever
+  {{framework}} is, if it renders itself, it stays `self-managed`.
+- Both modes keep working: under a shell you mount into
+  `middlewareContext.get("shell-layout").renderTarget`; standalone you mount
+  into your own node.
+- Identity lives in `rollup.config.ts` and the generated
+  `dist/fynapp.manifest.json`. There is no `"fynapp"` field in `package.json`.
+
+## Steps
+
+1. **Dependencies** — add {{framework}} and its rollup plugin to
+   `package.json`, then `fyn install`. Use `fyn`, never `npm`/`npx`.
+2. **Build** — in `rollup.config.ts`, add the plugin to `extraPlugins` (wrapped
+   in `newRollupPlugin` from `rollup-wrap-plugin`), and add a `shared` entry so
+   two FynApps on one page share a single copy of {{framework}}:
+   ```ts
+   shared: { "{{framework}}": { singleton: true, semver: "^1.0.0" } },
+   ```
+   If components live in files rollup does not resolve by default (`.vue`,
+   `.svelte`, `.marko`), add the extension to `resolve.extensions`.
+   Run `cfa check` — build wiring proven before any component exists.
+3. **Component** — add the {{framework}} component file(s) under `src/`. If the
+   file extension is not one TypeScript understands, add a `*.d.ts` shim (see
+   the `vue` template's `vue-shims.d.ts`).
+4. **Mount** — in `src/main.ts`, replace the bodies of the two methods marked
+   `AGENT-TODO`: `mount` creates the {{framework}} app and attaches it to
+   `target`, `unmount` destroys it. Leave `execute`, `initialize` and the render
+   result alone.
+5. **Types** — `fyn run check` (`tsc --noEmit`). Add JSX/compiler options to
+   `tsconfig.json` if {{framework}} needs them.
+6. **Verify** — `cfa check` must pass. It builds and checks the federation
+   output (`dist/fynapp-entry.js` plus a `dist/fynapp.manifest.json` exposing
+   `./main`). Types and manifest passing does **not** prove it renders: load it
+   in a browser too.
+
+## Worked examples
+
+The frameworks that do ship templates are the best reference — same contract,
+same factory, already correct. Read them under
+`node_modules/create-fynapp/templates/`:
+
+| If {{framework}} is like… | Read |
+|---|---|
+| a compiled single-file component | `vue`, `svelte`, `marko` |
+| JSX with a compiler pass | `solid`, `preact` |
+| React | `react`, `react18` |
+| plain DOM | `vanilla` |
+
+`node_modules/create-fynapp/agent/CONTRACT.md` and the `examples/` directory in
+that package cover middleware (consume and provide) and the low-level rollup
+form.

@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import AveAzul from "./aveazul-compat.js";
 import type { AppConfig } from "./prompts.js";
-import { assertSupportedFramework } from "./frameworks.js";
+import { normalizeFrameworkName, resolveTemplate } from "./frameworks.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +31,39 @@ export interface GeneratorConfig extends AppConfig {
     rootDir: string;
 }
 
+/** What `generateApp` scaffolded, so callers can tell the user what they got. */
+export interface GeneratedApp {
+    /** the normalized framework name */
+    framework: string;
+    /** true when no template exists for this framework and the generic one was used */
+    generic: boolean;
+    /** the template directory the files came from */
+    templateDir: string;
+}
+
+/**
+ * Files every template dir may hold at its root, each with its own writer.
+ * Anything else ending in `.template` is stamped as-is (see createExtraFiles).
+ */
+const wellKnownRootTemplates = new Set([
+    "package.json.template",
+    "rollup.config.ts.template",
+    "tsconfig.json.template",
+]);
+
+/**
+ * Substitute the template variables.
+ *
+ * Only the unspaced `{{appName}}` form is replaced, which is what lets Vue's
+ * own `{{ appName }}` interpolation survive in an SFC template (FYM-270).
+ */
+function applyTemplateVars(content: string, config: GeneratorConfig): string {
+    return content
+        .replace(/\{\{appName\}\}/g, config.name)
+        .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
+        .replace(/\{\{framework\}\}/g, config.framework);
+}
+
 /**
  * Convert kebab-case or snake_case to PascalCase
  */
@@ -44,26 +77,35 @@ function toPascalCase(str: string): string {
 /**
  * Creates a FynApp from templates based on the configuration
  */
-export async function generateApp(config: GeneratorConfig): Promise<void> {
-    assertSupportedFramework(config.framework);
-    console.log(`\nCreating a new ${config.framework} FynApp in ${config.targetDir}...`);
+export async function generateApp(config: GeneratorConfig): Promise<GeneratedApp> {
+    const framework = normalizeFrameworkName(config.framework);
+    const resolved: GeneratorConfig = { ...config, framework };
+    const { dir: templateDir, generic } = resolveTemplate(framework);
+
+    console.log(`\nCreating a new ${framework} FynApp in ${resolved.targetDir}...`);
+    if (generic) {
+        // Not an error: an agent is expected to finish the conversion, and it
+        // starts from a scaffold that already builds (FYM-273).
+        console.log(
+            `ℹ️  No built-in template for "${framework}" — scaffolding the framework-generic\n` +
+            `   FynApp skeleton plus AGENT-TODO.md, a checklist for converting it to ${framework}.`,
+        );
+    }
 
     // Create src directory
-    const srcDir = path.join(config.targetDir, "src");
+    const srcDir = path.join(resolved.targetDir, "src");
     if (!(await fileExists(srcDir))) {
         await mkdir(srcDir, { recursive: true });
     }
 
-    // Define template source directory
-    const templateDir = path.join(__dirname, "..", "templates", config.framework);
-
-    // Check if templates exist for the selected framework
     if (!(await fileExists(templateDir))) {
-        throw new Error(`No templates found for framework: ${config.framework}`);
+        throw new Error(`No templates found at ${templateDir}`);
     }
 
     // Process the templates
-    await processTemplates(templateDir, config);
+    await processTemplates(templateDir, resolved);
+
+    return { framework, generic, templateDir };
 }
 
 /**
@@ -75,7 +117,8 @@ async function processTemplates(templateDir: string, config: GeneratorConfig): P
         () => createPackageJson(templateDir, config),
         () => createRollupConfig(templateDir, config),
         () => createTsConfig(templateDir, config),
-        () => createSourceFiles(templateDir, config)
+        () => createSourceFiles(templateDir, config),
+        () => createExtraFiles(templateDir, config)
     ];
 
     await AveAzul.mapSeries(templateTasks, (task) => task())
@@ -95,11 +138,7 @@ async function createPackageJson(templateDir: string, config: GeneratorConfig): 
     try {
         let content = await readFile(templatePath, "utf-8");
 
-        // Replace template variables
-        content = content
-            .replace(/\{\{appName\}\}/g, config.name)
-            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
-            .replace(/\{\{framework\}\}/g, config.framework);
+        content = applyTemplateVars(content, config);
 
         // Write the file
         await writeFile(path.join(config.targetDir, "package.json"), content);
@@ -119,11 +158,7 @@ async function createRollupConfig(templateDir: string, config: GeneratorConfig):
     try {
         let content = await readFile(templatePath, "utf-8");
 
-        // Replace template variables
-        content = content
-            .replace(/\{\{appName\}\}/g, config.name)
-            .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
-            .replace(/\{\{framework\}\}/g, config.framework);
+        content = applyTemplateVars(content, config);
 
         // Write the file
         await writeFile(path.join(config.targetDir, "rollup.config.ts"), content);
@@ -185,11 +220,7 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
             if (file.endsWith(".template")) {
                 let content = await readFile(srcFilePath, "utf-8");
 
-                // Replace template variables
-                content = content
-                    .replace(/\{\{appName\}\}/g, config.name)
-                    .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
-                    .replace(/\{\{framework\}\}/g, config.framework);
+                content = applyTemplateVars(content, config);
 
                 // Write the processed file
                 await writeFile(targetFilePath.replace(".template", ""), content);
@@ -205,4 +236,29 @@ async function createSourceFiles(templateDir: string, config: GeneratorConfig): 
             console.error("❌ Error creating source files:", error.message);
             throw error;
         });
+}
+
+/**
+ * Stamps any other `*.template` file sitting at the template root — the generic
+ * template's `AGENT-TODO.md`, and whatever a future template needs beside the
+ * three well-known ones.
+ */
+async function createExtraFiles(templateDir: string, config: GeneratorConfig): Promise<void> {
+    const entries = await fsPromises.readdir(templateDir, { withFileTypes: true });
+    const extras = entries.filter(
+        (entry) =>
+            entry.isFile() &&
+            entry.name.endsWith(".template") &&
+            !wellKnownRootTemplates.has(entry.name),
+    );
+
+    for (const entry of extras) {
+        const content = await readFile(path.join(templateDir, entry.name), "utf-8");
+        const targetName = entry.name.replace(/\.template$/, "");
+        await writeFile(
+            path.join(config.targetDir, targetName),
+            applyTemplateVars(content, config),
+        );
+        console.log(`✅ Created ${targetName}`);
+    }
 }

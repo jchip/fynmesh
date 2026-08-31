@@ -1,0 +1,26 @@
+import { createFynAppRollupConfig } from "create-fynapp";
+
+// High-level factory form — the preferred FynApp rollup config.
+// See create-fynapp/agent/CONTRACT.md §3 for the full contract, and
+// createFynAppRollupConfig options (framework, exposes, extraPlugins, …).
+//
+// This is the framework-generic scaffold: it builds as it stands, with no
+// {{framework}} in it yet. AGENT-TODO.md lists what to add here.
+export default createFynAppRollupConfig({
+  name: "{{appName}}",
+  framework: "{{framework}}",
+  typescript: true,
+  // Only "react"/"react18" auto-expose "./main"; every other framework has to
+  // list it here (CONTRACT.md §3).
+  exposes: {
+    "./main": "./src/main.ts",
+  },
+  // AGENT-TODO: declare {{framework}} itself as a shared singleton so two
+  // FynApps on the page load one copy, e.g.
+  //   shared: { "{{framework}}": { singleton: true, semver: "^1.0.0" } },
+  //
+  // AGENT-TODO: add {{framework}}'s rollup plugin (SFC/JSX/template compiler)
+  // and any css handling, e.g.
+  //   import { newRollupPlugin } from "rollup-wrap-plugin";
+  //   extraPlugins: [newRollupPlugin(pluginFor)({ ... })],
+});

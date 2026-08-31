@@ -9,7 +9,7 @@ import { promptForMissingInfo } from "./prompts.js";
 import { fileExists } from "./utils.js";
 import { runFynCommand } from "./run-fyn.js";
 import { getCommandOptions } from "./cli-options.js";
-import { supportedFrameworks } from "./frameworks.js";
+import { templatedFrameworks } from "./frameworks.js";
 import { resolveTargetDir } from "./app-config.js";
 
 export async function main() {
@@ -23,7 +23,7 @@ export async function main() {
             required: false,
         },
         framework: {
-            desc: `Framework to use (${supportedFrameworks.join(", ")})`,
+            desc: `Framework to use — any name works; templated: ${templatedFrameworks.join(", ")}`,
             alias: "f",
             args: "< string>",
             required: false,
@@ -76,11 +76,12 @@ async function createNewApp(opts) {
         }
 
         // Generate app from template
-        await generateApp({
+        const generated = await generateApp({
             ...config,
             targetDir,
             rootDir
         });
+        config.framework = generated.framework;
 
         // Install dependencies if not skipped
         if (!config.skipInstall) {
@@ -93,7 +94,7 @@ async function createNewApp(opts) {
                 });
         }
 
-        return { ...config, targetDir };
+        return { ...config, targetDir, generic: generated.generic };
     })
         .then((config) => {
             // Relative to where the user ran the command, so the `cd` below is
@@ -115,7 +116,14 @@ Next steps:
 To modify this FynApp (add middleware, change rendering, migrate to a new
 kernel API), hand it to an LLM coding agent — see the contract and guide in
 create-fynapp/agent/ (CONTRACT.md, GUIDE.md) and examples/ for patterns.
-`);
+${
+    config.generic
+        ? `\nThere is no built-in ${config.framework} template, so what was scaffolded is the
+framework-generic skeleton: it builds and passes \`cfa check\` as it stands, and
+${where}/AGENT-TODO.md is the checklist for converting it to ${config.framework}.
+Hand that file to your coding agent.\n`
+        : ""
+}`);
         })
         .catch((error) => {
             console.error(`❌ Error creating FynApp: ${error.message}`);
