@@ -19,6 +19,7 @@ $pkg:
   esbuild: ^0.25.12
   esm-react: ../../misc/esm-react-18
   esm-react-dom: ../../misc/esm-react-dom-18
+  fynapp-shell-mw: ../fynapp-shell-mw
   rollup: ^4.9.1
   rollup-plugin-dts: ^6.1.0
   rollup-plugin-esbuild: ^6.2.1
@@ -1182,6 +1183,18 @@ function-bind:
  1.1.2:
   $: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==
   _: 'https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz'
+fynapp-shell-mw:
+ _latest: 1.0.0-fynlocal_h
+ _:
+  ../fynapp-shell-mw: 1.0.0-fynlocal_h
+ 1.0.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../fynapp-shell-mw
+  dependencies:
+   '@fynmesh/kernel': ^1.0.0
+   create-fynapp: ^1.0.0
+   rollup-wrap-plugin: ^1.0.0
 get-tsconfig:
  _latest: 4.14.3
  _:

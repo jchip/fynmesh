@@ -8,6 +8,7 @@ $pkg:
   '@rollup/plugin-node-resolve': ^15.2.3
   '@rollup/plugin-replace': ^6.0.2
   '@types/node': ^20.8.9
+  ag-grid-community: ^33.3.2
   create-fynapp: ../../dev-tools/create-fynapp
   esbuild: ^0.25.12
   esm-ag-grid: ../../misc/esm-ag-grid
@@ -715,6 +716,23 @@ acorn:
  8.15.0:
   $: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==
   _: 'https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz'
+ag-charts-types:
+ _latest: 14.1.0
+ _:
+  11.3.2: 11.3.2
+ 11.3.2:
+  $: sha512-trPGqgGYiTeLgtf9nLuztDYOPOFOLbqHn1g2D99phf7QowcwdX0TPx0wfWG8Hm90LjB8IH+G2s3AZe2vrdAtMQ==
+  _: 'https://registry.npmjs.org/ag-charts-types/-/ag-charts-types-11.3.2.tgz'
+ag-grid-community:
+ _latest: 36.1.0
+ _:
+  ^33.3.2: 33.3.2
+ 33.3.2:
+  top: 1
+  $: sha512-9bx0e/+ykOyLvUxHqmdy0cRVANH6JAtv0yZdnBZEXYYqBAwN+G5a4NY+2I1KvoOCYzbk8SnStG7y4hCdVAAWOQ==
+  _: 'https://registry.npmjs.org/ag-grid-community/-/ag-grid-community-33.3.2.tgz'
+  dependencies:
+   ag-charts-types: 11.3.2
 ansi-escapes:
  _latest: 7.2.0
  _:

@@ -28,6 +28,9 @@ const middlewareUser = {
       // This import should trigger SharedModuleNoProviderError
       // because "nonexistent-shared-lib" is declared as shared with import: false
       // but no other container provides it
+      // @ts-expect-error - deliberately unresolvable: this asserts the kernel raises
+      // SharedModuleNoProviderError at runtime, so the module must not exist on disk. The
+      // expect-error also fails the build if someone ever adds it, which is the point.
       const sharedLib = await import("nonexistent-shared-lib");
 
       // If we get here, the test failed - should have thrown

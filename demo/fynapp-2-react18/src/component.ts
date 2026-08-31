@@ -5,7 +5,7 @@ import { preloadComponents, ComponentLibrary } from "./components";
 
 // Create ReactDOM-like object for federation
 const ReactDOM = {
-    createRoot: ReactDOMClient.createRoot || ReactDOMClient.default?.createRoot
+    createRoot: ReactDOMClient.createRoot || (ReactDOMClient as any).default?.createRoot
 };
 
 // Component export for shell rendering

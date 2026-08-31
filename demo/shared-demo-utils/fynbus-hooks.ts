@@ -49,7 +49,11 @@ export function useFynBusChat(
   useEffect: any,
   runtime: MinimalRuntime | undefined,
   topic: string = DEMO_CHAT_TOPIC
-) {
+): {
+  messages: BusChatMessage[];
+  sendMessage: (text: string) => boolean;
+  busAvailable: boolean;
+} {
   const [messages, setMessages] = useState([] as BusChatMessage[]);
   const busAvailable = Boolean(runtime?.bus);
 

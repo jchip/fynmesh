@@ -11,7 +11,8 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",

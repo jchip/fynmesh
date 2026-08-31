@@ -14,7 +14,8 @@
   "scripts": {
     "build": "rm -rf dist && rollup -c",
     "start": "node dist/index.js",
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@fynmesh/kernel": "^1.0.0",
@@ -31,6 +32,7 @@
     "esbuild": "^0.25.12",
     "esm-react": "^19.1.0",
     "esm-react-dom": "^19.1.0",
+    "fynapp-shell-mw": "^1.0.0",
     "postcss": "^8.5.3",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
