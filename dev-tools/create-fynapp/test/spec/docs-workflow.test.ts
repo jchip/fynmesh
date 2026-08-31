@@ -1,6 +1,6 @@
 // @ts-nocheck -- this worktree intentionally reuses dependencies from the source checkout.
 import fs from "fs";
-import { supportedFrameworks } from "../../src/frameworks";
+import { templatedFrameworks } from "../../src/frameworks";
 
 describe("documented workflows", () => {
   const read = (file: string) => fs.readFileSync(file, "utf8");
@@ -17,20 +17,24 @@ describe("documented workflows", () => {
     expect(readme).not.toMatch(/cfa update|cfa config|~\/.fynmesh|AST Config Manager|test-utils/);
   });
 
-  // The guide's option line has to list exactly what the allowlist scaffolds.
-  // Advertising a framework with no template is the gap FYM-270 closed for vue,
-  // and the rest of the union in rollup-config-factory.ts is still unscaffolded.
-  it("documents exactly the frameworks the CLI scaffolds, and uses local tool runners", () => {
+  // The guide's option line has to list exactly the frameworks that ship a
+  // template, and say that the others still scaffold -- an agent that reads
+  // "react | vue" as the legal set will not try the framework it actually
+  // wants (FYM-273).
+  it("documents every templated framework and the open-framework fallback", () => {
     const guide = read("agent/GUIDE.md");
+    const readme = read("README.md");
     const migration = read("agent/MIGRATION.md");
-    const unscaffolded = ["react18", "preact", "solid", "marko", "svelte", "vanilla"].filter(
-      (framework) => !supportedFrameworks.includes(framework as any),
-    );
 
-    expect(guide).toContain(`--framework/-f (${supportedFrameworks.join(" | ")})`);
-    for (const framework of unscaffolded) {
-      expect(guide).not.toContain(`--framework ${framework}`);
+    expect(guide).toContain(`templates:\n#            ${templatedFrameworks.join(" | ")}`);
+    for (const doc of [guide, readme]) {
+      expect(doc).toContain("AGENT-TODO.md");
+      expect(doc).toMatch(/accepts any name|takes \*\*any\*\* framework name/);
     }
+    for (const framework of templatedFrameworks) {
+      expect(readme).toContain(`\`${framework}\``);
+    }
+
     expect(migration).toContain("nvx tsc --build tsconfig.lib.json");
     expect(migration).not.toContain("node_modules/.bin/");
   });
