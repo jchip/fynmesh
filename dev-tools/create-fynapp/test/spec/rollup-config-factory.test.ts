@@ -25,6 +25,15 @@ vi.mock('../../src/index', () => {
       { name: 'alias' },
     ],
     setupMinifyPlugins: () => isProduction ? [{ name: 'terser' }] : [],
+    setupTypeScriptPlugins: (options: any = {}) => [
+      {
+        name: 'esbuild',
+        tsconfig: './tsconfig.json',
+        sourceMap: true,
+        ...options,
+        supported: { 'import-attributes': true, ...options?.supported },
+      },
+    ],
   };
 });
 

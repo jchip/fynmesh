@@ -190,6 +190,90 @@ describe("Module Loading", () => {
       expect(result).toBe("ready");
     });
 
+    it("throws when a declaration is a Promise rather than an id string", async () => {
+      /*
+       * FYM-283 - `mw: import("pkg/middleware/x/x", { with: { type:
+       * "fynapp-middleware" } })` reaches the kernel as a Promise whenever the
+       * build strips those import attributes, because the federation plugin
+       * never rewrote the import into an id. This used to be logged at debug
+       * level and dropped: no middleware ran, `execute` was never called, and
+       * bootstrap still reported success, so the app just rendered nothing.
+       */
+      const fynApp = createMockFynApp();
+      const fynModule = {
+        __middlewareMeta: [
+          { mw: Promise.resolve({}), config: { theme: "dark" } },
+        ],
+      };
+
+      await expect(
+        kernel.testUseMiddlewareOnFynModule(fynModule, fynApp)
+      ).rejects.toThrow(/cannot read/i);
+    });
+
+    it("names the app and the shape it got, so the build defect is findable", async () => {
+      const fynApp = createMockFynApp();
+      const fynModule = {
+        __middlewareMeta: [{ mw: Promise.resolve({}), config: {} }],
+      };
+
+      await expect(
+        kernel.testUseMiddlewareOnFynModule(fynModule, fynApp)
+      ).rejects.toThrow(/test-app.*mw: object.*import attributes/is);
+    });
+
+    it("throws on a declaration shape it has no branch for at all", async () => {
+      const fynApp = createMockFynApp();
+      const fynModule = { __middlewareMeta: [42] };
+
+      await expect(
+        kernel.testUseMiddlewareOnFynModule(fynModule, fynApp)
+      ).rejects.toThrow(/cannot read/i);
+    });
+
+    it("keeps waiting when a legacy `info` names middleware not registered yet", async () => {
+      // not a defect - the middleware can still arrive, so this one is not fatal
+      const fynApp = createMockFynApp();
+      const fynModule = {
+        __middlewareMeta: [{ info: { name: "not-registered-yet" } }],
+      };
+
+      const result = await kernel.testUseMiddlewareOnFynModule(fynModule, fynApp);
+
+      expect(result).toBe("ready");
+    });
+
+    it("keeps waiting when an id string names middleware not registered yet", async () => {
+      const fynApp = createMockFynApp();
+      const fynModule = {
+        __middlewareMeta: [
+          "-FYNAPP_MIDDLEWARE other-app middleware/not-registered 1.0.0",
+        ],
+      };
+
+      const result = await kernel.testUseMiddlewareOnFynModule(fynModule, fynApp);
+
+      expect(result).toBe("ready");
+    });
+
+    it("says out loud that a unit resolving no middleware will not execute", async () => {
+      // the silence is the bug: bootstrap reported success either way (FYM-283)
+      const errors: string[] = [];
+      const spy = vi
+        .spyOn(console, "error")
+        .mockImplementation((...args: any[]) => errors.push(args.join(" ")));
+
+      const fynApp = createMockFynApp();
+      const fynModule = {
+        __middlewareMeta: [{ info: { name: "not-registered-yet" } }],
+      };
+
+      await kernel.testUseMiddlewareOnFynModule(fynModule, fynApp);
+      spy.mockRestore();
+
+      expect(errors.join("\n")).toMatch(/resolved none.*render nothing/s);
+    });
+
     it("should return empty string for modules without middleware", async () => {
       const fynApp = createMockFynApp();
       const fynModule = {

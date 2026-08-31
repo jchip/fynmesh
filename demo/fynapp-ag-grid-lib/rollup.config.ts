@@ -1,5 +1,4 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-import esbuild from "rollup-plugin-esbuild";
 import replace from "@rollup/plugin-replace";
 
 import { newRollupPlugin } from "rollup-wrap-plugin";
@@ -10,6 +9,7 @@ import {
   setupMinifyPlugins,
   setupFederationPlugins,
   fynmeshShareScope,
+  setupTypeScriptPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -34,10 +34,7 @@ export default [
         preventAssignment: true,
         "process.env.NODE_ENV": JSON.stringify(env),
       }),
-      newRollupPlugin(esbuild)({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-      }),
+      ...setupTypeScriptPlugins(),
       ...setupFederationPlugins({
         name: "fynapp-ag-grid-lib",
         shareScope: fynmeshShareScope,

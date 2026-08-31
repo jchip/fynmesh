@@ -1,5 +1,4 @@
 import resolve from "@rollup/plugin-node-resolve";
-import esbuild from "rollup-plugin-esbuild";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import {
   env,
@@ -10,6 +9,7 @@ import {
   setupReactAliasPlugins,
   setupMinifyPlugins,
   setupFederationPlugins,
+  setupTypeScriptPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -42,10 +42,7 @@ export default [
         },
       }),
       ...setupReactAliasPlugins(),
-      newRollupPlugin(esbuild)({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-      }),
+      ...setupTypeScriptPlugins(),
       ...setupMinifyPlugins(),
     ].filter(Boolean),
   }),

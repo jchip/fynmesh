@@ -1,6 +1,5 @@
 import resolve from "@rollup/plugin-node-resolve";
 // import commonjs from "@rollup/plugin-commonjs";
-import esbuild from "rollup-plugin-esbuild";
 // import alias from "@rollup/plugin-alias";
 // import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
@@ -15,6 +14,7 @@ import {
   setupReactAliasPlugins,
   setupDummyEntryPlugins,
   setupFederationPlugins,
+  setupTypeScriptPlugins,
 } from "create-fynapp";
 import { defineConfig } from "rollup";
 
@@ -58,10 +58,7 @@ export default [
         },
         debugging: true,
       }),
-      newRollupPlugin(esbuild)({
-        tsconfig: "./tsconfig.json",
-        sourceMap: true,
-      }),
+      ...setupTypeScriptPlugins(),
       ...setupReactAliasPlugins(),
       ...setupMinifyPlugins(),
     ],
