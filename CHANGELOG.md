@@ -2,6 +2,18 @@
 
 ## Packages
 
+-   `create-fynapp@1.1.3` `(1.1.2 => 1.1.3)`
+
+## Commits
+
+-   `packages/create-fynapp`
+
+    -   FYM-248: create in the current directory outside the fynmesh monorepo [commit](/commit/b97372ca8ce2ef33e33ecdbe918e48e541818d51)
+
+# 8/30/2026
+
+## Packages
+
 -   `create-fynapp@1.1.2` `(1.1.1 => 1.1.2)`
 
 ## Commits
