@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { NixClap } from "nix-clap";
 import { pathToFileURL } from "url";
+import path from "path";
 import { promises as fsPromises, realpathSync } from "fs";
 import AveAzul from "./aveazul-compat.js";
 import { generateApp } from "./generator.js";
@@ -28,7 +29,7 @@ export async function main() {
             required: false,
         },
         dir: {
-            desc: "Target directory (relative to demo/)",
+            desc: "Directory to create the FynApp in",
             alias: "d",
             args: "< string>",
             required: false,
@@ -92,17 +93,21 @@ async function createNewApp(opts) {
                 });
         }
 
-        return config;
+        return { ...config, targetDir };
     })
         .then((config) => {
+            // Relative to where the user ran the command, so the `cd` below is
+            // something they can paste. Outside the monorepo the base is cwd,
+            // so this is just the directory name (FYM-248).
+            const where = path.relative(process.cwd(), config.targetDir) || ".";
             console.log(`
 Successfully created FynApp: ${config.name}
 Using framework: ${config.framework}
 
-Your FynApp has been created in: demo/${config.dir || config.name}
+Your FynApp has been created in: ${where}
 
 Next steps:
-  cd demo/${config.dir || config.name}
+  cd ${where}
   fyn install
   cfa build          # Build the FynApp
   cfa check          # Build + check the federation output
