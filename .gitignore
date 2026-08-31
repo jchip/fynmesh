@@ -15,3 +15,6 @@ docs-temp
 *.bak
 .config/
 .npmrc
+
+# fyn 3 writes per-package audit output
+.fyn-audit.json

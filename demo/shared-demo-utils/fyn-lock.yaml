@@ -5,10 +5,10 @@ $pkg:
  dev:
   '@fynmesh/kernel': ../../core/kernel
 '@fynmesh/kernel':
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.1-fynlocal_h
  _:
-  ../../core/kernel: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../core/kernel: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   top: 1
   $: local
   _: ../../core/kernel
@@ -16,10 +16,10 @@ $pkg:
    federation-js: ^1.0.0
    tslib: ^2.6.2
 federation-js:
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.1-fynlocal_h
  _:
-  ../../rollup-federation/federation-js: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../rollup-federation/federation-js: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js
 tslib:

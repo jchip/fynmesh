@@ -9,10 +9,10 @@
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "xrun -s release-gate _fynpo",
     "build-prod": "NODE_ENV=production xrun -s build combine-demo _shell-templates",
-    "_shell-templates": "cd demo/demo-server && xrun build-templates",
+    "_shell-templates": "cd demo/demo-server && fyn run build:templates",
     "clean:demo": "rm -rf demo/*/dist",
     "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
-    "_gh-publish": "cd demo/demo-server && xrun gh-publish",
+    "_gh-publish": "cd demo/demo-server && fyn run gh-publish",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
     "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git",
@@ -30,10 +30,10 @@
     "url": ""
   },
   "dependencies": {
+    "@fynjs/run": "^1.0.0",
     "@types/node": "^24.10.1",
-    "@xarc/run": "^2.3.0",
-    "fyn": "^2.1.6",
-    "fynpo": "^2.1.6",
+    "fyn": "^3.0.0",
+    "fynpo": "^3.0.0",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6"
   },

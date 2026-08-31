@@ -44,7 +44,7 @@
     "directory": "dev-tools/create-fynapp"
   },
   "devDependencies": {
-    "@fynmesh/kernel": "^1.1.2",
+    "@fynmesh/kernel": "^1.1.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
@@ -70,9 +70,9 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "@rollup/plugin-virtual": "^3.0.2",
-    "aveazul": "^1.0.1",
+    "aveazul": "^2.0.0",
     "inquirer": "^9.2.10",
-    "nix-clap": "2.0.0",
+    "@fynjs/cli-args": "^1.0.0",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",

@@ -33,11 +33,18 @@ $pkg:
  7.27.1:
   $: sha512-D2hP9eA+Sqx1kBZgzxZh0y1trbuU+JoDkiEwqhQ36nodYqJwyEIhPSdMNd7lOm/4io72luTPWH20Yda0xOuUow==
   _: 'https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.27.1.tgz'
-'@fynmesh/kernel':
- _latest: 1.1.0-fynlocal_h
+'@fynjs/cli-args':
+ _latest: 1.0.0
  _:
-  ../../core/kernel: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ^1.0.0: 1.0.0
+ 1.0.0:
+  $: sha512-yMTXr8aaUNGMcsppCOu+QFBkmiZVBzIDUA1kUKFj3sX/D3tw/CHV0Zt8pc9G4/gmuT8DRDZLhrUXrP2pLB6kKw==
+  _: 'https://registry.npmjs.org/@fynjs/cli-args/-/cli-args-1.0.0.tgz'
+'@fynmesh/kernel':
+ _latest: 1.1.1-fynlocal_h
+ _:
+  ../../core/kernel: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   top: 1
   $: local
   _: ../../core/kernel
@@ -52,12 +59,12 @@ $pkg:
   $: sha512-lGPVU3yO9ZNqA7vTYz26jny41lE7yoQansmqdMLBEfqaGsmdg7V3W9mK9Pvb5IL4EVZ9GnSDGMO/cJXud5dMaw==
   _: 'https://registry.npmjs.org/@inquirer/figures/-/figures-1.0.13.tgz'
 '@jchip/error':
- _latest: 1.0.3
+ _latest: 2.0.0
  _:
-  ^1.0.3: 1.0.3
- 1.0.3:
-  $: sha512-4mh+7ucOm55u7USv2mwumdp7r020J+bZ1PkkUi+Zn+AAzU1+QoXVmN/5W2thZ1kkpHjJXS7tY1SDkUjI2FZgvw==
-  _: 'https://registry.npmjs.org/@jchip/error/-/error-1.0.3.tgz'
+  ^2.0.0: 2.0.0
+ 2.0.0:
+  $: sha512-zmCyEgon9INA6aUf8unHT3UtWIbTwZG4eupXk5cc/bwR0JcNeY4KhwAhxK5S3kzyU5TRUMGX63CYLNJaQuPBIg==
+  _: 'https://registry.npmjs.org/@jchip/error/-/error-2.0.0.tgz'
 '@jridgewell/gen-mapping':
  _latest: 0.3.12
  _:
@@ -205,6 +212,30 @@ $pkg:
    picomatch: ^4.0.2
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+'@rollup/rollup-android-arm-eabi':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-8oQkCTve4H4B4JpmD2FV7fV2ZPTxJHN//bRhCqPUU8v6c5APlxteAXyc7BFaEb4aGpUzrPLU4PoAcGhwmRzZTA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.45.3.tgz'
+  os:
+   - android
+  cpu:
+   - arm
+'@rollup/rollup-android-arm64':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-StOsmdXHU2hx3UFTTs6yYxCSwSIgLsfjUBICXyWj625M32OOjakXlaZuGKL+jA3Nvv35+hMxrm/64eCoT07SYQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.45.3.tgz'
+  os:
+   - android
+  cpu:
+   - arm64
 '@rollup/rollup-darwin-arm64':
  _latest: 4.52.4
  _:
@@ -216,6 +247,210 @@ $pkg:
    - darwin
   cpu:
    - arm64
+'@rollup/rollup-darwin-x64':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-QLWyWmAJG9elNTNLdcSXUT/M+J7DhEmvs1XPHYcgYkse3UHf9iWTJ+yTPlKMIetiQnNi+cNp+gY4gvjDpREfKw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.45.3.tgz'
+  os:
+   - darwin
+  cpu:
+   - x64
+'@rollup/rollup-freebsd-arm64':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-ZOvBq+5nL0yrZIEo1eq6r7MPvkJ8kC1XATS/yHvcq3WbDNKNKBQ1uIF4hicyzDMoJt72G+sn1nKsFXpifZyRDA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.45.3.tgz'
+  os:
+   - freebsd
+  cpu:
+   - arm64
+'@rollup/rollup-freebsd-x64':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-AYvGR07wecEnyYSovyJ71pTOulbNvsrpRpK6i/IM1b0UGX1vFx51afYuPYPxnvE9aCl5xPnhQicEvdIMxClRgQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.45.3.tgz'
+  os:
+   - freebsd
+  cpu:
+   - x64
+'@rollup/rollup-linux-arm-gnueabihf':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-Yx8Cp38tfRRToVLuIWzBHV25/QPzpUreOPIiUuNV7KahNPurYg2pYQ4l7aYnvpvklO1riX4643bXLvDsYSBIrA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - arm
+'@rollup/rollup-linux-arm-musleabihf':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-4dIYRNxlXGDKnO6qgcda6LxnObPO6r1OBU9HG8F9pAnHHLtfbiOqCzDvkeHknx+5mfFVH4tWOl+h+cHylwsPWA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - arm
+'@rollup/rollup-linux-arm64-gnu':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-M6uVlWKmhLN7LguLDu6396K1W5IBlAaRonjlHQgc3s4dOGceu0FeBuvbXiUPYvup/6b5Ln7IEX7XNm68DN4vrg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - arm64
+'@rollup/rollup-linux-arm64-musl':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-emaYiOTQJUd6fC9a6jcw9zIWtzaUiuBC+vomggaM4In2iOra/lA6IMHlqZqQZr08NYXrOPMVigreLMeSAwv3Uw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - arm64
+'@rollup/rollup-linux-loongarch64-gnu':
+ _latest: 4.50.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-3P77T5AQ4UfVRJSrTKLiUZDJ6XsxeP80027bp6mOFh8sevSD038mYuIYFiUtrSJxxgFb+NgRJFF9oIa0rlUsmg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-loongarch64-gnu/-/rollup-linux-loongarch64-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - loong64
+'@rollup/rollup-linux-ppc64-gnu':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-/VPH3ZVeSlmCBPhZdx/+4dMXDjaGMhDsWOBo9EwSkGbw2+OAqaslL53Ao2OqCxR0GgYjmmssJ+OoG+qYGE7IBg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - ppc64
+'@rollup/rollup-linux-riscv64-gnu':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-Hs5if0PjROl1MGMmZX3xMAIfqcGxQE2SJWUr/CpDQsOQn43Wq4IvXXxUMWtiY/BrzdqCCJlRgJ5DKxzS3qWkCw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - riscv64
+'@rollup/rollup-linux-riscv64-musl':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-Qm0WOwh3Lk388+HJFl1ILGbd2iOoQf6yl4fdGqOjBzEA+5JYbLcwd+sGsZjs5pkt8Cr/1G42EiXmlRp9ZeTvFA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - riscv64
+'@rollup/rollup-linux-s390x-gnu':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-VJdknTaYw+TqXzlh9c7vaVMh/fV2sU8Khfk4a9vAdYXJawpjf6z3U1k7vDWx2IQ9ZOPoOPxgVpDfYOYhxD7QUA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - s390x
+'@rollup/rollup-linux-x64-gnu':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-SUDXU5YabLAMl86FpupSQQEWzVG8X0HM+Q/famnJusbPiUgQnTGuSxtxg4UAYgv1ZmRV1nioYYXsgtSokU/7+Q==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - x64
+'@rollup/rollup-linux-x64-musl':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-ezmqknOUFgZMN6wW+Avlo4sXF3Frswd+ncrwMz4duyZ5Eqd+dAYgJ+A1MY+12LNZ7XDhCiijJceueYvtnzdviw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.45.3.tgz'
+  os:
+   - linux
+  cpu:
+   - x64
+'@rollup/rollup-win32-arm64-msvc':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-1YfXoUEE++gIW66zNB9Twd0Ua5xCXpfYppFUxVT/Io5ZT3fO6Se+C/Jvmh3usaIHHyi53t3kpfjydO2GAy5eBA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.45.3.tgz'
+  os:
+   - win32
+  cpu:
+   - arm64
+'@rollup/rollup-win32-ia32-msvc':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-Iok2YA3PvC163rVZf2Zy81A0g88IUcSPeU5pOilcbICXre2EP1mxn1Db/l09Z/SK1vdSLtpJXAnwGuMOyf5O9g==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.45.3.tgz'
+  os:
+   - win32
+  cpu:
+   - ia32
+'@rollup/rollup-win32-x64-msvc':
+ _latest: 4.63.1
+ _:
+  4.45.3: 4.45.3
+ 4.45.3:
+  optFailed: 3
+  $: sha512-HwHCH5GQTOeGYP5wBEBXFVhfQecwRl24Rugoqhh8YwGarsU09bHhOKuqlyW4ZolZCan3eTUax7UJbGSmKSM51A==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.45.3.tgz'
+  os:
+   - win32
+  cpu:
+   - x64
 '@types/estree':
  _latest: 1.0.8
  _:
@@ -290,15 +525,15 @@ ansi-styles:
   dependencies:
    color-convert: ^2.0.1
 aveazul:
- _latest: 1.0.2
+ _latest: 2.0.0
  _:
-  '^1.0.1,^1.0.2': 1.0.2
- 1.0.2:
-  $: sha512-AxNC1s5Nv++jqk9qpyD6RojhoUrr5anfYWKIlUXVreXT3bVBjtOiibTc8snQSVNHq+5BAAE5gyM+XkOUR9fbEQ==
-  _: 'https://registry.npmjs.org/aveazul/-/aveazul-1.0.2.tgz'
+  ^2.0.0: 2.0.0
+ 2.0.0:
+  $: sha512-RCJVYV8BFI6Xmkk/51dWFxPzJfkyrQkgaVb2bzHuCPCqmD/20U9ur8pTyKgKP3dVvv+uXmm3jwiPfk6BCGgqLg==
+  _: 'https://registry.npmjs.org/aveazul/-/aveazul-2.0.0.tgz'
   dependencies:
-   '@jchip/error': ^1.0.3
-   xaa: ^1.8.0
+   '@jchip/error': ^2.0.0
+   xaa: ^3.0.0
 balanced-match:
  _latest: 3.0.1
  _:
@@ -428,10 +663,10 @@ commondir:
   $: sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==
   _: 'https://registry.npmjs.org/commondir/-/commondir-1.0.1.tgz'
 create-fynapp:
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.3-fynlocal_h
  _:
-  ../../dev-tools/create-fynapp: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../dev-tools/create-fynapp: 1.1.3-fynlocal_h
+ 1.1.3-fynlocal_h:
   top: 1
   $: local
   _: ../../dev-tools/create-fynapp
@@ -443,9 +678,9 @@ create-fynapp:
    '@rollup/plugin-terser': ^0.4.4
    '@rollup/plugin-typescript': ^11.1.6
    '@rollup/plugin-virtual': ^3.0.2
-   aveazul: ^1.0.1
+   aveazul: ^2.0.0
    inquirer: ^9.2.10
-   nix-clap: ^2.0.0
+   '@fynjs/cli-args': ^1.0.0
    rollup: ^4.9.1
    rollup-plugin-dts: ^6.1.0
    rollup-plugin-federation: ^1.0.0
@@ -510,10 +745,10 @@ external-editor:
    iconv-lite: ^0.4.24
    tmp: ^0.0.33
 federation-js:
- _latest: 1.1.0-fynlocal_h
+ _latest: 1.1.1-fynlocal_h
  _:
-  ../../rollup-federation/federation-js: 1.1.0-fynlocal_h
- 1.1.0-fynlocal_h:
+  ../../rollup-federation/federation-js: 1.1.1-fynlocal_h
+ 1.1.1-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js
 find-up:
@@ -781,16 +1016,6 @@ mute-stream:
  1.0.0:
   $: sha512-avsJQhyd+680gKXyG/sQc0nXaC6rBkPOfyHYcFb9+hdkqQkR9bdnkJ0AMZhke0oesPqIO+mFFJ+IdBc7mst4IA==
   _: 'https://registry.npmjs.org/mute-stream/-/mute-stream-1.0.0.tgz'
-nix-clap:
- _latest: 1.3.13
- _:
-  ^2.0.0: 2.2.3
- 2.2.3:
-  $: sha512-zS2z9Oy8yb7rqKbNTQSPa+YVIj2kFpyjEzMEiQBO0c2SQLT6caWwm+TCTXLCQNRg6Nn1Gl/c1RQ2wOUHDC6Nkg==
-  _: 'https://registry.npmjs.org/nix-clap/-/nix-clap-2.2.3.tgz'
-  dependencies:
-   strip-ansi: '>= 4.0.0'
-   tslib: ^2.6.2
 normalize-package-data:
  _latest: 8.0.0
  _:
@@ -1032,11 +1257,11 @@ rollup-plugin-federation:
   _: ../../rollup-federation/rollup-plugin-federation
   dependencies:
    '@rollup/plugin-node-resolve': ^15.2.0
-   aveazul: ^1.0.2
+   aveazul: ^2.0.0
    lodash-es: ^4.17.21
    pkg-up: ^4.0.0
    read-pkg-up: ^10.0.0
-   xaa: ^1.8.0
+   xaa: ^3.0.0
 rollup-plugin-no-emit:
  _latest: 1.3.0
  _:
@@ -1188,7 +1413,7 @@ string_decoder:
 strip-ansi:
  _latest: 7.1.0
  _:
-  '>= 4.0.0,^6.0.0,^6.0.1': 6.0.1
+  '^6.0.0,^6.0.1': 6.0.1
  6.0.1:
   $: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
   _: 'https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz'
@@ -1306,14 +1531,12 @@ wrappy:
   $: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
   _: 'https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz'
 xaa:
- _latest: 1.8.0
+ _latest: 3.0.0
  _:
-  ^1.8.0: 1.8.0
- 1.8.0:
-  $: sha512-XPNHZLhbO/KyboMyJaJnqma/KUSRAkMUHZpNRVbilvsloJErKsTaOcxxte79u3Hj4UixCHR+y+p+DFp7rZ7MWQ==
-  _: 'https://registry.npmjs.org/xaa/-/xaa-1.8.0.tgz'
-  dependencies:
-   tslib: ^2.6.2
+  ^3.0.0: 3.0.0
+ 3.0.0:
+  $: sha512-43qra97miJW39IXU9aN9A1s5RVCA2stlE3O5WhLI2DG9ImKV2ugCBHEzFrqL96bzAkknHlaGlOcsX6f/F3nMDA==
+  _: 'https://registry.npmjs.org/xaa/-/xaa-3.0.0.tgz'
 yocto-queue:
  _latest: 1.2.1
  _:

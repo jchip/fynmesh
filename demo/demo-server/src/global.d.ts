@@ -10,7 +10,3 @@ declare module "@jchip/redbird" {
     export default redbird;
 }
 
-declare module "chalker" {
-    const ck: any;
-    export default ck;
-}
