@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-design-tokens",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "FynMesh Design Tokens Middleware Provider",
   "main": "dist/main.js",
   "scripts": {

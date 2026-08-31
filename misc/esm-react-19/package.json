@@ -5,6 +5,9 @@
   "description": "",
   "homepage": "",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "type": "module",
   "exports": {
     "production": "./src/react-esm-19.production.js",

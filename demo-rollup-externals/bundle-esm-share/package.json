@@ -8,6 +8,9 @@
   "type": "module",
   "homepage": "",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "rm -rf dist dist-2 && rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"

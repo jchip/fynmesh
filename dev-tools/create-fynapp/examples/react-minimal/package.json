@@ -1,6 +1,9 @@
 {
   "name": "example-react-minimal",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Minimal standalone React FynApp reference example",
   "type": "module",
   "main": "dist/index.js",

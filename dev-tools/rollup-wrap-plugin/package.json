@@ -5,6 +5,9 @@
   "main": "dist/rollup-wrap-plugin.js",
   "homepage": "https://github.com/jchip/fynmesh/tree/main/dev-tools/rollup-wrap-plugin",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "type": "module",
   "source": "src/rollup-wrap-plugin.ts",
   "scripts": {

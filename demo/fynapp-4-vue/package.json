@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-4-vue",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Sample FynApp using Vue",
   "type": "module",
   "main": "dist/index.js",

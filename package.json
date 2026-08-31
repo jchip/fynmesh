@@ -3,16 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "homepage": "",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "bootstrap": "test -e node_modules || fyn; fyn install-federation && fynpo",
     "build": "xrun -s release-gate _fynpo",
     "build-prod": "NODE_ENV=production xrun -s build combine-demo _shell-templates",
-    "_shell-templates": "cd demo/demo-server && fyn run build:templates",
+    "_shell-templates": "cd demo/demo-server && xrun build-templates",
     "clean:demo": "rm -rf demo/*/dist",
     "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
-    "_gh-publish": "cd demo/demo-server && fyn run gh-publish",
+    "_gh-publish": "cd demo/demo-server && xrun gh-publish",
     "start": "cd demo/demo-server && fyn start",
     "install-federation": "fyn clone-fed && cd rollup-federation && fyn && fyn bootstrap",
     "clone-fed": "test -e rollup-federation || git clone https://github.com/jchip/rollup-federation.git",

@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-notes",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Notes FynApp micro frontend",
   "type": "module",
   "main": "dist/fynapp-entry.js",

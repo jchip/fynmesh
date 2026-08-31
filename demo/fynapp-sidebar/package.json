@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-sidebar",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Sidebar navigation FynApp for shell layout",
   "type": "module",
   "main": "dist/index.js",

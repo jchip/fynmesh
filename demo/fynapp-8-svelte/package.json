@@ -2,6 +2,9 @@
   "private": true,
   "name": "fynapp-8-svelte",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "description": "Sample FynApp using Svelte",
   "type": "module",
   "main": "dist/index.js",

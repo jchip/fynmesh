@@ -4,6 +4,9 @@
   "version": "33.3.2",
   "description": "ESM wrapper for ag-grid-community",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "type": "module",
   "exports": {
     "production": "./dist/ag-grid.production.js",
