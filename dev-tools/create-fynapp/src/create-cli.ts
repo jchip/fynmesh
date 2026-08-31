@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { NixClap } from "@fynjs/cli-args";
+import { NixClap } from "nix-clap";
 import { pathToFileURL } from "url";
 import path from "path";
 import { promises as fsPromises, realpathSync } from "fs";
@@ -43,7 +43,7 @@ export async function main() {
     nixClap.init(cliOptions, {
         create: {
             desc: "Create a new FynApp",
-            exec: (command) => createNewApp(getCommandOptions(command))
+            exec: (command, commands) => createNewApp(getCommandOptions(command, commands))
         }
     });
 

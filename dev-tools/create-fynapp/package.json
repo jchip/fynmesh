@@ -72,7 +72,7 @@
     "@rollup/plugin-virtual": "^3.0.2",
     "aveazul": "^2.0.0",
     "inquirer": "^9.2.10",
-    "@fynjs/cli-args": "^1.0.0",
+    "nix-clap": "2.0.0",
     "rollup": "^4.9.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-federation": "^1.0.0",
