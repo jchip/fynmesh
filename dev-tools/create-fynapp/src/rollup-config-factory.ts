@@ -22,8 +22,22 @@ import {
 export interface FynAppRollupConfigOptions {
   /** The name of the FynApp (used in federation plugin) */
   name: string;
-  /** Framework type - determines federation style and default plugins */
-  framework?: "react" | "react18" | "solid" | "vue" | "marko" | "preact" | "svelte" | "vanilla";
+  /**
+   * Framework type. Only `react`/`react18` change behavior (React-specific
+   * federation, externals and aliases); every other name takes the identical
+   * non-React path, so any framework is spellable here — the known names are
+   * listed for completion, not as a constraint (FYM-273).
+   */
+  framework?:
+    | "react"
+    | "react18"
+    | "solid"
+    | "vue"
+    | "marko"
+    | "preact"
+    | "svelte"
+    | "vanilla"
+    | (string & {});
   /** React package strategy. The ESM adapters are for repository-local demos only. */
   reactPackages?: "standard" | "esm-adapters";
   /** Module federation exposes map */
