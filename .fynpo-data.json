@@ -57,7 +57,7 @@
         },
         "onPkg": {
           "name": "@fynmesh/kernel",
-          "version": "1.1.1",
+          "version": "1.1.2",
           "path": "core/kernel"
         },
         "depSection": "dev",
@@ -73,7 +73,7 @@
         },
         "onPkg": {
           "name": "create-fynapp",
-          "version": "1.1.3",
+          "version": "1.1.4",
           "path": "dev-tools/create-fynapp"
         },
         "depSection": "dev",
@@ -169,7 +169,7 @@
         },
         "onPkg": {
           "name": "rollup-plugin-federation",
-          "version": "1.1.0",
+          "version": "1.1.1",
           "path": "rollup-federation/rollup-plugin-federation"
         },
         "depSection": "dev",
@@ -185,7 +185,7 @@
         },
         "onPkg": {
           "name": "rollup-wrap-plugin",
-          "version": "1.0.0",
+          "version": "1.0.1",
           "path": "dev-tools/rollup-wrap-plugin"
         },
         "depSection": "dev",
@@ -245,5 +245,5 @@
       }
     ]
   },
-  "__timestamp": 1788161738255
+  "__timestamp": 1788283790500
 }
