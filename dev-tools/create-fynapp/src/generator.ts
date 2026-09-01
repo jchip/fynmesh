@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import AveAzul from "./aveazul-compat.js";
 import type { AppConfig } from "./prompts.js";
 import { normalizeFrameworkName, resolveTemplate } from "./frameworks.js";
+import { kernelVersion } from "./kernel-version.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -56,12 +57,18 @@ const wellKnownRootTemplates = new Set([
  *
  * Only the unspaced `{{appName}}` form is replaced, which is what lets Vue's
  * own `{{ appName }}` interpolation survive in an SFC template (FYM-270).
+ *
+ * `{{kernelVersion}}` comes from create-fynapp's own manifest rather than the
+ * caller's config -- a scaffolded app has to be pinned to the kernel these
+ * templates were written against, and that is not the user's choice to make
+ * (FYM-285).
  */
 function applyTemplateVars(content: string, config: GeneratorConfig): string {
     return content
         .replace(/\{\{appName\}\}/g, config.name)
         .replace(/\{\{appNamePascal\}\}/g, toPascalCase(config.name))
-        .replace(/\{\{framework\}\}/g, config.framework);
+        .replace(/\{\{framework\}\}/g, config.framework)
+        .replace(/\{\{kernelVersion\}\}/g, kernelVersion());
 }
 
 /**

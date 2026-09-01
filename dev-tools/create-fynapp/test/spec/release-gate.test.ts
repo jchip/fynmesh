@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { AppConfig, BuildOptions, GeneratorConfig } from "../../src/index";
 import { genericTemplateName, templatedFrameworks } from "../../src/frameworks";
+import { kernelVersion } from "../../src/kernel-version";
 
 type _PublicConfigTypes = AppConfig | BuildOptions | GeneratorConfig;
 
@@ -124,5 +125,63 @@ describe("release gate configuration", () => {
 
   it.each(templates)("scaffolds %s with no local fyn dependency overrides", template => {
     expect(readJson(path.join(templateDir, template)).fyn).toBeUndefined();
+  });
+});
+
+//
+// The kernel range a scaffolded app gets used to be a literal copied into every
+// template. Nothing kept those copies current -- five consecutive `[Publish]`
+// commits touched neither templates/ nor examples/, so they still asked for
+// `^1.0.0` two kernel minors later. The templates now read the version from
+// create-fynapp's own devDependency, which fynpo rewrites on release
+// (FYM-285).
+//
+// The files below are static: the generator never rewrites them, so nothing but
+// this gate can catch them drifting. `prepublishOnly` runs the tests, so a
+// stale literal fails the release instead of shipping.
+//
+describe("kernel version stays in one place", () => {
+  const kernelRange = () => pkg.devDependencies["@fynmesh/kernel"];
+
+  it("takes the scaffolded kernel range from create-fynapp's own devDependency", () => {
+    expect(kernelVersion()).toBe(kernelRange());
+  });
+
+  // Every template `resolveTemplate` can actually reach, which is the framework
+  // directories and the generic fallback -- not the two stray `*.template` files
+  // left at the root of templates/ from before the per-framework layout, which
+  // nothing resolves and `files` does not publish.
+  const scaffoldTemplates = [...templatedFrameworks, genericTemplateName];
+
+  it.each(scaffoldTemplates)("templates %s with a kernel placeholder, not a literal", framework => {
+    const manifest = readJson(path.join(templateDir, framework, "package.json.template"));
+    expect(manifest.devDependencies?.["@fynmesh/kernel"]).toBe("{{kernelVersion}}");
+  });
+
+  const examplesDir = path.join(packageDir, "examples");
+  const examples = fs
+    .readdirSync(examplesDir, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name);
+
+  it("finds examples to gate", () => {
+    expect(examples.length).toBeGreaterThan(0);
+  });
+
+  it.each(examples)("example %s depends on the current kernel", example => {
+    const manifest = readJson(path.join(examplesDir, example, "package.json"));
+    const deps = { ...manifest.dependencies, ...manifest.devDependencies };
+    expect(deps["@fynmesh/kernel"]).toBe(kernelRange());
+  });
+
+  // The agent brief is what an LLM copies a manifest out of, so a stale range
+  // there is scaffolded by hand into apps this gate never sees.
+  it("documents the current kernel in the agent contract", () => {
+    const contract = fs.readFileSync(path.join(packageDir, "agent", "CONTRACT.md"), "utf-8");
+    const found = [...contract.matchAll(/"@fynmesh\/kernel":\s*"([^"]+)"/g)].map(m => m[1]);
+    expect(found.length).toBeGreaterThan(0);
+    for (const range of found) {
+      expect(range).toBe(kernelRange());
+    }
   });
 });
