@@ -1,3 +1,281 @@
+# 9/1/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.2` `(1.1.1 => 1.1.2)`
+-   `create-fynapp@1.1.4` `(1.1.3 => 1.1.4)`
+-   `rollup-wrap-plugin@1.0.1` `(1.0.0 => 1.0.1)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/bundle-esm-share`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/create-fynapp`
+
+    -   FYM-286: drop the dead root templates, scaffold the create-fynapp version from a placeholder
+    -   FYM-285: create-fynapp templates take the kernel version from a placeholder
+    -   Pin create-fynapp templates and examples to kernel ^1.1.1
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-275: react and react18 templates bundle and provide their own React
+    -   FYM-280: docs and gates for the open-framework model
+    -   FYM-274..279: templates for vanilla, react18, preact, solid, svelte, marko
+    -   FYM-273: create-fynapp accepts any --framework, generic scaffold + agent brief
+    -   FYM-270: create-fynapp scaffolds vue - complete template, allowlist, and framework-generic gates
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-256: revert create-fynapp to the nix-clap 2.0.0 pin, cli-args drops defaultCommand
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/demo-server`
+
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/esm-ag-grid`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/esm-ag-grid-react`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/esm-pkg`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/esm-react-18`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/esm-react-dom-18`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/fynapp-1`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-1-b`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-2-react18`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-3-marko`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-4-vue`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-5-preact`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-6-react`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-7-solid`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-8-svelte`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-ag-grid`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-ag-grid-lib`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-design-tokens`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-notes`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-react-18`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-react-middleware`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-sidebar`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-test-shared`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/fynapp-x1-v1`
+
+    -   FYM-283: preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-267: point kernel types at lib, add federation.d.ts ambient shim
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/pkg-esm-react-18`
+
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/regular-react-app`
+
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/rollup-wrap-plugin`
+
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+
+-   `packages/shared-demo-utils`
+
+    -   FYM-267: type-check every package - alias type paths, shell-mw contract types, real type fixes
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `packages/test-nested-deps`
+
+    -   FYM-256: create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave
+    -   FYM-266: rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib
+    -   FYM-260: drop @xarc/module-dev, create-fynapp on vitest, type module and node >=24 across the repo
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `scripts`
+
+    -   FYM-252: adopt the 2026-08-30 fynjs release wave
+
+-   `MISC`
+
+    -   Version lock @fynmesh/kernel and create-fynapp so they release together
+    -   Update fyn and fynpo to 3.0.5
+    -   Update fyn and fynpo to 3.0.2
+
 # 8/30/2026
 
 ## Packages
