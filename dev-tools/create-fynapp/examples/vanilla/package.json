@@ -15,7 +15,7 @@
     "dev": "rollup -c -w"
   },
   "devDependencies": {
-    "@fynmesh/kernel": "^1.0.0",
+    "@fynmesh/kernel": "^1.1.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
