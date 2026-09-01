@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { buildPackage, runBuiltGenerator } from '../helpers/built-package';
-import { kernelVersion } from '../../src/kernel-version';
+import { createFynappVersion, kernelVersion } from '../../src/template-versions';
 
 /**
  * Checks that the STATIC scaffolder produces a skeleton that conforms to the
@@ -51,7 +51,7 @@ describe('create-fynapp static generator', () => {
         expect(pkg.name).toBe('test-fynapp');
         expect(pkg.type).toBe('module');
         expect(pkg.scripts.build).toBe('rm -rf dist && rollup -c');
-        expect(pkg.devDependencies['create-fynapp']).toBeDefined();
+        expect(pkg.devDependencies['create-fynapp']).toBe(createFynappVersion());
         // the scaffolded app is pinned to the kernel this create-fynapp ships
         // against, with the template placeholder resolved to a real range and
         // not written through literally (FYM-285)

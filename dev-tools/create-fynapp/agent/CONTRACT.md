@@ -284,7 +284,7 @@ is just `export {};` (because `./main` is always exposed).
   "type": "module",
   "scripts": { "build": "rm -rf dist && rollup -c", "dev": "rollup -c -w" },
   "devDependencies": {
-    "@fynmesh/kernel": "^1.1.1", "create-fynapp": "^1.0.0",
+    "@fynmesh/kernel": "^1.1.1", "create-fynapp": "^1.1.3",
     "rollup": "^4.9.1", "rollup-plugin-federation": "^1.0.0",
     "rollup-wrap-plugin": "^1.0.0", "typescript": "^5.2.2"
     // React apps also: react, react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
