@@ -14,7 +14,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fynmesh/kernel": "^1.0.0",
+    "@fynmesh/kernel": "^1.1.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/node": "^20.8.9",
     "create-fynapp": "^1.0.0",
