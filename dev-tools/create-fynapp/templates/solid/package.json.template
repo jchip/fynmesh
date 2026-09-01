@@ -23,7 +23,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/node": "^20.8.9",
     "babel-preset-solid": "^1.8.11",
-    "create-fynapp": "^1.0.0",
+    "create-fynapp": "{{createFynappVersion}}",
     "esbuild": "^0.25.12",
     "postcss": "^8.5.3",
     "rollup": "^4.9.1",

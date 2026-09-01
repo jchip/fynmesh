@@ -17,7 +17,7 @@
     "@fynmesh/kernel": "{{kernelVersion}}",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/node": "^20.8.9",
-    "create-fynapp": "^1.0.0",
+    "create-fynapp": "{{createFynappVersion}}",
     "esbuild": "^0.25.12",
     "rollup": "^4.9.1",
     "rollup-plugin-esbuild": "^6.2.1",
