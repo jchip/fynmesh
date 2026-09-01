@@ -16,7 +16,7 @@
     "marko": "^5.37.31"
   },
   "devDependencies": {
-    "@fynmesh/kernel": "^1.1.1",
+    "@fynmesh/kernel": "{{kernelVersion}}",
     "@marko/compiler": "^5.33.0",
     "@marko/rollup": "^4.0.3",
     "@rollup/plugin-commonjs": "^25.0.7",

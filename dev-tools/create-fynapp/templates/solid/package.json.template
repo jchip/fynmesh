@@ -18,7 +18,7 @@
   "devDependencies": {
     "@babel/core": "^7.22.9",
     "@babel/preset-env": "^7.22.9",
-    "@fynmesh/kernel": "^1.1.1",
+    "@fynmesh/kernel": "{{kernelVersion}}",
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/node": "^20.8.9",

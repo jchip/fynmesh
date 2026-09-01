@@ -14,7 +14,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@fynmesh/kernel": "^1.1.1",
+    "@fynmesh/kernel": "{{kernelVersion}}",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.5",
     "@types/node": "^20.8.9",
