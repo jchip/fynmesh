@@ -13,9 +13,9 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@fynmesh/kernel": "^1.0.0",
-    "create-fynapp": "^1.0.0",
-    "rollup-wrap-plugin": "^1.0.0"
+    "@fynmesh/kernel": "^1.1.2",
+    "create-fynapp": "^1.1.4",
+    "rollup-wrap-plugin": "^1.0.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

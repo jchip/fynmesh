@@ -27,7 +27,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^20.8.9",
-    "create-fynapp": "^1.0.0",
+    "create-fynapp": "^1.1.4",
     "esbuild": "^0.25.12",
     "marko": "^5.37.31",
     "rollup": "^4.40.2",
@@ -36,7 +36,7 @@
     "rollup-plugin-federation": "^1.0.0",
     "rollup-plugin-no-emit": "^1.3.0",
     "rollup-plugin-postcss": "^4.0.2",
-    "rollup-wrap-plugin": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.1",
     "typescript": "^5.2.2"
   }
 }
