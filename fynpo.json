@@ -11,6 +11,7 @@
     "demo-rollup-externals/*",
     "rollup-federation/*"
   ],
+  "versionLocks": [["@fynmesh/kernel", "create-fynapp"]],
   "command": {
     "publish": {
       "tags": {},
