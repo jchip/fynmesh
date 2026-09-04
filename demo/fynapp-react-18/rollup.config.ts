@@ -40,11 +40,11 @@ export default [
         exposes: {},
         shared: {
           "esm-react": {
-            singleton: true,
+            singleton: false,
             semver: "^18.0.0",
           },
           "esm-react-dom": {
-            singleton: true,
+            singleton: false,
             semver: "^18.0.0",
           },
         },

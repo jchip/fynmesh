@@ -47,12 +47,12 @@ export default [
         shared: {
           "esm-react": {
             import: false,
-            singleton: true,
+            singleton: false,
             semver: "^18.3.0",
           },
           "esm-react-dom": {
             import: false,
-            singleton: true,
+            singleton: false,
             semver: "^18.3.0",
           },
         },
