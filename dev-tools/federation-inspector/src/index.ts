@@ -16,6 +16,7 @@
 export { collect, fingerprint } from "./core/collect.js";
 export type { CollectOptions } from "./core/collect.js";
 export { probe } from "./core/capability.js";
+export { probeKernel, collectFynMesh } from "./core/collectors/fynmesh.js";
 
 export { analyse } from "./analysis/index.js";
 export type { Analysis } from "./analysis/index.js";
@@ -67,5 +68,12 @@ export type {
   LoaderInfo,
   Capability,
   FynAppManifest,
+  FynMeshNode,
+  FynAppNode,
+  FynAppStatus,
+  MiddlewareNode,
+  MiddlewareUseNode,
+  MiddlewareVersionNode,
+  KernelBuild,
   ViewName,
 } from "./core/model.js";

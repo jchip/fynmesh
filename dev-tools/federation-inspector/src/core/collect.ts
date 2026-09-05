@@ -12,6 +12,7 @@ import { emptySnapshot } from "./model.js";
 import { probe, attempt, safeGet } from "./capability.js";
 import { collectSystemJs, reindexDependents } from "./collectors/systemjs.js";
 import { collectFederation } from "./collectors/federation.js";
+import { collectFynMesh, probeKernel } from "./collectors/fynmesh.js";
 
 export interface CollectOptions {
   /** defaults to `globalThis.System` */
@@ -25,6 +26,8 @@ export interface CollectOptions {
   loaders?: unknown[];
   /** defaults to `globalThis.Federation` */
   federation?: unknown;
+  /** defaults to `globalThis.fynMeshKernel`; absent on a plain federation page */
+  kernel?: unknown;
   /** skip the combined-bundle pass, which is one lookup per module */
   skipBundles?: boolean;
 }
@@ -105,6 +108,16 @@ export function collect(opts: CollectOptions = {}): Snapshot {
     snap.bundles = fed.bundles;
     snap.errors.push(...fed.errors);
   }
+
+  // The kernel layer is read last because a FynApp row joins onto the container
+  // rows the federation pass produced. It is also the one collector whose whole
+  // output may legitimately be absent: no kernel means no `fynmesh` node, which
+  // is how the UI knows to hide the FynApps tab rather than show it empty.
+  const fynmesh = collectFynMesh(opts.kernel, snap.containers, capability);
+  if (fynmesh.fynmesh) {
+    snap.fynmesh = fynmesh.fynmesh;
+  }
+  snap.errors.push(...fynmesh.errors);
 
   // Federation attribution can introduce ids the record pass never saw (an
   // exposed chunk known only to a container), so dependents are rebuilt once
@@ -189,5 +202,26 @@ export function fingerprint(opts: CollectOptions = {}): string {
     });
   }
 
-  return records + ":" + regs + ":" + shares;
+  // A FynApp mounting changes no record and no registration -- the modules were
+  // all loaded before the kernel ever bootstrapped it -- so without a term of
+  // its own the FynApps tab would sit on a stale status until something
+  // unrelated happened to load. Key count plus the sum of the lifecycle
+  // timestamps is O(apps) and allocates nothing per module, which is the only
+  // budget a 500ms poll has.
+  let fynmesh = 0;
+  const { kernel } = probeKernel(opts.kernel);
+  if (kernel) {
+    attempt(() => {
+      const runTime = safeGet<any>(kernel, "runTime");
+      fynmesh += Object.keys(safeGet<object>(runTime, "apps") ?? {}).length;
+      fynmesh += Object.keys(safeGet<object>(runTime, "middlewares") ?? {}).length;
+    });
+    attempt(() => {
+      for (const state of kernel.listFynAppStates()) {
+        fynmesh += state.updatedAt ?? 0;
+      }
+    });
+  }
+
+  return records + ":" + regs + ":" + shares + ":" + fynmesh;
 }
