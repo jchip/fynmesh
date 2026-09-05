@@ -107,6 +107,9 @@
          *                  carries a real combined bundle. Perfectly healthy;
          *                  it is opt-in only so /demo.html keeps shipping the
          *                  one-file-per-chunk dev build it always has.
+         *   ?lab=mw        fynapp-mw-mismatch -- misdeclares its middleware, so
+         *                  the two amber resolution branches have something to
+         *                  report. This one really is unhealthy.
          *   ?lab=all       every lab app at once.
          */
         const lab = new Set(
@@ -120,6 +123,28 @@
 
         if (inLab("bundled")) {
             features["fynapp-bundled"] = true;
+        }
+
+        if (inLab("mw")) {
+            /*
+             * `unresolved` is not a branch a FynApp can declare its way into.
+             * It is what the collector reports when a middleware IS registered
+             * and still resolves to nothing: a version map whose `default` slot
+             * is not backed by any version key in it. `registerMiddleware`
+             * writes both from the same object, so a registry the kernel built
+             * is never in that state -- only one that arrived from somewhere
+             * else is, which is exactly what `initRunTime` accepts and what a
+             * clone or a serialise/parse round trip produces.
+             *
+             * So it is staged here, in the open, rather than faked inside an
+             * app: one entry whose only version key holds something that is not
+             * a registration. fynapp-mw-mismatch declares a use of it.
+             */
+            const registry = fynMeshKernel?.runTime?.middlewares;
+            if (registry) {
+                registry["fynapp-phantom-mw::layout-tokens"] = { "1.0.0": "[unreadable]" };
+            }
+            features["fynapp-mw-mismatch"] = true;
         }
 
         // Separate eager and lazy apps

@@ -141,4 +141,8 @@ startDevProxy([
     { path: "/fynapp-bundled" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-bundled") },
   ],
+  [
+    { path: "/fynapp-mw-mismatch" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-mw-mismatch") },
+  ],
 ]);
