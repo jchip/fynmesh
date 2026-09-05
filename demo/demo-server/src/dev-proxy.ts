@@ -18,6 +18,10 @@ try {
   process.exit(1);
 }
 const systemJs = Path.join(loader.systemDir, "system.js");
+const inspectorDist = Path.join(
+  __dirname,
+  "../../../rollup-federation/federation-inspector/dist"
+);
 
 // Start the dev proxy
 startDevProxy([
@@ -36,6 +40,17 @@ startDevProxy([
   ],
   // whole dist dir: the page picks .dev.js or .min.js by URL
   [{ path: "/federation-js/dist" }, { protocol: "file", path: loader.federationDist }],
+  // the inspector, mounted from its own dist for the same reason as the loader
+  // above: one build, no copy under public/ to go stale. It is optional -- a
+  // tree where it has not been built just 404s a low-priority script.
+  [
+    { path: "/federation-inspector.js" },
+    { protocol: "file", path: Path.join(inspectorDist, "federation-inspector.js") },
+  ],
+  [
+    { path: "/federation-inspector.js.map" },
+    { protocol: "file", path: Path.join(inspectorDist, "federation-inspector.js.map") },
+  ],
   [
     { path: "/spectre.css" },
     { protocol: "file", path: Path.join(__dirname, "../node_modules/spectre.css") },
