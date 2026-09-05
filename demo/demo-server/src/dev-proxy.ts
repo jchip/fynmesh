@@ -20,7 +20,7 @@ try {
 const systemJs = Path.join(loader.systemDir, "system.js");
 const inspectorDist = Path.join(
   __dirname,
-  "../../../rollup-federation/federation-inspector/dist"
+  "../../../dev-tools/federation-inspector/dist"
 );
 
 // Start the dev proxy
