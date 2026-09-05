@@ -855,6 +855,105 @@ describe("auto-apply reach against FynApps that are no longer registered", () =>
   });
 });
 
+describe("auto-apply reach on a page that is still coming up (FYM-360)", () => {
+  /*
+   * The load window, in the shape the shell demo actually has at ~29ms when the
+   * bundle is injected at document-start: `fynapp-shell-mw` has just registered
+   * `shell-layout` from inside its own bootstrap, so the middleware is in the
+   * registry, its host is `bootstrapping`, and nothing has been delivered to
+   * anything yet. Every auto-applying middleware passes through this state --
+   * the kernel applies one during each FynApp's bootstrap, so "registered and
+   * carried by nobody" is what a healthy middleware looks like for a few
+   * milliseconds.
+   */
+  const loadingPage = (ageMs: number): PageOptions => ({
+    apps: [
+      fakeFynApp({
+        name: "fynapp-1",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+      }),
+      fakeFynApp({
+        name: "fynapp-shell-mw",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+      }),
+    ],
+    states: [
+      { name: "fynapp-1", version: "1.0.0", status: "mounted" },
+      {
+        name: "fynapp-shell-mw",
+        version: "1.0.0",
+        status: "bootstrapping",
+        updatedAt: Date.now() - ageMs,
+      },
+    ],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["fynapp", "middleware"],
+      },
+    ],
+  });
+
+  it("does not report the row while a FynApp is still bootstrapping", () => {
+    expect(codes(issuesOf(loadingPage(200)))).not.toContain(
+      "middleware-auto-apply-undelivered"
+    );
+  });
+
+  it("says it is waiting rather than going quiet", () => {
+    const skipped = one(issuesOf(loadingPage(200)), "fynmesh-checks-unavailable");
+    expect(skipped.detail).toContain("whether fynapp-shell-mw::shell-layout reached anything");
+    expect(skipped.detail).toContain("fynapp-shell-mw@1.0.0 has been bootstrapping for 0.2s");
+    expect(skipped.detail).toContain("not-yet-final answer");
+  });
+
+  /*
+   * The other half of the guard, and the reason it is bounded. A suppression
+   * that waits for a bootstrap that never finishes would withhold this check
+   * for as long as the tab stays open -- so the same threshold that turns a
+   * bootstrapping FynApp into a `fynapp-bootstrap-stalled` row also stops it
+   * counting as a page still loading.
+   */
+  it("reports the row again once a wedged FynApp is past the stalled threshold", () => {
+    const issues = issuesOf(loadingPage(60_000));
+    expect(codes(issues)).toContain("middleware-auto-apply-undelivered");
+    expect(codes(issues)).toContain("fynapp-bootstrap-stalled");
+  });
+
+  it("reports the row on a settled page, so the guard is a delay and not a mute", () => {
+    const settled = loadingPage(200);
+    settled.states = [
+      { name: "fynapp-1", version: "1.0.0", status: "mounted" },
+      { name: "fynapp-shell-mw", version: "1.0.0", status: "mounted" },
+    ];
+    expect(codes(issuesOf(settled))).toContain("middleware-auto-apply-undelivered");
+  });
+
+  /*
+   * A `bootstrapping` row with no timestamp cannot be aged, and
+   * `fynapp-bootstrap-stalled` will not report it either. Waiting is the only
+   * consistent reading, and the wait is said out loud -- an indefinite decline
+   * that announces itself is the one shape of permanent blindness this list can
+   * live with.
+   */
+  it("waits on a bootstrapping FynApp the kernel kept no timestamp for, and names it", () => {
+    const kernel = devKernel(loadingPage(200)) as any;
+    kernel.listFynAppStates = () => [
+      { name: "fynapp-1", version: "1.0.0", status: "mounted", updatedAt: Date.now() },
+      { name: "fynapp-shell-mw", version: "1.0.0", status: "bootstrapping" },
+    ];
+    const issues = issuesOf({ kernel });
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    expect(one(issues, "fynmesh-checks-unavailable").detail).toContain(
+      "kept no timestamp to age that against"
+    );
+  });
+});
+
 /* ------------------------------------------------------------- app registry */
 
 describe("two versions of one FynApp name", () => {

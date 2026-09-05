@@ -1054,6 +1054,48 @@ function targetBuckets(
 }
 
 /**
+ * The FynApps this page is still coming up on, by `lifecycleIssues`' own clock.
+ *
+ * Deliberately the exact complement of the `fynapp-bootstrap-stalled` predicate
+ * below `STUCK_BOOTSTRAP_MS`, and that symmetry is the whole design: "still
+ * loading" and "stuck" are the two readings of one status, this file already
+ * draws the line between them in one place, and a second, differently-placed
+ * line would mean a FynApp that is simultaneously stalled enough to report and
+ * fresh enough to withhold a check.
+ *
+ * The line matters most in the direction nobody looks: a page where something
+ * never finishes bootstrapping would otherwise withhold the reach check for as
+ * long as the tab stays open, which is permanent blindness dressed as patience.
+ * Past the threshold the FynApp gets its own row and stops being a reason to
+ * wait.
+ *
+ * A `bootstrapping` row with no `updatedAt` counts as still loading. There is
+ * nothing to age it against, `lifecycleIssues` will not call it stalled either,
+ * and this file has no basis for calling the page settled -- but the caller
+ * says so out loud rather than going quiet, so an indefinite wait is at least a
+ * visible one.
+ */
+function stillBootstrapping(snapshot: Snapshot, apps: FynAppNode[]): FynAppNode[] {
+  return apps.filter((app) => {
+    if (app.status !== "bootstrapping") {
+      return false;
+    }
+    if (app.updatedAt === undefined) {
+      return true;
+    }
+    return snapshot.takenAt - app.updatedAt <= STUCK_BOOTSTRAP_MS;
+  });
+}
+
+function bootstrappingFor(snapshot: Snapshot, app: FynAppNode): string {
+  if (app.updatedAt === undefined) {
+    return `${app.key} is still bootstrapping and the kernel kept no timestamp to age that against`;
+  }
+  const seconds = (snapshot.takenAt - app.updatedAt) / 1000;
+  return `${app.key} has been bootstrapping for ${seconds.toFixed(1)}s`;
+}
+
+/**
  * Which auto-applying middlewares reached nothing, and which cannot be judged.
  *
  * One walk behind two rows. `unreached` becomes the diagnostic; `skipped`
@@ -1061,6 +1103,17 @@ function targetBuckets(
  * declines is indistinguishable from one that passed -- and here the decline is
  * the interesting half: it means the consumers may exist and be unattributable
  * rather than absent.
+ *
+ * The third decline is time (FYM-360). Every auto-applying middleware passes
+ * through "registered and delivered to nobody" on its way up, because the
+ * kernel registers it while its host FynApp bootstraps and applies it during
+ * each FynApp's bootstrap afterwards. Injected at document-start on the shell
+ * demo -- the position `standalone.ts` recommends and the one an extension
+ * panel has -- `fynapp-shell-mw::shell-layout` registers ~29ms into the load
+ * with its own host `bootstrapping` (9ms old) and holding the bootstrap lock,
+ * and the check reports it; 3ms later, at the next macrotask, the row is gone.
+ * The demo pages load the bundle last and so cannot reach that instant at all,
+ * which is why FYM-357 shipped without this guard and why it is here now.
  */
 interface ReachVerdict {
   /** auto-applies, has FynApps it could have reached, and reached none of them */
@@ -1104,6 +1157,28 @@ function autoApplyReach(snapshot: Snapshot): ReachVerdict {
         candidates.length === 1 ? "auto-applies" : "auto-apply"
       }, but kernel.runTime.apps is readable and holds no FynApp, so there was ` +
         "nothing on this page to reach"
+    );
+    return verdict;
+  }
+
+  // FYM-360: the page has not finished loading, and on a page that is loading
+  // this check is guaranteed to be true of a healthy middleware for a moment.
+  const loading = stillBootstrapping(snapshot, registered);
+  if (loading.length) {
+    verdict.skipped.push(
+      `whether ${candidates.map((mw) => mw.regKey).join(", ")} reached ` +
+        `anything — ${candidates.length === 1 ? "it auto-applies" : "they auto-apply"} and no ` +
+        `FynApp on this page carries ${candidates.length === 1 ? "it" : "them"} yet, but ` +
+        `${loading.map((app) => bootstrappingFor(snapshot, app)).join(", ")}. The kernel ` +
+        "auto-applies a middleware to a FynApp as part of that FynApp's bootstrap, so a " +
+        "FynApp that has not finished bootstrapping has not been offered it yet and a " +
+        `middleware that has just registered has reached nobody every time. ` +
+        "That is a not-yet-final answer rather than a finding — take another snapshot once " +
+        `the page has settled. A FynApp still bootstrapping ${
+          STUCK_BOOTSTRAP_MS / 1000
+        }s after its last lifecycle change is reported as stalled instead, and stops ` +
+        "withholding this check: one wedged FynApp is not a reason to stop looking at the " +
+        "rest of the page for as long as it stays open"
     );
     return verdict;
   }
