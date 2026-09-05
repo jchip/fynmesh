@@ -7,11 +7,21 @@
  * lands on, and who is actually consuming it. One row per `provider::name`,
  * expanding into a block per registered version.
  *
- * Both tabs read one collection. `snapshot.fynmesh.middlewares` is built once
- * by `collectors/fynmesh.ts`, with the consumer list filled in from the same
- * pass over `__middlewareMeta` that fills each FynApp's `usesMiddleware` -- so
- * the two views cannot disagree about who consumes what, because there is only
- * one answer and they both render it.
+ * Both tabs read one collection, and getting that guarantee right took two
+ * goes. `snapshot.fynmesh.middlewares` was first filled from the pass over
+ * `__middlewareMeta` alone -- the same pass that fills each FynApp's
+ * `usesMiddleware` -- on the reasoning that one source cannot contradict
+ * itself. It could, because a FynApp does not have to declare a middleware to
+ * be running one: `fynapp-shell-mw::shell-layout` auto-applies, and it showed
+ * `0 consumers` here while the FynApps tab listed it as delivered to three
+ * FynApps (FYM-347).
+ *
+ * So the collector now files consumers from *both* of the FynApp fields this
+ * view's sibling renders -- `usesMiddleware` and `middlewareDelivered` -- and
+ * tags each with the `route` it came by. The count answers "who runs on this",
+ * which is the question a reader of this tab is asking, and "who asked for it"
+ * is still on every chip. Neither tab can be short of the other, because
+ * neither is reading a subset of the other's evidence any more.
  *
  * The tab exists only when a kernel does, and every empty state here names
  * what is missing. "No middleware registered" and "the registry could not be
@@ -58,6 +68,20 @@ const VIA_TITLE: Record<MiddlewareResolution, string> = {
     "this middleware is registered but which version the declaration resolves to could " +
     "not be worked out — the registration behind the default slot could not be read",
 };
+
+/**
+ * What an undeclared consumer is, said without guessing at a cause.
+ *
+ * `autoApplyScope` is the usual one, but a middleware may also write straight
+ * into another FynApp's `middlewareContext` -- and the kernel records nothing
+ * that separates the two, so neither is claimed.
+ */
+const UNDECLARED_TITLE =
+  "nothing in this FynApp's __middlewareMeta asks for this middleware, but its " +
+  "middlewareContext carries an entry under the name — so it is running on it " +
+  "without ever declaring it. That is what autoApplyScope does, and it is also " +
+  "what a middleware writing straight into another FynApp's context does; the " +
+  "kernel records no difference between the two.";
 
 const VIA_LABEL: Record<MiddlewareResolution, string> = {
   exact: "exact",
@@ -189,8 +213,10 @@ function MiddlewareRow({
   const isOpen = expanded.value.has(id);
   const consumers = allConsumers(mw);
   const undelivered = consumers.filter((c) => !c.delivered).length;
+  // only a *declaration* can miss a provider: an undeclared consumer named
+  // nothing at all, and never went near the kernel's resolve-by-name path
   const exposed = mw.nameCollisions.length
-    ? consumers.filter((c) => !c.pinnedProvider).length
+    ? consumers.filter((c) => c.route === "declared" && !c.pinnedProvider).length
     : 0;
 
   return (
@@ -315,11 +341,13 @@ function MiddlewareDetail({
           <span
             class="faint"
             title={
-              "these FynApps declare this middleware, but which registered version they " +
-              "resolve to could not be worked out"
+              "these FynApps consume this middleware, but which registered version they " +
+              "are on could not be worked out -- either a declaration that resolves to " +
+              "no version below, or an undeclared consumer of a middleware with more " +
+              "than one version it could have come from"
             }
           >
-            resolve to this middleware but to no version below
+            consume this middleware but no version below
           </span>
           <span class="inline">
             {mw.unpinnedConsumers.map((c) => (
@@ -455,16 +483,18 @@ function VersionBlock({
             title={
               "no FynApp on this page declares " +
               mw.regKey +
-              " in a way that resolves to this version" +
+              " in a way that resolves to this version, and none carries it in " +
+              "middlewareContext either" +
               (version.autoApplyScope?.length
-                ? ". It auto-applies, and the kernel keeps no record of that, so it may " +
-                  "well be running anyway"
+                ? ". It auto-applies, so the kernel would have offered it to every " +
+                  "FynApp here — every one of them either declined it through " +
+                  "shouldApply or was handed nothing to record"
                 : "")
             }
           >
             {version.autoApplyScope?.length
-              ? "nobody declares it — but it auto-applies, and the kernel records no trace of that"
-              : "nobody declares it"}
+              ? "nobody declares it, and nobody carries it in middlewareContext — it auto-applies, so it ran and wrote nothing"
+              : "nobody declares it, and nobody carries it in middlewareContext"}
           </span>
         )}
       </div>
@@ -480,20 +510,28 @@ function VersionBlock({
  * into that app", which is a middleware that declined via `shouldApply`, one
  * that has nothing to hand over, or one that failed. The kernel keeps no record
  * that separates those three, and the tooltip says so rather than picking one.
+ *
+ * An undeclared consumer has no cross to show and no resolution to describe --
+ * it exists only because delivery happened. It is labelled for what it is, so a
+ * reader counting chips against the FynApps tab can see which of them got here
+ * without asking.
  */
 function ConsumerChip({ consumer }: { consumer: MiddlewareConsumerNode }): JSX.Element {
   const [name] = consumer.app.split("@");
-  const detail = [
-    consumer.range ? "asked for " + consumer.range : "asked for no version",
-    VIA_TITLE[consumer.via],
-    consumer.pinnedProvider
-      ? "named the provider"
-      : "named no provider (or one that never registered), so the kernel resolved this by name alone",
-    consumer.delivered
-      ? "its middlewareContext carries an entry under this name"
-      : "nothing under this name is in its middlewareContext — the middleware may have " +
-        "declined it, delivered nothing, or failed; the kernel records no difference",
-  ].join("\n");
+  const detail =
+    consumer.route === "undeclared"
+      ? UNDECLARED_TITLE
+      : [
+          consumer.range ? "asked for " + consumer.range : "asked for no version",
+          VIA_TITLE[consumer.via],
+          consumer.pinnedProvider
+            ? "named the provider"
+            : "named no provider (or one that never registered), so the kernel resolved this by name alone",
+          consumer.delivered
+            ? "its middlewareContext carries an entry under this name"
+            : "nothing under this name is in its middlewareContext — the middleware may have " +
+              "declined it, delivered nothing, or failed; the kernel records no difference",
+        ].join("\n");
 
   return (
     <Chip
@@ -502,9 +540,11 @@ function ConsumerChip({ consumer }: { consumer: MiddlewareConsumerNode }): JSX.E
       onClick={() => focusOn("fynapps", name, "fynapp:" + consumer.app)}
     >
       {consumer.app} {consumer.delivered ? "✓" : "✗"}
-      {consumer.via !== "default" && consumer.via !== "exact"
-        ? " " + VIA_LABEL[consumer.via]
-        : ""}
+      {consumer.route === "undeclared"
+        ? " undeclared"
+        : consumer.via !== "default" && consumer.via !== "exact"
+          ? " " + VIA_LABEL[consumer.via]
+          : ""}
     </Chip>
   );
 }
@@ -566,15 +606,29 @@ function consumersTitle(mw: MiddlewareNode, known: boolean): string {
     return (
       "no FynApp on this page declares " +
       mw.regKey +
-      (mw.autoApply?.length ? ", though it auto-applies and so may be running anyway" : "")
+      ", and none carries it in middlewareContext" +
+      (mw.autoApply?.length
+        ? " — it auto-applies, so the kernel offered it to every FynApp here and none " +
+          "of them recorded anything"
+        : "")
     );
   }
+  const declared = consumers.filter((c) => c.route === "declared").length;
+  const undeclared = consumers.length - declared;
   const delivered = consumers.filter((c) => c.delivered).length;
   return (
     consumers.length +
-    " FynApps declare it, " +
+    " FynApps run on it: " +
+    declared +
+    " declare it" +
+    (undeclared
+      ? " and " +
+        undeclared +
+        " never asked — it auto-applied, or the middleware wrote straight into them"
+      : "") +
+    ". " +
     delivered +
-    " have something under its name in their middlewareContext"
+    " have something under its name in their middlewareContext."
   );
 }
 

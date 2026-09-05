@@ -420,10 +420,13 @@ function short(id: string): string {
  * wrong. Deliberately absent: "middleware registered but never delivered" and
  * "middleware with no consumers", both of which the design doc lists. Delivery
  * is written by the middleware, not the kernel, so a middleware that legitimately
- * writes nothing looks identical to one that failed; and `MiddlewareNode.consumers`
- * counts declarations only, so an auto-applied middleware -- `fynapp-shell-mw::shell-layout`
- * on the demo's shell page -- shows zero consumers while two FynApps list it as
- * delivered. Reporting either would contradict the FynApps view on screen.
+ * writes nothing looks identical to one that failed. The second reason no longer
+ * holds: `MiddlewareNode.consumers` counted declarations only, so an auto-applied
+ * middleware -- `fynapp-shell-mw::shell-layout` on the demo's shell page -- showed
+ * zero consumers while three FynApps listed it as delivered, and reporting it
+ * would have contradicted the FynApps view on screen. FYM-347 fixed that field to
+ * count consumers by either route. Whether the check is now worth having is a
+ * decision for FYM-325 to revisit, deliberately; it is not made here by default.
  *
  * **Say what to do.** A row that only names a condition spends the reader's
  * attention without repaying it.
@@ -770,10 +773,15 @@ function registryAmbiguity(snapshot: Snapshot): Issue[] {
  * from the FynApp declarations, so this row and the Middleware view are looking
  * at one list. `unpinnedConsumers` is included because a consumer that resolved
  * to the middleware but to none of its version rows is still a consumer of it.
+ *
+ * Declared consumers only. Since FYM-347 those lists also hold consumers that
+ * declared nothing at all, and this row is about declarations that name no
+ * version -- an auto-applied FynApp has no declaration to add a range to, so
+ * counting it here would name an app the advice below cannot be acted on for.
  */
 function versionlessConsumers(mw: MiddlewareNode): string[] {
   return [...mw.versions.flatMap((v) => v.consumers), ...mw.unpinnedConsumers]
-    .filter((c) => c.via === "default")
+    .filter((c) => c.route === "declared" && c.via === "default")
     .map((c) => c.app);
 }
 
@@ -835,7 +843,9 @@ function duplicateMiddlewareVersions(fm: FynMeshNode): Issue[] {
  * It only bites a declaration that did not pin a provider. That is the path
  * where the kernel scans the registry and takes the first match, and
  * `pinnedProvider` on each consumer is the collector's record of which path it
- * took -- not a guess made here.
+ * took -- not a guess made here. A consumer that declared nothing (FYM-347)
+ * never went near that path, so it is skipped rather than counted as one more
+ * app resolving by name.
  */
 function competingProviders(fm: FynMeshNode): Issue[] {
   const byRegKey = new Map(fm.middlewares.map((m) => [m.regKey, m]));
@@ -859,7 +869,7 @@ function competingProviders(fm: FynMeshNode): Issue[] {
         ...node.versions.flatMap((v) => v.consumers),
         ...node.unpinnedConsumers,
       ]) {
-        if (!c.pinnedProvider) {
+        if (c.route === "declared" && !c.pinnedProvider) {
           unpinned.push(`${c.app} did not pin a provider and resolved to ${node.regKey}`);
         }
       }

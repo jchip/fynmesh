@@ -472,8 +472,38 @@ export interface MiddlewareUseNode {
  */
 export type MiddlewareResolution = "exact" | "range" | "default" | "fallback" | "unresolved";
 
+/**
+ * How a FynApp came to be consuming a middleware.
+ *
+ * `declared` is the route with a paper trail: `__middlewareMeta` names the
+ * middleware, the kernel resolved that declaration, and every field describing
+ * the resolution means something.
+ *
+ * `undeclared` is delivery with nothing asked for. `autoApplyScope` is the
+ * common cause -- the kernel applies such a middleware to every FynApp on the
+ * page whether or not anything declares it -- but it is not the only one: a
+ * middleware may also write straight into another FynApp's `middlewareContext`,
+ * which is how `fynapp-shell-mw::shell-layout` reaches the apps it hosts. The
+ * kernel keeps no record separating the two, so this route is named for what is
+ * observable (nothing declared it, it arrived anyway) rather than for a cause
+ * that would have to be guessed.
+ */
+export type MiddlewareRoute = "declared" | "undeclared";
+
+/**
+ * One FynApp consuming this middleware, by whichever route it got there.
+ *
+ * A union rather than one shape with optional fields, because half the fields
+ * below exist only on the declared route: there is no range, no provider
+ * pinning and no resolution branch when there was no declaration to resolve.
+ * Reading `via` off an auto-applied consumer is a question with no answer, and
+ * the type says so rather than filling in a plausible one.
+ */
+export type MiddlewareConsumerNode = DeclaredConsumerNode | UndeclaredConsumerNode;
+
 /** One FynApp's declaration, seen from the middleware it resolves to. */
-export interface MiddlewareConsumerNode {
+export interface DeclaredConsumerNode {
+  route: "declared";
   /** `name@version` of the consuming FynApp */
   app: string;
   /** the semver range it declared, when it declared one */
@@ -489,6 +519,23 @@ export interface MiddlewareConsumerNode {
   /** the app's `middlewareContext` carries an entry under this middleware's name */
   delivered: boolean;
   via: MiddlewareResolution;
+}
+
+/**
+ * One FynApp running on this middleware without ever declaring it (FYM-347).
+ *
+ * Read from the app's `middlewareContext` keys -- the same list its
+ * `middlewareDelivered` renders -- so `delivered` is `true` by construction:
+ * delivery is the only evidence this consumer exists at all. There is nothing
+ * else to record. No range was asked for, no provider was named, and no
+ * resolution branch ran.
+ */
+export interface UndeclaredConsumerNode {
+  route: "undeclared";
+  /** `name@version` of the consuming FynApp */
+  app: string;
+  /** always true: this node is built *from* the delivery record */
+  delivered: true;
 }
 
 export interface MiddlewareVersionNode {
@@ -534,9 +581,25 @@ export interface MiddlewareNode {
   unreadableVersions: string[];
   /** the version occupying the `default` slot; absent when nothing does */
   defaultVersion?: string;
-  /** `name@version` of every FynApp whose `__middlewareMeta` names this */
+  /**
+   * `name@version` of every FynApp consuming this, by either route.
+   *
+   * Not "every FynApp that declares it": a middleware that auto-applies is
+   * delivered to FynApps whose `__middlewareMeta` never mentions it, and
+   * counting declarations alone reported zero consumers for
+   * `fynapp-shell-mw::shell-layout` on a page where two FynApps listed it under
+   * `middlewareDelivered` (FYM-347). Which route each one came by is on the
+   * consumer nodes, not here.
+   */
   consumers: string[];
-  /** consumers that resolve to this middleware but to none of its versions */
+  /**
+   * consumers this middleware has, but that no version row below can claim.
+   *
+   * Two ways in: a declaration that resolves to the middleware and to none of
+   * its versions, and an undeclared consumer of a middleware with more than one
+   * candidate version -- neither of which may be dropped, because a consumer of
+   * *something* is still a consumer.
+   */
   unpinnedConsumers: MiddlewareConsumerNode[];
   /** other `provider::name` keys registering this same middleware name */
   nameCollisions: string[];

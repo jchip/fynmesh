@@ -20,12 +20,20 @@ import { emptyCapability } from "../src/core/model.js";
 import type {
   Capability,
   ContainerNode,
+  DeclaredConsumerNode,
+  MiddlewareConsumerNode,
   MiddlewareNode,
   MiddlewareVersionNode,
 } from "../src/core/model.js";
 import { filterMiddleware } from "../src/ui/views/middleware.js";
 import { twoContainerPage } from "./fixture.js";
-import { devKernel, fakeFynApp, fakeUnit, minifiedKernel } from "./kernel-fixture.js";
+import {
+  autoAppliedShellPage,
+  devKernel,
+  fakeFynApp,
+  fakeUnit,
+  minifiedKernel,
+} from "./kernel-fixture.js";
 import type { FakeKernelOptions } from "./kernel-fixture.js";
 
 function run(kernel: unknown, containers: ContainerNode[] = []) {
@@ -40,6 +48,18 @@ function mwNamed(nodes: MiddlewareNode[], regKey: string): MiddlewareNode {
     throw new Error(`no middleware ${regKey} in [${nodes.map((m) => m.regKey).join(", ")}]`);
   }
   return found;
+}
+
+/**
+ * Narrow to the declared route (FYM-347).
+ *
+ * `via`, `range` and `pinnedProvider` exist only on a declaration -- an
+ * undeclared consumer never asked for anything, so there is nothing there to
+ * assert on. The type says so, and these assertions say which route they are
+ * about rather than reaching past it.
+ */
+function declaredOf(consumers: MiddlewareConsumerNode[]): DeclaredConsumerNode[] {
+  return consumers.filter((c): c is DeclaredConsumerNode => c.route === "declared");
 }
 
 function versionOf(mw: MiddlewareNode, version: string): MiddlewareVersionNode {
@@ -110,8 +130,8 @@ describe("a provider with two versions", () => {
     const { fynmesh } = run(twoVersions());
     const mw = mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout");
 
-    const one = versionOf(mw, "1.0.0").consumers;
-    const two = versionOf(mw, "2.0.0").consumers;
+    const one = declaredOf(versionOf(mw, "1.0.0").consumers);
+    const two = declaredOf(versionOf(mw, "2.0.0").consumers);
 
     // in the FynApps view's own order, which is by name
     expect(one.map((c) => [c.app, c.via])).toEqual([
@@ -156,7 +176,7 @@ describe("consumers", () => {
     const { fynmesh } = run(twoVersions());
     const mw = mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout");
     const byApp = new Map(
-      [...mw.versions.flatMap((v) => v.consumers)].map((c) => [c.app, c])
+      declaredOf(mw.versions.flatMap((v) => v.consumers)).map((c) => [c.app, c])
     );
 
     expect(byApp.get("fynapp-asks-range@1.0.0")!.delivered).toBe(true);
@@ -215,6 +235,209 @@ describe("consumers", () => {
   });
 });
 
+/*
+ * FYM-347. The Middleware view was built on the claim that filing consumers off
+ * the same `usesMiddleware` array the FynApps view renders makes the two tabs
+ * incapable of disagreeing. It was false wherever delivery happens without a
+ * declaration -- which is not a corner case, it is what `autoApplyScope` is for.
+ *
+ * The assertion that matters is the last one in this block: the set of apps the
+ * Middleware view names as consumers and the set of apps whose
+ * `middlewareDelivered` carries the name are computed independently here and
+ * compared. That is the contradiction the browser verification photographed,
+ * and it is checked rather than reasoned about.
+ */
+describe("a middleware delivered to FynApps that never declared it", () => {
+  const shellPage = () => run(devKernel(autoAppliedShellPage()));
+
+  it("counts an auto-applied FynApp as a consumer, tagged with the route it came by", () => {
+    const { fynmesh } = shellPage();
+    const mw = mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout");
+
+    // three, and the third is the middleware's own host: autoApplyScope
+    // includes "middleware", so it applies to middleware providers too
+    expect(mw.consumers).toEqual([
+      "fynapp-shell-mw@1.0.0",
+      "fynapp-sidebar@1.0.0",
+      "fynapp-x1@1.0.0",
+    ]);
+    // filed under the version that auto-applies, not left dangling
+    expect(versionOf(mw, "1.0.0").consumers.map((c) => [c.app, c.route, c.delivered])).toEqual([
+      ["fynapp-shell-mw@1.0.0", "undeclared", true],
+      ["fynapp-sidebar@1.0.0", "undeclared", true],
+      ["fynapp-x1@1.0.0", "undeclared", true],
+    ]);
+    expect(mw.unpinnedConsumers).toEqual([]);
+  });
+
+  it("leaves a declared consumer exactly as it was, resolution and all", () => {
+    const { fynmesh } = shellPage();
+    const mw = mwNamed(fynmesh!.middlewares, "fynapp-design-tokens::design-tokens");
+
+    expect(mw.consumers).toEqual(["fynapp-x1@1.0.0", "fynapp-x1@2.0.0"]);
+    expect(versionOf(mw, "1.0.0").consumers).toEqual([
+      {
+        route: "declared",
+        app: "fynapp-x1@1.0.0",
+        range: "^1.0.0",
+        pinnedProvider: true,
+        delivered: true,
+        via: "range",
+      },
+      {
+        route: "declared",
+        app: "fynapp-x1@2.0.0",
+        range: "^1.0.0",
+        pinnedProvider: true,
+        delivered: true,
+        via: "range",
+      },
+    ]);
+  });
+
+  /*
+   * One FynApp, both routes, on one page: `fynapp-x1@1.0.0` declares
+   * design-tokens and was handed shell-layout without asking. "Who runs on
+   * this" and "who asked for it" are different questions and both stay
+   * answerable -- which is the whole point of carrying the route rather than
+   * renaming the field to say it counts declarations only.
+   */
+  it("keeps the two routes apart on the same FynApp", () => {
+    const { fynmesh } = shellPage();
+    const shell = versionOf(
+      mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout"),
+      "1.0.0"
+    ).consumers.find((c) => c.app === "fynapp-x1@1.0.0")!;
+    const tokens = versionOf(
+      mwNamed(fynmesh!.middlewares, "fynapp-design-tokens::design-tokens"),
+      "1.0.0"
+    ).consumers.find((c) => c.app === "fynapp-x1@1.0.0")!;
+
+    expect(shell.route).toBe("undeclared");
+    expect(tokens.route).toBe("declared");
+    // the undeclared node carries nothing it cannot know: no range, no
+    // provider pinning, no resolution branch
+    expect(shell).toEqual({ route: "undeclared", app: "fynapp-x1@1.0.0", delivered: true });
+
+    // and the FynApp's own declaration list is untouched by any of it
+    const app = fynmesh!.apps.find((a) => a.key === "fynapp-x1@1.0.0")!;
+    expect(app.usesMiddleware.map((u) => u.name)).toEqual(["design-tokens"]);
+    expect(app.middlewareDelivered).toEqual(["shell-layout", "design-tokens"]);
+  });
+
+  it("still reports a middleware nobody declares and nobody receives as having none", () => {
+    const { fynmesh, cap } = shellPage();
+    const mw = mwNamed(fynmesh!.middlewares, "fynapp-react-middleware::react-context");
+
+    expect(mw.consumers).toEqual([]);
+    expect(versionOf(mw, "1.0.0").consumers).toEqual([]);
+    expect(mw.unpinnedConsumers).toEqual([]);
+    // "nobody" is only a real answer because the app list was readable
+    expect(cap.kernelRunTime).toBe(true);
+  });
+
+  /*
+   * The contradiction itself, checked both ways round on the collector's own
+   * output. Before FYM-347 the left side of this was empty for shell-layout and
+   * the right side had three entries in it.
+   */
+  it("agrees with the FynApps view about every middleware on the page", () => {
+    const { fynmesh } = shellPage();
+
+    for (const mw of fynmesh!.middlewares) {
+      const named = [...mw.versions.flatMap((v) => v.consumers), ...mw.unpinnedConsumers]
+        .filter((c) => c.delivered)
+        .map((c) => c.app)
+        .sort();
+      const deliveredTo = fynmesh!.apps
+        .filter((a) => a.middlewareDelivered.includes(mw.name))
+        .map((a) => a.key)
+        .sort();
+      expect(named, mw.regKey).toEqual(deliveredTo);
+    }
+
+    // and specifically the row the browser verification photographed
+    const shell = mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout");
+    expect(shell.consumers).toHaveLength(3);
+  });
+
+  it("reads the same consumers off the minified kernel", () => {
+    const opts = autoAppliedShellPage();
+    expect(run(minifiedKernel(opts)).fynmesh!.middlewares).toEqual(
+      run(devKernel(opts)).fynmesh!.middlewares
+    );
+  });
+
+  /*
+   * Which version delivered is inferable only when there is one candidate. With
+   * two versions auto-applying, an undeclared consumer could have come from
+   * either, and `unpinnedConsumers` is where a consumer of the middleware but of
+   * no nameable version already belongs -- guessing would put a FynApp on a
+   * version it may not be running.
+   */
+  it("parks an undeclared consumer of two auto-applying versions as unpinned", () => {
+    const { fynmesh } = run(
+      devKernel({
+        apps: [
+          fakeFynApp({ name: "fynapp-quiet", version: "1.0.0", delivered: ["shell-layout"] }),
+        ],
+        middlewares: [
+          { provider: "mw-host", name: "shell-layout", hostVersion: "1.0.0", autoApplyScope: ["fynapp"] },
+          { provider: "mw-host", name: "shell-layout", hostVersion: "2.0.0", autoApplyScope: ["fynapp"] },
+        ],
+      })
+    );
+    const mw = mwNamed(fynmesh!.middlewares, "mw-host::shell-layout");
+
+    expect(mw.consumers).toEqual(["fynapp-quiet@1.0.0"]);
+    expect(versionOf(mw, "1.0.0").consumers).toEqual([]);
+    expect(versionOf(mw, "2.0.0").consumers).toEqual([]);
+    expect(mw.unpinnedConsumers).toEqual([
+      { route: "undeclared", app: "fynapp-quiet@1.0.0", delivered: true },
+    ]);
+  });
+
+  /*
+   * A `middlewareContext` key is a name the middleware chose, not a registry
+   * key. Two providers of one name (FYM-333) make it unattributable, and filing
+   * the app under either would say it consumes a provider it may never have
+   * touched. The `name shared` chip is what explains the short row.
+   */
+  it("does not attribute a delivered name that two providers register", () => {
+    const { fynmesh } = run(
+      devKernel({
+        apps: [fakeFynApp({ name: "fynapp-quiet", version: "1.0.0", delivered: ["logger", "ghost"] })],
+        middlewares: [
+          { provider: "mw-a", name: "logger", hostVersion: "1.0.0", autoApplyScope: ["fynapp"] },
+          { provider: "mw-b", name: "logger", hostVersion: "1.0.0", autoApplyScope: ["fynapp"] },
+        ],
+      })
+    );
+
+    expect(mwNamed(fynmesh!.middlewares, "mw-a::logger").consumers).toEqual([]);
+    expect(mwNamed(fynmesh!.middlewares, "mw-b::logger").consumers).toEqual([]);
+    // "ghost" matches no registration at all and is likewise not invented into one
+    expect(fynmesh!.middlewares.map((m) => m.regKey)).toEqual(["mw-a::logger", "mw-b::logger"]);
+  });
+
+  /*
+   * A declaration and a delivery for the same middleware are one consumer, not
+   * two: the declared node already carries `delivered`.
+   */
+  it("does not double-file a FynApp that both declared it and received it", () => {
+    const { fynmesh } = run(
+      devKernel({
+        apps: [consumer("fynapp-asks", { name: "logger", provider: "mw-a" }, ["logger"])],
+        middlewares: [{ provider: "mw-a", name: "logger", hostVersion: "1.0.0" }],
+      })
+    );
+    const mw = mwNamed(fynmesh!.middlewares, "mw-a::logger");
+
+    expect(mw.consumers).toEqual(["fynapp-asks@1.0.0"]);
+    expect(versionOf(mw, "1.0.0").consumers.map((c) => c.route)).toEqual(["declared"]);
+  });
+});
+
 describe("a name registered by more than one provider", () => {
   /*
    * FYM-333: legal, and silent in production. A consumer that names no provider
@@ -241,9 +464,11 @@ describe("a name registered by more than one provider", () => {
     expect(b.nameCollisions).toEqual(["mw-a::logger"]);
 
     // the vague one resolved by name alone; the precise one took the exact key
-    const vague = versionOf(a, "1.0.0").consumers.find((c) => c.app === "fynapp-vague@1.0.0")!;
+    const vague = declaredOf(versionOf(a, "1.0.0").consumers).find(
+      (c) => c.app === "fynapp-vague@1.0.0"
+    )!;
     expect(vague.pinnedProvider).toBe(false);
-    const precise = versionOf(b, "1.0.0").consumers.find(
+    const precise = declaredOf(versionOf(b, "1.0.0").consumers).find(
       (c) => c.app === "fynapp-precise@1.0.0"
     )!;
     expect(precise.pinnedProvider).toBe(true);
@@ -407,7 +632,7 @@ describe("absent, empty and unreadable", () => {
     const mw = mwNamed(fynmesh!.middlewares, "mw-host::ghost");
     expect(mw.versions).toEqual([]);
     expect(mw.defaultVersion).toBeUndefined();
-    expect(mw.unpinnedConsumers.map((c) => [c.app, c.via])).toEqual([
+    expect(declaredOf(mw.unpinnedConsumers).map((c) => [c.app, c.via])).toEqual([
       ["fynapp-hopeful@1.0.0", "unresolved"],
     ]);
     // still counted as a consumer of the middleware, just not of a version
@@ -477,7 +702,15 @@ describe("filterMiddleware", () => {
         {
           version: "1.0.0",
           hostApp: "mw-a@1.0.0",
-          consumers: [{ app: "fynapp-1@1.0.0", pinnedProvider: true, delivered: true, via: "default" }],
+          consumers: [
+            {
+              route: "declared",
+              app: "fynapp-1@1.0.0",
+              pinnedProvider: true,
+              delivered: true,
+              via: "default",
+            },
+          ],
         },
       ],
       consumers: ["fynapp-1@1.0.0"],

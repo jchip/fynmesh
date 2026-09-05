@@ -352,6 +352,7 @@ describe("middleware", () => {
         // version the kernel's resolution order puts it on (FYM-329)
         consumers: [
           {
+            route: "declared",
             app: "fynapp-1@1.0.0",
             range: "^1.0.0",
             pinnedProvider: true,
