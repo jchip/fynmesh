@@ -46,6 +46,7 @@ import type {
   ContainerVersionNode,
 } from "../model.js";
 import { attempt, isFn, safeGet } from "../capability.js";
+import { inlinedExposes } from "../exposes.js";
 import { maxSatisfying } from "../../analysis/semver.js";
 
 /** The five statuses `FynAppLifecycle` records. Anything else is not one. */
@@ -1262,6 +1263,9 @@ function joinContainer(node: FynAppNode, index: Map<string, ContainerIndexEntry>
     return;
   }
   node.containerVersion = node.version;
+  // the container's own answer to "which of these have a chunk at all", carried
+  // over so the FynApps view can say it instead of guessing at it (FYM-359)
+  node.inlinedExposes = inlinedExposes(version);
   markImported(version, node);
 }
 

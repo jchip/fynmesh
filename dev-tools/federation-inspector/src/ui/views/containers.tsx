@@ -27,7 +27,7 @@ import type {
   ShareDecl,
 } from "../../core/model.js";
 import type { ExposeLevels } from "../../core/exposes.js";
-import { containerExposeLevels, inlinedExposes } from "../../core/exposes.js";
+import { containerExposeLevels } from "../../core/exposes.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { filterContainers } from "../../analysis/search.js";
 import {
@@ -114,7 +114,6 @@ function VersionBlock({
   const id = "container:" + name + "@" + v.version;
   const isOpen = expanded.value.has(id);
   const exposes = containerExposeLevels(v);
-  const inlined = inlinedExposes(v);
   const unsatisfied = v.consumes.filter((d) => d.resolved && !d.resolved.satisfies).length;
   const shares = shareCount(v);
 
@@ -138,7 +137,7 @@ function VersionBlock({
           {v.version}
         </span>
         <span class="faint">scope {v.scope}</span>
-        <span class="muted" title={exposesTitle(exposes, inlined)}>
+        <span class="muted" title={exposesTitle(exposes)}>
           {exposes.declared.length
             ? `${exposes.loaded!.length}/${exposes.declared.length} chunks loaded`
             : "no exposes"}
@@ -294,7 +293,8 @@ function inferredProvides(v: ContainerVersionNode): ShareDecl[] {
  * "ex K/M" for the same app, with nothing on either screen saying they were
  * counting different things.
  */
-export function exposesTitle(levels: ExposeLevels, inlined: string[] = []): string {
+export function exposesTitle(levels: ExposeLevels): string {
+  const inlined = levels.inlined ?? [];
   const lines = [
     `${levels.declared.length} exposes declared by the build`,
     `${levels.loaded!.length} whose chunk the loader has: ` +

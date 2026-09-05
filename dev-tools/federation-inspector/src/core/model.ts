@@ -717,6 +717,19 @@ export interface FynAppNode {
   importedExposes: string[];
   /** exposes the build declared (`container.$E`) */
   declaredExposes: string[];
+  /**
+   * declared exposes with no chunk of their own, inlined into the container entry
+   *
+   * A container-side fact, carried across at the join rather than re-derived
+   * here: the FynApps view has no `$E` chunk ids to look at, and deriving
+   * "has a chunk" a second way is exactly how the two tabs came to disagree
+   * about exposes in the first place. See `src/core/exposes.ts`.
+   *
+   * **Absent** when the container collector saw no version row for this app:
+   * then which of its exposes have chunks is unknown, which is not the same
+   * claim as "none of them are inlined".
+   */
+  inlinedExposes?: string[];
   /** FynUnit hooks the `./main` expose implements */
   unitHooks: string[];
   usesMiddleware: MiddlewareUseNode[];

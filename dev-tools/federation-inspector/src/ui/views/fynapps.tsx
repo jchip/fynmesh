@@ -621,14 +621,7 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
               </span>
             ))}
             {notImported.map((e) => (
-              <span
-                key={e}
-                class="faint mono"
-                title={
-                  "declared by the build, never imported by the kernel. Its chunk may " +
-                  "still have loaded -- see this container on the Containers tab."
-                }
-              >
+              <span key={e} class="faint mono" title={notImportedTitle(e, levels)}>
                 {e}
               </span>
             ))}
@@ -939,6 +932,42 @@ export function importedTitle(levels: ExposeLevels): string {
     lines.push("imported but never declared: " + levels.undeclared.join(", "));
   }
   return lines.join("\n");
+}
+
+/**
+ * A declared-but-not-imported expose's tooltip.
+ *
+ * "The kernel never imported it" is one fact; whether there is a chunk that
+ * could have loaded anyway is a second one, and it decides whether the
+ * Containers tab has anything to show for this name. An expose the build
+ * inlined into the container entry has no chunk at all -- `fynapp-design-tokens`'s
+ * `./main` is exactly that -- so sending the reader over there to look for one
+ * is a dead end, and the Containers tab already says the true thing about it.
+ *
+ * Which names are inlined is the container collector's answer, joined onto the
+ * FynApp node and read here. Deriving it a second time off something in this
+ * view is how the exposes numbers came to disagree across these two tabs in the
+ * first place; see `src/core/exposes.ts`.
+ */
+export function notImportedTitle(name: string, levels: ExposeLevels): string {
+  const head = "declared by the build, never imported by the kernel.";
+  if (!levels.inlined) {
+    // no container version row: whether this name has a chunk is unknown, and
+    // "its chunk may have loaded" would presume one exists
+    return (
+      head +
+      " No container row was collected for this version, so whether it has a" +
+      " chunk of its own is unknown."
+    );
+  }
+  if (levels.inlined.includes(name)) {
+    return (
+      head +
+      " The build inlined it into the container entry, so it has no chunk of" +
+      " its own that could have loaded."
+    );
+  }
+  return head + " Its chunk may still have loaded — see this container on the Containers tab.";
 }
 
 function middlewareTitle(app: FynAppNode): string {
