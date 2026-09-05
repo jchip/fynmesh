@@ -16,7 +16,15 @@
 import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useComputed } from "@preact/signals";
-import { analysis, focusOn, graphHops, graphZoom, selected, visibleModules } from "../state.js";
+import {
+  analysis,
+  focusOn,
+  graphHops,
+  graphZoom,
+  selected,
+  snapshot,
+  visibleModules,
+} from "../state.js";
 import { layerLayout, neighbourhood, type Graph } from "../../analysis/graph.js";
 import {
   edgeKey,
@@ -26,10 +34,23 @@ import {
   type Point,
 } from "../../analysis/elk-layout.js";
 import { dehash, hueFor, plural, urlTail } from "../../util/format.js";
-import type { ModuleNode } from "../../core/model.js";
+import type { ContainerNode, ModuleNode } from "../../core/model.js";
 
 const NODE_W = 168;
 const NODE_H = 34;
+/*
+ * How much text a node's two lines hold, in characters.
+ *
+ * Both lines are monospace, so this is a width in disguise: at 11px the main
+ * line's glyphs are ~6.6px, at 9.5px the sub-line's are ~5.7px, and both start
+ * 8px in. 21 and 26 land at 147px and 156px of the 168px node, which leaves
+ * the right edge clear without wasting it. The sub-line gets the wider budget
+ * because it is the line that carries `container@version`: cutting
+ * `fynapp-x1@2.0.0` down to `fynapp-x1@2.0…` would throw away the digit the
+ * version was put there to show.
+ */
+const MAIN_CHARS = 21;
+const SUB_CHARS = 26;
 /*
  * 80, not 56. Eleven edges arrive at the shared `esm-react` node, and they
  * have to fan out into the gap between layers: at 56 the closest pair of edges
@@ -216,6 +237,51 @@ function usePanZoom(): {
 }
 
 /**
+ * Container names the snapshot holds more than one live version of.
+ *
+ * The same test the Containers view calls "N versions live", read off the
+ * containers list rather than guessed from an id: a version that appears in a
+ * url is a build's directory convention (`fynapp-x1-v2/`) and not something
+ * the loader or federation promises, and `demo/fynapp-x1-v1` and
+ * `demo/fynapp-x1-v2` both publish the container name `fynapp-x1`. The
+ * registrations are what actually know there are two.
+ */
+export function multiVersionNames(containers: ContainerNode[]): Set<string> {
+  const names = new Set<string>();
+  for (const c of containers) {
+    if (c.versions.length > 1) {
+      names.add(c.name);
+    }
+  }
+  return names;
+}
+
+/**
+ * The container a node belongs to, told apart from its siblings when it has to
+ * be.
+ *
+ * The version is spent only where it buys something. With one live version of
+ * a container the name already names one thing, and `fynapp-1@1.0.0` under
+ * every chunk of a nine-container page is noise on the line with the least
+ * room. But `fynapp-x1` at 1.0.0 and at 2.0.0 are two containers as far as the
+ * reader is concerned and their chunks are both `main.js`, so under a bare
+ * name a node from each is the same node drawn twice. Where the version does
+ * appear it is therefore a fact in itself: this is one of the containers
+ * running twice.
+ */
+function containerLabel(
+  container: { name: string; version?: string } | undefined,
+  multiVersion: Set<string>
+): string | undefined {
+  if (!container) {
+    return undefined;
+  }
+  return container.version && multiVersion.has(container.name)
+    ? container.name + "@" + container.version
+    : container.name;
+}
+
+/**
  * What to write on a node.
  *
  * The filename alone is useless here: fifteen of the demo's nodes are called
@@ -223,19 +289,28 @@ function usePanZoom(): {
  * labelled by its container, a shared module by its share key, and everything
  * else by its filename with the container underneath.
  */
-function labelFor(node: ModuleNode): { main: string; sub?: string } {
+export function labelFor(
+  node: ModuleNode,
+  multiVersion: Set<string>
+): { main: string; sub?: string } {
   if (node.kind === "container-entry" && node.container) {
+    // the main line is already the name, so the sub-line carries the version
+    // alone -- and here it carries it always, because a container entry is the
+    // one node whose whole identity is which version it is
     return {
       main: node.container.name,
       sub: node.container.version ? "@" + node.container.version : "entry",
     };
   }
   if (node.shareKey) {
-    return { main: node.shareKey, sub: node.version ?? node.container?.name };
+    return {
+      main: node.shareKey,
+      sub: node.version ?? containerLabel(node.container, multiVersion),
+    };
   }
   return {
     main: dehash(urlTail(node.id, 1) || node.id),
-    sub: node.container?.name,
+    sub: containerLabel(node.container, multiVersion),
   };
 }
 
@@ -390,6 +465,7 @@ export function GraphView(): JSX.Element {
       edges,
       graph,
       focus,
+      multiVersion: multiVersionNames(snapshot.value.containers),
       key: structureKey(ids, edges),
       fallback: fallbackPlacement(ids, edges),
       truncated: ids.length >= MAX_NODES,
@@ -565,7 +641,7 @@ export function GraphView(): JSX.Element {
               const p = xy(id);
               const hue = node.container ? hueFor(node.container.name) : 220;
               const isFocus = id === m.focus;
-              const label = labelFor(node);
+              const label = labelFor(node, m.multiVersion);
               return (
                 <g
                   key={id}
@@ -576,7 +652,11 @@ export function GraphView(): JSX.Element {
                 >
                   <title>
                     {id}
-                    {node.container ? `\ncontainer: ${node.container.name}` : ""}
+                    {node.container
+                      ? `\ncontainer: ${node.container.name}${
+                          node.container.version ? "@" + node.container.version : ""
+                        }`
+                      : ""}
                     {`\nstage: ${node.stage}`}
                   </title>
                   <rect
@@ -598,11 +678,11 @@ export function GraphView(): JSX.Element {
                     stroke-width={isFocus ? 2 : 1}
                   />
                   <text x="8" y={label.sub ? 14 : NODE_H / 2 + 4}>
-                    {clip(label.main, 21)}
+                    {clip(label.main, MAIN_CHARS)}
                   </text>
                   {label.sub ? (
                     <text class="sub" x="8" y="26">
-                      {clip(label.sub, 24)}
+                      {clip(label.sub, SUB_CHARS)}
                     </text>
                   ) : null}
                 </g>
