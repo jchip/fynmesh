@@ -766,7 +766,11 @@ select:focus-visible,
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* .link is worn by buttons, spans and now an <a>; the anchor's UA underline
+   would make one of them look different from the rest for no reason */
+.link { text-decoration: none; }
 .link:hover { background: var(--bg-sel); }
+a.link:hover { text-decoration: underline; }
 .link.missing { color: var(--err); text-decoration: line-through; }
 .link.plain { color: var(--fg-dim); cursor: default; }
 

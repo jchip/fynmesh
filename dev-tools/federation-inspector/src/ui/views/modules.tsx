@@ -361,7 +361,20 @@ function ModuleDetail({ module: m }: { module: ModuleNode }): JSX.Element {
         {m.url && m.url !== m.id ? (
           <>
             <dt>url</dt>
-            <dd>{m.url}</dd>
+            <dd>
+              {/*
+                * A real link, because the next question after "which file is
+                * this" is always "what is in it". A page cannot open the
+                * Sources panel -- there is no API for that, and this UI holds
+                * a snapshot rather than the live module, so it cannot hand
+                * devtools an object to resolve either. A new tab is the whole
+                * of what the page form can offer; the devtools extension can
+                * do the real thing with panels.openResource().
+                */}
+              <a class="link" href={m.url} target="_blank" rel="noreferrer noopener">
+                {m.url}
+              </a>
+            </dd>
           </>
         ) : null}
         {m.bundle ? (
