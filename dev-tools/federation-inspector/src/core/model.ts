@@ -371,9 +371,23 @@ export interface ShareScopeNode {
 export interface BundleNode {
   /** url of the physical combined file */
   url: string;
-  /** urls of the modules it carries */
+  /**
+   * ids of the modules it carries, in `Snapshot.modules` terms.
+   *
+   * The combined-bundle map is keyed by url, but a member's url is not always
+   * its id: a chunk the loader knows only as a registration is filed under its
+   * specifier (`./chunk-abc.js`) with the url alongside. Members were urls
+   * here, which made this array unjoinable against `modules` for exactly the
+   * members whose id differs -- and the join was being attempted. Each member's
+   * url is `modules[id].url`, and the reverse is `ModuleNode.bundle`.
+   */
   members: string[];
-  /** members the loader has a record for */
+  /**
+   * members whose stage says the loader really has them, by `isLoadedStage`.
+   *
+   * The same predicate the exposes counts use. Nothing here is ever unknown:
+   * every member is a module this snapshot holds, so it has a stage.
+   */
   loadedCount: number;
 }
 

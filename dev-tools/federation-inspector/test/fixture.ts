@@ -453,3 +453,70 @@ export function minifiedSharePage(): {
 
   return { loader, federation };
 }
+
+/**
+ * A page whose container was built with `federation-combine`: three chunks in
+ * one physical file, at three different points in their lives.
+ *
+ * The demo emits no combined bundles at all -- `$bU` is empty on every page it
+ * serves -- so this is the only place the bundle collector's members are more
+ * than a formality, and the only place the id-vs-url split under them can be
+ * exercised. `$bU` is keyed by a member's **url** (that is the key
+ * `instantiate` is called with), but the loader's own key for that module is
+ * whatever it was first told, which for a chunk is often the specifier the
+ * container's `_f` handed it. The three members here are the three ways that
+ * lands:
+ *
+ * - `main-aaa.js` -- a record under its own url. id === url, executed.
+ * - `deep-ddd.js` -- a record under the chunk specifier, with the url arriving
+ *   from its registration. id !== url, executed. The old count could not find
+ *   it and called it loaded anyway, which was right by accident.
+ * - `late-ccc.js` -- a registration nothing consumed, the resting state of a
+ *   combined chunk no one has imported. id !== url, `registered`. The old count
+ *   could not find it either, and called it loaded, which was wrong.
+ */
+export function combinedBundlePage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const entry = "https://app.test/fynapp-combo/dist/fynapp-entry.js";
+  const combo = "https://app.test/fynapp-combo/dist/combined-zzz.js";
+  const byUrl = "https://app.test/fynapp-combo/dist/main-aaa.js";
+  const bySpecifier = "https://app.test/fynapp-combo/dist/deep-ddd.js";
+  const neverRun = "https://app.test/fynapp-combo/dist/late-ccc.js";
+
+  const c = new FakeContainer(
+    "__mf_container_fynapp-combo",
+    "fynapp-combo",
+    "fynmesh",
+    "1.0.0"
+  )
+    .expose("./main", "./main-aaa.js")
+    .expose("./deep", "./deep-ddd.js")
+    .expose("./late", "./late-ccc.js");
+
+  loader
+    .addRecord({ id: entry, n: { container: c, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: byUrl, n: { main: 1 }, d: [] })
+    // the record is filed under the specifier; only the registration below
+    // knows the url, so this module's id is not its url
+    .addRecord({ id: "./deep-ddd.js", n: { deep: 1 }, d: [] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-combo", { url: entry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-combo", { url: entry })
+    .addRegistration("./main-aaa.js", { url: byUrl })
+    .addRegistration("./deep-ddd.js", { url: bySpecifier })
+    // known to the loader, url and all, and never instantiated
+    .addRegistration("./late-ccc.js", { url: neverRun, registration: [[], () => ({})] });
+
+  federation
+    .addBundle(byUrl, combo)
+    .addBundle(bySpecifier, combo)
+    .addBundle(neverRun, combo);
+
+  return { loader, federation };
+}

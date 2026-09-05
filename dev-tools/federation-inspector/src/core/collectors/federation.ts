@@ -648,6 +648,21 @@ export function compareVersionDesc(a: string, b: string): number {
  * map -- `$bU` itself is mangled -- and it answers per url, so this is one
  * call per module. That is fine: it is a plain object lookup, and the module
  * count is bounded by the registry.
+ *
+ * The grouping keeps the `ModuleNode`s themselves rather than their urls, for
+ * two reasons that were one bug. `loadedCount` used to re-find each member with
+ * `modules.get(url)`, but `modules` is keyed by **id** and a member's url is
+ * only its id when the id happens to be a url -- so for a chunk the loader
+ * knows as `./chunk-abc.js` with the url on its registration, the lookup missed
+ * and `undefined !== "registered"` counted it as loaded. That is backwards
+ * twice over: those misses are overwhelmingly the `registered` stage, the one
+ * stage that means *not* loaded.
+ *
+ * The lookup was never needed -- this loop already holds the module. So the
+ * count is taken here, off the stage in hand, through the same `isLoadedStage`
+ * the expose counts use, and `members` carries ids so that a caller joining
+ * against `modules` finds what we found. No member is ever "unknown": every one
+ * of them is a module this snapshot holds, and `ModuleNode.stage` is required.
  */
 function readBundles(
   federation: any,
@@ -656,7 +671,7 @@ function readBundles(
   if (!isFn(safeGet(federation, "bundleUrlFor"))) {
     return [];
   }
-  const byBundle = new Map<string, string[]>();
+  const byBundle = new Map<string, ModuleNode[]>();
   for (const mod of modules.values()) {
     if (!mod.url) {
       continue;
@@ -668,16 +683,16 @@ function readBundles(
     mod.bundle = bundleUrl;
     const list = byBundle.get(bundleUrl);
     if (list) {
-      list.push(mod.url);
+      list.push(mod);
     } else {
-      byBundle.set(bundleUrl, [mod.url]);
+      byBundle.set(bundleUrl, [mod]);
     }
   }
   return [...byBundle.entries()]
-    .map(([url, members]) => ({
+    .map(([url, mods]) => ({
       url,
-      members,
-      loadedCount: members.filter((m) => modules.get(m)?.stage !== "registered").length,
+      members: mods.map((m) => m.id),
+      loadedCount: mods.filter((m) => isLoadedStage(m.stage)).length,
     }))
     .sort((a, b) => a.url.localeCompare(b.url));
 }
