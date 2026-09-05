@@ -232,12 +232,45 @@ export const MiddlewareManager = function (telemetry?: KernelTelemetry): Middlew
           }
         }
       }
-      // Fallback: scan all providers for the first one exporting this name.
-      // Which provider wins here is unchanged by FYM-321 - see FYM-333.
-      for (const [key, versionMap] of Object.entries(middlewares)) {
+      /*
+       * Fallback: the consumer named no provider (or named one that has not
+       * registered), so scan the registry for anything exporting this name and
+       * take the first hit. Which provider that is remains registration order,
+       * unchanged (FYM-321, FYM-333).
+       *
+       * FYM-333 keeps the pick and removes the silence: one match is
+       * unambiguous and stays completely quiet, while two or more means the
+       * kernel is choosing a provider on the consumer's behalf and says so.
+       * It reports rather than throws on purpose - throwing would break pages
+       * that work today, correctly or by luck, and that migration is a separate
+       * decision.
+       */
+      const matches: string[] = [];
+      for (const key of Object.keys(middlewares)) {
         if (key.endsWith(`::${name}`)) {
-          const mwReg = resolveFromVersionMap(versionMap, key, wanted);
-          if (mwReg) return mwReg;
+          matches.push(key);
+        }
+      }
+
+      for (const key of matches) {
+        const mwReg = resolveFromVersionMap(middlewares[key], key, wanted);
+        if (mwReg) {
+          if (matches.length > 1) {
+            // Reported against the registration actually taken, not
+            // matches[0] - a provider whose version map resolves to nothing is
+            // skipped, exactly as before.
+            //
+            // Dev builds only: terser's `drop_console` strips this from
+            // fynmesh-browser-kernel.min.js (see rollup.config.ts). It exists
+            // in the .dev.js build the demo serves.
+            console.error(
+              `❌ Middleware '${name}' is registered by more than one provider` +
+                ` (${matches.join(", ")}), and this lookup named no provider,` +
+                ` so the kernel used '${key}'.` +
+                ` Name the provider on the middleware declaration to pin which one runs.`
+            );
+          }
+          return mwReg;
         }
       }
       return DummyMiddlewareReg;
