@@ -19,7 +19,7 @@ import {
   inlinedExposes,
 } from "../src/core/exposes.js";
 import { exposeTitle, exposesTitle } from "../src/ui/views/containers.js";
-import { importedTitle } from "../src/ui/views/fynapps.js";
+import { importedTitle, notImportedTitle } from "../src/ui/views/fynapps.js";
 import type { ContainerVersionNode, Snapshot } from "../src/core/model.js";
 import { twoContainerPage } from "./fixture.js";
 import {
@@ -148,6 +148,10 @@ describe("cross-view agreement on the imported level", () => {
       // unknowable. `0/0 imported` beside a container row silent on imported is
       // the same bug in a quieter font.
       expect(container.imported === undefined, key).toBe(app.imported === undefined);
+      // whether an expose has a chunk at all is one fact, and a joined pair has
+      // it from one derivation -- the FynApps tooltip promising a chunk the
+      // Containers tab says was inlined away is what happens when it is two
+      expect(container.inlined, key).toEqual(app.inlined);
       if (!container.imported || !app.imported) {
         continue;
       }
@@ -298,9 +302,64 @@ describe("shapes the real page had and the fixtures did not", () => {
     expect(exposeTitle(v.exposes.find((e) => e.name === "./main")!)).toContain(
       "no chunk of its own"
     );
-    expect(exposesTitle(containerExposeLevels(v), inlinedExposes(v))).toContain(
-      "1 with no chunk at all"
+    expect(exposesTitle(containerExposeLevels(v))).toContain("1 with no chunk at all");
+  });
+
+  it("tells the reader an inlined expose has no chunk to go and look for", () => {
+    const { loader, federation, kernel } = designTokensPage();
+    const snap = collect({ loader, federation, kernel });
+    const app = snap.fynmesh!.apps.find((a) => a.key === "fynapp-design-tokens@1.0.0")!;
+    const levels = fynAppExposeLevels(app);
+
+    // the container's answer, joined on rather than derived again here
+    expect(levels.inlined).toEqual(["./main"]);
+    expect(levels.inlined).toEqual(
+      inlinedExposes(versionOf(snap, "fynapp-design-tokens", "1.0.0"))
     );
+
+    // the row FYM-359 was about: declared, never imported, and no chunk at all
+    const title = notImportedTitle("./main", levels);
+    expect(title).toContain("never imported by the kernel");
+    expect(title).toContain("no chunk of its own");
+    expect(title).not.toContain("Containers tab");
+  });
+
+  it("still sends the reader to the chunk when the expose has one", () => {
+    const { loader, federation, kernel } = fynApp1Page();
+    const snap = collect({ loader, federation, kernel });
+    const app = snap.fynmesh!.apps.find((a) => a.key === "fynapp-1@1.0.0")!;
+    const levels = fynAppExposeLevels(app);
+
+    // the two states are different answers, not one hedge that covers both:
+    // `./App`'s chunk really is in the loader, and the Containers tab shows it
+    expect(levels.inlined).toEqual([]);
+    expect(notImportedTitle("./App", levels)).toContain("may still have loaded");
+    expect(notImportedTitle("./App", levels)).toContain("Containers tab");
+  });
+
+  it("says the chunk question is unknown when no container row was collected", () => {
+    const { loader, federation } = twoContainerPage();
+    const kernel = devKernel({
+      apps: [
+        fakeFynApp({
+          name: "fynapp-ghost",
+          version: "1.0.0",
+          exposes: {},
+          declared: ["./main"],
+        }),
+      ],
+    });
+    const snap = collect({ loader, federation, kernel });
+    const app = snap.fynmesh!.apps.find((a) => a.key === "fynapp-ghost@1.0.0")!;
+    expect(app.containerVersion).toBeUndefined();
+
+    const levels = fynAppExposeLevels(app);
+    // absent, not empty: with no `$E` behind it, "nothing is inlined" would be
+    // an answer the collector never had
+    expect(levels.inlined).toBeUndefined();
+    const title = notImportedTitle("./main", levels);
+    expect(title).toContain("unknown");
+    expect(title).not.toContain("may still have loaded");
   });
 
   it("knows the kernel was asked about a container that declares no exposes", () => {
