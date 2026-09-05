@@ -18,6 +18,7 @@ import type {
   Issue,
   MiddlewareNode,
   MiddlewareUseNode,
+  MiddlewareVersionNode,
   Snapshot,
 } from "../core/model.js";
 import type { Graph } from "./graph.js";
@@ -417,16 +418,23 @@ function short(id: string): string {
  * `fynmesh-checks-unavailable`, rather than passing quietly.
  *
  * **Do not cry wolf.** Every condition below is one the kernel itself treats as
- * wrong. Deliberately absent: "middleware registered but never delivered" and
- * "middleware with no consumers", both of which the design doc lists. Delivery
- * is written by the middleware, not the kernel, so a middleware that legitimately
- * writes nothing looks identical to one that failed. The second reason no longer
- * holds: `MiddlewareNode.consumers` counted declarations only, so an auto-applied
- * middleware -- `fynapp-shell-mw::shell-layout` on the demo's shell page -- showed
- * zero consumers while three FynApps listed it as delivered, and reporting it
- * would have contradicted the FynApps view on screen. FYM-347 fixed that field to
- * count consumers by either route. Whether the check is now worth having is a
- * decision for FYM-325 to revisit, deliberately; it is not made here by default.
+ * wrong, or one it decides silently on the reader's behalf. Of the two checks
+ * the design doc lists and FYM-325 withheld, one is here and one is still not:
+ *
+ * "Middleware with no consumers" stays absent, deliberately. A provider that
+ * publishes a middleware nothing on this page has needed yet is not broken --
+ * `fynapp-react-middleware::react-context` is in exactly that state on both demo
+ * pages, and `basic-counter` is on the shell page while serving four FynApps
+ * on the other. A row on every one of those teaches the reader to skip the
+ * list.
+ *
+ * "Registered but never delivered" is here (FYM-357), narrowed to the one case
+ * where non-delivery contradicts a stated intent: a version that declares an
+ * `autoApplyScope` -- "apply me to every FynApp in this scope, declaration or
+ * not" -- and that no FynApp on the page carries. It became checkable at all
+ * only with FYM-347: `MiddlewareNode.consumers` counted declarations, so every
+ * auto-applied middleware read as zero, and `fynapp-shell-mw::shell-layout` on
+ * the shell page would have been reported while running in three FynApps.
  *
  * **Say what to do.** A row that only names a condition spends the reader's
  * attention without repaying it.
@@ -456,6 +464,7 @@ function fynmeshIssues(snapshot: Snapshot): Issue[] {
     ...lifecycleIssues(snapshot),
     ...middlewareUseIssues(snapshot),
     ...registryAmbiguity(snapshot),
+    ...middlewareReach(snapshot),
     ...manifestJoinIssues(snapshot),
   ];
 }
@@ -480,9 +489,10 @@ function uncheckableFynMesh(snapshot: Snapshot): Issue[] {
   }
   if (!cap.kernelRunTime) {
     skipped.push(
-      "middleware declarations and the bare-name registry key — " +
-        "kernel.runTime.apps could not be read, so the FynApp rows carry no " +
-        "declarations to check"
+      "middleware declarations, the bare-name registry key, and whether an " +
+        "auto-applying middleware reached anything — kernel.runTime.apps could " +
+        "not be read, so the FynApp rows carry no declarations to check and no " +
+        "FynApp on this page carries a delivery record"
     );
   }
   if (!cap.kernelMiddleware) {
@@ -498,6 +508,9 @@ function uncheckableFynMesh(snapshot: Snapshot): Issue[] {
         "targets need __FYNAPP_MANIFEST__, and no container on this page carries one"
     );
   }
+  // the reach check reports its own gaps: a middleware it declined to judge is
+  // a missing row, and a missing row explains itself here or not at all
+  skipped.push(...autoApplyReach(snapshot).skipped);
 
   if (!skipped.length) {
     return [];
@@ -953,6 +966,268 @@ function ambiguousAppName(fm: FynMeshNode): Issue[] {
       focus: "app:" + name,
       view: "fynapps",
       refs: apps.map((a) => a.key),
+    });
+  }
+
+  return issues;
+}
+
+/* ------------------------------------------------ auto-apply that reached nobody */
+
+/**
+ * The auto-applying versions of a middleware: the ones that asked to be
+ * delivered without being declared.
+ *
+ * The same predicate `collectors/fynmesh.ts` uses to decide which version an
+ * undeclared consumer is filed under, so the check below and the consumer lists
+ * it reads cannot be looking at two different sets of versions.
+ */
+function autoApplyingVersions(mw: MiddlewareNode): MiddlewareVersionNode[] {
+  return mw.versions.filter((v) => v.autoApplyScope?.length);
+}
+
+/**
+ * The two buckets the kernel sorts FynApps into when it auto-applies.
+ *
+ * `middlewareManager.register` files an auto-applying middleware into a
+ * `fynapp` list, an `mw` list, or both, and at execute time
+ * `getTargetMiddlewares` hands a FynApp exactly one of those lists --
+ * `isFynAppMiddlewareProvider(fynApp) ? autoApply.mw : autoApply.fynapp`. So
+ * "in scope" is not a preference, it is which of two lists a FynApp can ever be
+ * offered, and a middleware scoped to a bucket that is empty on this page
+ * reached nobody by arithmetic rather than by failing.
+ */
+type AutoApplyBucket = "fynapp" | "middleware";
+
+/**
+ * The kernel's own test for the `mw` bucket, over the same value.
+ *
+ * `isFynAppMiddlewareProvider` reads `Object.keys(fynApp.exposes)`, and
+ * `importedExposes` is exactly that array -- not `declaredExposes`, which is
+ * what the build published and which the kernel never consults here.
+ */
+const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
+
+function bucketOf(app: FynAppNode): AutoApplyBucket {
+  return app.importedExposes.some((name) => name.startsWith(MIDDLEWARE_EXPOSE_PREFIX))
+    ? "middleware"
+    : "fynapp";
+}
+
+/**
+ * The buckets this middleware would be offered to.
+ *
+ * `MiddlewareNode.autoApply` is the kernel's own answer and is preferred over
+ * any reading of the scope strings: the collector takes it from
+ * `runTime.autoApply.fynapp` / `.mw`, which is the very pair of lists
+ * `getTargetMiddlewares` chooses between. It is absent on a kernel with neither
+ * that field nor `mwMgr.getAutoApply()`, and only then is the registration rule
+ * re-applied here to the declared scopes.
+ *
+ * That rule: `all` selects both, `fynapp` and `middleware` select one, and
+ * anything else selects neither. The last is not a lenient reading but the
+ * literal one -- registration tests `includes("all") || includes("fynapp")` and
+ * then `includes("all") || includes("middleware")`, so a misspelt scope is filed
+ * into no list and auto-applied to nothing. Both paths therefore agree that an
+ * empty result is a true statement about the page.
+ */
+function targetBuckets(
+  mw: MiddlewareNode,
+  versions: MiddlewareVersionNode[]
+): Set<AutoApplyBucket> {
+  const buckets = new Set<AutoApplyBucket>();
+  if (mw.autoApply) {
+    for (const bucket of mw.autoApply) {
+      buckets.add(bucket === "mw" ? "middleware" : "fynapp");
+    }
+    return buckets;
+  }
+  for (const scope of versions.flatMap((v) => v.autoApplyScope ?? [])) {
+    if (scope === "all" || scope === "fynapp") {
+      buckets.add("fynapp");
+    }
+    if (scope === "all" || scope === "middleware") {
+      buckets.add("middleware");
+    }
+  }
+  return buckets;
+}
+
+/**
+ * Which auto-applying middlewares reached nothing, and which cannot be judged.
+ *
+ * One walk behind two rows. `unreached` becomes the diagnostic; `skipped`
+ * becomes lines in `fynmesh-checks-unavailable`, because a check that quietly
+ * declines is indistinguishable from one that passed -- and here the decline is
+ * the interesting half: it means the consumers may exist and be unattributable
+ * rather than absent.
+ */
+interface ReachVerdict {
+  /** auto-applies, has FynApps it could have reached, and reached none of them */
+  unreached: Array<{ mw: MiddlewareNode; inScope: number; registered: number }>;
+  /** ones this would have reported, and why it did not */
+  skipped: string[];
+}
+
+function autoApplyReach(snapshot: Snapshot): ReachVerdict {
+  const verdict: ReachVerdict = { unreached: [], skipped: [] };
+  const fm = snapshot.fynmesh;
+  if (!fm || !snapshot.capability.kernelRunTime) {
+    // With no readable `runTime.apps` every middleware has zero consumers and
+    // every auto-applying one would be reported. The capability row above
+    // already names that surface; this adds nothing to it.
+    return verdict;
+  }
+
+  const candidates = fm.middlewares.filter(
+    (mw) => autoApplyingVersions(mw).length > 0 && !mw.consumers.length
+  );
+  if (!candidates.length) {
+    return verdict;
+  }
+
+  // Registry rows only. `fynmesh.apps` is the registry unioned with the
+  // lifecycle table, and a row known only from the lifecycle table is a
+  // shutdown app: it carries no exposes and no `middlewareDelivered`, and an
+  // empty list there means unreadable rather than empty. Counting those as
+  // FynApps a middleware failed to reach would report a middleware for not
+  // reaching apps that are gone.
+  const registered = fm.apps.filter((app) => app.inRegistry);
+  if (!registered.length) {
+    // `runTime.apps` readable and empty, which `cap.kernelRunTime` cannot
+    // distinguish from a page mid-load. Nothing was in scope, so nothing was
+    // missed.
+    verdict.skipped.push(
+      `whether ${candidates.length} auto-applying middleware${
+        candidates.length === 1 ? "" : "s"
+      } reached anything — ${candidates.map((mw) => mw.regKey).join(", ")} ${
+        candidates.length === 1 ? "auto-applies" : "auto-apply"
+      }, but kernel.runTime.apps is readable and holds no FynApp, so there was ` +
+        "nothing on this page to reach"
+    );
+    return verdict;
+  }
+
+  for (const mw of candidates) {
+    if (mw.nameCollisions.length) {
+      // FYM-333: the collector attributes an undeclared delivery by matching a
+      // `middlewareContext` key against the registry, and a name two providers
+      // register matches both. Rather than guess a provider it files nothing,
+      // so this middleware's consumer list is short by construction and a
+      // no-consumers reading of it would be a guess dressed as a finding.
+      verdict.skipped.push(
+        `whether ${mw.regKey} reached anything — it auto-applies and no FynApp ` +
+          `on this page carries it, but "${mw.name}" is also registered by ` +
+          `${mw.nameCollisions.join(" and ")}, and a delivery recorded under a ` +
+          "name two providers share cannot be attributed to either of them. Its " +
+          "consumers may be unattributable rather than absent, so it is not " +
+          "reported as unreached. Name the provider on the colliding " +
+          "registrations to make this checkable"
+      );
+      continue;
+    }
+
+    const buckets = targetBuckets(mw, autoApplyingVersions(mw));
+    const inScope = registered.filter((app) => buckets.has(bucketOf(app))).length;
+    if (!inScope) {
+      // The scope is the middleware's own statement of who it is for, and this
+      // page has nobody in it. Reaching nobody is then the correct outcome, not
+      // a finding -- but it is still the answer to a question the reader asked,
+      // so it is said rather than swallowed.
+      const scopes = [...new Set(autoApplyingVersions(mw).flatMap((v) => v.autoApplyScope ?? []))];
+      verdict.skipped.push(
+        `whether ${mw.regKey} reached anything — its autoApplyScope is ` +
+          `${scopes.join(", ")}, and none of the ${registered.length} FynApp${
+            registered.length === 1 ? "" : "s"
+          } the kernel has registered is in that scope, so reaching none of them ` +
+          "is the correct outcome rather than a finding"
+      );
+      continue;
+    }
+
+    verdict.unreached.push({ mw, inScope, registered: registered.length });
+  }
+
+  return verdict;
+}
+
+/**
+ * A middleware that asked to be applied to everything, and that nothing shows.
+ *
+ * Deliberately not "a middleware with no consumers", which is the check the
+ * design doc names and which stays unwritten: a provider publishing something
+ * nothing on this page has needed yet is a normal page, not a broken one. What
+ * makes this narrower condition worth a row is `autoApplyScope`. It is a stated
+ * intent -- the kernel applies such a middleware to every FynApp in the scope as
+ * it loads, declaration or not -- and a stated intent that nothing on the page
+ * reflects is worth the reader's attention in a way that an unused registration
+ * is not.
+ *
+ * The scope is taken literally, not as a slogan: a middleware scoped to a
+ * bucket no FynApp on this page is in reached nobody by arithmetic, and is
+ * declined above rather than reported. What is left is a middleware with FynApps
+ * it could have been applied to and no trace on any of them.
+ *
+ * `info`, not `warn`, and the distinction is the whole design of this row.
+ * `warn` here would claim wrong behaviour, and the evidence does not support
+ * that: the kernel writes nothing into `middlewareContext` itself, so delivery
+ * is only ever observable when the middleware chooses to leave a trace. A
+ * middleware whose entire effect is an execution override or a DOM side effect
+ * applies perfectly and looks exactly like one that never ran, and a
+ * `shouldApply` that filtered every FynApp out is a supported, deliberate
+ * outcome that looks like both. The row says which of those it cannot tell
+ * apart, and what to look at to tell them apart, rather than picking one.
+ */
+function middlewareReach(snapshot: Snapshot): Issue[] {
+  const issues: Issue[] = [];
+
+  for (const { mw, inScope, registered } of autoApplyReach(snapshot).unreached) {
+    const auto = autoApplyingVersions(mw);
+    const scopes = [...new Set(auto.flatMap((v) => v.autoApplyScope ?? []))];
+    const hooks = [...new Set(auto.flatMap((v) => v.overrideHooks))];
+
+    issues.push({
+      id: nextId("middleware-auto-apply-undelivered"),
+      severity: "info",
+      code: "middleware-auto-apply-undelivered",
+      title: `${mw.regKey} auto-applies, and no FynApp on this page carries it`,
+      detail:
+        `Its autoApplyScope is ${scopes.join(", ")}, which asks the kernel to ` +
+        "apply it to every FynApp in that scope as each one loads — no " +
+        `declaration needed, and none exists. ${inScope} of the ${registered} ` +
+        `FynApp${registered === 1 ? "" : "s"} the kernel has registered ${
+          inScope === 1 ? "is" : "are"
+        } in that scope, and ${
+          inScope === 1
+            ? "it neither declares this middleware nor carries"
+            : "none of them declares this middleware or carries"
+        } an entry under "${mw.name}" in its middlewareContext.` +
+        "\n\nThat is not proof it never ran, and this row is deliberately not " +
+        "claiming it did not. The kernel calls `setup` and `apply`; what lands " +
+        "in a FynApp's `middlewareContext` is written by the middleware itself. " +
+        "So a middleware whose whole effect is a side effect — an execution " +
+        "override, a stylesheet, a global — applies correctly and leaves exactly " +
+        "this trace, and so does a `shouldApply` that returned false for every " +
+        "FynApp on the page, which is a deliberate outcome rather than a failure." +
+        (hooks.length
+          ? `\n\nIt implements ${hooks.join(", ")}, so at least part of what it ` +
+            "does needs no context entry — which is the likeliest reading of " +
+            "this row."
+          : "") +
+        "\n\nWhat to check, in the order that settles it fastest: whether its " +
+        `\`shouldApply\` excludes ${
+          inScope === 1 ? "that FynApp" : "all " + inScope + " of them"
+        }, which is the one filter a snapshot cannot see; and whether its ` +
+        "`setup` or `apply` writes into `context.fynApp.middlewareContext` at " +
+        "all. If it hands something to the FynApps it applies to, it is handing " +
+        "it to none of them and every FynApp here is running without it. If it " +
+        "only has side effects, nothing is wrong and this is what that looks " +
+        "like from a snapshot." +
+        "\n\nThe kernel logs each auto-apply as it happens, in the dev build " +
+        "only; nothing records afterwards which FynApps it reached.",
+      focus: "mw:" + mw.name,
+      view: "middleware",
+      refs: [...new Set([mw.regKey, ...auto.map((v) => v.hostApp)])],
     });
   }
 
