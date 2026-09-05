@@ -37,7 +37,20 @@ The demo server provides local development and Cloudflare Pages deployment for t
 3. Open your browser:
    - Main Demo: http://localhost:3000
    - Shell Demo: http://localhost:3000/shell.html
+   - Full fynapp page: http://localhost:3000/demo.html
    - HTTPS: https://localhost:3443
+
+   `PORT` overrides the HTTP port (`HTTPS_PORT` the other one):
+
+   ```bash
+   PORT=3001 fyn start
+   ```
+
+   Worth knowing if the server comes up somewhere unexpected: port 3000 is a
+   popular default, and anything else already holding it — a container
+   publishing `3000`, another dev server — takes it, because whoever binds
+   first wins. The proxy prints the URL it actually listened on at startup;
+   trust that over the numbers above.
 
 ### Switching the federation-js loader
 
