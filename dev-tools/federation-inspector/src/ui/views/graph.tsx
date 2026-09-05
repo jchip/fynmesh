@@ -594,7 +594,7 @@ export function GraphView(): JSX.Element {
                       disabled={dead}
                       title={
                         closed
-                          ? `depth ${h} reaches the same ${nodes} nodes as depth ${h - 1}`
+                          ? `depth ${h} reaches the same ${plural(nodes, "node")} as depth ${h - 1}`
                           : `depth ${h} reaches ${plural(nodes, "node")}`
                       }
                       onClick={() => (graphHops.value = h)}
