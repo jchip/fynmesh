@@ -218,7 +218,14 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
   const r = decl.resolved;
   return (
     <div class="node l3">
-      <span class="label" style={{ minWidth: "120px" }}>
+      {/*
+        * A width to line rows up against, not a floor to overflow the row
+        * with: `min-width` cannot shrink, so at a narrow panel these two
+        * columns held their size, pushed the row past the panel edge, and
+        * took the range-satisfied mark at the end of it out of view -- the
+        * one thing in the row that must always be visible.
+        */}
+      <span class="label" style={{ flex: "0 1 120px", minWidth: 0 }}>
         {decl.key}
       </span>
       {decl.singleton ? (
@@ -231,7 +238,7 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
           consume-only
         </Chip>
       ) : null}
-      <span class="faint mono" style={{ minWidth: "68px" }}>
+      <span class="faint mono" style={{ flex: "0 1 68px", minWidth: 0 }}>
         {decl.requestedRange ?? "any"}
       </span>
       <span class="faint">→</span>

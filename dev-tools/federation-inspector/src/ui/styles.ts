@@ -788,7 +788,12 @@ select:focus-visible,
   padding-left: calc(var(--pad-x) + var(--scale) * 48px);
   background: var(--bg-alt);
 }
-.tree .label { color: var(--fg-strong); flex: none; }
+.tree .label {
+  color: var(--fg-strong);
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .tree .label.ver { font-variant-numeric: tabular-nums; }
 .tree .muted { color: var(--fg-dim); font: 400 var(--fs-sm)/1 var(--sans); }
 .tree .faint { color: var(--fg-dim); font: 400 var(--fs-sm)/1 var(--sans); }
