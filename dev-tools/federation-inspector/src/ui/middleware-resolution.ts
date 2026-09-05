@@ -18,7 +18,10 @@
  * - `exact` -- asked for a version by name and the registry had that key.
  * - `range` -- asked for a range and got the highest registered version in it.
  * - `default` -- asked for nothing, so it got whatever registered first. Not a
- *   worse answer than `exact`, but a *different claim*: nobody chose it.
+ *   worse answer than `exact`, but a *different claim*: nobody chose it. Always
+ *   the middleware *version* slot: the FynApp registry's bare-name key is a
+ *   different fact with the opposite tie-break, and the FynApps view spells that
+ *   one `bare name` so one row cannot say `default` about both (FYM-361).
  * - `fallback` -- asked for a range, nothing satisfied it, and the kernel
  *   handed over the default slot anyway. Delivery succeeded and the app is
  *   running a version it explicitly did not ask for.

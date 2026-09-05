@@ -429,6 +429,44 @@ function originOf(apps: FynAppNode[]): number | undefined {
   return earliest;
 }
 
+/**
+ * What holds the bare-name registry key, said without the word `default`.
+ *
+ * This chip used to read `default`, and a middleware row two lines below it can
+ * read `default 1.0.0` (FYM-356) -- one word, two registries, on one FynApp's
+ * row (FYM-361). The branch chip keeps the word: `default` is one of the five
+ * names that mirror what the kernel's resolver did, it is what `resolvedVia`
+ * carries, and the Middleware view reads the same table -- renaming inside that
+ * set to settle a collision here would break the correspondence and put the two
+ * views back into disagreement (FYM-353).
+ *
+ * Nothing similar stands behind this one, and the codebase already had a
+ * spelling for it: `FynAppRegistry.add` writes the *bare* name, and the model,
+ * the collector and the ambiguous-name issue all say "the bare key" or "the
+ * bare `name`". The chip was the only place calling it `default`, so it is the
+ * one that moves -- the same rule as FYM-355, one spelling per concept.
+ *
+ * Scoping both instead (`default name` / `default version`) was the other way
+ * out and is worse: it draws the two as siblings when their tie-breaks are
+ * *opposite*. The bare app key is re-pointed on every registration, so it is
+ * whichever version registered LAST; a middleware's `default` slot is set once
+ * by the FIRST version and never moves (FYM-332). Making them rhyme is exactly
+ * the assumption `fynapp-name-ambiguous` exists to warn a reader off.
+ */
+export const BARE_NAME_LABEL = "bare name";
+
+/** Which lookups land here, and why this key is not the middleware `default` slot. */
+export function bareNameTitle(app: FynAppNode): string {
+  return (
+    "the bare registry key `" + app.name + "` points at this instance, so a lookup by " +
+    "name alone — `loadFynAppsByName`, a middleware declaration naming a provider with " +
+    "no version — gets this version.\n\n" +
+    "`FynAppRegistry.add` re-points that key on every registration, so it is whichever " +
+    "version registered LAST. That is the opposite of a middleware's `default` slot, " +
+    "which the first registration sets and nothing moves after."
+  );
+}
+
 function AppRow({
   app,
   t0,
@@ -508,14 +546,8 @@ function AppRow({
           </Chip>
         ) : null}
         {ambiguous && app.isDefaultForName ? (
-          <Chip
-            tone="accent"
-            title={
-              "the bare-name registry key resolves to this instance, so a by-name " +
-              "lookup of " + app.name + " gets this version"
-            }
-          >
-            default
+          <Chip tone="accent" title={bareNameTitle(app)}>
+            {BARE_NAME_LABEL}
           </Chip>
         ) : null}
         {!app.inRegistry ? (
