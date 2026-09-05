@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { labelFor, multiVersionNames, resolveFocus } from "../src/ui/views/graph.js";
-import { buildGraph } from "../src/analysis/graph.js";
+import {
+  MAX_NODES,
+  depthOptions,
+  depthTitle,
+  labelFor,
+  multiVersionNames,
+  resolveFocus,
+} from "../src/ui/views/graph.js";
+import { buildGraph, reachByDepth } from "../src/analysis/graph.js";
 import { emptySnapshot } from "../src/core/model.js";
 import type { ContainerNode, ModuleNode } from "../src/core/model.js";
 
@@ -141,5 +148,89 @@ describe("graph focus resolution", () => {
 
   it("has neither focus nor missing selection when nothing is selected", () => {
     expect(resolveFocus(graph, undefined)).toEqual({ missing: undefined });
+  });
+});
+
+/**
+ * A tree wide and deep enough that the cap bites before the graph runs out.
+ *
+ * Built rather than written: the cap is 320 nodes and the point is what
+ * happens on the far side of it, so the fixture has to be bigger than anything
+ * worth typing. Branching 8 ways puts 585 nodes within 3 hops of the root and
+ * 593 within 4 -- two depths whose true reach differs, and which the view
+ * draws identically.
+ */
+function wideTree(branch: number, levels: number): Record<string, string[]> {
+  const deps: Record<string, string[]> = { root: [] };
+  let frontier = ["root"];
+  let next = 0;
+  for (let level = 0; level < levels; level++) {
+    const born: string[] = [];
+    for (const parent of frontier) {
+      for (let i = 0; i < branch; i++) {
+        const id = "n" + next++;
+        deps[id] = [];
+        deps[parent].push(id);
+        born.push(id);
+      }
+    }
+    // one branch carries on alone, so the last level adds something without
+    // multiplying the whole tree by `branch` again
+    frontier = level === levels - 2 ? born.slice(0, 1) : born;
+  }
+  return deps;
+}
+
+/*
+ * FYM-310 put a node count on each depth button so a depth that reaches no
+ * further could be told apart from one that does. Past MAX_NODES the count and
+ * the picture part company: the neighbourhood keeps growing, the view keeps
+ * drawing 320, and two buttons advertising 585 and 593 would both redraw the
+ * same capped graph.
+ */
+describe("graph depth options", () => {
+  const graph = graphOf(wideTree(8, 4));
+  const reach = reachByDepth(graph, "root", 4);
+  const options = depthOptions(reach, [1, 2, 3, 4], MAX_NODES);
+
+  it("has a fixture that outgrows the cap at depth 3 and keeps growing after it", () => {
+    expect(reach).toEqual([9, 73, 585, 593]);
+    expect(reach[2]).toBeGreaterThan(MAX_NODES);
+    expect(reach[3]).toBeGreaterThan(reach[2]);
+  });
+
+  it("advertises what the view will draw, not what the neighbourhood holds", () => {
+    expect(options.map((o) => o.nodes)).toEqual([9, 73, MAX_NODES, MAX_NODES]);
+  });
+
+  it("closes a depth the cap flattened, on the same rule as one the graph closed", () => {
+    // depth 3 is the first to hit the cap and draws more than depth 2; depth 4
+    // adds nothing to the picture, so it is as dead as any other closed depth
+    expect(options.map((o) => o.closed)).toEqual([false, false, false, true]);
+  });
+
+  it("says the cap is in force, so two buttons reading 320 explain themselves", () => {
+    expect(options.map((o) => o.capped)).toEqual([false, false, true, true]);
+    expect(depthTitle(options[2], MAX_NODES)).toBe(
+      "depth 3 reaches past the 320-node cap, so it draws 320 nodes"
+    );
+    expect(depthTitle(options[3], MAX_NODES)).toBe(
+      "depth 4 draws the same 320 nodes as depth 3: both reach past the 320-node cap"
+    );
+  });
+
+  it("leaves a graph under the cap saying exactly what it says today", () => {
+    const small = depthOptions([3, 7, 7, 7], [1, 2, 3, 4], MAX_NODES);
+    expect(small.map((o) => o.nodes)).toEqual([3, 7, 7, 7]);
+    expect(small.map((o) => o.capped)).toEqual([false, false, false, false]);
+    expect(depthTitle(small[1], MAX_NODES)).toBe("depth 2 reaches 7 nodes");
+    expect(depthTitle(small[2], MAX_NODES)).toBe("depth 3 reaches the same 7 nodes as depth 2");
+  });
+
+  it("does not call a neighbourhood that fits exactly capped", () => {
+    // 320 drawn out of 320 dropped nothing; only more than the cap is capped
+    const exact = depthOptions([MAX_NODES, MAX_NODES], [1, 2], MAX_NODES);
+    expect(exact[0]).toEqual({ hops: 1, nodes: MAX_NODES, capped: false, closed: false });
+    expect(exact[1].closed).toBe(true);
   });
 });

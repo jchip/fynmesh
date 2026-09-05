@@ -63,7 +63,8 @@ const SUB_CHARS = 26;
  */
 const GAP_X = 80;
 const GAP_Y = 12;
-const MAX_NODES = 320;
+/** the most nodes the view will draw, whatever it was asked for */
+export const MAX_NODES = 320;
 /** the depths the focus control offers */
 const HOPS = [1, 2, 3, 4];
 
@@ -438,6 +439,67 @@ function useElkLayout(
   return { placement, pending: placement?.key !== key };
 }
 
+export interface DepthOption {
+  hops: number;
+  /** nodes this depth will put on screen, which past the cap is the cap */
+  nodes: number;
+  /** the neighbourhood at this depth is larger than the view will draw */
+  capped: boolean;
+  /** draws what the depth below already drew */
+  closed: boolean;
+}
+
+/**
+ * What each depth button offers, after MAX_NODES has taken its share.
+ *
+ * `reachByDepth` counts the true neighbourhood; the view draws at most `cap`
+ * of it. Below the cap those are the same number and above it they are not, so
+ * a button advertising the reach would promise a graph the view has no
+ * intention of drawing -- and two depths that both overflow would advertise
+ * different counts and then draw the identical capped picture, which is the
+ * thing the depth counts were added to stop.
+ *
+ * Clamping before the comparison is also what keeps one rule for `closed`:
+ * "pressing this redraws what is already on screen" is as true of a depth the
+ * cap closed as of one the graph closed, so a cap-closed depth disables itself
+ * through the same test rather than through a second one bolted alongside.
+ */
+export function depthOptions(reach: number[], hops: number[], cap: number): DepthOption[] {
+  const options: DepthOption[] = [];
+  for (const h of hops) {
+    const reached = reach[h - 1];
+    const nodes = Math.min(reached, cap);
+    const previous = options[options.length - 1];
+    options.push({
+      hops: h,
+      nodes,
+      capped: reached > cap,
+      // the neighbourhoods are nested, so the same count is the same nodes
+      closed: previous !== undefined && nodes === previous.nodes,
+    });
+  }
+  return options;
+}
+
+/**
+ * What a depth button says it will do, before it is pressed.
+ *
+ * A capped depth says so rather than only reporting the clamped number: "320"
+ * on its own reads as the size of the neighbourhood, and a reader comparing
+ * two buttons that both say 320 is owed the reason they agree.
+ */
+export function depthTitle(option: DepthOption, cap: number): string {
+  const { hops, nodes, capped, closed } = option;
+  if (capped) {
+    return closed
+      ? `depth ${hops} draws the same ${plural(nodes, "node")} as depth ${hops - 1}: both reach past the ${cap}-node cap`
+      : `depth ${hops} reaches past the ${cap}-node cap, so it draws ${plural(nodes, "node")}`;
+  }
+  return closed
+    ? `depth ${hops} reaches the same ${plural(nodes, "node")} as depth ${hops - 1}`
+    : `depth ${hops} reaches ${plural(nodes, "node")}`;
+}
+
 /**
  * The selection this graph can draw, and the one it cannot.
  *
@@ -465,15 +527,19 @@ export function GraphView(): JSX.Element {
 
     let ids: string[];
     let edges: Array<[string, string]>;
+    /** nodes the answer holds before the cap, so the cap can be reported honestly */
+    let total: number;
 
     if (focus) {
       const n = neighbourhood(graph, focus, graphHops.value);
       ids = [...n.nodes];
       edges = n.edges;
+      total = n.nodes.size;
     } else {
       // no selection: the filtered set, capped -- an unfiltered registry is
       // not something a reader can take in, and pretending otherwise wastes
       // the view
+      total = visibleModules.value.length;
       ids = visibleModules.value.slice(0, MAX_NODES).map((m) => m.id);
       const set = new Set(ids);
       edges = [];
@@ -498,14 +564,19 @@ export function GraphView(): JSX.Element {
       graph,
       focus,
       missing,
-      // what each depth setting would reach, so the control can say so before
+      // what each depth setting would draw, so the control can say so before
       // it is pressed. Empty when there is nothing focused to widen around --
       // including a selection this graph does not contain.
-      reach: focus ? reachByDepth(graph, focus, HOPS[HOPS.length - 1]) : [],
+      depths: focus
+        ? depthOptions(reachByDepth(graph, focus, HOPS[HOPS.length - 1]), HOPS, MAX_NODES)
+        : [],
       multiVersion: multiVersionNames(snapshot.value.containers),
       key: structureKey(ids, edges),
       fallback: fallbackPlacement(ids, edges),
-      truncated: ids.length >= MAX_NODES,
+      // what was left out, not what was drawn: an answer of exactly MAX_NODES
+      // fits, and announcing a cap that dropped nothing is the same overclaim
+      // in the other direction
+      truncated: total > MAX_NODES,
     };
   });
 
@@ -603,15 +674,10 @@ export function GraphView(): JSX.Element {
         </span>
         {m.focus || m.missing ? (
           <>
-            {m.reach.length ? (
+            {m.depths.length ? (
               <>
                 <span class="grouplabel">depth</span>
-                {HOPS.map((h) => {
-                  const nodes = m.reach[h - 1];
-                  // the neighbourhoods are nested, so reaching the same count
-                  // as the depth below means reaching the same nodes: this
-                  // button would redraw the picture already on screen
-                  const closed = h > 1 && nodes === m.reach[h - 2];
+                {m.depths.map((d) => {
                   /*
                    * Never take away the depth the reader is standing on. A
                    * control going dead under the pointer reads as a fault, the
@@ -619,22 +685,18 @@ export function GraphView(): JSX.Element {
                    * a disabled button is a contradiction. So a closed depth is
                    * disabled only while it is not the current one.
                    */
-                  const dead = closed && graphHops.value !== h;
+                  const dead = d.closed && graphHops.value !== d.hops;
                   return (
                     <button
-                      key={h}
+                      key={d.hops}
                       class="facet"
-                      aria-pressed={graphHops.value === h}
+                      aria-pressed={graphHops.value === d.hops}
                       disabled={dead}
-                      title={
-                        closed
-                          ? `depth ${h} reaches the same ${plural(nodes, "node")} as depth ${h - 1}`
-                          : `depth ${h} reaches ${plural(nodes, "node")}`
-                      }
-                      onClick={() => (graphHops.value = h)}
+                      title={depthTitle(d, MAX_NODES)}
+                      onClick={() => (graphHops.value = d.hops)}
                     >
-                      {h}
-                      <span class="n">{nodes}</span>
+                      {d.hops}
+                      <span class="n">{d.nodes}</span>
                     </button>
                   );
                 })}
