@@ -189,6 +189,47 @@ select:focus-visible,
 
 /* ----------------------------------------------------------------- overlay */
 
+/*
+ * Opening and closing are movements, not cuts.
+ *
+ * Each dock enters from the edge it belongs to -- the right dock from the
+ * right, the bottom dock from below, a floating panel up from where the badge
+ * was -- so the panel appears to come from somewhere rather than being
+ * switched on. Short, because this sits in front of a page someone is working
+ * on: 140ms in, 120ms out, and the out has to match EXIT_MS in ui/App.
+ *
+ * Translate and opacity only, deliberately: a scale would make every
+ * getBoundingClientRect inside the panel report scaled numbers, and the
+ * virtual table measures row heights that way and caches them. A panel that
+ * animated its scale would remember the wrong row heights.
+ */
+@keyframes fi-in-right { from { opacity: 0; transform: translateX(20px); } }
+@keyframes fi-in-bottom { from { opacity: 0; transform: translateY(20px); } }
+@keyframes fi-in-float { from { opacity: 0; transform: translateY(10px); } }
+@keyframes fi-out-right { to { opacity: 0; transform: translateX(20px); } }
+@keyframes fi-out-bottom { to { opacity: 0; transform: translateY(20px); } }
+@keyframes fi-out-float { to { opacity: 0; transform: translateY(10px); } }
+
+.overlay.opening { animation: fi-in-float 0.14s cubic-bezier(0.2, 0, 0, 1); }
+.overlay.dock-right.opening { animation-name: fi-in-right; }
+.overlay.dock-bottom.opening { animation-name: fi-in-bottom; }
+
+.overlay.closing {
+  animation: fi-out-float 0.12s ease-in forwards;
+  /* on its way out it is scenery: clicks belong to the page again */
+  pointer-events: none;
+}
+.overlay.dock-right.closing { animation-name: fi-out-right; }
+.overlay.dock-bottom.closing { animation-name: fi-out-bottom; }
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay.opening,
+  .overlay.closing {
+    animation: none;
+  }
+  .overlay.closing { opacity: 0; }
+}
+
 .overlay {
   position: fixed;
   z-index: 2147483645;

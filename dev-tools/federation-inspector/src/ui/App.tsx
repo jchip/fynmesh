@@ -9,9 +9,9 @@
 
 import type { JSX } from "preact";
 import type { RefObject } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { signal, useComputed } from "@preact/signals";
-import type { ViewName } from "../core/model.js";
+import type { ShareScopeNode, ViewName } from "../core/model.js";
 import type { Adapter } from "../adapters/types.js";
 import {
   analysis,
@@ -103,17 +103,62 @@ export function App(props: AppProps): JSX.Element {
   }, [live.value]);
 
   useKeyboard(props);
+  const showing = useOpenTransition();
 
   return (
     <>
       {/*
-        * The launcher is hidden while the panel is open. It is fixed to a page
-        * corner and the panel docks to the same corner, so it sat on top of
-        * the last two table rows -- covering the data it exists to advertise.
+        * The launcher is hidden while the panel is on screen -- including
+        * while it animates away. It is fixed to a page corner and the panel
+        * docks to the same corner, so it sat on top of the last two table
+        * rows: covering the data it exists to advertise.
         */}
-      {props.showLauncher && !open.value ? <Launcher corner={props.corner} /> : null}
-      {open.value ? <Overlay {...props} /> : null}
+      {props.showLauncher && !showing ? <Launcher corner={props.corner} /> : null}
+      {showing ? <Overlay {...props} closing={!open.value} /> : null}
     </>
+  );
+}
+
+/** how long the exit animation in ui/styles runs; they must agree */
+const EXIT_MS = 120;
+
+/**
+ * Keep the panel mounted until its exit animation has played.
+ *
+ * `open` is the intent, and it flips instantly from four places (the button,
+ * Escape, the hotkey, the API). Unmounting on that flip is what made closing
+ * a cut rather than a movement: the panel was simply gone on the frame the
+ * click landed. So the panel stays mounted for one animation past the intent,
+ * and `closing` tells it which way to play.
+ */
+function useOpenTransition(): boolean {
+  const isOpen = open.value;
+  const [showing, setShowing] = useState(isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowing(true);
+      return;
+    }
+    // the next opening gets to claim the caret again -- keyed to the intent,
+    // not to the exit animation, so a quick close-and-reopen still behaves
+    // like an opening
+    caretClaimed = false;
+    if (!showing) {
+      return;
+    }
+    // matched to the animation, not to a repaint: an animationend listener
+    // would also fire for animations *inside* the panel
+    const t = setTimeout(() => setShowing(false), reducedMotion() ? 0 : EXIT_MS);
+    return () => clearTimeout(t);
+  }, [isOpen, showing]);
+
+  return showing;
+}
+
+function reducedMotion(): boolean {
+  return (
+    typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
 
@@ -140,7 +185,17 @@ function Launcher({ corner }: { corner: Corner }): JSX.Element {
 
 /* ----------------------------------------------------------------- overlay */
 
-function Overlay(props: AppProps): JSX.Element {
+/**
+ * The panel's root element while it is on screen, or null.
+ *
+ * There is exactly one, and the key handler needs it to decide whether a
+ * keystroke belongs to us or to the page: `document.activeElement` cannot
+ * answer that, because the panel lives in a shadow root and the document only
+ * ever reports the host element, whatever is focused inside it.
+ */
+let panelEl: HTMLElement | null = null;
+
+function Overlay(props: AppProps & { closing: boolean }): JSX.Element {
   /*
    * Drawn from the remembered geometry clamped to the *current* viewport, and
    * subscribed to `viewport` so a window resize redraws it. The clamp is not
@@ -170,7 +225,18 @@ function Overlay(props: AppProps): JSX.Element {
   }, []);
 
   return (
-    <div class={"overlay " + dock.value} style={style} role="dialog" aria-label="Federation inspector">
+    <div
+      // held module-side so the key handler can ask "did this keystroke come
+      // from inside the panel?" -- see `useKeyboard`
+      ref={(el) => {
+        panelEl = el;
+      }}
+      class={"overlay " + dock.value + (props.closing ? " closing" : " opening")}
+      style={style}
+      role="dialog"
+      aria-label="Federation inspector"
+      aria-hidden={props.closing}
+    >
       <ResizeHandles />
       <Header {...props} />
       <CapabilityBanner />
