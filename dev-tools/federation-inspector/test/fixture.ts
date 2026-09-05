@@ -160,6 +160,29 @@ export class FakeContainer {
     return this;
   }
 
+  /**
+   * The same declaration as `share`, in the shape a *minified* federation-js
+   * leaves behind.
+   *
+   * `Container._S` builds `$SC[key] = {options, rvm, versions}` with the last
+   * two annotated for mangling, and that project's terser config treats
+   * annotations as an allow-list, so the shipped build emits
+   * `{options: r, i: a(), o: a()}` -- grepped out of
+   * `federation-js/dist/federation-js.min.js`. The mangled slots are filled
+   * with the real data on purpose: a collector that reached for them by their
+   * source names would read `undefined` and quietly report nothing, which is
+   * the bug this shape exists to catch.
+   */
+  shareMinified(
+    key: string,
+    options: Record<string, unknown>,
+    versions: Record<string, { id: string }> = {},
+    rvm: Record<string, string> = {}
+  ): this {
+    this.$SC[key] = { options, i: rvm, o: versions };
+    return this;
+  }
+
   expose(name: string, chunkId: string): this {
     this.$E[name] = chunkId;
     return this;
@@ -320,6 +343,73 @@ export function twoContainerPage(): { loader: FakeLoader; federation: FakeFedera
     });
 
   federation.addBundle(app1Main, "https://app.test/fynapp-1/dist/combined.js");
+
+  return { loader, federation };
+}
+
+/**
+ * A page built by a minified federation-js, where the only surviving record of
+ * what a container provides is the share store.
+ *
+ * Three things it puts in the collector's way at once: one container sourcing
+ * two keys, the same copy filed under both its specifier and its url, and a
+ * source that names no container version.
+ */
+export function minifiedSharePage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const entry = "https://app.test/fynapp-min/dist/fynapp-entry.js";
+  const react = "https://app.test/fynapp-min/dist/react-19-abc.js";
+  const vue = "https://app.test/fynapp-min/dist/vue-def.js";
+
+  const c = new FakeContainer("__mf_container_fynapp-min", "fynapp-min", "fynmesh", "1.0.0")
+    .shareMinified(
+      "esm-react",
+      { semver: "^19.0.0", singleton: true },
+      { "19.0.0": { id: "./react-19-abc.js" } },
+      { "/": "^19.0.0" }
+    )
+    .shareMinified("vue", { semver: "^3.5.0" }, { "3.5.13": { id: "./vue-def.js" } })
+    .expose("./main", "./main-min.js");
+
+  loader
+    .addRecord({ id: entry, n: { container: c, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: react, n: { default: {} }, d: [] })
+    .addRecord({ id: vue, n: { default: {} }, d: [] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-min", { url: entry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-min", { url: entry })
+    // the specifier redirects to the url, which is what makes a chunk id in a
+    // share source resolvable at all
+    .addRegistration("./react-19-abc.js", { url: react })
+    .addRegistration("./vue-def.js", { url: vue });
+
+  federation
+    .addShare("fynmesh", "esm-react", "19.0.0", {
+      url: react,
+      id: "./react-19-abc.js",
+      container: "fynapp-min",
+      containerVersion: "1.0.0",
+    })
+    // the same copy announced again under its url: one provision, two spellings
+    .addShare("fynmesh", "esm-react", "19.0.0", {
+      url: react,
+      id: react,
+      container: "fynapp-min",
+      containerVersion: "1.0.0",
+    })
+    // filed without a container version, which only this container's being the
+    // page's only version of itself makes attributable
+    .addShare("fynmesh", "vue", "3.5.13", {
+      url: vue,
+      id: "./vue-def.js",
+      container: "fynapp-min",
+    });
 
   return { loader, federation };
 }

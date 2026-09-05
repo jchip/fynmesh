@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
-import { FakeLoader, containerWithEntryChunk, twoContainerPage } from "./fixture.js";
+import {
+  FakeLoader,
+  containerWithEntryChunk,
+  minifiedSharePage,
+  twoContainerPage,
+} from "./fixture.js";
 
 function snap() {
   const { loader, federation } = twoContainerPage();
@@ -72,6 +77,61 @@ describe("collect", () => {
 
     expect((one.manifest as any)["import-exposed"]["fynapp-2"]).toBeTruthy();
     expect(s.capability.manifest).toBe(true);
+  });
+
+  it("rebuilds provides from the share store when $SC is mangled", () => {
+    const { loader, federation } = minifiedSharePage();
+    const s = collect({ loader, federation });
+    analyse(s);
+    const v = s.containers.find((c) => c.name === "fynapp-min")!.versions[0];
+
+    // `options` survives minification, so the range asked for is still exact
+    const react = v.consumes.find((d) => d.key === "esm-react")!;
+    expect(react.requestedRange).toBe("^19.0.0");
+    expect(react.singleton).toBe(true);
+    // `rvm` and `versions` do not survive it, and the ones the minified
+    // container still carries under mangled names must not be read
+    expect(react.rvm).toBeUndefined();
+
+    // so `versions` comes from the store -- and the copy announced twice, once
+    // by specifier and once by url, is one provision
+    expect(react.versions).toEqual(["19.0.0"]);
+    expect(v.provides.map((d) => d.key).sort()).toEqual(["esm-react", "vue"]);
+    // filed with no container version, attributable because this container has
+    // only one version on the page
+    expect(v.provides.find((d) => d.key === "vue")!.versions).toEqual(["3.5.13"]);
+  });
+
+  it("reports required-version maps as unavailable rather than as none", () => {
+    const { loader, federation } = minifiedSharePage();
+    const s = collect({ loader, federation });
+    expect(s.capability.shareConfig).toBe(true);
+    expect(s.capability.requiredVersionMaps).toBe(false);
+    expect(s.capability.notes.join(" ")).toContain("Required-version maps are unavailable");
+
+    const un = containerWithEntryChunk();
+    const s2 = collect({ loader: un.loader, federation: un.federation });
+    expect(s2.capability.requiredVersionMaps).toBe(true);
+    expect(s2.capability.notes.join(" ")).not.toContain("Required-version maps");
+  });
+
+  it("still reads provides off an unmangled container", () => {
+    const { loader, federation } = containerWithEntryChunk();
+    const s = collect({ loader, federation });
+    const v = s.containers.find((c) => c.name === "fynapp-4-vue")!.versions[0];
+    expect(v.provides.map((d) => d.key)).toEqual(["vue"]);
+    expect(v.provides[0].versions).toEqual(["3.5.13"]);
+    expect(v.consumes.find((d) => d.key === "vue")!.versions).toEqual(["3.5.13"]);
+  });
+
+  it("credits a provider the loader never saw, without calling it a consumer", () => {
+    const s = snap();
+    const lib = s.containers.find((c) => c.name === "fynapp-react-lib")!.versions[0];
+    expect(lib.provides.map((d) => d.key)).toEqual(["esm-react"]);
+    expect(lib.provides[0].versions).toEqual(["19.0.0"]);
+    // reconstructed, so "no range" here means unknown and says so
+    expect(lib.provides[0].inferred).toBe(true);
+    expect(lib.consumes).toHaveLength(0);
   });
 
   it("builds the share scope tree with sources and loaded state", () => {

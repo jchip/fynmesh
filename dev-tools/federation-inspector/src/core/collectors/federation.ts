@@ -2,14 +2,18 @@
  * The federation half of a snapshot.
  *
  * The awkward fact this file exists to work around: `federation-js` ships
- * minified with property mangling, and the mangling is not uniform. `$SS`
- * (the share store), `$SC` (a container's share config), `$E` (its exposes)
- * and the `_mf*` methods all survive in the shipped `federation-js.min.js`;
- * `$C` -- the runtime's container registry -- and `_mfGetContainer` do not.
+ * minified with property mangling, and the mangling is not uniform. Grepped
+ * against the shipped `federation-js.min.js`: `$SS` (the share store), `$SC`
+ * (a container's share config), `$E` (its exposes), `$C` (the runtime's
+ * container registry), `$B` (its bindings) and the `_mf*` methods are all
+ * present, while `_mfGetContainer`, `getUrlForId` and the two maps
+ * `Container._S` builds inside a `$SC` entry -- `rvm` and `versions` -- are
+ * not. See `capability.ts` for why the annotations do not predict this.
  *
- * So containers cannot be enumerated from the runtime on a production page.
- * They are enumerated from the *loader* instead, which is fine, because
- * federation files every container under a deterministic id:
+ * Containers are therefore enumerated from the *loader* rather than from
+ * `$C`. That is a historical choice, not a forced one -- `$C` is readable and
+ * would be authoritative -- but it is also a working one, because federation
+ * files every container under a deterministic id:
  *
  *   `_mfContainer`  ->  `__mf_container_<name>`, qualified by container version
  *   `_mfBind`(entry) ->  `__mf_entry_<name>_<fileName>`
@@ -94,9 +98,9 @@ function keysOf(obj: unknown): string[] {
  * A rollup-federation build emits every chunk beside its container entry, so
  * "same directory as the entry" identifies a container's own chunks. It is a
  * heuristic and labelled as one -- the authoritative map is federation's `$B`
- * binding table, which the minified build does not expose. It is wrong only
- * for a build that emits two containers into one directory, which the plugin
- * does not do.
+ * binding table, which does survive minification and which nothing here reads
+ * yet. The heuristic is wrong only for a build that emits two containers into
+ * one directory, which the plugin does not do.
  */
 function dirOf(url: string | undefined): string | undefined {
   if (!url) {
@@ -150,23 +154,35 @@ function findContainer(
   );
 }
 
-/** Read `$SC` into share declarations, split into provided and consumed. */
+/**
+ * Read `$SC` into the share declarations one container version makes.
+ *
+ * Only the declarations: `versions` is filled in afterwards from the share
+ * store (see `indexProvidedCopies`), because the `$SC` slot of that name is
+ * one of the mangled ones and reads `undefined` on a production page.
+ *
+ * `rvmOk` reports the *slot*, not its contents: an unmangled build always
+ * builds an `rvm` object even when no importer contributed a range, so an
+ * object -- empty or not -- means the map is readable, and `undefined` means
+ * this build mangled it away.
+ */
 function readShareConfig(
   container: any,
   defaultScope: string
-): { provides: ShareDecl[]; consumes: ShareDecl[]; ok: boolean } {
+): { consumes: ShareDecl[]; ok: boolean; rvmOk: boolean } {
   const sc = safeGet(container, "$SC");
   if (!sc || typeof sc !== "object") {
-    return { provides: [], consumes: [], ok: false };
+    return { consumes: [], ok: false, rvmOk: false };
   }
-  const provides: ShareDecl[] = [];
   const consumes: ShareDecl[] = [];
+  let rvmOk = false;
 
   for (const key of keysOf(sc)) {
     const entry = safeGet(sc, key);
     const options = (safeGet(entry, "options") ?? {}) as Record<string, any>;
     const versions = keysOf(safeGet(entry, "versions"));
     const rvmRaw = safeGet(entry, "rvm");
+    rvmOk ||= !!rvmRaw && typeof rvmRaw === "object";
     const rvm: Record<string, string> = {};
     for (const dir of keysOf(rvmRaw)) {
       const v = safeGet<string>(rvmRaw, dir);
@@ -177,7 +193,9 @@ function readShareConfig(
     // `import: false` is the generated marker for consume-only: this container
     // can use the share but never offers a copy of its own.
     const importable = safeGet(options, "import") !== false;
-    const decl: ShareDecl = {
+    // Every declaration is a consumption -- declaring a share is how you get to
+    // import it. Which of them are also provisions is decided by `provisions`.
+    consumes.push({
       key,
       requestedRange: typeof options.semver === "string" ? options.semver : undefined,
       singleton: options.singleton === true,
@@ -186,16 +204,139 @@ function readShareConfig(
         typeof options.shareScope === "string" ? options.shareScope : defaultScope,
       versions,
       rvm: Object.keys(rvm).length ? rvm : undefined,
-    };
-    // Every declaration is a consumption -- declaring a share is how you get to
-    // import it. Only a declaration with `import !== false` and an actual
-    // version to offer is also a provision.
-    consumes.push(decl);
-    if (importable && versions.length) {
-      provides.push({ ...decl });
+    });
+  }
+  return { consumes, ok: true, rvmOk };
+}
+
+/** One copy the share store says a container filed into a scope. */
+interface ProvidedCopy {
+  /** the container version the source named; "" when it named none */
+  containerVersion: string;
+  scope: string;
+  key: string;
+  version: string;
+}
+
+/**
+ * Invert the share store: which container filed which version of what.
+ *
+ * This is where `ContainerVersion.provides` comes from, and it has to be,
+ * because a container's own record of it is unreadable: `Container._S` builds
+ * `$SC[key] = {options, rvm, versions}` and terser renames the last two, so
+ * `versions` reads `undefined` on every production page and provides came out
+ * empty everywhere while `capability.shareConfig` still said true.
+ *
+ * What `_S` files into `Federation.$SS` survives whole -- `sources[].id`,
+ * `.container` and `.version` are all in the min build -- and it records the
+ * same fact: `_S` announces a version into the scope exactly when
+ * `options.import !== false`, which is the same test the unmangled path
+ * applies. So the store is not a substitute for the mangled slot, it is the
+ * other end of the same write.
+ *
+ * The share version comes from the store's own version key rather than from
+ * `sources[].id`, because that id is a chunk id and often a specifier
+ * (`./vue.js`) rather than a module url -- see "a specifier is not a module"
+ * in the design note. Two spellings of one copy would otherwise be counted as
+ * two provisions; keyed on the version they collapse into one.
+ */
+function indexProvidedCopies(scopes: ShareScopeNode[]): Map<string, ProvidedCopy[]> {
+  const byContainer = new Map<string, ProvidedCopy[]>();
+  for (const scope of scopes) {
+    for (const key of scope.keys) {
+      for (const ver of key.versions) {
+        for (const src of ver.sources) {
+          const copy: ProvidedCopy = {
+            containerVersion: src.version ?? "",
+            scope: scope.name,
+            key: key.key,
+            version: ver.version,
+          };
+          const list = byContainer.get(src.container);
+          if (list) {
+            list.push(copy);
+          } else {
+            byContainer.set(src.container, [copy]);
+          }
+        }
+      }
     }
   }
-  return { provides, consumes, ok: true };
+  return byContainer;
+}
+
+/**
+ * Fill `versions` on one container version's declarations, and return the
+ * provisions that follow from them.
+ *
+ * A container is commonly a source for several keys and for several versions
+ * of one key, so the copies are grouped by scope and key before they are
+ * matched against a declaration.
+ *
+ * `sole` says this container has exactly one version on the page. It is what
+ * makes a source that named no container version usable at all: with two
+ * versions live there is no way to tell which of them filed the copy, and
+ * telling that apart is the case this tool exists for, so an unattributable
+ * copy is dropped rather than guessed onto both.
+ */
+function provisions(
+  copies: ProvidedCopy[],
+  versionKeys: string[],
+  sole: boolean,
+  consumes: ShareDecl[]
+): ShareDecl[] {
+  const byScope = new Map<string, Map<string, Set<string>>>();
+  for (const copy of copies) {
+    const mine = copy.containerVersion
+      ? versionKeys.includes(copy.containerVersion)
+      : sole;
+    if (!mine) {
+      continue;
+    }
+    let keys = byScope.get(copy.scope);
+    if (!keys) {
+      keys = new Map();
+      byScope.set(copy.scope, keys);
+    }
+    const versions = keys.get(copy.key);
+    if (versions) {
+      versions.add(copy.version);
+    } else {
+      keys.set(copy.key, new Set([copy.version]));
+    }
+  }
+
+  const extra: ShareDecl[] = [];
+  for (const [scope, keys] of byScope) {
+    for (const [key, versions] of keys) {
+      const decl = consumes.find((d) => d.key === key && d.shareScope === scope);
+      if (decl) {
+        for (const v of decl.versions) {
+          versions.add(v);
+        }
+        decl.versions = [...versions].sort(compareVersionDesc);
+        continue;
+      }
+      // The container filed a copy under a key its `$SC` did not yield: either
+      // no Container object was reachable at all, or it declared the share into
+      // another scope. The provision is observed fact and is reported as one --
+      // but it is not added to `consumes`, because filing a copy is not
+      // evidence of importing one, and a consumer list that names every
+      // provider is worse than a short one.
+      extra.push({
+        key,
+        importable: true,
+        shareScope: scope,
+        versions: [...versions].sort(compareVersionDesc),
+        inferred: true,
+      });
+    }
+  }
+
+  return consumes
+    .filter((d) => d.importable !== false && d.versions.length)
+    .map((d) => ({ ...d }))
+    .concat(extra.sort((a, b) => a.key.localeCompare(b.key)));
 }
 
 /** Read `$E` into expose rows, resolving each chunk id to a module. */
@@ -533,8 +674,11 @@ export function collectFederation(
   }
 
   let sawShareConfig = false;
+  let sawRvm = false;
   let sawExposes = false;
   let sawManifest = false;
+
+  const providedCopies = indexProvidedCopies(scopes);
 
   for (const [name, byVersion] of discovered) {
     const versions: ContainerVersionNode[] = [];
@@ -557,15 +701,16 @@ export function collectFederation(
         scopes[0]?.name ??
         "default";
 
-      const { provides, consumes, ok: scOk } = container
+      const { consumes, ok: scOk, rvmOk } = container
         ? readShareConfig(container, scopeName)
-        : { provides: [], consumes: [], ok: false };
+        : { consumes: [], ok: false, rvmOk: false };
       const { exposes, ok: expOk } = container
         ? readExposes(container, resolve)
         : { exposes: [], ok: false };
       const manifest = container ? readManifest(container) : undefined;
 
       sawShareConfig ||= scOk;
+      sawRvm ||= rvmOk;
       sawExposes ||= expOk;
       sawManifest ||= !!manifest;
 
@@ -574,6 +719,15 @@ export function collectFederation(
         version ||
         manifest?.version ||
         "0.0.0";
+
+      // both spellings, because a source names the version the container calls
+      // itself while the loader may only know the registration qualifier
+      const provides = provisions(
+        providedCopies.get(name) ?? [],
+        [version, resolvedVersion].filter(Boolean),
+        byVersion.size === 1,
+        consumes
+      );
 
       versions.push({
         version: resolvedVersion,
@@ -596,12 +750,20 @@ export function collectFederation(
   containers.sort((a, b) => a.name.localeCompare(b.name));
 
   cap.shareConfig = sawShareConfig;
+  cap.requiredVersionMaps = sawRvm;
   cap.exposes = sawExposes;
   cap.manifest = sawManifest;
   if (containers.length && !sawShareConfig) {
     cap.notes.push(
       "Container.$SC is unreadable, so requested semver ranges and " +
         "required-version maps are unavailable. Share versions are still listed."
+    );
+  }
+  if (sawShareConfig && !sawRvm) {
+    cap.notes.push(
+      "Required-version maps are unavailable in this build: federation-js " +
+        "mangles Container.$SC[key].rvm, and nothing else on the page keeps a " +
+        "copy. The semver range each container declared is still shown."
     );
   }
   if (containers.length && !sawExposes) {

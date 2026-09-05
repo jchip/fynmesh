@@ -98,6 +98,16 @@ export interface Capability {
   shareStore: boolean;
   /** `Container.$SC` -- per-container share config, with semver ranges */
   shareConfig: boolean;
+  /**
+   * `Container.$SC[key].rvm` -- the per-importer required-version map.
+   *
+   * Split from `shareConfig` because the two do not travel together: `options`
+   * survives federation-js's mangling and `rvm` does not, so a build can hand
+   * us every declared semver range and none of the maps behind them. Nothing
+   * else on the page retains an rvm once `_S` has returned, so false here
+   * means unavailable, not empty.
+   */
+  requiredVersionMaps: boolean;
   /** `Container.$E` -- exposes map */
   exposes: boolean;
   /** `__FYNAPP_MANIFEST__` present on at least one container */
@@ -175,10 +185,21 @@ export interface ShareDecl {
   /** false when `options.import === false`: consume-only, provides nothing */
   importable?: boolean;
   shareScope: string;
-  /** versions this container is able to provide */
+  /**
+   * versions this container is able to provide
+   *
+   * Reconstructed from the share store, not read off the container: see
+   * `indexProvidedCopies` in the federation collector.
+   */
   versions: string[];
   /** required-version map: importer dir to the range from its nearest package.json */
   rvm?: Record<string, string>;
+  /**
+   * true when this row was reconstructed from the share store because the
+   * container's own declaration could not be read -- so the absence of a
+   * `requestedRange` here means unknown, not unconstrained
+   */
+  inferred?: boolean;
   /** filled in by analysis: what the range actually resolved to */
   resolved?: {
     version?: string;
@@ -334,6 +355,7 @@ export function emptyCapability(): Capability {
     federation: false,
     shareStore: false,
     shareConfig: false,
+    requiredVersionMaps: false,
     exposes: false,
     manifest: false,
     bundleMap: false,
