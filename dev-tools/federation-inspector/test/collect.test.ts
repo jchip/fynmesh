@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
+import { isLoadedStage } from "../src/core/exposes.js";
 import {
   FakeLoader,
+  combinedBundlePage,
   containerWithEntryChunk,
   minifiedSharePage,
   twoContainerPage,
@@ -281,5 +283,63 @@ describe("collect", () => {
     // make the remote adapter impossible
     expect(() => structuredClone(s)).not.toThrow();
     expect(JSON.parse(JSON.stringify(s)).modules.length).toBe(s.modules.length);
+  });
+});
+
+/**
+ * The bundle collector, on the only page shape that has combined bundles.
+ *
+ * `members` are module ids and `loadedCount` is `isLoadedStage` -- one word,
+ * one predicate, shared with the expose counts. What these pin down is the
+ * member the old code could not look up: it grouped by url and counted through
+ * an id-keyed map, so a miss read as `undefined !== "registered"` and a chunk
+ * nobody had loaded was counted as loaded.
+ */
+describe("combined bundles", () => {
+  function comboSnap() {
+    const { loader, federation } = combinedBundlePage();
+    return collect({ loader, federation });
+  }
+
+  it("names its members by module id, so they join against modules", () => {
+    const s = comboSnap();
+    expect(s.bundles).toHaveLength(1);
+    const byId = new Map(s.modules.map((m) => [m.id, m]));
+    for (const member of s.bundles[0].members) {
+      expect(byId.get(member), member).toBeDefined();
+    }
+    expect([...s.bundles[0].members].sort()).toEqual([
+      "./deep-ddd.js",
+      "./late-ccc.js",
+      "https://app.test/fynapp-combo/dist/main-aaa.js",
+    ]);
+  });
+
+  it("counts a member the loader only has a registration for as not loaded", () => {
+    const s = comboSnap();
+    const late = s.modules.find((m) => m.id === "./late-ccc.js")!;
+    // the shape that used to inflate the count: its url is not its id, so the
+    // old lookup missed, and a miss counted as loaded
+    expect(late.url).toBe("https://app.test/fynapp-combo/dist/late-ccc.js");
+    expect(late.stage).toBe("registered");
+    expect(s.bundles[0].members).toHaveLength(3);
+    expect(s.bundles[0].loadedCount).toBe(2);
+  });
+
+  it("still counts an executed member whose id is not its url", () => {
+    const s = comboSnap();
+    const deep = s.modules.find((m) => m.id === "./deep-ddd.js")!;
+    expect(deep.url).toBe("https://app.test/fynapp-combo/dist/deep-ddd.js");
+    expect(deep.stage).toBe("executed");
+    expect(deep.bundle).toBe("https://app.test/fynapp-combo/dist/combined-zzz.js");
+  });
+
+  it("agrees with the stage of every member it names", () => {
+    const s = comboSnap();
+    const byId = new Map(s.modules.map((m) => [m.id, m]));
+    for (const b of s.bundles) {
+      const loaded = b.members.filter((id) => isLoadedStage(byId.get(id)!.stage));
+      expect(b.loadedCount).toBe(loaded.length);
+    }
   });
 });
