@@ -47,6 +47,8 @@ export type IssueSeverity = "error" | "warn" | "info";
 
 export type ViewName =
   | "modules"
+  /** only ever offered when `Snapshot.fynmesh` is present */
+  | "fynapps"
   | "containers"
   | "shares"
   | "graph"
@@ -114,6 +116,19 @@ export interface Capability {
   manifest: boolean;
   /** `Federation.bundleUrlFor` -- combined-bundle membership */
   bundleMap: boolean;
+  /**
+   * a FynMesh kernel was found at `globalThis.fynMeshKernel`
+   *
+   * False is the ordinary case: this is a federation tool first, and a page
+   * with no kernel is a page it still fully describes.
+   */
+  kernel: boolean;
+  /** `kernel.runTime.apps` -- the registry that says which containers are FynApps */
+  kernelRunTime: boolean;
+  /** `kernel.listFynAppStates()` -- mount status, timings and failures */
+  kernelLifecycle: boolean;
+  /** `kernel.runTime.middlewares` -- the middleware registry */
+  kernelMiddleware: boolean;
   /** human-readable notes about anything that probed false */
   notes: string[];
 }
@@ -338,6 +353,152 @@ export interface FynAppManifest {
   [key: string]: unknown;
 }
 
+/* -------------------------------------------------------------- FynMesh */
+
+/**
+ * Which build of `@fynmesh/kernel` this page is running.
+ *
+ * A shape probe, never a version check. `kernel.version` is recorded for a bug
+ * report but gates nothing, because the shipped build is the moving target and
+ * the version number is not: the min build mangles property names the dev build
+ * keeps, and which ones is a property of the terser run, not of the release.
+ */
+export type KernelBuild = "dev" | "minified" | "unknown";
+
+/** `FynAppState.status`, as `FynAppLifecycle` records it. */
+export type FynAppStatus =
+  | "bootstrapping"
+  | "mounted"
+  | "suspended"
+  | "failed"
+  | "shutdown";
+
+/** One `__middlewareMeta` entry, normalised across its three declaration forms. */
+export interface MiddlewareUseNode {
+  name?: string;
+  provider?: string;
+  /** the semver range the consumer asked for, when it declared one */
+  range?: string;
+  /**
+   * the shape it was written in: a bare `-FYNAPP_MIDDLEWARE ...` string, a
+   * `{ mw, config }` object, or the `{ info, config }` object `useMiddleware`
+   * produces. `unknown` is a declaration the kernel itself would refuse.
+   */
+  form: "string" | "mw" | "info" | "unknown";
+  /** the raw string, for the two string forms -- kept even when it will not parse */
+  raw?: string;
+  /** the config, when it survived a structured clone */
+  config?: unknown;
+  configKind?: "json" | "opaque";
+  /** top-level keys only, when the config could not be cloned */
+  configKeys?: string[];
+  /** something is registered under this name in `runTime.middlewares` */
+  registered: boolean;
+  /** the `provider::name` key it resolved to */
+  resolvedRegKey?: string;
+  /**
+   * the exact registration, when there is only one it could be.
+   *
+   * Left undefined when a declared range has to be matched against several
+   * registered versions: the kernel resolves that with its own semver, and a
+   * guess here would name a version the app may not actually be running.
+   */
+  resolvedFullKey?: string;
+  /** `middlewareContext` has an entry under this name */
+  delivered: boolean;
+}
+
+export interface MiddlewareVersionNode {
+  version: string;
+  /** also occupies the registry's `default` slot, which every unmatched range falls back to */
+  isDefault: boolean;
+  fullKey: string;
+  /** `name@version` of the FynApp hosting it */
+  hostApp: string;
+  exposeName: string;
+  exportName: string;
+  autoApplyScope?: string[];
+  hasSetup: boolean;
+  hasApply: boolean;
+  hasShouldApply: boolean;
+  overridesExecution: boolean;
+}
+
+export interface MiddlewareNode {
+  /** `provider::name` */
+  regKey: string;
+  name: string;
+  provider: string;
+  versions: MiddlewareVersionNode[];
+  /** `name@version` of every FynApp whose `__middlewareMeta` names this */
+  consumers: string[];
+  autoApply?: Array<"fynapp" | "mw">;
+}
+
+/**
+ * One FynApp instance, which is exactly one container version.
+ *
+ * `loadFynAppBasics` builds a FynApp straight off the container, so name and
+ * version are the container's own and the join needs no heuristic. What makes
+ * the two views different is what they can say: a container row is what the
+ * build published, and this is what the kernel did with it.
+ */
+export interface FynAppNode {
+  name: string;
+  version: string;
+  /** `name@version` -- the lifecycle table's key, and this node's identity */
+  key: string;
+  packageName?: string;
+  /**
+   * present in `runTime.apps`.
+   *
+   * False for a row known only from the lifecycle table, which is what a
+   * shutdown app looks like. Distinguished because such a row has no exposes
+   * and no middleware to read, and an empty list there means unreadable, not
+   * empty.
+   */
+  inRegistry: boolean;
+  /**
+   * the bare-name registry key also points at this instance.
+   *
+   * `FynAppRegistry.add` files every app under both `name` and `name@version`,
+   * so with two versions of one name live the bare key is ambiguous and silently
+   * resolves to whichever registered last.
+   */
+  isDefaultForName: boolean;
+  /** undefined when the app is in the registry but has no lifecycle row */
+  status?: FynAppStatus;
+  mountedAt?: number;
+  updatedAt?: number;
+  /** the kernel retains this only while status is `failed` */
+  error?: { message: string; stack?: string };
+  /** joins into `ContainerNode.id` */
+  containerId?: string;
+  /** set only when the container collector saw this exact version */
+  containerVersion?: string;
+  /** exposes the kernel actually pulled in (`fynApp.exposes`) */
+  loadedExposes: string[];
+  /** exposes the build declared (`container.$E`) */
+  declaredExposes: string[];
+  /** FynUnit hooks the `./main` expose implements */
+  unitHooks: string[];
+  usesMiddleware: MiddlewareUseNode[];
+  /** `middlewareContext` keys, in the order the middleware wrote them */
+  middlewareDelivered: string[];
+  /** regKeys of middleware hosted by this FynApp */
+  providesMiddleware: string[];
+  /** `./config` was loaded. The value is never snapshotted -- see the collector */
+  hasConfig: boolean;
+}
+
+export interface FynMeshNode {
+  kernelVersion?: string;
+  shareScopeName?: string;
+  build: KernelBuild;
+  apps: FynAppNode[];
+  middlewares: MiddlewareNode[];
+}
+
 export interface Snapshot {
   /** schema version, so a remote agent and a panel can disagree loudly */
   schema: 1;
@@ -353,6 +514,14 @@ export interface Snapshot {
   containers: ContainerNode[];
   scopes: ShareScopeNode[];
   bundles: BundleNode[];
+  /**
+   * The FynMesh kernel layer, when there is one on the page.
+   *
+   * Absent -- not empty -- when `globalThis.fynMeshKernel` is not there, which
+   * is what lets the UI hide the FynApps tab rather than render a table that
+   * reads as "this page has zero FynApps".
+   */
+  fynmesh?: FynMeshNode;
   issues: Issue[];
   /** anything that threw during collection, kept rather than swallowed */
   errors: string[];
@@ -371,6 +540,10 @@ export function emptyCapability(): Capability {
     exposes: false,
     manifest: false,
     bundleMap: false,
+    kernel: false,
+    kernelRunTime: false,
+    kernelLifecycle: false,
+    kernelMiddleware: false,
     notes: [],
   };
 }

@@ -11,7 +11,7 @@ import type { JSX } from "preact";
 import type { RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { signal, useComputed } from "@preact/signals";
-import type { ShareScopeNode, ViewName } from "../core/model.js";
+import type { ShareScopeNode, Snapshot, ViewName } from "../core/model.js";
 import type { Adapter } from "../adapters/types.js";
 import {
   analysis,
@@ -51,6 +51,7 @@ import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
 import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
 import { ContainersView } from "./views/containers.jsx";
+import { filterFynApps, FynAppsView } from "./views/fynapps.jsx";
 import { filterIssues, IssuesView } from "./views/issues.jsx";
 import { RawView } from "./views/raw.jsx";
 import { GraphView } from "./views/graph.jsx";
@@ -68,12 +69,27 @@ export interface AppProps {
 
 const TABS: Array<{ id: ViewName; label: string }> = [
   { id: "modules", label: "Modules" },
+  { id: "fynapps", label: "FynApps" },
   { id: "containers", label: "Containers" },
   { id: "shares", label: "Shares" },
   { id: "graph", label: "Graph" },
   { id: "issues", label: "Issues" },
   { id: "raw", label: "Raw" },
 ];
+
+/**
+ * The tabs this page has anything to put in.
+ *
+ * FynApps is absent entirely on a page with no `@fynmesh/kernel`, rather than
+ * present and empty. An empty table there would read as "this page has zero
+ * FynApps", which is a different and much more alarming claim than "this page
+ * is not a FynMesh page" -- and it is the second one that is true. It sits
+ * ahead of Containers because on a page that does have a kernel it is the view
+ * you actually want first.
+ */
+function tabsFor(snap: Snapshot): Array<{ id: ViewName; label: string }> {
+  return snap.fynmesh ? TABS : TABS.filter((t) => t.id !== "fynapps");
+}
 
 export function App(props: AppProps): JSX.Element {
   const { adapter } = props;
@@ -248,6 +264,8 @@ function Overlay(props: AppProps & { closing: boolean }): JSX.Element {
 
 function renderView(name: ViewName): JSX.Element {
   switch (name) {
+    case "fynapps":
+      return <FynAppsView />;
     case "containers":
       return <ContainersView />;
     case "shares":
@@ -273,6 +291,10 @@ function Header(props: AppProps): JSX.Element {
     switch (id) {
       case "modules":
         return <span class="n">{totals.value.modules}</span>;
+      case "fynapps":
+        return snap.fynmesh?.apps.length ? (
+          <span class={"n" + (fynappErrors(snap) ? " err" : "")}>{snap.fynmesh.apps.length}</span>
+        ) : null;
       case "containers":
         return snap.containers.length ? <span class="n">{snap.containers.length}</span> : null;
       case "shares":
@@ -303,7 +325,7 @@ function Header(props: AppProps): JSX.Element {
       </span>
 
       <span class="tabs" role="tablist" ref={tabsRef} onScroll={updateTabScroll}>
-        {TABS.map((t) => (
+        {tabsFor(snap).map((t) => (
           <button
             key={t.id}
             class="tab"
@@ -512,9 +534,11 @@ function SimpleFilterBar(): JSX.Element {
       ? "filter share keys"
       : view.value === "containers"
         ? "filter containers"
-        : view.value === "issues"
-          ? "filter issues"
-          : "filter";
+        : view.value === "fynapps"
+          ? "filter fynapps — try status:failed"
+          : view.value === "issues"
+            ? "filter issues"
+            : "filter";
   return (
     <div class="filterbar">
       <SearchBox placeholder={label} />
@@ -601,6 +625,13 @@ function ViewSummary(): JSX.Element | null {
   let noun: string;
 
   switch (view.value) {
+    case "fynapps": {
+      const apps = snap.fynmesh?.apps ?? [];
+      total = apps.length;
+      shown = filterFynApps(apps, query.value).length;
+      noun = "fynapps";
+      break;
+    }
     case "containers": {
       total = snap.containers.length;
       shown = filterContainers(snap.containers, query.value).length;
@@ -634,6 +665,11 @@ function ViewSummary(): JSX.Element | null {
 
 function countShareKeys(scopes: ShareScopeNode[]): number {
   return scopes.reduce((n, s) => n + s.keys.length, 0);
+}
+
+/** a FynApp whose bootstrap threw -- the tab count turns red for it */
+function fynappErrors(snap: Snapshot): boolean {
+  return !!snap.fynmesh?.apps.some((a) => a.status === "failed");
 }
 
 /* ------------------------------------------------------------------- keys */
@@ -711,9 +747,12 @@ function useKeyboard(props: AppProps): void {
       }
       if (e.key === "[" || e.key === "]") {
         e.preventDefault();
-        const i = TABS.findIndex((t) => t.id === view.value);
-        const next = (i + (e.key === "]" ? 1 : TABS.length - 1)) % TABS.length;
-        view.value = TABS[next].id;
+        // the same list the header draws, or the cycle steps onto a tab that
+        // is not offered on this page
+        const tabs = tabsFor(snapshot.value);
+        const i = tabs.findIndex((t) => t.id === view.value);
+        const next = (i + (e.key === "]" ? 1 : tabs.length - 1)) % tabs.length;
+        view.value = tabs[next].id;
         return;
       }
       if (e.key === "j" || e.key === "k" || e.key === "ArrowDown" || e.key === "ArrowUp") {
