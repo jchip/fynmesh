@@ -295,7 +295,30 @@ export interface ContainerVersionNode {
   entryId: string;
   entryUrl?: string;
   stage: LoadStage;
-  scope: string;
+  /**
+   * the share scope this container version files into
+   *
+   * **Absent** when nothing on the page says which one -- unknown, not a
+   * container without a scope. Every container is constructed with a scope
+   * name, so there is no such thing as a scopeless one; a reader that prints a
+   * name here where none was read is inventing the answer. It used to print
+   * `default`, which is also a real and common scope name, so "could not be
+   * read" and "is named `default`" were drawn identically.
+   *
+   * Two things can fill it, and `scopeSource` says which:
+   * `container.scope` itself, or -- when that cannot be reached -- the share
+   * store naming this container as a source in exactly one scope.
+   */
+  scope?: string;
+  /**
+   * where `scope` was read from
+   *
+   * `"container"` is the container's own declaration of its default scope.
+   * `"share-store"` is weaker and recorded rather than left to the view to
+   * guess at: the store proves this container filed copies into that one
+   * scope, which is not quite the same claim as the scope it defaults to.
+   */
+  scopeSource?: "container" | "share-store";
   exposes: ExposeInfo[];
   /** shares this container version can provide */
   provides: ShareDecl[];

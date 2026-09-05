@@ -7,7 +7,9 @@ import {
   combinedBundlePage,
   containerWithEntryChunk,
   minifiedSharePage,
+  noShareStorePage,
   twoContainerPage,
+  unreadableScopePage,
 } from "./fixture.js";
 
 function snap() {
@@ -341,5 +343,95 @@ describe("combined bundles", () => {
       const loaded = b.members.filter((id) => isLoadedStage(byId.get(id)!.stage));
       expect(b.loadedCount).toBe(loaded.length);
     }
+  });
+});
+
+/**
+ * Which share scope a container files into, and what is said when nobody can
+ * say.
+ *
+ * The collector used to end this chain with the literal `"default"` -- which
+ * is a real and common module federation scope name, so a container whose
+ * scope could not be read rendered exactly like one named `default`. The name
+ * is also a lookup key for `$SC` entries that declare no scope of their own,
+ * and those are two different decisions: the node keeps only what was read,
+ * while the key keeps the fallbacks, where a wrong guess costs a failed match
+ * instead of a false claim.
+ */
+describe("container scope", () => {
+  it("reads a container's own scope, and says so", () => {
+    const v = snap().containers.find((c) => c.name === "fynapp-1")!.versions[0];
+    expect(v.scope).toBe("fynmesh");
+    expect(v.scopeSource).toBe("container");
+  });
+
+  it("takes it from the share store for a container it cannot reach", () => {
+    // fynapp-design-tokens is in the store and nowhere else: no registration,
+    // no container object. The store still names the one scope it filed into.
+    const v = snap().containers.find((c) => c.name === "fynapp-design-tokens")!.versions[0];
+    expect(v.scope).toBe("fynmesh");
+    expect(v.scopeSource).toBe("share-store");
+  });
+
+  it("leaves it absent when neither the container nor the store says", () => {
+    const { loader, federation } = unreadableScopePage();
+    const s = collect({ loader, federation });
+    const v = s.containers.find((c) => c.name === "fynapp-ghost")!.versions[0];
+    expect(v.scope).toBeUndefined();
+    expect(v.scopeSource).toBeUndefined();
+  });
+
+  it("does not pick one for a container the store names in two scopes", () => {
+    const { loader, federation } = unreadableScopePage();
+    const s = collect({ loader, federation });
+    const v = s.containers.find((c) => c.name === "fynapp-both")!.versions[0];
+    // "one of these two" is not an answer, and the first of them is a guess
+    expect(s.scopes.map((x) => x.name)).toEqual(["fynmesh", "other"]);
+    expect(v.scope).toBeUndefined();
+  });
+
+  it("still joins the declarations of a container whose scope it could not read", () => {
+    // the display fallback going away must not take the lookup key with it:
+    // `$SC` entries name no scope of their own, so they are looked up under
+    // the container's, and the store is what supplies it here
+    const { loader, federation } = unreadableScopePage();
+    const s = collect({ loader, federation });
+    analyse(s);
+    const v = s.containers.find((c) => c.name === "fynapp-mangled")!.versions[0];
+    expect(v.scope).toBe("fynmesh");
+    expect(v.scopeSource).toBe("share-store");
+    const decl = v.consumes.find((d) => d.key === "esm-react")!;
+    expect(decl.shareScope).toBe("fynmesh");
+    expect(decl.resolved?.satisfies).toBe(true);
+    expect(decl.resolved?.version).toBe("19.0.0");
+    const key = s.scopes.find((x) => x.name === "fynmesh")!.keys.find((k) => k.key === "esm-react")!;
+    expect(key.versions[0].consumers.map((c) => c.container)).toContain("fynapp-mangled");
+  });
+
+  it("calls nothing `default` on a page with no share store at all", () => {
+    const { loader, federation } = noShareStorePage();
+    const s = collect({ loader, federation });
+    expect(s.scopes).toEqual([]);
+    const v = s.containers.find((c) => c.name === "fynapp-ghost")!.versions[0];
+    // the string this ticket is about: invented, and indistinguishable from a
+    // container really filing into a scope named `default`
+    expect(v.scope).toBeUndefined();
+    expect(JSON.stringify(s.containers)).not.toContain("default");
+  });
+
+  it("tags no module with a scope its container could not name", () => {
+    const { loader, federation } = unreadableScopePage();
+    const s = collect({ loader, federation });
+    const main = s.modules.find((m) => m.id === "./main-mmm.js")!;
+    // the store named its container's scope, so this one is attributable
+    expect(main.scope).toBe("fynmesh");
+    for (const m of s.modules) {
+      expect(m.scope).not.toBe("default");
+    }
+    const { loader: l2, federation: f2 } = noShareStorePage();
+    const bare = collect({ loader: l2, federation: f2 });
+    // absent, not heaped under one label: an unreadable scope is unknown per
+    // container, so modules from two of them share nothing but the gap
+    expect(bare.modules.every((m) => m.scope === undefined)).toBe(true);
   });
 });
