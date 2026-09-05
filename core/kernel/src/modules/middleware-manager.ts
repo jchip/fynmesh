@@ -21,6 +21,12 @@ const DummyMiddlewareReg: FynAppMiddlewareReg = {
 
 // Aligns with FynAppMiddlewareVersionMap from types.ts
 export type MiddlewareVersionMap = Record<string, FynAppMiddlewareReg> & {
+  /**
+   * What a lookup that asks for no version resolves to: the version that
+   * registered FIRST, never re-pointed. See FynAppMiddlewareVersionMap in
+   * types.ts for why first-registered was kept over highest-available, and
+   * `registerMiddleware` for the warning that makes the ambiguity visible.
+   */
   default?: FynAppMiddlewareReg;
 };
 
@@ -53,6 +59,8 @@ export interface MiddlewareManager {
 export const MiddlewareManager = function (telemetry?: KernelTelemetry): MiddlewareManager {
   const tel = telemetry ?? noOpTelemetry;
   const scannedModules = new Set<string>();
+  /** regKeys already warned about under FYM-332 - warn once, not once per registration. */
+  const ambiguousDefaultWarned = new Set<string>();
   let middlewares: Record<string, MiddlewareVersionMap> = {};
   let autoApply: AutoApplyMiddlewares | undefined;
 
@@ -72,9 +80,46 @@ export const MiddlewareManager = function (telemetry?: KernelTelemetry): Middlew
     console.log(`🔧 Registering mw: ${regKey}, autoApplyScope:`, mwReg.mw.autoApplyScope);
 
     versionMap[hostFynApp.version] = mwReg;
-    // set default version to the first version
+    /*
+     * `default` is what a lookup with no version range resolves to, and it is
+     * set once, by whichever version registers first - deliberately, and kept
+     * that way in FYM-332.
+     *
+     * First-registered is arbitrary but stable: once a page has resolved a
+     * version-less lookup, every later one resolves the same way. Re-pointing
+     * `default` at the highest registered version reads as the more intuitive
+     * rule, but versions register as FynApps mount, so it would move `default`
+     * under a page that is already running - two consumers that both asked for
+     * nothing would then get different middleware depending only on when they
+     * mounted. An ordering surprise you can read off the load order beats a
+     * timing one you cannot reproduce, so this assignment stays conditional.
+     *
+     * A consumer that actually cares which version it gets asks for a range
+     * (FYM-321); the `else` below makes the ambiguity audible for the ones
+     * that do not.
+     */
     if (!versionMap.default) {
       versionMap.default = mwReg;
+    } else if (!ambiguousDefaultWarned.has(regKey)) {
+      // Once per middleware, at registration - NOT at lookup. A version-less
+      // lookup on a two-version page happens on every execution, and a warning
+      // that repeats like that gets filtered out or deleted rather than fixed.
+      //
+      // Dev builds only: rollup.config.ts compresses the browser kernel with
+      // terser `drop_console: true`, so this text exists in
+      // fynmesh-browser-kernel.dev.js and is gone from the .min.js. Nothing
+      // production-facing should be assumed to depend on seeing it.
+      ambiguousDefaultWarned.add(regKey);
+      const others = Object.keys(versionMap).filter(
+        (key) => key !== "default" && key !== versionMap.default!.hostFynApp.version
+      );
+      console.warn(
+        `⚠️ Middleware '${regKey}' now has more than one version registered.` +
+          ` A lookup that asks for no version resolves to the first version registered` +
+          ` (${versionMap.default.hostFynApp.version}), not the highest;` +
+          ` also registered: ${others.join(", ")}.` +
+          ` Declare a version range on the middleware to choose deliberately.`
+      );
     }
     middlewares[regKey] = versionMap;
 
@@ -265,6 +310,7 @@ export const MiddlewareManager = function (telemetry?: KernelTelemetry): Middlew
       middlewares = {};
       autoApply = undefined;
       scannedModules.clear();
+      ambiguousDefaultWarned.clear();
     },
   };
 } as unknown as new (tel?: KernelTelemetry) => MiddlewareManager;
