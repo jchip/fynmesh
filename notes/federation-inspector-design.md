@@ -611,8 +611,9 @@ with FYM-302..306.
 | `adapters/` live + remote (postMessage both ends) | done |
 | `ui/` shell, Modules, Containers, Shares, Graph, Issues, Raw | done |
 | build: rollup + esbuild + terser + tsc | done |
-| `attach()` timeline instrumentation | not built — §5.3, still the right shape |
-| Chrome extension | not built — unblocked by `adapters/remote.ts` |
+| `attach()` timeline instrumentation | not built — §5.3, still the right shape. FYM-330 may be what finally motivates it |
+| FynMesh / FynApp support | designed, not built — epic FYM-322 |
+| Chrome extension | **dropped** (FYM-31, `wont_do`). The in-page badge works on any page, so a DevTools panel buys little; `adapters/remote.ts` keeps it unblocked if revisited |
 
 Two implementation notes worth carrying forward, both found by tests against a
 fake loader built to the real contracts:
@@ -632,14 +633,37 @@ actually decides resolution, and it is unreachable inside that bundle's IIFE.
 replay -- and it returns `undefined` rather than `false` for a range it cannot
 parse, so the inspector never manufactures an issue out of its own limits.
 
-## 9. Open questions
+## 9. Questions, answered
 
-- **Ship it in the demo?** Adding the script to `demo/demo-server/templates`
-  (dev only) is the fastest way to dogfood it, but it changes the demo's script
-  set. Not doing it without a call.
-- **Publish?** `federation-js` and `rollup-plugin-federation` are the published
-  pair. Leaving this private until it has proven itself.
-- **A first-class `Federation.inspect()`?** A small, mangle-reserved snapshot
-  method on the runtime would remove all the probing in §2.2/§3.2. It is
-  purely additive, but it is a change to `federation-js`'s public surface, so
-  it is a separate decision — and the design above deliberately does not need it.
+All three were decided on 2026-09-05. Kept here with their reasoning rather
+than deleted, so the next person does not re-open them cold.
+
+- **Ship it in the demo?** *Yes, done.* FYM-309 loads it at idle after first
+  paint, served from its own `dist`. Note what that decision forecloses: any
+  strategy that works by wrapping runtime functions early — a monkey-patched
+  snapshot, for instance — needs to load *before* the containers register, and
+  this deliberately does not.
+
+- **Publish?** *No.* It stays private. The guard is `"private": true` in its
+  own `package.json`, and only that: fynpo 3.0.5 reads neither
+  `excludePackages` nor `includePackages` (the latter is used only by this
+  repo's own `release-gate` task), so an exclude entry would be dead config.
+  Before FYM-318 the real protection was fynpo's nested-repo auto-skip, which
+  the move removed — worth knowing if the guard is ever revisited.
+
+- **A first-class snapshot method on the runtime?** *Yes — `Federation.__I()`,
+  in the normal dist.* FYM-326. Three things about it are worth carrying:
+
+  1. **The justification here was wrong.** It is not that probing is blocked —
+     §2.2's table is mistaken in both directions, and the container-registry
+     workaround in §3.2 solves a problem that does not exist. The real
+     justification is authoritative semver replay from *inside* the IIFE,
+     which nothing outside can do.
+  2. **It does not remove the probing.** Older runtimes still need the §3.2
+     path as a fallback, so `__I()` is an accelerator, not a deletion.
+  3. **A separate mangled add-on was considered and rejected.** Terser's
+     `nameCache` does make it work — an add-on seeded from the main build's
+     cache emits identical short names — but at 271 gzipped bytes it is
+     *larger* than the 207 it would save by staying out of the main dist, and
+     it pays for that with a committed name cache and silent-garbage failure
+     on version drift.
