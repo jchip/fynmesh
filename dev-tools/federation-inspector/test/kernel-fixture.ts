@@ -376,6 +376,83 @@ export function minifiedKernel(opts: FakeKernelOptions = {}): Record<string, unk
 }
 
 /**
+ * The demo's `shell.html`, which is the page auto-apply actually happens on.
+ *
+ * Reproduced from the live kernel read off that page rather than invented, and
+ * it is the shape FYM-347 was found in: `fynapp-shell-mw::shell-layout`
+ * declares `autoApplyScope: ["fynapp", "middleware"]`, **no** `__middlewareMeta`
+ * anywhere on the page names it, and three FynApps nonetheless carry
+ * `shell-layout` in their `middlewareContext` -- including its own host, which
+ * the "middleware" half of the scope applies it to.
+ *
+ * `demo.html` cannot stand in for this. There every delivered key has a
+ * declaration behind it, so a collector that files consumers from declarations
+ * alone looks perfectly correct on it.
+ *
+ * Three routes in one page, deliberately:
+ *
+ * - `shell-layout` -- delivered to three apps, declared by none.
+ * - `design-tokens` -- declared by two apps and delivered to both, the ordinary
+ *   route, which must keep working exactly as it did.
+ * - `react-context` -- registered, declared by nobody, delivered to nobody. The
+ *   control: "nobody uses this" has to stay reachable, or the fix has traded one
+ *   false claim for another.
+ */
+export function autoAppliedShellPage(): FakeKernelOptions {
+  return {
+    apps: [
+      // the middleware's own host: `autoApplyScope` includes "middleware", so
+      // the kernel applies it to middleware-providing FynApps as well
+      fakeFynApp({
+        name: "fynapp-shell-mw",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+        delivered: ["shell-layout"],
+      }),
+      fakeFynApp({
+        name: "fynapp-sidebar",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+        delivered: ["shell-layout"],
+      }),
+      fakeFynApp({
+        name: "fynapp-x1",
+        version: "1.0.0",
+        exposes: {
+          "./main": fakeUnit(["execute"], [
+            { info: { name: "design-tokens", provider: "fynapp-design-tokens", version: "^1.0.0" }, config: {} },
+          ]),
+        },
+        delivered: ["shell-layout", "design-tokens"],
+      }),
+      fakeFynApp({
+        name: "fynapp-x1",
+        version: "2.0.0",
+        exposes: {
+          "./main": fakeUnit(["execute"], [
+            { info: { name: "design-tokens", provider: "fynapp-design-tokens", version: "^1.0.0" }, config: {} },
+          ]),
+        },
+        delivered: ["design-tokens"],
+      }),
+      fakeFynApp({ name: "fynapp-design-tokens", version: "1.0.0" }),
+      fakeFynApp({ name: "fynapp-react-middleware", version: "1.0.0" }),
+    ],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["fynapp", "middleware"],
+        overrideHooks: ["overrideExecute"],
+      },
+      { provider: "fynapp-design-tokens", name: "design-tokens", hostVersion: "1.0.0" },
+      { provider: "fynapp-react-middleware", name: "react-context", hostVersion: "1.0.0" },
+    ],
+  };
+}
+
+/**
  * A `ContainerNode` shaped as the federation collector leaves one.
  *
  * The FynMesh diagnostics join the kernel's registry against the containers the

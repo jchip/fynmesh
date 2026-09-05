@@ -210,19 +210,47 @@ export function collectFynMesh(
   const registered = indexRegistry(registry);
   const appNodes = buildApps(registered, states ?? [], mwNodes, containers, middlewares);
 
-  // consumers are the middleware registry read from the other side; doing it
-  // here rather than in `buildMiddlewares` keeps one pass over the apps
+  // Consumers are the middleware registry read from the other side; doing it
+  // here rather than in `buildMiddlewares` keeps one pass over the apps.
+  //
+  // Two routes in, and both of them are already on the FynApp node. A
+  // declaration in `__middlewareMeta` is one. The other is delivery with
+  // nothing declared at all -- `autoApplyScope`, which the kernel applies with
+  // no declaration anywhere, and a middleware writing straight into another
+  // FynApp's `middlewareContext`. Filing only the first is what FYM-347 was:
+  // `fynapp-shell-mw::shell-layout` reported zero consumers on a page where
+  // `fynapp-sidebar` and `fynapp-x1` both carried `shell-layout` in
+  // `middlewareDelivered`. Both routes are filed, each tagged with the route it
+  // came by, so the count answers "who runs on this" without losing "who asked
+  // for it".
   const byRegKey = new Map(mwNodes.map((m) => [m.regKey, m]));
+  const byName = new Map<string, MiddlewareNode[]>();
+  for (const mw of mwNodes) {
+    byName.set(mw.name, [...(byName.get(mw.name) ?? []), mw]);
+  }
   for (const node of appNodes) {
+    const declaredKeys = new Set<string>();
     for (const use of node.usesMiddleware) {
       const mw = use.resolvedRegKey ? byRegKey.get(use.resolvedRegKey) : undefined;
       if (!mw) {
         continue;
       }
-      if (!mw.consumers.includes(node.key)) {
-        mw.consumers.push(node.key);
-      }
+      declaredKeys.add(mw.regKey);
       addConsumer(mw, node.key, use);
+    }
+    for (const name of node.middlewareDelivered) {
+      // A `middlewareContext` key is a name the *middleware* chose, so it
+      // attributes to a registration only when exactly one carries that name.
+      // Two providers of one name (FYM-333) leave it unattributable, and
+      // guessing between them would file a FynApp under a provider it may never
+      // have touched -- `nameCollisions` is what tells that reader why the row
+      // is short. A key matching no registration at all is likewise left alone:
+      // nothing says a middleware must write under its own name.
+      const matches = byName.get(name) ?? [];
+      if (matches.length !== 1 || declaredKeys.has(matches[0].regKey)) {
+        continue;
+      }
+      addUndeclaredConsumer(matches[0], node.key);
     }
   }
 
@@ -727,9 +755,12 @@ function resolveVersion(
  * is a consumer of *something*, and a view that silently discarded it would
  * show a middleware with fewer consumers than the FynApps view shows
  * declarations against it.
+ *
+ * `addUndeclaredConsumer` below is the same filing for the other route in.
  */
 function addConsumer(mw: MiddlewareNode, appKey: string, use: MiddlewareUseNode): void {
   const consumer: MiddlewareConsumerNode = {
+    route: "declared",
     app: appKey,
     pinnedProvider: use.provider === mw.provider,
     delivered: use.delivered,
@@ -741,8 +772,48 @@ function addConsumer(mw: MiddlewareNode, appKey: string, use: MiddlewareUseNode)
   const version = use.resolvedVersion
     ? mw.versions.find((v) => v.version === use.resolvedVersion)
     : undefined;
-  const list = version ? version.consumers : mw.unpinnedConsumers;
-  if (!list.some((c) => c.app === appKey)) {
+  fileConsumer(mw, version ? version.consumers : mw.unpinnedConsumers, consumer);
+}
+
+/**
+ * File a consumer that never declared anything (FYM-347).
+ *
+ * The app's `middlewareContext` carries this middleware's name and nothing in
+ * its `__middlewareMeta` asked for it: the kernel auto-applied it, or the
+ * middleware wrote into the app itself. Either way the app is running on it.
+ *
+ * With no declaration there is no version to resolve, so which version
+ * delivered has to be inferred, and only from what cannot be otherwise:
+ *
+ * 1. exactly one version carries an `autoApplyScope` -- that is the only one
+ *    the kernel would have auto-applied, so it is the one that ran.
+ * 2. otherwise exactly one version exists at all -- there is no other candidate.
+ * 3. otherwise `unpinnedConsumers`, which already means "a consumer of this
+ *    middleware, of no version we can name". Guessing between two candidates
+ *    would put a FynApp on a version it may not be running, which is exactly
+ *    the mistake `unpinnedConsumers` exists to avoid.
+ */
+function addUndeclaredConsumer(mw: MiddlewareNode, appKey: string): void {
+  const auto = mw.versions.filter((v) => v.autoApplyScope?.length);
+  const version =
+    auto.length === 1 ? auto[0] : mw.versions.length === 1 ? mw.versions[0] : undefined;
+  fileConsumer(mw, version ? version.consumers : mw.unpinnedConsumers, {
+    route: "undeclared",
+    app: appKey,
+    delivered: true,
+  });
+}
+
+/** Record one consumer on the middleware and on the list that claims it. */
+function fileConsumer(
+  mw: MiddlewareNode,
+  list: MiddlewareConsumerNode[],
+  consumer: MiddlewareConsumerNode
+): void {
+  if (!mw.consumers.includes(consumer.app)) {
+    mw.consumers.push(consumer.app);
+  }
+  if (!list.some((c) => c.app === consumer.app)) {
     list.push(consumer);
   }
 }
