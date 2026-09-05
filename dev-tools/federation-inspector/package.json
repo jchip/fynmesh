@@ -44,11 +44,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jchip/fynmesh.git",
-    "directory": "rollup-federation/federation-inspector"
+    "directory": "dev-tools/federation-inspector"
   },
   "devDependencies": {
     "@fynjs/run": "^1.0.0",
-    "@fynmesh/systemjs": "^6.15.1",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^24.0.10",

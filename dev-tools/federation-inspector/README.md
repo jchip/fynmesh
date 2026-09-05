@@ -1,7 +1,7 @@
 # federation-inspector
 
-A visual module browser for pages running [`@fynmesh/systemjs`](../systemjs) and
-[`federation-js`](../federation-js). Drop one script tag next to them, get a
+A visual module browser for pages running [`@fynmesh/systemjs`](https://github.com/jchip/rollup-federation/tree/main/systemjs) and
+[`federation-js`](https://github.com/jchip/rollup-federation/tree/main/federation-js). Drop one script tag next to them, get a
 badge in the corner of the page, and click it for a dense panel showing every
 module the loader knows, every federation container, every share scope, and
 what actually resolved against what.
@@ -214,4 +214,4 @@ Outputs:
 | `dist/index.js` | ESM, Preact external | library / extension |
 | `dist/*.d.ts` | — | types |
 
-Design notes: [`../notes/federation-inspector-design.md`](../notes/federation-inspector-design.md).
+Design notes: [`../../notes/federation-inspector-design.md`](../../notes/federation-inspector-design.md).

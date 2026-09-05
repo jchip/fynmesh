@@ -6,7 +6,7 @@ themselves), puts a small badge in a page corner, and opens a dense inspector
 overlay on click. The same code is consumable as an ES library so a Chrome
 DevTools extension can be built on it without a rewrite.
 
-Status: design. Package lives at `rollup-federation/federation-inspector/`.
+Status: design. Package lives at `dev-tools/federation-inspector/`.
 
 ---
 
@@ -130,7 +130,7 @@ that can cross the bridge is JSON. It also keeps the UI trivially testable
 ### 3.1 Package layout
 
 ```
-rollup-federation/federation-inspector/
+dev-tools/federation-inspector/
   src/
     index.ts                 library entry (ESM): collect, analyse, mount
     standalone.ts            IIFE entry: auto-mounts launcher + overlay
@@ -601,7 +601,7 @@ until we decide to publish it.
 
 ## 8. Status
 
-Built. `rollup-federation/federation-inspector/`, tracked as FYM-301 (epic)
+Built. `dev-tools/federation-inspector/`, tracked as FYM-301 (epic)
 with FYM-302..306.
 
 | Layer | State |

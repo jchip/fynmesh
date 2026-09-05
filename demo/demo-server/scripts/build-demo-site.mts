@@ -321,7 +321,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             : "federation-inspector.js";
         const inspectorSrc = path.join(
             __dirname,
-            "../../../rollup-federation/federation-inspector/dist",
+            "../../../dev-tools/federation-inspector/dist",
             inspectorFile
         );
         if (existsSync(inspectorSrc)) {
