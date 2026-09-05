@@ -25,7 +25,7 @@ import type {
   MiddlewareNode,
   MiddlewareVersionNode,
 } from "../src/core/model.js";
-import { filterMiddleware } from "../src/ui/views/middleware.js";
+import { consumerTone, filterMiddleware } from "../src/ui/views/middleware.js";
 import { twoContainerPage } from "./fixture.js";
 import {
   autoAppliedShellPage,
@@ -689,6 +689,77 @@ describe("the snapshot contract", () => {
     const clone = structuredClone(snap);
     expect(clone.fynmesh!.middlewares).toEqual(snap.fynmesh!.middlewares);
     expect(JSON.stringify(snap.fynmesh!.middlewares)).toContain("shell-layout");
+  });
+});
+
+/*
+ * FYM-354. The chip's tick means "something arrived". Its colour used to mean
+ * the same thing, which left the one state the inspector is the last witness to
+ * -- a consumer running a version it did not ask for -- drawn in the colour
+ * that says everything is fine. The kernel's own warning for it is stripped by
+ * `drop_console: true`, so there is nothing else left to notice it by.
+ */
+describe("what colour a consumer chip is drawn in", () => {
+  const chipsOn = (mw: MiddlewareNode) =>
+    new Map(
+      [...mw.versions.flatMap((v) => v.consumers), ...mw.unpinnedConsumers].map((c) => [
+        c.app,
+        consumerTone(c),
+      ])
+    );
+
+  it("warns on a fallback resolution even though it was delivered", () => {
+    const { fynmesh } = run(twoVersions());
+    const tones = chipsOn(mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout"));
+
+    // asked for ^9.0.0, got 1.0.0 through the default slot, and the middleware
+    // did write into it -- the tick stays, the colour must not
+    const app = fynmesh!.apps.find((a) => a.name === "fynapp-asks-missing")!;
+    expect(app.usesMiddleware[0].resolvedVia).toBe("fallback");
+    expect(tones.get("fynapp-asks-missing@1.0.0")).toBe("warn");
+  });
+
+  it("leaves the branches that got what they asked for alone", () => {
+    const { fynmesh } = run(twoVersions());
+    const tones = chipsOn(mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout"));
+
+    expect(tones.get("fynapp-asks-exact@1.0.0")).toBe("ok");
+    expect(tones.get("fynapp-asks-range@1.0.0")).toBe("ok");
+    expect(tones.get("fynapp-asks-nothing@1.0.0")).toBe("ok");
+  });
+
+  it("warns on an unresolved consumer, which is the other branch with no answer", () => {
+    const { fynmesh } = run(
+      devKernel({
+        apps: [consumer("fynapp-hopeful", { name: "ghost", provider: "mw-host" }, ["ghost"])],
+        middlewares: [
+          { provider: "mw-host", name: "ghost", hostVersion: "1.0.0", unreadable: true },
+        ],
+      })
+    );
+    const mw = mwNamed(fynmesh!.middlewares, "mw-host::ghost");
+
+    expect(declaredOf(mw.unpinnedConsumers)[0].via).toBe("unresolved");
+    expect(chipsOn(mw).get("fynapp-hopeful@1.0.0")).toBe("warn");
+  });
+
+  it("still warns when nothing was delivered at all", () => {
+    const { fynmesh } = run(
+      devKernel({
+        apps: [consumer("fynapp-quiet", { name: "logger", provider: "mw-a" })],
+        middlewares: [{ provider: "mw-a", name: "logger", hostVersion: "1.0.0" }],
+      })
+    );
+    expect(chipsOn(mwNamed(fynmesh!.middlewares, "mw-a::logger")).get("fynapp-quiet@1.0.0")).toBe(
+      "warn"
+    );
+  });
+
+  it("draws an undeclared consumer as ok: it asked for nothing, so nothing went wrong", () => {
+    const { fynmesh } = run(devKernel(autoAppliedShellPage()));
+    const tones = chipsOn(mwNamed(fynmesh!.middlewares, "fynapp-shell-mw::shell-layout"));
+
+    expect([...tones.values()]).toEqual(["ok", "ok", "ok"]);
   });
 });
 
