@@ -9,9 +9,11 @@ import type {
   FynApp,
   FynMeshRuntimeData,
   KernelTelemetry,
+  MiddlewareLookupOptions,
 } from "../types";
 import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { MIDDLEWARE_EXPORT_PREFIX } from "../util";
+import { isSupportedRange, maxSatisfying } from "../semver-range";
 
 const DummyMiddlewareReg: FynAppMiddlewareReg = {
   regKey: "",
@@ -29,7 +31,11 @@ export interface AutoApplyMiddlewares {
 
 export interface MiddlewareManager {
   registerMiddleware(mwReg: FynAppMiddlewareReg): void;
-  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg;
+  getMiddleware(
+    name: string,
+    provider?: string,
+    opts?: MiddlewareLookupOptions
+  ): FynAppMiddlewareReg;
   getAutoApply(): AutoApplyMiddlewares | undefined;
   scanAndRegisterMiddleware(fynApp: FynApp, exposeName: string, exposedModule: any): string[];
   initializeFromRuntime(runtime: FynMeshRuntimeData): void;
@@ -97,24 +103,95 @@ export const MiddlewareManager = function (telemetry?: KernelTelemetry): Middlew
 
   const hasScannedModule = (scanCacheKey: string): boolean => scannedModules.has(scanCacheKey);
 
+  /**
+   * Pick, out of one middleware's version map, the registration the consumer
+   * asked for (FYM-321).
+   *
+   * Before FYM-321 this was unconditionally `versionMap.default` - whichever
+   * version registered first - even though the consumer's semver range had been
+   * carried all the way from its package.json to this call site and then
+   * dropped. Two versions of one middleware on a page meant every consumer
+   * silently got the one that loaded first.
+   *
+   * The compatibility guarantee this change rests on: **with no version asked
+   * for, this returns `versionMap.default` and does nothing else** - no parsing,
+   * no scanning, no warning - exactly as before. Every FynApp resolving
+   * middleware today takes that path, so nothing that runs today changes what
+   * it runs.
+   *
+   * A range that nothing satisfies also still resolves to `default`. The defect
+   * was the silence, not the fallback, so the fallback stays and gains a
+   * warning. Resolving to nothing instead would turn pages that work today -
+   * wrongly, but visibly - into blank ones; that is a separate decision for a
+   * major version, deliberately not built here.
+   */
+  const resolveFromVersionMap = (
+    versionMap: MiddlewareVersionMap,
+    regKey: string,
+    wanted?: string
+  ): FynAppMiddlewareReg | undefined => {
+    const fallback = versionMap.default;
+
+    // The pre-FYM-321 path, untouched. `*` is what parseMiddlewareString
+    // substitutes when the build wrote no range, so it means the same thing.
+    if (!wanted || wanted === "*" || wanted.trim() === "") {
+      return fallback;
+    }
+
+    // An exact version key needs no range machinery. Guard `default` itself:
+    // it is a slot name, not a version anyone can ask for.
+    if (wanted !== "default" && versionMap[wanted]) {
+      return versionMap[wanted];
+    }
+
+    const registered = Object.keys(versionMap).filter((key) => key !== "default");
+
+    if (!isSupportedRange(wanted)) {
+      console.warn(
+        `⚠️ Middleware '${regKey}': '${wanted}' is not a version range this kernel can read` +
+          ` (registered: ${registered.join(", ") || "none"}).` +
+          ` Falling back to the default version (${fallback?.hostFynApp.version ?? "none"}).`
+      );
+      return fallback;
+    }
+
+    const best = maxSatisfying(registered, wanted);
+    if (best) {
+      return versionMap[best];
+    }
+
+    console.warn(
+      `⚠️ Middleware version mismatch for '${regKey}': asked for '${wanted}',` +
+        ` but the registered version(s) are ${registered.join(", ") || "none"}.` +
+        ` Falling back to the default version (${fallback?.hostFynApp.version ?? "none"}),` +
+        ` so this FynApp will run a version of the middleware it did not ask for.`
+    );
+
+    return fallback;
+  };
+
   return {
     registerMiddleware,
 
-    getMiddleware(name, provider) {
+    getMiddleware(name, provider, opts) {
+      const wanted = opts?.version;
+
       // If provider is specified, try exact match first
       if (provider) {
-        const versionMap = middlewares[`${provider}::${name}`];
+        const key = `${provider}::${name}`;
+        const versionMap = middlewares[key];
         if (versionMap) {
-          const mwReg = versionMap["default"];
+          const mwReg = resolveFromVersionMap(versionMap, key, wanted);
           if (mwReg) {
             return mwReg;
           }
         }
       }
-      // Fallback: scan all providers for first available default match
+      // Fallback: scan all providers for the first one exporting this name.
+      // Which provider wins here is unchanged by FYM-321 - see FYM-333.
       for (const [key, versionMap] of Object.entries(middlewares)) {
         if (key.endsWith(`::${name}`)) {
-          const mwReg = versionMap.default;
+          const mwReg = resolveFromVersionMap(versionMap, key, wanted);
           if (mwReg) return mwReg;
         }
       }

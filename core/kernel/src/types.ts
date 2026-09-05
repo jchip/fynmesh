@@ -271,10 +271,29 @@ export type FynMeshRuntimeData = {
 /**
  * Middleware lookup options
  */
+/**
+ * The middleware lookup, as injected into the pieces that resolve declarations.
+ *
+ * One named type rather than four inline copies: before FYM-321 the signature
+ * was repeated at every injection point, and the version argument had to be
+ * added to all of them in step. Naming it makes the next such change one edit.
+ */
+export type GetMiddlewareFn = (
+  name: string,
+  provider?: string,
+  opts?: MiddlewareLookupOptions
+) => FynAppMiddlewareReg;
+
 export interface MiddlewareLookupOptions {
-  /** Whether to perform fallback search across all providers */
-  fallbackSearch?: boolean;
-  /** Specific version to look for */
+  /**
+   * The version the consumer asked for - a semver range (`^2.0.0`), an exact
+   * version, or `*`/absent for "any".
+   *
+   * Absent or `*` resolves to the version map's `default` slot, which is how
+   * every lookup behaved before FYM-321. A range picks the highest registered
+   * version satisfying it; a range nothing satisfies warns and falls back to
+   * `default` rather than failing to resolve.
+   */
   version?: string;
 }
 
@@ -367,8 +386,14 @@ export interface FynMeshKernel {
    * Get middleware by name and provider
    * @param name - middleware name
    * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
+   * @param opts - lookup options; `version` is the semver range the consumer
+   *   asked for. Omitting it resolves to the `default` version, as it always has.
    */
-  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg;
+  getMiddleware(
+    name: string,
+    provider?: string,
+    opts?: MiddlewareLookupOptions
+  ): FynAppMiddlewareReg;
 
   /**
    * Get middleware state registry for global or region scope

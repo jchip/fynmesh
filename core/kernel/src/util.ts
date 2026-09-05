@@ -1,4 +1,4 @@
-import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel, MiddlewareInfo } from "./types";
+import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel, MiddlewareInfo, GetMiddlewareFn } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -151,7 +151,7 @@ export async function parseMiddlewareString(
   fynApp: FynApp,
   kernel: FynMeshKernel,
   runtime: FynUnitRuntime,
-  getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+  getMiddleware: GetMiddlewareFn,
   loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>
 ): Promise<FynAppMiddlewareCallContext | null> {
   const parts = middlewareStr.trim().split(' ');
@@ -170,7 +170,9 @@ export async function parseMiddlewareString(
     await loadMiddlewareFromDependency(packageName, middlewarePath);
   }
 
-  const reg = getMiddleware(middlewareName, packageName);
+  // FYM-321: the range the build wrote into the id is the whole point of
+  // parsing it - hand it to the lookup instead of only logging it.
+  const reg = getMiddleware(middlewareName, packageName, { version: semver });
   if (reg.regKey === "") {
     console.debug("❌ No middleware found for", middlewareName, packageName);
     return null;

@@ -28,6 +28,7 @@ import type {
   FynAppStatus,
   FynUnit,
   FynAppMiddlewareReg,
+  MiddlewareLookupOptions,
   FynAppMiddlewareCallContext,
   FynUnitRuntime,
   RegistryResolver,
@@ -277,8 +278,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   /**
    * Get middleware by name and provider
    */
-  getMiddleware(name: string, provider?: string): FynAppMiddlewareReg {
-    return this.mwMgr.getMiddleware(name, provider);
+  getMiddleware(
+    name: string,
+    provider?: string,
+    opts?: MiddlewareLookupOptions
+  ): FynAppMiddlewareReg {
+    return this.mwMgr.getMiddleware(name, provider, opts);
   }
 
   /**
@@ -490,7 +495,7 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
             fynApp,
             this,
             () => this.#runtimeFor(fynApp),
-            (name, provider) => this.getMiddleware(name, provider),
+            (name, provider, opts) => this.getMiddleware(name, provider, opts),
             async (packageName, middlewarePath) => {
               await this.loader.loadMiddlewareFromDependency(
                 packageName,

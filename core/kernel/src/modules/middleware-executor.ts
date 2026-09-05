@@ -12,6 +12,7 @@ import type {
   FynMeshKernel,
   MiddlewareUseMeta,
   KernelTelemetry,
+  GetMiddlewareFn,
 } from "../types";
 import { noOpTelemetry, captureEvent } from "../kernel-telemetry";
 import { isFynAppMiddlewareProvider, MIDDLEWARE_EXPOSE_PREFIX, getTargetMiddlewares, findExecutionOverride, createMiddlewareCallContext, executeMiddlewareOverride, parseMiddlewareString } from "../util";
@@ -99,7 +100,7 @@ export interface MiddlewareExecutor {
     fynApp: FynApp,
     kernel: FynMeshKernel,
     createRuntime: () => FynUnitRuntime,
-    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+    getMiddleware: GetMiddlewareFn,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
     autoApply?: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] },
   ): Promise<string>;
@@ -480,7 +481,7 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
     fynApp: FynApp,
     kernel: FynMeshKernel,
     createRuntime: () => FynUnitRuntime,
-    getMiddleware: (name: string, provider?: string) => FynAppMiddlewareReg,
+    getMiddleware: GetMiddlewareFn,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
     autoApply?: {
       fynapp: FynAppMiddlewareReg[];
@@ -534,7 +535,9 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
           const info = (meta as any).info;
           console.debug("🔍 Legacy format - name:", info.name, "provider:", info.provider);
 
-          const reg = getMiddleware(info.name, info.provider);
+          // FYM-321: `info.version` is a semver range the consumer declared;
+          // it used to be read only for logging.
+          const reg = getMiddleware(info.name, info.provider, { version: info.version });
           if (reg.regKey === "") {
             console.debug("❌ No middleware found for", info.name, info.provider);
             continue;
