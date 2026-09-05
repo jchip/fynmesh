@@ -520,3 +520,100 @@ export function combinedBundlePage(): {
 
   return { loader, federation };
 }
+
+/**
+ * Three containers whose own `scope` cannot be read, for the three answers
+ * that used to be one invented string.
+ *
+ * `Container.scope` is not one of the mangled slots, so this is not the
+ * minified-build case: it is the container the collector cannot *reach* -- one
+ * discovered from a registration whose record exports no container, or from
+ * the share store alone -- plus, for completeness, a container object that
+ * simply does not carry the field.
+ *
+ * - `fynapp-ghost` is registered and nothing else. No record, no container
+ *   object, no share store entry: nobody can say which scope it is in.
+ * - `fynapp-mangled` has a readable `$SC` and no `scope`. The store names it
+ *   as a source in exactly one scope, which is where its declarations have to
+ *   be looked up -- the case that proves the display fallback and the lookup
+ *   fallback are two decisions.
+ * - `fynapp-both` files copies into two scopes, so the store cannot pick one
+ *   for it either.
+ */
+export function unreadableScopePage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const ghostEntry = "https://app.test/fynapp-ghost/dist/fynapp-entry.js";
+  const mangledEntry = "https://app.test/fynapp-mangled/dist/fynapp-entry.js";
+  const bothEntry = "https://app.test/fynapp-both/dist/fynapp-entry.js";
+  const mangledMain = "https://app.test/fynapp-mangled/dist/main-mmm.js";
+  const react19 = "https://app.test/react-19/dist/react.js";
+
+  const mangled = new FakeContainer(
+    "__mf_container_fynapp-mangled",
+    "fynapp-mangled",
+    "fynmesh",
+    "1.0.0"
+  )
+    .share("esm-react", { semver: "^19.0.0", singleton: true }, { "19.0.0": { id: react19 } })
+    .expose("./main", "./main-mmm.js");
+  // the one fact under test: no readable scope of its own
+  delete (mangled as { scope?: string }).scope;
+
+  loader
+    .addRecord({ id: mangledEntry, n: { container: mangled, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: "./main-mmm.js", n: { main: 1 }, d: [] })
+    .addRecord({ id: react19, n: { react: 1 }, d: [] })
+    // a record for the ghost's entry that exports no container at all
+    .addRecord({ id: ghostEntry, n: { default: {} }, d: [] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-ghost", { url: ghostEntry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-mangled", { url: mangledEntry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-both", { url: bothEntry }, "1.0.0")
+    .addRegistration("./main-mmm.js", { url: mangledMain });
+
+  federation
+    .addShare("fynmesh", "esm-react", "19.0.0", {
+      url: react19,
+      id: react19,
+      container: "fynapp-mangled",
+      containerVersion: "1.0.0",
+    })
+    .addShare("fynmesh", "design-tokens", "1.0.0", {
+      container: "fynapp-both",
+      containerVersion: "1.0.0",
+    })
+    .addShare("other", "design-tokens", "1.0.0", {
+      container: "fynapp-both",
+      containerVersion: "1.0.0",
+    });
+
+  return { loader, federation };
+}
+
+/**
+ * A container nothing can be read from, on a page with no share store at all.
+ *
+ * The exact branch this ticket is about: with no scope collected, the last
+ * fallback used to hand the node the string `default` -- a real and common
+ * module federation scope name, printed as if it had been read.
+ */
+export function noShareStorePage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+  const entry = "https://app.test/fynapp-ghost/dist/fynapp-entry.js";
+
+  loader
+    .addRecord({ id: entry, n: { default: {} }, d: [] })
+    .addRegistration("__mf_container_fynapp-ghost", { url: entry }, "1.0.0");
+
+  return { loader, federation };
+}

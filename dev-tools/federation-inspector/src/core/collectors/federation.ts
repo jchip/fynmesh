@@ -166,6 +166,12 @@ function findContainer(
  * builds an `rvm` object even when no importer contributed a range, so an
  * object -- empty or not -- means the map is readable, and `undefined` means
  * this build mangled it away.
+ *
+ * `defaultScope` is a **lookup key**, not display text. `ShareDecl.shareScope`
+ * is what `resolveShares`, `applySingletonFlags` and `consumersOf` join on, so
+ * it has to be some string even where the container's scope could not be read
+ * -- which is why the caller decides the node's `scope` and this key
+ * separately. Nothing rendered as a container's scope comes from here.
  */
 function readShareConfig(
   container: any,
@@ -717,10 +723,22 @@ export function collectFederation(
   // A container may show up in the share store without ever registering with
   // this loader -- a share provided by a container whose entry the loader did
   // not fetch. Note the name so it is not silently dropped.
+  //
+  // The same walk records which scopes name each container as a source. That
+  // is the only evidence about a container's scope that survives when the
+  // `Container` object itself is out of reach -- which is exactly the case for
+  // a container discovered here and nowhere else. See `scopeSource`.
+  const scopesNamingContainer = new Map<string, Set<string>>();
   for (const scope of scopes) {
     for (const key of scope.keys) {
       for (const v of key.versions) {
         for (const s of v.sources) {
+          let seen = scopesNamingContainer.get(s.container);
+          if (!seen) {
+            seen = new Set<string>();
+            scopesNamingContainer.set(s.container, seen);
+          }
+          seen.add(scope.name);
           if (!discovered.has(s.container)) {
             discovered.set(
               s.container,
@@ -755,13 +773,48 @@ export function collectFederation(
       const entryMod = resolve(entryUrl) ?? resolve(entryId);
       const stage: LoadStage = entryMod?.stage ?? "registered";
 
-      const scopeName =
-        (container ? safeGet<string>(container, "scope") : undefined) ??
-        scopes[0]?.name ??
-        "default";
+      // Which scope this container files into -- two readings, weaker second,
+      // and *nothing* when neither answers. `Container.scope` is its own
+      // declaration and is not one of the mangled slots, so on any page whose
+      // container object can be reached at all this is the first branch. The
+      // store is the fallback for a container that never registered with this
+      // loader: it proves the container filed copies into that scope, which is
+      // near enough to display but is not the container's own word, so which
+      // branch answered is recorded rather than left for a view to guess.
+      //
+      // A container named by two scopes gets neither: "one of these two" is
+      // not an answer, and picking the first would be the invention this
+      // replaces.
+      const declaredScope = container ? safeGet(container, "scope") : undefined;
+      // a name or nothing: an empty string is not a scope, and a non-string is
+      // some other page's `scope`, not federation's
+      const ownScope =
+        typeof declaredScope === "string" && declaredScope ? declaredScope : undefined;
+      const storeScopes = scopesNamingContainer.get(name);
+      const storeScope =
+        storeScopes?.size === 1 ? [...storeScopes][0] : undefined;
+      const scopeName = ownScope || storeScope;
+      const scopeSource: ContainerVersionNode["scopeSource"] = ownScope
+        ? "container"
+        : storeScope
+          ? "share-store"
+          : undefined;
+
+      // A *lookup key*, not a fact, and deliberately not the same decision as
+      // the one above: `$SC` entries that name no `shareScope` of their own
+      // belong to whatever scope the container defaults to (`Container._S`:
+      // `options.shareScope || this.scope`), and joining them to the store
+      // needs some key even when that name could not be read. So the guesses
+      // live here, where a miss costs a failed match, and never on the node,
+      // where a miss would be printed as fact. The last of them is module
+      // federation's own conventional scope name and is all but unreachable:
+      // `$SC` is a mangled slot, so a build that lets us read it is a build
+      // that lets us read `scope`. With no scope collected at all, every key
+      // misses regardless of the name we hand it.
+      const declScope = scopeName ?? scopes[0]?.name ?? "default";
 
       const { consumes, ok: scOk, rvmOk } = container
-        ? readShareConfig(container, scopeName)
+        ? readShareConfig(container, declScope)
         : { consumes: [], ok: false, rvmOk: false };
       const { exposes, ok: expOk } = container
         ? readExposes(container, resolve)
@@ -794,6 +847,7 @@ export function collectFederation(
         entryUrl,
         stage,
         scope: scopeName,
+        scopeSource,
         exposes,
         provides,
         consumes,
@@ -908,6 +962,13 @@ function attributeModules(
     return mod;
   };
 
+  // A container version whose own scope could not be read tags nothing: its
+  // modules keep no scope, which is what `ModuleNode.scope` already means for
+  // most of the registry -- "no scope was attributed", the state every chunk
+  // the directory heuristic claims is in. It is deliberately not a third
+  // value: an unreadable scope is unknown *per container*, so collecting the
+  // affected modules under one "unknown" label would assert they share a scope
+  // when the only thing they share is that nobody could say.
   for (const c of containers) {
     for (const v of c.versions) {
       const ref = { name: c.name, version: v.version };

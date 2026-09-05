@@ -8,11 +8,12 @@ import {
   manifestDialect,
   manifestEntries,
   manifestSectionState,
+  scopeCell,
   shareCount,
   showsResolution,
 } from "../src/ui/views/containers.js";
 import type { FynAppManifest } from "../src/core/model.js";
-import { minifiedSharePage, twoContainerPage } from "./fixture.js";
+import { minifiedSharePage, twoContainerPage, unreadableScopePage } from "./fixture.js";
 
 /**
  * `fynapp-design-tokens` is in the share store and nowhere else: no
@@ -213,5 +214,42 @@ describe("empty manifest sections", () => {
     const m: FynAppManifest = { "import-exposed": { "fynapp-2": {} } };
     expect(manifestSectionState(m, "import-exposed")).toBe("filled");
     expect(importExposedRows(m)).toEqual([]);
+  });
+});
+
+/**
+ * The scope cell.
+ *
+ * The row printed `scope {v.scope}` with no branch, because the collector
+ * guaranteed a string by inventing one. `default` is a real module federation
+ * scope name, so "could not be read" and "is named `default`" were the same
+ * pixels. What the cell must never do is print a name nobody read.
+ */
+describe("container scope cell", () => {
+  it("prints the name a container declares for itself", () => {
+    const { loader, federation } = twoContainerPage();
+    const s = collect({ loader, federation });
+    const v = s.containers.find((c) => c.name === "fynapp-1")!.versions[0];
+    expect(scopeCell(v).text).toBe("scope fynmesh");
+    expect(scopeCell(v).title).toContain("declares as its own");
+  });
+
+  it("says where a store-derived name came from, in the same words", () => {
+    const v = storeOnly();
+    // same text -- it is a name either way -- and a tooltip that does not
+    // claim the container said it
+    expect(scopeCell(v).text).toBe("scope fynmesh");
+    expect(scopeCell(v).title).toContain("share store");
+  });
+
+  it("says it could not be read rather than naming a scope", () => {
+    const { loader, federation } = unreadableScopePage();
+    const s = collect({ loader, federation });
+    const v = s.containers.find((c) => c.name === "fynapp-ghost")!.versions[0];
+    expect(scopeCell(v).text).toBe("scope unreadable");
+    // "unreadable", not "none": every container is built with a scope, so an
+    // absence claim here would be a different and false one
+    expect(scopeCell(v).text).not.toContain("no scope");
+    expect(scopeCell(v).title).toContain("could not be read");
   });
 });

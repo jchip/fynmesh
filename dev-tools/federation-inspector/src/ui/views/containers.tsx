@@ -136,7 +136,7 @@ function VersionBlock({
         <span class="label ver">
           {v.version}
         </span>
-        <span class="faint">scope {v.scope}</span>
+        <ScopeCell version={v} />
         <span class="muted" title={exposesTitle(exposes)}>
           {exposes.declared.length
             ? `${exposes.loaded!.length}/${exposes.declared.length} chunks loaded`
@@ -278,6 +278,49 @@ function VersionBlock({
         </>
       ) : null}
     </>
+  );
+}
+
+/**
+ * The scope cell: a name when one was read, and otherwise said so.
+ *
+ * This row used to print `scope default` for a container whose scope nothing
+ * could be read from, because the collector filled the gap with that string.
+ * `default` is module federation's own conventional scope name, so the guess
+ * was indistinguishable from a real reading of a container in a scope of that
+ * name. The collector now leaves `scope` absent instead (see
+ * `ContainerVersionNode.scope`), and the two readings it does have are told
+ * apart in the tooltip rather than in the text: a name is a name either way,
+ * but the store proves only that the container filed copies into that scope.
+ */
+export function scopeCell(v: ContainerVersionNode): { text: string; title: string } {
+  if (!v.scope) {
+    return {
+      text: "scope unreadable",
+      title:
+        "which share scope this container files into could not be read: its " +
+        "own scope property was out of reach and the share store does not " +
+        "place it in exactly one scope. Every container is built with a " +
+        "scope, so this is a gap in the reading, not a container without one.",
+    };
+  }
+  return {
+    text: "scope " + v.scope,
+    title:
+      v.scopeSource === "share-store"
+        ? "from the share store, which records this container filing copies " +
+          "into this one scope. Its own scope property was out of reach, so " +
+          "this is where it shares, not necessarily the scope it defaults to."
+        : "the scope this container declares as its own",
+  };
+}
+
+function ScopeCell({ version: v }: { version: ContainerVersionNode }): JSX.Element {
+  const { text, title } = scopeCell(v);
+  return (
+    <span class="faint" title={title}>
+      {text}
+    </span>
   );
 }
 
