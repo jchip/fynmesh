@@ -1,0 +1,67 @@
+<!--
+    The federation inspector, loaded last on purpose.
+
+    It is an observer: it reports on how this page loaded, so it must not be
+    part of what it loaded. Fetching it with the rest of the scripts would put
+    a megabyte of devtool ahead of the fynapps in the network queue and put its
+    own parse and mount inside the measurements it is there to show.
+
+    So it waits for the load event, then two frames (the first is the paint the
+    load event preceded, the second is the one after it), then for the browser
+    to be idle -- by which time the fynapps have rendered. The fetch itself is
+    async and fetchPriority="low", so even the request is queued behind
+    anything the page still wants.
+
+    The badge appears in the corner when it is ready; Ctrl+Shift+M opens it.
+-->
+<script>
+    (function () {
+        var src = "{{pathPrefix}}federation-inspector{% if isProduction %}.min{% endif %}.js";
+
+        function load() {
+            var s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            if ("fetchPriority" in s) {
+                s.fetchPriority = "low";
+            }
+            document.head.appendChild(s);
+        }
+
+        function whenIdle() {
+            if (window.requestIdleCallback) {
+                // the timeout is a backstop, not a target: a page that never
+                // goes idle should still end up with the badge
+                requestIdleCallback(load, { timeout: 10000 });
+            } else {
+                setTimeout(load, 2000);
+            }
+        }
+
+        function afterPaint() {
+            var waiting = true;
+            function go() {
+                if (waiting) {
+                    waiting = false;
+                    whenIdle();
+                }
+            }
+            // two frames: the first is the paint the load event preceded, the
+            // second is the one after it
+            requestAnimationFrame(function () {
+                requestAnimationFrame(go);
+            });
+            // ...but a page in a background tab is never given a frame, and
+            // waiting for one there means waiting forever. Measured: a tab
+            // that had not painted yet sat with the script element created and
+            // nothing behind it.
+            setTimeout(go, 3000);
+        }
+
+        if (document.readyState === "complete") {
+            afterPaint();
+        } else {
+            addEventListener("load", afterPaint, { once: true });
+        }
+    })();
+</script>

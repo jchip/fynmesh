@@ -310,6 +310,27 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 }
             });
 
+        // The inspector ships from its own dist, like the loader above: the
+        // page asks for .min.js in production and .js in development, so only
+        // the one the generated HTML references is copied. It is optional --
+        // a tree where it has not been built ships a site without the badge,
+        // which is why this does not throw. (findMissingLocalRefs below will
+        // still catch a page that references a file nobody copied.)
+        const inspectorFile = isProduction
+            ? "federation-inspector.min.js"
+            : "federation-inspector.js";
+        const inspectorSrc = path.join(
+            __dirname,
+            "../../../rollup-federation/federation-inspector/dist",
+            inspectorFile
+        );
+        if (existsSync(inspectorSrc)) {
+            writeFileSync(path.join(outputDir, inspectorFile), readFileSync(inspectorSrc));
+            log(`📄 Copied: ${inspectorFile}`);
+        } else {
+            log(`⚠️  Skipped: ${inspectorFile} (not built)`);
+        }
+
         // Note: no CNAME file — Cloudflare Pages configures the custom domain
         // (www.lm360.ai) in its dashboard, so a CNAME file is not used.
 
