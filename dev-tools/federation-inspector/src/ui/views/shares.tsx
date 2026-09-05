@@ -20,26 +20,10 @@ import type { ShareKeyNode, ShareScopeNode, ShareVersionNode } from "../../core/
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { Chip, ContainerChip, Link, SatisfiedMark, StageDot, Twisty } from "../components/atoms.jsx";
 import { urlTail } from "../../util/format.js";
+import { filterScopes } from "../../analysis/search.js";
 
 export function SharesView(): JSX.Element {
-  const scopes = useComputed(() => {
-    const q = query.value.trim().toLowerCase();
-    if (!q) {
-      return snapshot.value.scopes;
-    }
-    // The share view filters on the key name only. The module query grammar
-    // does not apply here -- a person typing "esm-react" in this tab means the
-    // share, not a module id.
-    const needle = q.replace(/^share:/, "");
-    return snapshot.value.scopes
-      .map((s) => ({
-        ...s,
-        keys: s.keys.filter(
-          (k) => k.key.toLowerCase().includes(needle) || s.name.toLowerCase().includes(needle)
-        ),
-      }))
-      .filter((s) => s.keys.length);
-  });
+  const scopes = useComputed(() => filterScopes(snapshot.value.scopes, query.value));
 
   if (!snapshot.value.capability.shareStore) {
     return (

@@ -3,7 +3,13 @@ import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
 import { buildGraph } from "../src/analysis/graph.js";
 import { satisfies, maxSatisfying, compareVersionStrings } from "../src/analysis/semver.js";
-import { parseQuery, filterModules, toggleFacet, fuzzy } from "../src/analysis/search.js";
+import {
+  parseQuery,
+  filterModules,
+  filterScopes,
+  toggleFacet,
+  fuzzy,
+} from "../src/analysis/search.js";
 import { emptySnapshot } from "../src/core/model.js";
 import type { ModuleNode } from "../src/core/model.js";
 import { FakeLoader, twoContainerPage } from "./fixture.js";
@@ -132,6 +138,16 @@ describe("share resolution", () => {
     const react = s.scopes[0].keys.find((k) => k.key === "esm-react")!;
     expect(react.singleton).toBe(true);
   });
+
+  it("marks it singleton in a bare collect(), without analyse()", () => {
+    // the DevTools/library path reads the snapshot as plain JSON; every key
+    // used to come back singleton:false there, including asserted ones
+    const { loader, federation } = twoContainerPage();
+    const s = collect({ loader, federation });
+    const react = s.scopes[0].keys.find((k) => k.key === "esm-react")!;
+    expect(react.singleton).toBe(true);
+    expect(s.scopes[0].keys.find((k) => k.key === "design-tokens")!.singleton).toBe(false);
+  });
 });
 
 describe("issues", () => {
@@ -226,6 +242,51 @@ describe("search", () => {
     // a single-valued field replaces rather than accumulates
     expect(toggleFacet("stage:errored", "stage", "linked")).toBe("stage:linked");
     expect(toggleFacet("react stage:errored", "stage", "linked")).toBe("react stage:linked");
+  });
+});
+
+describe("share filter", () => {
+  it("matches share keys by substring, and scope names too", () => {
+    const s = snap();
+    expect(filterScopes(s.scopes, "react")[0].keys.map((k) => k.key)).toEqual(["esm-react"]);
+    // a scope-name match keeps every key in that scope
+    expect(filterScopes(s.scopes, "fynmesh")[0].keys.length).toBe(s.scopes[0].keys.length);
+    expect(filterScopes(s.scopes, "nothing-here")).toEqual([]);
+  });
+
+  it("treats container: as a facet rather than literal text", () => {
+    const s = snap();
+    // the facet the other tabs write; it used to be matched against key names
+    // and so emptied the tab
+    const only = filterScopes(s.scopes, "container:fynapp-2");
+    expect(only.length).toBe(1);
+    expect(only[0].keys.map((k) => k.key)).toContain("esm-react");
+    expect(filterScopes(s.scopes, "container:no-such-app")).toEqual([]);
+  });
+
+  it("narrows to the versions that container touches, and recounts loaded", () => {
+    const s = snap();
+    const react = filterScopes(s.scopes, "container:fynapp-1")[0].keys.find(
+      (k) => k.key === "esm-react"
+    )!;
+    const all = s.scopes[0].keys.find((k) => k.key === "esm-react")!;
+    expect(all.versions.length).toBeGreaterThan(react.versions.length);
+    expect(react.loadedCount).toBe(react.versions.filter((v) => v.loaded).length);
+  });
+
+  it("combines a container facet with a key substring", () => {
+    const s = snap();
+    expect(filterScopes(s.scopes, "container:fynapp-1 react")[0].keys.map((k) => k.key)).toEqual([
+      "esm-react",
+    ]);
+    expect(filterScopes(s.scopes, "container:fynapp-1 vue")).toEqual([]);
+  });
+
+  it("does not mutate the snapshot it filters", () => {
+    const s = snap();
+    const before = JSON.stringify(s.scopes);
+    filterScopes(s.scopes, "container:fynapp-1");
+    expect(JSON.stringify(s.scopes)).toBe(before);
   });
 });
 

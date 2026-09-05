@@ -42,14 +42,57 @@ interface Persisted {
   float?: FloatRect;
 }
 
+const DOCKS: Dock[] = ["dock-right", "dock-bottom", "float", "full"];
+const THEMES: Theme[] = ["auto", "light", "dark"];
+const DENSITIES: Density[] = ["compact", "normal", "relaxed"];
+
 function load(): Persisted {
   try {
-    return JSON.parse(localStorage.getItem(STORE_KEY) ?? "{}");
+    return sanitise(JSON.parse(localStorage.getItem(STORE_KEY) ?? "{}"));
   } catch {
     // a page with storage disabled, or a sandboxed iframe. Defaults are fine;
     // losing a remembered panel width is not worth a try/catch at each read.
     return {};
   }
+}
+
+/**
+ * Keep only values this build understands.
+ *
+ * localStorage is shared with every other script on the origin and outlives
+ * every version of this tool, so what comes back is untrusted input: a stale
+ * dock name reaches `setAttribute`, and a stale `size` reaches the layout
+ * maths, where a string or a NaN is a silently broken panel rather than an
+ * error anyone can see. Anything unrecognised is dropped and defaulted.
+ */
+export function sanitise(raw: unknown): Persisted {
+  if (!raw || typeof raw !== "object") {
+    return {};
+  }
+  const o = raw as Record<string, unknown>;
+  const out: Persisted = {};
+  if (DOCKS.includes(o.dock as Dock)) {
+    out.dock = o.dock as Dock;
+  }
+  if (THEMES.includes(o.theme as Theme)) {
+    out.theme = o.theme as Theme;
+  }
+  if (DENSITIES.includes(o.density as Density)) {
+    out.density = o.density as Density;
+  }
+  if (isSize(o.size)) {
+    out.size = o.size;
+  }
+  const f = o.float as Record<string, unknown> | null | undefined;
+  if (f && typeof f === "object" && isSize(f.x) && isSize(f.y) && isSize(f.w) && isSize(f.h)) {
+    out.float = { x: f.x, y: f.y, w: f.w, h: f.h };
+  }
+  return out;
+}
+
+/** a finite, non-negative pixel count -- rejects NaN, Infinity and strings */
+function isSize(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v) && v >= 0;
 }
 
 const saved = load();
@@ -87,8 +130,28 @@ export const live = signal(true);
 export const groupBy = signal<GroupBy>("none");
 export const sortBy = signal<SortBy>("seq");
 export const sortDesc = signal(false);
+/**
+ * The viewport, as a signal.
+ *
+ * The panel's stored geometry is an *intent* -- what was dragged to, on
+ * whatever screen it was dragged on -- and it is clamped to the viewport only
+ * when it is drawn. That is what makes a window resize non-destructive: making
+ * the window narrow used to overwrite the remembered width, so widening it
+ * again left the panel at whatever the narrow window had forced on it. Reading
+ * this signal in the style is what redraws the panel when the window changes.
+ */
+export const viewport = signal({ w: 0, h: 0 });
+
 /** graph focus depth */
 export const graphHops = signal(2);
+/**
+ * Graph zoom, 1 = actual size.
+ *
+ * Deliberately not persisted: it is a reading gesture, not a preference, and
+ * coming back to a panel scaled to 40% with no memory of having done it is a
+ * worse first frame than starting at 1 every time.
+ */
+export const graphZoom = signal(1);
 
 export const snapshot: Signal<Snapshot> = signal(emptySnapshot());
 export const analysis: Signal<Analysis> = signal(analyse(snapshot.value));

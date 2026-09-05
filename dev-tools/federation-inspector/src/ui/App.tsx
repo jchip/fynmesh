@@ -8,8 +8,9 @@
  */
 
 import type { JSX } from "preact";
+import type { RefObject } from "preact";
 import { useEffect, useRef } from "preact/hooks";
-import { useComputed } from "@preact/signals";
+import { signal, useComputed } from "@preact/signals";
 import type { ViewName } from "../core/model.js";
 import type { Adapter } from "../adapters/types.js";
 import {
@@ -19,7 +20,6 @@ import {
   canGoForward,
   dock,
   expanded,
-  floatRect,
   goBack,
   goForward,
   groupBy,
@@ -31,7 +31,6 @@ import {
   query,
   selected,
   setSnapshot,
-  size,
   snapshot,
   theme,
   view,
@@ -40,7 +39,13 @@ import {
   type GroupBy,
 } from "./state.js";
 import type { Density } from "./metrics.js";
-import { ResizeHandles, reflowFloat, useHeaderDrag } from "./components/Resize.jsx";
+import {
+  ResizeHandles,
+  drawnRect,
+  drawnSize,
+  reflowFloat,
+  useHeaderDrag,
+} from "./components/Resize.jsx";
 import { toggleFacet } from "../analysis/search.js";
 import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
 import { ModulesView } from "./views/modules.jsx";
@@ -136,19 +141,30 @@ function Launcher({ corner }: { corner: Corner }): JSX.Element {
 /* ----------------------------------------------------------------- overlay */
 
 function Overlay(props: AppProps): JSX.Element {
-  const r = floatRect.value;
+  /*
+   * Drawn from the remembered geometry clamped to the *current* viewport, and
+   * subscribed to `viewport` so a window resize redraws it. The clamp is not
+   * written back: narrowing the window and widening it again returns the panel
+   * to the size it had, rather than stranding it at the narrowest the window
+   * has ever been.
+   */
+  const r = drawnRect();
+  const drawn = drawnSize();
   const style =
     dock.value === "dock-right"
-      ? { width: size.value + "px" }
+      ? { width: drawn + "px" }
       : dock.value === "dock-bottom"
-        ? { height: size.value + "px" }
+        ? { height: drawn + "px" }
         : dock.value === "float"
           ? { left: r.x + "px", top: r.y + "px", width: r.w + "px", height: r.h + "px" }
           : {};
 
   // A window resize can leave a floating panel off-screen or a docked one
-  // wider than the viewport, and neither is recoverable by dragging.
+  // wider than the viewport, and neither is recoverable by dragging. The same
+  // is true of a geometry restored from localStorage on a smaller screen than
+  // the one it was saved on, so the first pass runs on mount.
   useEffect(() => {
+    reflowFloat();
     window.addEventListener("resize", reflowFloat);
     return () => window.removeEventListener("resize", reflowFloat);
   }, []);
@@ -185,6 +201,7 @@ function Header(props: AppProps): JSX.Element {
   const totals = useComputed(() => analysis.value.totals);
   const snap = snapshot.value;
   const drag = useHeaderDrag();
+  const { tabsRef, updateTabScroll } = useTabScroll();
 
   const tabCount = (id: ViewName): JSX.Element | null => {
     switch (id) {
@@ -219,7 +236,7 @@ function Header(props: AppProps): JSX.Element {
         <span class="hide-sm">federation</span>
       </span>
 
-      <span class="tabs" role="tablist">
+      <span class="tabs" role="tablist" ref={tabsRef} onScroll={updateTabScroll}>
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -271,14 +288,16 @@ function Header(props: AppProps): JSX.Element {
         {Icons.refresh}
       </button>
       <button
-        class="iconbtn hide-sm"
-        title="Copy the snapshot as JSON"
+        class={"iconbtn hide-sm copybtn" + (copied.value ? " flash " + copied.value : "")}
+        title={COPY_TITLE[copied.value]}
         onClick={() => copySnapshot()}
       >
-        {Icons.copy}
+        {copied.value === "ok" ? Icons.check : Icons.copy}
       </button>
+      {/* hide-xs, not hide-sm: this is the only control that changes the
+          panel's shape, and a narrow panel is exactly when that is wanted */}
       <button
-        class="iconbtn hide-sm"
+        class="iconbtn hide-xs"
         title={"Dock: " + dock.value}
         onClick={() => {
           const order: Dock[] = ["dock-right", "dock-bottom", "float", "full"];
@@ -628,11 +647,91 @@ function matchesHotkey(e: KeyboardEvent, hotkey: string | false): boolean {
   );
 }
 
+/**
+ * "" while idle, then the outcome of the last copy for as long as the button
+ * is showing it. A copy produces no visible change anywhere -- without this
+ * the only way to tell a click registered is to go and paste somewhere.
+ */
+const copied = signal<"" | "ok" | "fail">("");
+let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+
+const COPY_TITLE: Record<"" | "ok" | "fail", string> = {
+  "": "Copy the snapshot as JSON",
+  ok: "Snapshot copied to the clipboard",
+  fail: "Clipboard unavailable -- snapshot logged to the console instead",
+};
+
+function flashCopied(state: "ok" | "fail"): void {
+  copied.value = state;
+  clearTimeout(copiedTimer);
+  // long enough to read the check, short enough not to sit there as state:
+  // the CSS fades the last third of it out.
+  copiedTimer = setTimeout(() => (copied.value = ""), 1400);
+}
+
+/**
+ * Mark the tab strip when it has tabs off either end.
+ *
+ * The strip scrolls when the panel is narrow -- at 420px only two of six tabs
+ * are in view -- and it scrolls with no scrollbar (a horizontal bar over a
+ * 26px strip is worse than the problem). Without a mark there is nothing to
+ * say the other four exist: the `<` `>` beside it are history buttons, which
+ * is actively misleading. So the ends get a fade, and only when there is
+ * something behind it.
+ *
+ * Measured rather than assumed, because the widths depend on the text size,
+ * the tab counts and the panel width all at once.
+ */
+function useTabScroll(): {
+  tabsRef: RefObject<HTMLElement>;
+  updateTabScroll: () => void;
+} {
+  const tabsRef = useRef<HTMLElement>(null);
+
+  const apply = () => {
+    const el = tabsRef.current;
+    if (!el) {
+      return;
+    }
+    // 1px of slack: fractional scroll widths at a non-integer zoom otherwise
+    // leave the end fade permanently on
+    const max = el.scrollWidth - el.clientWidth;
+    el.classList.toggle("more-l", el.scrollLeft > 1);
+    el.classList.toggle("more-r", el.scrollLeft < max - 1);
+  };
+
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    apply();
+    // the strip resizes with the panel, and its contents resize with the text
+    // size and the live counts, so both are watched
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    for (const child of Array.from(el.children)) {
+      ro.observe(child);
+    }
+    return () => ro.disconnect();
+  }, []);
+
+  return { tabsRef, updateTabScroll: apply };
+}
+
 function copySnapshot(): void {
   const text = JSON.stringify(snapshot.value, null, 2);
-  navigator.clipboard?.writeText(text).catch(() => {
-    // clipboard needs a permission or a secure context; fall back to the
-    // console, which is always available and is where this is going anyway
-    console.log("[federation-inspector] snapshot:", snapshot.value);
-  });
+  const written = navigator.clipboard?.writeText(text);
+  if (!written) {
+    fallbackCopy();
+    return;
+  }
+  written.then(() => flashCopied("ok")).catch(fallbackCopy);
+}
+
+function fallbackCopy(): void {
+  // clipboard needs a permission or a secure context; fall back to the
+  // console, which is always available and is where this is going anyway
+  console.log("[federation-inspector] snapshot:", snapshot.value);
+  flashCopied("fail");
 }

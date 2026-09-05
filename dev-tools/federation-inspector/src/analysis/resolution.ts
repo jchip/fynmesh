@@ -20,6 +20,7 @@ import type {
   ShareVersionNode,
   Snapshot,
 } from "../core/model.js";
+import { applySingletonFlags } from "../core/collectors/federation.js";
 import { maxSatisfying, satisfies, compareVersionStrings } from "./semver.js";
 
 /**
@@ -109,20 +110,11 @@ function findKey(
 export function resolveShares(snapshot: Snapshot): void {
   const { scopes, containers } = snapshot;
 
-  // pass 1: singleton flags, from whoever asserted them
-  for (const c of containers) {
-    for (const v of c.versions) {
-      for (const decl of v.consumes) {
-        if (!decl.singleton) {
-          continue;
-        }
-        const target = findKey(scopes, decl.shareScope, decl.key);
-        if (target) {
-          target.singleton = true;
-        }
-      }
-    }
-  }
+  // pass 1: singleton flags, from whoever asserted them. The collector does
+  // this too, so a bare snapshot is already correct; it is repeated here
+  // because a snapshot can also arrive from a file, a DevTools page, or a test
+  // fixture that never ran the collector.
+  applySingletonFlags(scopes, containers);
 
   // pass 2: resolve each declaration, and record it as a consumer
   for (const c of containers) {

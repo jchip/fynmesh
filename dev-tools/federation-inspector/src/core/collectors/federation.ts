@@ -608,10 +608,40 @@ export function collectFederation(
     cap.notes.push("Container.$E is unreadable, so exposed modules cannot be listed.");
   }
 
+  applySingletonFlags(scopes, containers);
   attributeModules(containers, modules, scopes, resolve);
   const bundles = readBundles(federation, modules);
 
   return { containers, scopes, bundles, errors };
+}
+
+/**
+ * Roll the containers' singleton declarations up onto the share keys.
+ *
+ * Singleton-ness is a property of the *key* that any one container can assert,
+ * but it is declared per container. Doing this in the collector and not only
+ * in the analysis keeps a bare `collect()` snapshot honest: a consumer reading
+ * the JSON without running `analyse()` used to see `singleton: false` on every
+ * key, including the ones a container had explicitly marked.
+ */
+export function applySingletonFlags(
+  scopes: ShareScopeNode[],
+  containers: ContainerNode[]
+): void {
+  for (const c of containers) {
+    for (const v of c.versions) {
+      for (const decl of v.consumes) {
+        if (!decl.singleton) {
+          continue;
+        }
+        const scope = scopes.find((s) => s.name === decl.shareScope);
+        const key = scope?.keys.find((k) => k.key === decl.key);
+        if (key) {
+          key.singleton = true;
+        }
+      }
+    }
+  }
 }
 
 /**

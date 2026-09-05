@@ -22,7 +22,7 @@
  *   -stage:executed            any term may be negated with a leading "-"
  */
 
-import type { ModuleNode } from "../core/model.js";
+import type { ModuleNode, ShareScopeNode, ShareVersionNode } from "../core/model.js";
 
 export interface Term {
   field?: string;
@@ -176,6 +176,63 @@ export function filterModules(modules: ModuleNode[], query: string): ModuleNode[
  * Facet chips are toggles over the same string a person types, so clicking
  * "errored" twice has to remove it again rather than appending a second copy.
  */
+/**
+ * The Shares tab's filter.
+ *
+ * Mostly a plain substring against the key and scope name: a person typing
+ * "esm-react" in that tab means the share, not a module id, so the module
+ * grammar above does not apply. `container:` is the exception -- it is the
+ * facet the other tabs write when you click a container chip, and it has an
+ * obvious meaning here ("what does this container share?"), so arriving from
+ * Modules or Containers with one in the query narrows this tab instead of
+ * emptying it.
+ *
+ * Returns fresh objects; the snapshot is never mutated.
+ */
+export function filterScopes(scopes: ShareScopeNode[], query: string): ShareScopeNode[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return scopes;
+  }
+  const terms = q.split(/\s+/).filter(Boolean);
+  const wanted = terms
+    .filter((t) => t.startsWith("container:"))
+    .map((t) => t.slice("container:".length))
+    .filter(Boolean);
+  const needle = terms
+    .filter((t) => !t.startsWith("container:"))
+    .join(" ")
+    .replace(/^share:/, "");
+
+  const involves = (v: ShareVersionNode) =>
+    wanted.every(
+      (c) =>
+        v.sources.some((s) => s.container.toLowerCase().includes(c)) ||
+        v.consumers.some((s) => s.container.toLowerCase().includes(c))
+    );
+
+  return scopes
+    .map((s) => ({
+      ...s,
+      keys: s.keys
+        .filter((k) => k.key.toLowerCase().includes(needle) || s.name.toLowerCase().includes(needle))
+        // a container narrows to the versions it actually touches, and drops
+        // the key when it touches none. `loadedCount` is recounted with it, or
+        // the header reads "1 version . 2 loaded".
+        .map((k) => {
+          if (!wanted.length) {
+            return k;
+          }
+          const versions = k.versions.filter(involves);
+          return { ...k, versions, loadedCount: versions.filter((v) => v.loaded).length };
+        })
+        // only a facet can empty a key's version list; an unfiltered key with
+        // no versions is a real thing to show, not something to hide
+        .filter((k) => !wanted.length || k.versions.length),
+    }))
+    .filter((s) => s.keys.length);
+}
+
 export function toggleFacet(query: string, field: string, value: string): string {
   const token = `${field}:${value}`;
   const terms = parseQuery(query);

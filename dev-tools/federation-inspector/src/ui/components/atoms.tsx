@@ -147,8 +147,9 @@ function leadFor(lead: string): string {
  * A module id with its repeating prefix dimmed.
  *
  * The prefix is what every sibling shares (a directory, or `__mf_entry_`); the
- * tail is what distinguishes them. So the prefix is dimmed and clipped and the
- * tail is never truncated at all.
+ * tail is what distinguishes them. So the prefix is dimmed and clipped first,
+ * and the tail is only truncated once the prefix has nothing left to give (see
+ * the shrink factors on `.id` in ui/styles).
  *
  * The clipping is done here rather than in CSS on purpose. `direction: rtl`
  * plus `text-overflow` looks like the natural way to drop the front of a path,
@@ -247,6 +248,11 @@ export const Icons = {
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
       <rect x="5.5" y="5.5" width="8" height="8" rx="1.4" />
       <path d="M10.5 3.5h-6a1.5 1.5 0 0 0-1.5 1.5v6" stroke-linecap="round" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="m3.5 8.4 3 3 6-6.8" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   ),
   close: (

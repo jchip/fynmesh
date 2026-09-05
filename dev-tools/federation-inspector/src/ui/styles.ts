@@ -278,6 +278,20 @@ select:focus-visible,
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
+/*
+ * A tab strip with tabs off the end says so.
+ *
+ * There is no scrollbar (a horizontal bar across a 26px strip is worse than
+ * the thing it solves), so a scrolled-away tab was simply invisible -- and the
+ * history arrows sitting next to the strip read as its scroll controls. The
+ * fades are set from JS (useTabScroll) because whether it overflows depends on
+ * the panel width, the text size and the live counts together.
+ */
+.tabs.more-l { mask-image: linear-gradient(to right, transparent, #000 16px); }
+.tabs.more-r { mask-image: linear-gradient(to left, transparent, #000 16px); }
+.tabs.more-l.more-r {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
 .actions { display: flex; align-items: center; gap: 1px; flex: none; }
 .tab {
   padding: 0 9px;
@@ -324,6 +338,20 @@ select:focus-visible,
 .iconbtn:hover { background: var(--chip); color: var(--fg-strong); }
 .iconbtn[aria-pressed="true"] { color: var(--accent); background: var(--bg-sel); }
 .iconbtn svg { width: calc(var(--scale) * 15px); height: calc(var(--scale) * 15px); }
+/*
+ * The copy button is the one control whose effect is entirely off-screen, so
+ * it acknowledges itself: the outcome colour snaps on at click time and then
+ * fades back over ~0.6s once the class comes off, which reads as "done" the
+ * way an instant revert does not.
+ */
+.copybtn { transition: color 0.6s ease 0.2s, background 0.6s ease 0.2s; }
+.copybtn.flash { transition: none; }
+.copybtn.flash.ok { color: var(--ok); background: var(--chip); }
+.copybtn.flash.fail { color: var(--err); background: var(--chip); }
+@media (prefers-reduced-motion: reduce) {
+  .copybtn { transition: none; }
+}
+
 .iconbtn.text {
   width: auto;
   padding: 0 7px;
@@ -434,8 +462,16 @@ select:focus-visible,
   color: var(--fg-dim);
   user-select: none;
 }
-.thead .col { cursor: pointer; }
-.thead .col:hover { color: var(--fg-strong); }
+/*
+ * A sortable header label is a <button>, and the UA stylesheet gives buttons
+ * 'text-transform: none' -- so the uppercasing on .thead reached the plain
+ * cells and skipped the sortable ones, and the strip read "SOURCE" beside
+ * "module container dep". Only the sortable cells get the pointer, too: the
+ * other three offered a hand cursor over nothing clickable.
+ */
+.thead .col { text-transform: inherit; }
+.thead button.col { cursor: pointer; }
+.thead button.col:hover { color: var(--fg-strong); }
 .thead .col.sorted { color: var(--accent); }
 
 .rows { position: relative; }
@@ -474,11 +510,24 @@ select:focus-visible,
 .col.grow { flex: 1 1 auto; }
 
 /*
- * The id must be able to shrink, or it overflows its cell and is painted on
- * top of whatever follows it. '.tail' was 'flex: none', so '.id' could never
- * be narrower than the filename -- measured 134px of filename drawn over the
- * share-key chip beside it. Both parts shrink now, proportionally to their
- * content, so the long dimmed prefix gives way before the filename does.
+ * The module cell gives way in a strict order: prefix, then filename, then
+ * chips.
+ *
+ * Not by shrink factors. Flexbox spreads a deficit across every shrinkable
+ * item in proportion to factor x base width, so *some* of it always lands on
+ * the items that should have gone last -- with a 50:1 ratio the filename still
+ * lost 1.8px, which is exactly the ".js" off the end of it. An order needs
+ * items that cannot shrink at all.
+ *
+ * So the filename and the chips are 'flex-shrink: 0' and bounded by
+ * 'max-width: 100%'. They hold their full width while anything else has width
+ * to give, and ellipsize only once they are wider than the box that contains
+ * them -- which is to say, only when they are all that is left. The prefix,
+ * the one thing that is repeated on every row, absorbs everything before that.
+ *
+ * ('.tail' was once 'flex: none' with no bound, which is the failure this is
+ * carefully not: it could not shrink, could not clip, and was painted 134px
+ * over the share-key chip beside it.)
  */
 .id {
   display: flex;
@@ -506,8 +555,8 @@ select:focus-visible,
 }
 .id .tail {
   color: var(--fg-strong);
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -573,7 +622,8 @@ select:focus-visible,
   color: var(--fg-dim);
   overflow: hidden;
   white-space: nowrap;
-  flex: 0 1 auto;
+  /* holds its width until it is the last thing in the cell; see .id above */
+  flex: 0 0 auto;
   min-width: 0;
 }
 .chip .chiptext {
@@ -714,6 +764,23 @@ select:focus-visible,
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
+/*
+ * A tree row clips itself.
+ *
+ * The rows are nowrap flex lines of chips and links, and at a narrow panel
+ * width they simply ran past the right edge of the panel -- 62px of row, with
+ * the entry link mostly outside it, unreachable and unreadable. Clipping the
+ * row and letting its links ellipsize keeps every row inside the panel.
+ */
+.tree .node { overflow: hidden; }
+.tree .node > .link { min-width: 0; flex: 0 1 auto; }
+.tree .node > .faint,
+.tree .node > .muted { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* marks and badges are single glyphs: clipping one destroys it, so they hold
+   their size and the text beside them gives way instead */
+.tree .node > .chip.mark,
+.tree .node > .sgl,
+.tree .node > .stage { flex: none; }
 .tree .node:hover { background: var(--bg-hover); }
 .tree .node.l1 { padding-left: calc(var(--pad-x) + var(--scale) * 12px); }
 .tree .node.l2 { padding-left: calc(var(--pad-x) + var(--scale) * 30px); }
@@ -814,8 +881,24 @@ select:focus-visible,
 
 /* ------------------------------------------------------------------- graph */
 
-.graphwrap { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; }
+/*
+ * Drag anywhere to pan; ctrl/cmd + wheel to zoom. The grab cursor is what says
+ * so -- there is no other affordance on a canvas, and a graph three screens
+ * wide with only scrollbars reads as broken.
+ */
+.graphwrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  cursor: grab;
+  overscroll-behavior: contain;
+}
+.graphwrap.panning { cursor: grabbing; user-select: none; }
 .graphwrap svg { display: block; }
+.gnode { cursor: pointer; }
+/* mid-pan the pointer belongs to the canvas, not to whatever is under it */
+.graphwrap.panning .gnode { cursor: grabbing; }
 .gnode rect { stroke-width: 1; }
 .gnode text {
   font: 400 calc(var(--scale) * 11px)/1 var(--mono);
@@ -860,9 +943,22 @@ select:focus-visible,
 
 /* ------------------------------------------------------ narrow-panel rules */
 
-@container (max-width: 900px) { .hide-md { display: none !important; } }
-@container (max-width: 700px) { .hide-sm { display: none !important; } }
-@container (max-width: 560px) {
+/*
+ * Three pixels short of the round numbers on purpose.
+ *
+ * The query is measured against the container's *content* box and .overlay has
+ * a 1px border, and 'max-width' is inclusive -- so a 560px query was
+ * still hiding things at an outer panel width of 562. The names are the outer
+ * widths they are meant to describe.
+ */
+@container (max-width: 897px) { .hide-md { display: none !important; } }
+@container (max-width: 697px) {
+  .hide-sm { display: none !important; }
+  /* buy back ~130px of strip before falling back to scrolling it */
+  .tab { padding: 0 6px; }
+  .tab .n { display: none; }
+}
+@container (max-width: 557px) {
   .hide-xs { display: none !important; }
   .search { max-width: none; }
 }

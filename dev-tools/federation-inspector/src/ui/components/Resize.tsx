@@ -13,12 +13,53 @@
 
 import type { JSX } from "preact";
 import { useRef } from "preact/hooks";
-import { dock, floatRect, persist, size, type FloatRect } from "../state.js";
+import { dock, floatRect, persist, size, viewport, type FloatRect } from "../state.js";
 
 export type Edge = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
 const MIN_W = 360;
 const MIN_H = 240;
+
+/*
+ * A dock never covers the whole page.
+ *
+ * The point of the tool is to watch the app while poking at it, so a dock that
+ * can reach 100% is a dock that can hide the thing being inspected -- and a
+ * full-width right dock puts its only resize handle off screen, leaving no way
+ * to shrink it back.
+ */
+const DOCK_MAX = 0.9;
+
+/*
+ * `documentElement.client*`, not `window.inner*`: the latter counts the
+ * classic scrollbar gutter, so on a scrolling page every clamp here was ~15px
+ * too generous and let the panel settle just past the visible edge.
+ */
+function viewW(): number {
+  return document.documentElement.clientWidth;
+}
+function viewH(): number {
+  return document.documentElement.clientHeight;
+}
+/*
+ * Read through the signal, not the DOM.
+ *
+ * Every clamp below runs during a render, and reading `viewport` there is what
+ * subscribes the panel to window resizes -- measuring the document directly
+ * would give the right answer once and never redraw again. The signal is
+ * refreshed by reflowFloat on mount and on every resize; the direct
+ * measurement is only the fallback for the first paint.
+ */
+function currentView(): { w: number; h: number } {
+  const v = viewport.value;
+  return v.w && v.h ? v : { w: viewW(), h: viewH() };
+}
+export function maxDockW(): number {
+  return Math.max(MIN_W, Math.round(currentView().w * DOCK_MAX));
+}
+export function maxDockH(): number {
+  return Math.max(MIN_H, Math.round(currentView().h * DOCK_MAX));
+}
 
 /** Handles for the current dock mode. */
 export function ResizeHandles(): JSX.Element | null {
@@ -42,9 +83,8 @@ export function ResizeHandles(): JSX.Element | null {
   );
 }
 
-function clampToViewport(rect: FloatRect): FloatRect {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+export function clampToViewport(rect: FloatRect): FloatRect {
+  const { w: vw, h: vh } = currentView();
   const w = Math.max(MIN_W, Math.min(rect.w, vw));
   const h = Math.max(MIN_H, Math.min(rect.h, vh));
   /*
@@ -97,12 +137,14 @@ function ResizeHandle({ edge }: { edge: Edge }): JSX.Element {
         const dx = e.clientX - start.current.x;
         const dy = e.clientY - start.current.y;
 
+        // the same cap as reflowFloat: clamping only on a dock switch left the
+        // drag itself free to produce the covered-page state it guards against
         if (dock.value === "dock-right") {
-          size.value = Math.max(MIN_W, Math.min(window.innerWidth, start.current.size - dx));
+          size.value = Math.max(MIN_W, Math.min(maxDockW(), start.current.size - dx));
           return;
         }
         if (dock.value === "dock-bottom") {
-          size.value = Math.max(MIN_H, Math.min(window.innerHeight, start.current.size - dy));
+          size.value = Math.max(MIN_H, Math.min(maxDockH(), start.current.size - dy));
           return;
         }
 
@@ -189,18 +231,51 @@ export function useHeaderDrag(): JSX.HTMLAttributes<HTMLDivElement> {
   };
 }
 
-/** Keep a floating panel on screen when the window shrinks under it. */
+/**
+ * Note the new viewport so the panel redraws against it.
+ *
+ * Nothing is written back to `size` or `floatRect` here: the stored geometry
+ * is what a person asked for and outlives any one window size. Making the
+ * window narrow and wide again therefore returns the panel to the width it
+ * had, instead of leaving it at the narrowest the window ever was.
+ */
 export function reflowFloat(): void {
-  if (dock.value === "float") {
-    floatRect.value = clampToViewport(floatRect.value);
+  const w = viewW();
+  const h = viewH();
+  if (viewport.value.w !== w || viewport.value.h !== h) {
+    viewport.value = { w, h };
   }
-  if (dock.value === "dock-right") {
-    size.value = Math.min(size.value, window.innerWidth);
-  }
-  if (dock.value === "dock-bottom") {
-    // 90%, not 100%: `size` is shared with dock-right, so switching from a
-    // wide right dock used to produce a panel covering the entire page with
-    // nothing of the app left visible behind it.
-    size.value = Math.min(size.value, Math.round(window.innerHeight * 0.9));
-  }
+}
+
+/**
+ * The geometry to draw with: the remembered intent, clamped to what fits.
+ *
+ * `size` is shared between the two docks -- it means width docked right and
+ * height docked bottom -- so the same number has to be clamped against
+ * whichever axis it is being used on.
+ */
+export function drawnSize(): number {
+  return dock.value === "dock-bottom"
+    ? Math.min(size.value, maxDockH())
+    : Math.min(size.value, maxDockW());
+}
+
+export function drawnRect(): FloatRect {
+  const { w: vw, h: vh } = currentView();
+  const want = floatRect.value;
+  const r = clampToViewport(want);
+  /*
+   * A panel the viewport had to shrink is pulled fully back into view.
+   *
+   * Dragging a panel half off the right edge is a deliberate gesture -- park
+   * it, watch the app -- so position alone is left exactly as it was found.
+   * But a panel whose *size* the viewport just cut was not parked by anyone:
+   * it is only hanging off the edge because the window moved under it, and it
+   * should end up whole and on screen.
+   */
+  return {
+    ...r,
+    x: r.w < want.w ? Math.max(0, Math.min(r.x, vw - r.w)) : r.x,
+    y: r.h < want.h ? Math.max(0, Math.min(r.y, vh - r.h)) : r.y,
+  };
 }
