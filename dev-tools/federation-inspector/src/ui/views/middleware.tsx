@@ -83,6 +83,42 @@ const UNDECLARED_TITLE =
   "what a middleware writing straight into another FynApp's context does; the " +
   "kernel records no difference between the two.";
 
+/**
+ * The resolution branches that are a warning on their own (FYM-354).
+ *
+ * `fallback` is a consumer running a version it explicitly did not ask for;
+ * `unresolved` is one whose version could not be worked out at all. Both used
+ * to be drawn in the reassuring colour whenever the middleware was delivered --
+ * and delivery is exactly what makes them easy to miss, because from the
+ * outside everything appears to have worked.
+ *
+ * That is the wrong way round for these two in particular. The kernel's own
+ * warning about a range nothing satisfies (FYM-321) is compiled out of the
+ * browser build by terser's `drop_console: true`, so on a production page this
+ * chip is the only surviving signal that it happened. Green removes the last
+ * one, two inches from a tooltip saying the app is running a version it did not
+ * ask for.
+ */
+const WARNING_BRANCHES: ReadonlySet<MiddlewareResolution> = new Set<MiddlewareResolution>([
+  "fallback",
+  "unresolved",
+]);
+
+/**
+ * The colour one consumer chip is drawn in.
+ *
+ * Two independent reasons to warn, and delivery is only one of them: nothing
+ * arrived, or what arrived was not what was asked for. An undeclared consumer
+ * asked for nothing, so it can only ever fail the first test -- and it cannot,
+ * since it exists only because delivery happened.
+ */
+export function consumerTone(consumer: MiddlewareConsumerNode): "ok" | "warn" {
+  if (!consumer.delivered) {
+    return "warn";
+  }
+  return consumer.route === "declared" && WARNING_BRANCHES.has(consumer.via) ? "warn" : "ok";
+}
+
 const VIA_LABEL: Record<MiddlewareResolution, string> = {
   exact: "exact",
   range: "range",
@@ -515,6 +551,10 @@ function VersionBlock({
  * it exists only because delivery happened. It is labelled for what it is, so a
  * reader counting chips against the FynApps tab can see which of them got here
  * without asking.
+ *
+ * The tick and the colour say different things (FYM-354). The tick is delivery.
+ * The colour is delivery *and* the resolution branch, so a `fallback` consumer
+ * is amber with a tick: something arrived, and it is not what was asked for.
  */
 function ConsumerChip({ consumer }: { consumer: MiddlewareConsumerNode }): JSX.Element {
   const [name] = consumer.app.split("@");
@@ -535,7 +575,7 @@ function ConsumerChip({ consumer }: { consumer: MiddlewareConsumerNode }): JSX.E
 
   return (
     <Chip
-      tone={consumer.delivered ? "ok" : "warn"}
+      tone={consumerTone(consumer)}
       title={detail}
       onClick={() => focusOn("fynapps", name, "fynapp:" + consumer.app)}
     >
