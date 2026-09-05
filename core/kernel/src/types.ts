@@ -241,7 +241,24 @@ export type FynAppMiddlewareReg = {
 };
 
 /**
- * Middleware version map for tracking different versions of the same middleware
+ * Middleware version map for tracking different versions of the same middleware.
+ *
+ * Keys are host FynApp versions, plus one reserved `default` slot.
+ *
+ * **`default` holds whichever version registered FIRST, and nothing ever
+ * re-points it** (FYM-332). That is what a lookup with no version range
+ * resolves to, so on a page carrying two versions of one middleware, load order
+ * decides what a version-less consumer runs.
+ *
+ * First-registered is arbitrary, but it is *stable for the life of the page*.
+ * The intuitive alternative - point `default` at the highest registered version
+ * - was considered and rejected: a second version can register at any time as
+ * another FynApp mounts, so `default` would change under a page that is already
+ * running, and two consumers that both asked for nothing would get different
+ * middleware purely by mount timing. That trades a surprise you can read off
+ * the load order for one you cannot reproduce. The real fix for a consumer that
+ * cares is to ask for a version range (FYM-321), not to make the fallback
+ * cleverer; registering a second version warns once so the ambiguity is visible.
  */
 export type FynAppMiddlewareVersionMap = Record<string, FynAppMiddlewareReg>;
 
