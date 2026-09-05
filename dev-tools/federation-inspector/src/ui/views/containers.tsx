@@ -101,6 +101,7 @@ function VersionBlock({
   const isOpen = expanded.value.has(id);
   const loadedExposes = v.exposes.filter((e) => e.stage && e.stage !== "registered").length;
   const unsatisfied = v.consumes.filter((d) => d.resolved && !d.resolved.satisfies).length;
+  const shares = shareCount(v);
 
   return (
     <>
@@ -125,9 +126,9 @@ function VersionBlock({
         <span class="muted">
           {v.exposes.length ? `${loadedExposes}/${v.exposes.length} exposes loaded` : "no exposes"}
         </span>
-        {v.consumes.length ? (
+        {shares ? (
           <span class="muted">
-            {v.consumes.length} share{v.consumes.length === 1 ? "" : "s"}
+            {shares} share{shares === 1 ? "" : "s"}
           </span>
         ) : null}
         {unsatisfied ? (
@@ -253,6 +254,34 @@ function inferredProvides(v: ContainerVersionNode): ShareDecl[] {
 }
 
 /**
+ * How many shares the collapsed header should claim.
+ *
+ * Counted across both bands rather than off `consumes`. A store-only
+ * container's `consumes` is empty on purpose -- filing a copy into the scope
+ * is not evidence of importing one, and adding provisions there made every
+ * provider a false consumer -- so counting it alone reported a container that
+ * provides a share as having no shares at all.
+ */
+export function shareCount(v: ContainerVersionNode): number {
+  const keys = new Set<string>();
+  for (const d of [...v.consumes, ...v.provides]) {
+    keys.add(d.shareScope + ":" + d.key);
+  }
+  return keys.size;
+}
+
+/**
+ * Does this row have a resolution to report?
+ *
+ * An inferred row has no declaration behind it and so nothing to resolve
+ * against; saying "unresolved" there put an amber warning next to a version
+ * that had plainly been supplied. Nothing is the honest answer.
+ */
+export function showsResolution(decl: ShareDecl): boolean {
+  return !!decl.resolved?.version || !decl.inferred;
+}
+
+/**
  * Is the rvm missing, or is it unreadable?
  *
  * Worth the distinction in the UI because the answer is always "unreadable" on
@@ -310,23 +339,27 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
       >
         {decl.requestedRange ?? (decl.inferred ? "?" : "any")}
       </span>
-      <span class="faint">→</span>
-      {r?.version ? (
+      {showsResolution(decl) ? (
         <>
-          <Chip
-            tone={r.satisfies ? "ok" : "warn"}
-            class="ver"
-            title={r.url ?? "no url"}
-          >
-            {r.version}
-          </Chip>
-          <SatisfiedMark ok={r.satisfies} title={r.reason} />
+          <span class="faint">→</span>
+          {r?.version ? (
+            <>
+              <Chip
+                tone={r.satisfies ? "ok" : "warn"}
+                class="ver"
+                title={r.url ?? "no url"}
+              >
+                {r.version}
+              </Chip>
+              <SatisfiedMark ok={r.satisfies} title={r.reason} />
+            </>
+          ) : (
+            <Chip tone="warn" title={r?.reason ?? "not resolved"}>
+              unresolved
+            </Chip>
+          )}
         </>
-      ) : (
-        <Chip tone="warn" title={r?.reason ?? "not resolved"}>
-          unresolved
-        </Chip>
-      )}
+      ) : null}
       {r?.reason && !r.satisfies ? (
         <span class="faint" style={{ overflow: "hidden", textOverflow: "ellipsis" }} title={r.reason}>
           {r.reason}
