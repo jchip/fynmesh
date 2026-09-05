@@ -22,6 +22,7 @@ import type {
   ContainerVersionNode,
   FynAppManifest,
 } from "../src/core/model.js";
+import { FakeContainer, FakeFederation, FakeLoader } from "./fixture.js";
 
 export interface FakeFynAppOptions {
   name: string;
@@ -476,6 +477,7 @@ export function fakeContainerNode(opts: {
       name,
       chunkId: "." + name.replace(/^\./, "") + "-chunk.js",
       stage: "executed" as const,
+      loaded: true,
     })),
     provides: [],
     consumes: [],
@@ -489,4 +491,175 @@ export function fakeContainerNode(opts: {
     id: "__mf_container_" + opts.name,
     versions: [version],
   };
+}
+
+/**
+ * The real demo's `fynapp-1`, which is the page all three numbers disagreed on.
+ *
+ * Federation and a kernel on one page, wired to the shape a live collect really
+ * found (`.temp/collect.json`, taken off `demo.html`):
+ *
+ * - the build declared **five** exposes;
+ * - the loader has **two** of the chunks -- `./main`, and `./App` because
+ *   `./main` imports the App component itself, not because anything imported
+ *   the expose;
+ * - the kernel imported **one**, `./main`.
+ *
+ * Nothing here is a hypothetical: the chunk names are the demo's own. A fixture
+ * where every declared expose is loaded and imported -- which is what the
+ * fixtures were before this -- cannot tell the three levels apart, which is why
+ * the disagreement had to be found in a browser.
+ */
+export function fynApp1Page(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+  kernel: Record<string, unknown>;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const base = "https://app.test/fynapp-1/dist/";
+  const entry = base + "fynapp-entry.js";
+  const main = base + "main-D396sYtd.js";
+  const appChunk = base + "App-BvOD4S9o.js";
+
+  const container = new FakeContainer(
+    "__mf_container_fynapp-1",
+    "fynapp-1",
+    "fynmesh",
+    "1.0.0"
+  )
+    .expose("./main", "./main-D396sYtd.js")
+    .expose("./App", "./App-BvOD4S9o.js")
+    .expose("./hello", "./hello-CHU6jq3a.js")
+    .expose("./getInfo", "./getInfo-C7Esg9Mn.js")
+    .expose("./component", "./component-DsUCLrn8.js");
+
+  loader
+    .addRecord({ id: entry, n: { container, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: appChunk, n: { default: {} }, d: [] });
+  // `./main` depends on the App chunk -- the whole reason the loader has a
+  // chunk nobody imported the expose of
+  loader.addRecord({ id: main, n: { main: {} }, d: [{ id: appChunk, d: [] }] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-1", { url: entry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-1", { url: entry })
+    .addRegistration("./main-D396sYtd.js", { url: main })
+    .addRegistration("./App-BvOD4S9o.js", { url: appChunk });
+  // the other three chunks have no registration and no record at all: the
+  // loader has never heard of them
+
+  const kernel = devKernel({
+    apps: [
+      fakeFynApp({
+        name: "fynapp-1",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["initialize", "execute"]) },
+        declared: ["./main", "./App", "./hello", "./getInfo", "./component"],
+      }),
+    ],
+    states: [{ name: "fynapp-1", version: "1.0.0", status: "mounted", mountedAt: 1000 }],
+  });
+
+  return { loader, federation, kernel };
+}
+
+/**
+ * The real demo's `fynapp-design-tokens`, whose two tabs still disagreed after
+ * the three levels were named.
+ *
+ * Its `$E` carries two keys and only one chunk id: `./main` is inlined into the
+ * entry (`_E("./main", Promise.resolve().then(...))` stores an `undefined` id),
+ * `./middleware/design-tokens` is a real chunk. The federation pass used to
+ * skip the chunk-less key while the FynMesh pass kept it, so Containers read
+ * `1/1 imported` beside a FynApps row reading `1/2 imported` -- the same word,
+ * two denominators, off one `$E`.
+ *
+ * The kernel imports only the middleware expose, which is what the demo does.
+ */
+export function designTokensPage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+  kernel: Record<string, unknown>;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const base = "https://app.test/fynapp-design-tokens/dist/";
+  const entry = base + "fynapp-entry.js";
+  const mw = base + "design-tokens-cAzYYAY9.js";
+
+  const container = new FakeContainer(
+    "__mf_container_fynapp-design-tokens",
+    "fynapp-design-tokens",
+    "fynmesh",
+    "1.0.0"
+  )
+    .inlinedExpose("./main")
+    .expose("./middleware/design-tokens", "./design-tokens-cAzYYAY9.js");
+
+  loader
+    .addRecord({ id: entry, n: { container, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: mw, n: { default: {} }, d: [] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-design-tokens", { url: entry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-design-tokens", { url: entry })
+    .addRegistration("./design-tokens-cAzYYAY9.js", { url: mw });
+
+  const kernel = devKernel({
+    apps: [
+      fakeFynApp({
+        name: "fynapp-design-tokens",
+        version: "1.0.0",
+        exposes: { "./middleware/design-tokens": {} },
+        declared: ["./main", "./middleware/design-tokens"],
+      }),
+    ],
+    states: [
+      { name: "fynapp-design-tokens", version: "1.0.0", status: "mounted", mountedAt: 1000 },
+    ],
+  });
+
+  return { loader, federation, kernel };
+}
+
+/**
+ * A FynApp whose container declares nothing at all, as `fynapp-react-lib` does
+ * on the demo: it is a shared-library fynapp, all shares and no exposes.
+ *
+ * Zero exposes is where "did the FynMesh pass mark this version?" cannot be
+ * read back off the exposes array, so it is the case that proves the flag has
+ * to be recorded rather than sniffed.
+ */
+export function libOnlyPage(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+  kernel: Record<string, unknown>;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const entry = "https://app.test/fynapp-react-lib/dist/fynapp-entry.js";
+  const container = new FakeContainer(
+    "__mf_container_fynapp-react-lib",
+    "fynapp-react-lib",
+    "fynmesh",
+    "19.2.8"
+  );
+
+  loader.addRecord({ id: entry, n: { container, init: () => {}, get: () => {} }, d: [] });
+  loader
+    .addRegistration("__mf_container_fynapp-react-lib", { url: entry }, "19.2.8")
+    .addRegistration("__mf_container_fynapp-react-lib", { url: entry });
+
+  const kernel = devKernel({
+    apps: [
+      fakeFynApp({ name: "fynapp-react-lib", version: "19.2.8", exposes: {}, declared: [] }),
+    ],
+    states: [{ name: "fynapp-react-lib", version: "19.2.8", status: "mounted", mountedAt: 1000 }],
+  });
+
+  return { loader, federation, kernel };
 }

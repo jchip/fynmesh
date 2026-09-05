@@ -19,6 +19,12 @@
  * middleware provider each of those is still waiting for. It is a panel and not
  * a tab because it is only ever a handful of lines, and because it is the
  * context those rows are read in.
+ *
+ * The exposes column counts what the *kernel imported* and says so. It used to
+ * be labelled `ex L/D` and described as "loaded", which is a different fact
+ * that the Containers tab was separately counting off chunk stages -- so the
+ * two tabs printed different numbers under the same word for the same app.
+ * Both now read `src/core/exposes.ts`, which names the three levels.
  */
 
 import type { JSX } from "preact";
@@ -32,6 +38,8 @@ import type {
   LoadStage,
   MiddlewareUseNode,
 } from "../../core/model.js";
+import type { ExposeLevels } from "../../core/exposes.js";
+import { fynAppExposeLevels } from "../../core/exposes.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { parseQuery } from "../../analysis/search.js";
 import { Chip, Link, Twisty } from "../components/atoms.jsx";
@@ -425,9 +433,7 @@ function AppRow({
   const id = "fynapp:" + app.key;
   const isOpen = expanded.value.has(id);
 
-  const declared = app.declaredExposes.length;
-  const loaded = app.loadedExposes.length;
-  const declaredCount = Math.max(declared, loaded);
+  const exposes = fynAppExposeLevels(app);
   const deliveredCount = app.usesMiddleware.filter((u) => u.delivered).length;
   const unregistered = app.usesMiddleware.filter((u) => !u.registered).length;
 
@@ -454,12 +460,24 @@ function AppRow({
         <span class="faint mono" title={timestampTitle(app)}>
           {offset(app.mountedAt, t0)}
         </span>
-        <span
-          class="muted"
-          title={`${loaded} of ${declaredCount} declared exposes were loaded by the kernel`}
-        >
-          ex {loaded}/{declaredCount}
+        <span class={exposes.imported ? "muted" : "faint"} title={importedTitle(exposes)}>
+          {!exposes.imported
+            ? "exposes unreadable"
+            : exposes.declared.length
+              ? `${exposes.imported.length}/${exposes.declared.length} imported`
+              : "no exposes"}
         </span>
+        {exposes.undeclared ? (
+          <Chip
+            tone="warn"
+            title={
+              "the kernel returned exposes this container never declared: " +
+              exposes.undeclared.join(", ")
+            }
+          >
+            {exposes.undeclared.length} undeclared
+          </Chip>
+        ) : null}
         <span class="muted" title={middlewareTitle(app)}>
           mw {app.usesMiddleware.length}
           {deliveredCount ? " ✓" + deliveredCount : ""}
@@ -539,8 +557,9 @@ function ContainerLink({ app }: { app: FynAppNode }): JSX.Element | null {
 }
 
 function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
-  const unloaded = app.declaredExposes.filter((e) => !app.loadedExposes.includes(e));
-  const undeclared = app.loadedExposes.filter((e) => !app.declaredExposes.includes(e));
+  const levels = fynAppExposeLevels(app);
+  const notImported = app.declaredExposes.filter((e) => !app.importedExposes.includes(e));
+  const undeclared = levels.undeclared ?? [];
 
   return (
     <>
@@ -573,18 +592,21 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
 
       <div class="node l2 wrapline">
         <span class="faint rowlabel">exposes</span>
-        {app.declaredExposes.length || app.loadedExposes.length ? (
+        {app.declaredExposes.length || app.importedExposes.length ? (
           <span class="inline">
-            {app.loadedExposes.map((e) => (
-              <span key={e} class="mono" title="loaded by the kernel">
+            {app.importedExposes.map((e) => (
+              <span key={e} class="mono" title="imported by the kernel onto fynApp.exposes">
                 {e}
               </span>
             ))}
-            {unloaded.map((e) => (
+            {notImported.map((e) => (
               <span
                 key={e}
                 class="faint mono"
-                title="declared by the build, never loaded by the kernel"
+                title={
+                  "declared by the build, never imported by the kernel. Its chunk may " +
+                  "still have loaded -- see this container on the Containers tab."
+                }
               >
                 {e}
               </span>
@@ -593,7 +615,7 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
         ) : (
           <span class="faint">
             {app.inRegistry
-              ? "none declared and none loaded"
+              ? "none declared and none imported"
               : "unreadable — this app is no longer in the registry"}
           </span>
         )}
@@ -601,7 +623,7 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
           <Chip
             tone="warn"
             title={
-              "loaded but absent from the container's declared exposes: " +
+              "imported but absent from the container's declared exposes: " +
               undeclared.join(", ")
             }
           >
@@ -622,9 +644,9 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
           </span>
         ) : (
           <span class="faint">
-            {app.loadedExposes.includes("./main")
+            {app.importedExposes.includes("./main")
               ? "./main exposes no FynUnit"
-              : "no ./main expose was loaded"}
+              : "the kernel never imported a ./main expose"}
           </span>
         )}
       </div>
@@ -780,6 +802,39 @@ function timestampTitle(app: FynAppNode): string {
   );
   if (app.updatedAt) {
     lines.push("last status change " + new Date(app.updatedAt).toISOString());
+  }
+  return lines.join("\n");
+}
+
+/**
+ * The exposes cell's tooltip.
+ *
+ * It says "imported" and not "loaded", and it says why the Containers tab may
+ * show a bigger number for the same container: a chunk can be in the loader
+ * because a sibling expose imported it, with nobody having imported the expose
+ * itself.
+ */
+export function importedTitle(levels: ExposeLevels): string {
+  const imported = levels.imported;
+  if (!imported) {
+    return (
+      "this FynApp is no longer in the registry, so neither its declared exposes " +
+      "nor the ones the kernel imported can be read — not zero of them, none " +
+      "readable. The Containers tab says nothing about imported for it either."
+    );
+  }
+  if (!levels.declared.length) {
+    return "this FynApp's container declares no exposes at all, so there is no fraction to show";
+  }
+  const lines = [
+    `${imported.length} of ${levels.declared.length} declared exposes were imported ` +
+      "by the kernel onto fynApp.exposes" +
+      (imported.length ? ": " + imported.join(", ") : ""),
+    "The Containers tab counts loaded chunks, which is a different and usually " +
+      "larger number for the same container.",
+  ];
+  if (levels.undeclared) {
+    lines.push("imported but never declared: " + levels.undeclared.join(", "));
   }
   return lines.join("\n");
 }

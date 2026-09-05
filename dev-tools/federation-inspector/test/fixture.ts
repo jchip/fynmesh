@@ -139,7 +139,7 @@ export class FakeLoader {
 /** A fake federation Container, with the field names the real one exposes. */
 export class FakeContainer {
   $SC: Record<string, any> = Object.create(null);
-  $E: Record<string, string> = Object.create(null);
+  $E: Record<string, string | undefined> = Object.create(null);
   $SS?: unknown;
   __FYNAPP_MANIFEST__?: unknown;
 
@@ -185,6 +185,22 @@ export class FakeContainer {
 
   expose(name: string, chunkId: string): this {
     this.$E[name] = chunkId;
+    return this;
+  }
+
+  /**
+   * An expose the build inlined into the container entry: `$E` holds the name
+   * and no chunk id.
+   *
+   * Not hypothetical. `Container._E` stores `value.id`, and a fynapp whose
+   * `./main` is bundled into the entry registers it as
+   * `_E("./main", Promise.resolve().then(...))` -- a promise, whose `.id` is
+   * `undefined`. `fynapp-design-tokens` on the demo is exactly this, and it is
+   * what made the Containers tab count one fewer declared expose than the
+   * FynApps tab for the same container.
+   */
+  inlinedExpose(name: string): this {
+    this.$E[name] = undefined;
     return this;
   }
 }

@@ -43,6 +43,7 @@ import type {
   Capability,
 } from "../model.js";
 import { CONTAINER_ID_PREFIX, ENTRY_ID_PREFIX } from "../model.js";
+import { isLoadedStage } from "../exposes.js";
 import { safeGet, attempt, isFn } from "../capability.js";
 
 /**
@@ -372,7 +373,15 @@ function provisions(
     .concat(extra.sort((a, b) => a.key.localeCompare(b.key)));
 }
 
-/** Read `$E` into expose rows, resolving each chunk id to a module. */
+/**
+ * Read `$E` into expose rows, resolving each chunk id to a module.
+ *
+ * Every key of `$E` becomes a row, chunk id or not. `_E` stores `value.id`, so
+ * an expose the build inlined into the entry -- `_E("./main", Promise…)` rather
+ * than `_E(name, _f(id))` -- lands as a key with an `undefined` value. It is
+ * still declared, and skipping it here gave this view a denominator one smaller
+ * than the FynApps view's `Object.keys($E)` for the same container.
+ */
 function readExposes(
   container: any,
   resolve: Resolver
@@ -384,18 +393,20 @@ function readExposes(
   const exposes: ExposeInfo[] = [];
   for (const name of keysOf(e)) {
     const chunkId = safeGet<string>(e, name);
-    if (typeof chunkId !== "string") {
-      continue;
-    }
     // `_E` stores the raw chunk id, which is usually a specifier redirecting
     // to the module's real url -- the resolver is what follows that.
-    const mod = resolve(chunkId);
-    exposes.push({
+    const mod = typeof chunkId === "string" ? resolve(chunkId) : undefined;
+    const info: ExposeInfo = {
       name,
-      chunkId,
       url: mod?.url,
       stage: mod?.stage,
-    });
+      // decided here, not in the view -- see src/core/exposes.ts
+      loaded: isLoadedStage(mod?.stage),
+    };
+    if (typeof chunkId === "string") {
+      info.chunkId = chunkId;
+    }
+    exposes.push(info);
   }
   exposes.sort((a, b) => a.name.localeCompare(b.name));
   return { exposes, ok: true };

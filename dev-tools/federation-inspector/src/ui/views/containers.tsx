@@ -9,6 +9,12 @@
  * Each version block answers three questions in three bands: what it exposes
  * and whether those modules have loaded; what it asked for and what it got;
  * and, when a FynMesh manifest is present, which other apps it reaches into.
+ *
+ * The expose counts are read off the snapshot, never derived here. A chunk
+ * being loaded and the kernel having imported the expose are two different
+ * facts, both of them true at different numbers, and this view deriving one of
+ * them itself is what let it print `2/5 exposes loaded` beside a FynApps row
+ * reading `ex 1/5`. See `src/core/exposes.ts`.
  */
 
 import type { JSX } from "preact";
@@ -16,9 +22,12 @@ import { useComputed } from "@preact/signals";
 import type {
   ContainerNode,
   ContainerVersionNode,
+  ExposeInfo,
   FynAppManifest,
   ShareDecl,
 } from "../../core/model.js";
+import type { ExposeLevels } from "../../core/exposes.js";
+import { containerExposeLevels, inlinedExposes } from "../../core/exposes.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { filterContainers } from "../../analysis/search.js";
 import {
@@ -104,7 +113,8 @@ function VersionBlock({
 }): JSX.Element {
   const id = "container:" + name + "@" + v.version;
   const isOpen = expanded.value.has(id);
-  const loadedExposes = v.exposes.filter((e) => e.stage && e.stage !== "registered").length;
+  const exposes = containerExposeLevels(v);
+  const inlined = inlinedExposes(v);
   const unsatisfied = v.consumes.filter((d) => d.resolved && !d.resolved.satisfies).length;
   const shares = shareCount(v);
 
@@ -128,9 +138,24 @@ function VersionBlock({
           {v.version}
         </span>
         <span class="faint">scope {v.scope}</span>
-        <span class="muted">
-          {v.exposes.length ? `${loadedExposes}/${v.exposes.length} exposes loaded` : "no exposes"}
+        <span class="muted" title={exposesTitle(exposes, inlined)}>
+          {exposes.declared.length
+            ? `${exposes.loaded!.length}/${exposes.declared.length} chunks loaded`
+            : "no exposes"}
         </span>
+        {exposes.imported && exposes.declared.length ? (
+          <span
+            class="muted"
+            title={
+              "the FynMesh kernel imported " +
+              exposes.imported.length +
+              " of these exposes onto fynApp.exposes. Fewer than loaded is normal: " +
+              "one expose's chunk can pull in another's without anybody importing it."
+            }
+          >
+            {exposes.imported.length}/{exposes.declared.length} imported
+          </span>
+        ) : null}
         {shares ? (
           <span class="muted">
             {shares} share{shares === 1 ? "" : "s"}
@@ -161,11 +186,7 @@ function VersionBlock({
               </span>
               <span class="inline">
                 {v.exposes.map((e) => (
-                  <span
-                    key={e.name}
-                    class="inline"
-                    title={`${e.name} → ${e.chunkId}${e.url ? "\n" + e.url : ""}`}
-                  >
+                  <span key={e.name} class="inline" title={exposeTitle(e)}>
                     <StageDot stage={e.stage ?? "registered"} />
                     {e.url ? (
                       <Link onClick={() => focusOn("modules", "url:" + e.url, e.url)}>
@@ -176,6 +197,14 @@ function VersionBlock({
                         {e.name}
                       </span>
                     )}
+                    {e.imported ? (
+                      <span
+                        class="faint"
+                        title="the kernel imported this expose onto fynApp.exposes"
+                      >
+                        ↑
+                      </span>
+                    ) : null}
                   </span>
                 ))}
               </span>
@@ -256,6 +285,58 @@ function VersionBlock({
 /** Provisions with no declaration behind them -- see `provisions` in the collector. */
 function inferredProvides(v: ContainerVersionNode): ShareDecl[] {
   return v.provides.filter((d) => d.inferred);
+}
+
+/**
+ * The collapsed header's exposes tooltip, spelling out the levels.
+ *
+ * The header used to read "N/M exposes loaded" while the FynApps tab read
+ * "ex K/M" for the same app, with nothing on either screen saying they were
+ * counting different things.
+ */
+export function exposesTitle(levels: ExposeLevels, inlined: string[] = []): string {
+  const lines = [
+    `${levels.declared.length} exposes declared by the build`,
+    `${levels.loaded!.length} whose chunk the loader has: ` +
+      (levels.loaded!.length ? levels.loaded!.join(", ") : "none"),
+  ];
+  if (inlined.length) {
+    lines.push(
+      `${inlined.length} with no chunk at all, inlined into the container entry, so ` +
+        "they can never be in that count: " +
+        inlined.join(", ")
+    );
+  }
+  if (levels.imported) {
+    lines.push(
+      `${levels.imported.length} the kernel imported: ` +
+        (levels.imported.length ? levels.imported.join(", ") : "none")
+    );
+  }
+  return lines.join("\n");
+}
+
+/** One expose row's tooltip: where it points, and which levels it reached. */
+export function exposeTitle(e: ExposeInfo): string {
+  const lines = [e.chunkId ? `${e.name} → ${e.chunkId}` : e.name];
+  if (e.url) {
+    lines.push(e.url);
+  }
+  lines.push(
+    !e.chunkId
+      ? "no chunk of its own — the build inlined this expose into the container entry"
+      : e.loaded
+        ? "the loader has this chunk"
+        : "the loader has no record of this chunk"
+  );
+  if (e.imported !== undefined) {
+    lines.push(
+      e.imported
+        ? "the kernel imported this expose onto fynApp.exposes"
+        : "the kernel never imported this expose"
+    );
+  }
+  return lines.join("\n");
 }
 
 /**

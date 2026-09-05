@@ -43,6 +43,7 @@ import type {
   MiddlewareResolution,
   MiddlewareUseNode,
   MiddlewareVersionNode,
+  ContainerVersionNode,
 } from "../model.js";
 import { attempt, isFn, safeGet } from "../capability.js";
 import { maxSatisfying } from "../../analysis/semver.js";
@@ -447,7 +448,7 @@ function emptyAppNode(
     key: name + "@" + version,
     inRegistry: false,
     isDefaultForName: false,
-    loadedExposes: [],
+    importedExposes: [],
     declaredExposes: [],
     unitHooks: [],
     usesMiddleware: [],
@@ -467,7 +468,7 @@ function appNode(
 ): FynAppNode {
   const { app } = entry;
   const exposes = safeGet<any>(app, "exposes");
-  const loadedExposes = isObject(exposes) ? Object.keys(exposes) : [];
+  const importedExposes = isObject(exposes) ? Object.keys(exposes) : [];
 
   const node: FynAppNode = {
     name: entry.name,
@@ -475,7 +476,7 @@ function appNode(
     key: entry.key,
     inRegistry: true,
     isDefaultForName: entry.isDefaultForName,
-    loadedExposes,
+    importedExposes,
     declaredExposes: declaredExposesOf(app),
     unitHooks: hooksOf(isObject(exposes) ? safeGet(exposes, "./main") : undefined),
     usesMiddleware: usesOf(app, exposes, middlewares),
@@ -1227,13 +1228,16 @@ function applyConfig(use: MiddlewareUseNode, config: unknown): void {
 
 interface ContainerIndexEntry {
   id: string;
-  versions: Set<string>;
+  versions: Map<string, ContainerVersionNode>;
 }
 
 function indexContainers(containers: ContainerNode[]): Map<string, ContainerIndexEntry> {
   const index = new Map<string, ContainerIndexEntry>();
   for (const c of containers) {
-    index.set(c.name, { id: c.id, versions: new Set(c.versions.map((v) => v.version)) });
+    index.set(c.name, {
+      id: c.id,
+      versions: new Map(c.versions.map((v) => [v.version, v])),
+    });
   }
   return index;
 }
@@ -1253,8 +1257,35 @@ function joinContainer(node: FynAppNode, index: Map<string, ContainerIndexEntry>
     return;
   }
   node.containerId = entry.id;
-  if (entry.versions.has(node.version)) {
-    node.containerVersion = node.version;
+  const version = entry.versions.get(node.version);
+  if (!version) {
+    return;
+  }
+  node.containerVersion = node.version;
+  markImported(version, node);
+}
+
+/**
+ * Tell the container version which of its exposes the kernel imported.
+ *
+ * The Containers view has no way to reach the kernel and the FynApps view has
+ * no way to reach a chunk's load stage, so whichever one derived the other's
+ * fact was going to get a different number -- which is what happened. The join
+ * is the one place that can see both, so the fact is written down here and
+ * both views read it.
+ *
+ * Only for an app still in the registry: a lifecycle-only row has an
+ * unreadable `exposes`, and stamping `imported: false` across the container
+ * would turn "cannot be read" into "nobody imported it".
+ */
+function markImported(version: ContainerVersionNode, node: FynAppNode): void {
+  if (!node.inRegistry) {
+    return;
+  }
+  version.importsKnown = true;
+  const imported = new Set(node.importedExposes);
+  for (const e of version.exposes) {
+    e.imported = imported.has(e.name);
   }
 }
 
