@@ -473,7 +473,20 @@ select:focus-visible,
 }
 .col.grow { flex: 1 1 auto; }
 
-.id { display: flex; align-items: baseline; min-width: 0; }
+/*
+ * The id must be able to shrink, or it overflows its cell and is painted on
+ * top of whatever follows it. '.tail' was 'flex: none', so '.id' could never
+ * be narrower than the filename -- measured 134px of filename drawn over the
+ * share-key chip beside it. Both parts shrink now, proportionally to their
+ * content, so the long dimmed prefix gives way before the filename does.
+ */
+.id {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
 /*
  * The prefix is truncated in JS, not by CSS.
  *
@@ -483,8 +496,22 @@ select:focus-visible,
  * the separator gone from between the directory and the filename. See
  * leadFor() in views/modules.
  */
-.id .lead { color: var(--fg-dim); flex: 0 1 auto; overflow: hidden; }
-.id .tail { color: var(--fg-strong); flex: none; }
+.id .lead {
+  color: var(--fg-dim);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.id .tail {
+  color: var(--fg-strong);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .url {
   color: var(--fg-dim);

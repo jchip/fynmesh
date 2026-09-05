@@ -66,6 +66,7 @@ function IssueRow({ issue }: { issue: Issue }): JSX.Element {
       <span class="txt">
         <span class="t">
           {issue.title}
+          {/* a real space, so copying the row does not yield "…providedshare-not-provided" */}{" "}
           <span class="code">{issue.code}</span>
         </span>
         <span class="d">{issue.detail}</span>

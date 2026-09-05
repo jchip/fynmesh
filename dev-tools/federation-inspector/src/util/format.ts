@@ -18,6 +18,30 @@ export function middleTruncate(text: string, max: number): string {
   return text.slice(0, Math.max(0, keepStart)) + "…" + text.slice(-keepEnd);
 }
 
+/**
+ * The shortest tail that tells these urls apart.
+ *
+ * Two versions of one container are both ".../dist/fynapp-entry.js", so the
+ * default two-segment tail rendered them identically -- the deployment
+ * directory (fynapp-react-19 vs fynapp-react-18) is the only thing that
+ * differs, and it is exactly the thing a reader is looking for. Widens the
+ * tail until every url in the set is distinct.
+ */
+export function distinguishingTails(
+  urls: Array<string | undefined>,
+  min = 2,
+  max = 5
+): string[] {
+  for (let n = min; n <= max; n++) {
+    const tails = urls.map((u) => urlTail(u, n));
+    const present = tails.filter(Boolean);
+    if (new Set(present).size === present.length) {
+      return tails;
+    }
+  }
+  return urls.map((u) => urlTail(u, max));
+}
+
 /** The filename, plus one parent directory for context. */
 export function urlTail(url: string | undefined, segments = 2): string {
   if (!url) {

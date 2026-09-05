@@ -24,7 +24,7 @@ import {
   StageDot,
   Twisty,
 } from "../components/atoms.jsx";
-import { urlTail } from "../../util/format.js";
+import { distinguishingTails } from "../../util/format.js";
 
 export function ContainersView(): JSX.Element {
   const containers = useComputed(() => {
@@ -78,9 +78,13 @@ function ContainerBlock({ container: c }: { container: ContainerNode }): JSX.Ele
         <span class="sub">{c.id}</span>
       </div>
       <div class="tree">
-        {c.versions.map((v) => (
-          <VersionBlock key={v.version} name={c.name} version={v} />
-        ))}
+        {(() => {
+          // widen the entry link until the versions are told apart
+          const tails = distinguishingTails(c.versions.map((v) => v.entryUrl));
+          return c.versions.map((v, i) => (
+            <VersionBlock key={v.version} name={c.name} version={v} entryLabel={tails[i]} />
+          ));
+        })()}
       </div>
     </div>
   );
@@ -89,9 +93,11 @@ function ContainerBlock({ container: c }: { container: ContainerNode }): JSX.Ele
 function VersionBlock({
   name,
   version: v,
+  entryLabel,
 }: {
   name: string;
   version: ContainerVersionNode;
+  entryLabel: string;
 }): JSX.Element {
   const id = "container:" + name + "@" + v.version;
   const isOpen = expanded.value.has(id);
@@ -122,7 +128,9 @@ function VersionBlock({
           {v.exposes.length ? `${loadedExposes}/${v.exposes.length} exposes loaded` : "no exposes"}
         </span>
         {v.consumes.length ? (
-          <span class="muted">{v.consumes.length} shares</span>
+          <span class="muted">
+            {v.consumes.length} share{v.consumes.length === 1 ? "" : "s"}
+          </span>
         ) : null}
         {unsatisfied ? (
           <Chip tone="warn" title="a declared range does not match what it resolved to">
@@ -135,7 +143,7 @@ function VersionBlock({
             title={v.entryUrl}
             onClick={(() => focusOn("modules", "url:" + v.entryUrl, v.entryUrl)) as () => void}
           >
-            {urlTail(v.entryUrl, 2)}
+            {entryLabel}
           </Link>
         ) : null}
       </div>

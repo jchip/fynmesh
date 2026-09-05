@@ -47,13 +47,23 @@ function clampToViewport(rect: FloatRect): FloatRect {
   const vh = window.innerHeight;
   const w = Math.max(MIN_W, Math.min(rect.w, vw));
   const h = Math.max(MIN_H, Math.min(rect.h, vh));
+  /*
+   * Asymmetric on purpose.
+   *
+   * Keeping "80px of panel" on screen is not the same as keeping something
+   * *draggable* on screen. The header's grab surface is its left portion --
+   * title and tabs -- while the right end is packed with buttons that swallow
+   * the pointer. A panel pushed off the left kept only that button strip
+   * visible and could not be dragged back by any point on it.
+   *
+   * So the left edge stays put and only the right may leave the viewport,
+   * which guarantees the grab surface is always reachable.
+   */
   return {
+    x: Math.max(0, Math.min(rect.x, vw - 80)),
+    y: Math.max(0, Math.min(rect.y, vh - 40)),
     w,
     h,
-    // keep at least a sliver on screen in both axes, so a panel dragged off
-    // the edge can always be dragged back
-    x: Math.max(-(w - 80), Math.min(rect.x, vw - 80)),
-    y: Math.max(0, Math.min(rect.y, vh - 40)),
   };
 }
 
@@ -188,6 +198,9 @@ export function reflowFloat(): void {
     size.value = Math.min(size.value, window.innerWidth);
   }
   if (dock.value === "dock-bottom") {
-    size.value = Math.min(size.value, window.innerHeight);
+    // 90%, not 100%: `size` is shared with dock-right, so switching from a
+    // wide right dock used to produce a panel covering the entire page with
+    // nothing of the app left visible behind it.
+    size.value = Math.min(size.value, Math.round(window.innerHeight * 0.9));
   }
 }

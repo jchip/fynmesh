@@ -471,8 +471,14 @@ function FilterBar(): JSX.Element {
  * on that) and a modules count shown while looking at Shares is just wrong --
  * it read "9 / 46" over a list of share keys.
  */
-function ViewSummary(): JSX.Element {
+function ViewSummary(): JSX.Element | null {
   const snap = snapshot.value;
+
+  // Raw and Graph are not lists and the filter does not narrow them, so a
+  // count here would be describing a different tab's contents.
+  if (view.value === "raw" || view.value === "graph") {
+    return null;
+  }
 
   let shown: number;
   let total: number;

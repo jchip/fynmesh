@@ -271,3 +271,24 @@ describe("analysis caching", () => {
     expect(analyse(s2)).not.toBe(a);
   });
 });
+
+describe("distinguishing urls", () => {
+  it("widens the tail until two container entries differ", async () => {
+    const { distinguishingTails } = await import("../src/util/format.js");
+    // both versions of one container are ".../dist/fynapp-entry.js"; the
+    // deployment directory is the only thing that tells them apart
+    expect(
+      distinguishingTails([
+        "http://x/fynapp-react-19/dist/fynapp-entry.js",
+        "http://x/fynapp-react-18/dist/fynapp-entry.js",
+      ])
+    ).toEqual([
+      "fynapp-react-19/dist/fynapp-entry.js",
+      "fynapp-react-18/dist/fynapp-entry.js",
+    ]);
+    // already distinct at the default width: stay short
+    expect(
+      distinguishingTails(["http://x/a/dist/one.js", "http://x/a/dist/two.js"])
+    ).toEqual(["dist/one.js", "dist/two.js"]);
+  });
+});

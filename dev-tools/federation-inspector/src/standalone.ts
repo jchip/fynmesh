@@ -70,7 +70,17 @@ function readOptions(): MountOptions & { auto: boolean } {
   return {
     auto: bool(d.auto, true),
     corner: (d.corner as MountOptions["corner"]) ?? "bottom-right",
-    theme: (d.theme as MountOptions["theme"]) ?? "auto",
+    /*
+     * Left undefined when the attribute is absent, rather than defaulted here.
+     *
+     * `mount` treats a supplied theme as an explicit instruction and assigns it
+     * over the signal -- which is restored from localStorage. Defaulting to
+     * "auto" in this function therefore clobbered the remembered theme on every
+     * load: the value was written, survived the reload, and was then
+     * overwritten before anything could read it.
+     */
+    theme: d.theme as MountOptions["theme"] | undefined,
+    density: d.density as MountOptions["density"] | undefined,
     hotkey: d.hotkey === "false" ? false : (d.hotkey ?? "ctrl+shift+m"),
     open: bool(d.open, false),
     launcher: bool(d.launcher, true),
