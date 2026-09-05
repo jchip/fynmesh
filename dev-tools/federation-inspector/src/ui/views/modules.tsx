@@ -14,7 +14,7 @@
 
 import type { JSX } from "preact";
 import { useComputed } from "@preact/signals";
-import type { ModuleNode, LoadStage } from "../../core/model.js";
+import type { BundleNode, ModuleNode, LoadStage } from "../../core/model.js";
 import {
   analysis,
   density,
@@ -28,6 +28,7 @@ import {
   sortDesc,
   toggleExpanded,
   visibleModules,
+  type GroupBy,
   type SortBy,
 } from "../state.js";
 import { toggleFacet } from "../../analysis/search.js";
@@ -44,7 +45,7 @@ import {
   StageDot,
   Twisty,
 } from "../components/atoms.jsx";
-import { splitUrl, urlTail } from "../../util/format.js";
+import { plural, splitUrl, urlTail } from "../../util/format.js";
 
 /**
  * The column table.
@@ -101,7 +102,7 @@ function cellStyle(c: Column): JSX.CSSProperties {
 
 /** A group header, or a module. Both flow through one virtual list. */
 type Row =
-  | { type: "group"; key: string; label: string; count: number; hue?: string }
+  | { type: "group"; key: string; groupKey: string; count: number; hue?: string }
   | { type: "module"; key: string; module: ModuleNode };
 
 const STAGE_RANK = new Map(STAGE_ORDER.map((s, i) => [s, i]));
@@ -134,6 +135,22 @@ function sortModules(list: ModuleNode[], by: SortBy, desc: boolean): ModuleNode[
   return sorted;
 }
 
+/** the bundle group for modules that arrived in a file of their own */
+const OWN_FILE = "(own file)";
+
+/**
+ * The bucket a module belongs to, which is also the bucket's identity.
+ *
+ * The bundle case keys on the **full** carrier url. It used to key on
+ * `urlTail(m.bundle, 1)` -- the basename -- and a basename is not a bundle:
+ * `federation-combine` names its output per container, so two containers
+ * built the same way emit two different files with one name, and every module
+ * in both landed in a single group whose count belonged to neither. The tail
+ * is still what the header prints (see `groupHead`); it is no longer what
+ * decides which modules are the same file.
+ *
+ * Keying on the url is also what lets a group join `Snapshot.bundles`.
+ */
 function groupKeyOf(m: ModuleNode, by: string): string {
   switch (by) {
     case "container":
@@ -143,10 +160,71 @@ function groupKeyOf(m: ModuleNode, by: string): string {
     case "kind":
       return m.kind;
     case "bundle":
-      return m.bundle ? urlTail(m.bundle, 1) : "(own file)";
+      return m.bundle ?? OWN_FILE;
     default:
       return "";
   }
+}
+
+/** What a group header prints: a name, a dim tally, and hover for the rest. */
+export interface GroupHead {
+  label: string;
+  summary: string;
+  title?: string;
+}
+
+/**
+ * The one reader of `Snapshot.bundles`.
+ *
+ * A `BundleNode` is otherwise a projection of the modules already on this
+ * view -- `readBundles` builds it from nothing but `modules.values()`, so its
+ * `members` are rows you can already see and its `url` is already on every
+ * member's chip and detail pane. Two facts do not survive that projection,
+ * and both belong on the group header rather than on any one row:
+ *
+ * - `loadedCount`: of the modules this one physical file carries, how many the
+ *   loader really has. That is the question a combined bundle creates -- you
+ *   fetched the whole file, how much of it is live -- and counting stage dots
+ *   by eye was the only way to answer it.
+ * - `members.length`: the carrier's true size, which the row count is not,
+ *   because the row count is after the filter.
+ *
+ * So when a filter is hiding members the summary says so explicitly instead of
+ * printing a number that looks like the bundle's size. The loaded tally is
+ * always the whole bundle's; the title says which.
+ *
+ * A group whose key names no `BundleNode` says only what is on screen. That
+ * cannot happen from `collect()` -- both sides come out of the same loop --
+ * but a snapshot can be handed in from anywhere, and inventing a size for a
+ * carrier we hold no record of is the thing this package does not do.
+ */
+export function groupHead(
+  by: GroupBy,
+  key: string,
+  shown: number,
+  bundles: BundleNode[]
+): GroupHead {
+  if (by !== "bundle" || key === OWN_FILE) {
+    return { label: key, summary: String(shown) };
+  }
+  const label = urlTail(key, 1);
+  const bundle = bundles.find((b) => b.url === key);
+  if (!bundle) {
+    return { label, summary: String(shown), title: key };
+  }
+  const total = bundle.members.length;
+  const size = shown === total ? plural(total, "module") : shown + " of " + total + " shown";
+  return {
+    label,
+    summary: size + " \u00b7 " + bundle.loadedCount + " loaded",
+    title:
+      key +
+      " \u2014 one combined file carrying " +
+      plural(total, "module") +
+      ", " +
+      bundle.loadedCount +
+      " of which the loader really has",
+  };
 }
 
 export function ModulesView(): JSX.Element {
@@ -168,9 +246,23 @@ export function ModulesView(): JSX.Element {
       }
     }
 
+    // Groups order by what the header prints, not by the key underneath it:
+    // a bundle key is a full url and its header is the basename, so sorting on
+    // the key alone left the visible labels out of order. The key is the
+    // tie-break, so two files with one basename still have a stable order.
+    const sortKey = (k: string) =>
+      by === "bundle" && k !== OWN_FILE ? urlTail(k, 1) + "\u0000" + k : k;
+
     const out: Row[] = [];
-    for (const [label, members] of [...buckets].sort((a, b) => a[0].localeCompare(b[0]))) {
-      out.push({ type: "group", key: "grp:" + label, label, count: members.length });
+    for (const [groupKey, members] of [...buckets].sort((a, b) =>
+      sortKey(a[0]).localeCompare(sortKey(b[0]))
+    )) {
+      out.push({
+        type: "group",
+        key: "grp:" + groupKey,
+        groupKey,
+        count: members.length,
+      });
       for (const m of members) {
         out.push({ type: "module", key: m.id, module: m });
       }
@@ -235,17 +327,36 @@ export function ModulesView(): JSX.Element {
       empty={<EmptyModules />}
       renderRow={(row, _i, measureRef) =>
         row.type === "group" ? (
-          <div class="section">
-            <div class="head" style={{ height: rowH + "px" }}>
-              <span>{row.label}</span>
-              <span class="sub">{row.count}</span>
-            </div>
-          </div>
+          <GroupHeader groupKey={row.groupKey} count={row.count} height={rowH} />
         ) : (
           <ModuleRow module={row.module} measureRef={measureRef} />
         )
       }
     />
+  );
+}
+
+/**
+ * A bucket header. Everything it says comes from `groupHead`, so the strings
+ * are testable without a DOM and the bundle join lives in one place.
+ */
+function GroupHeader({
+  groupKey,
+  count,
+  height,
+}: {
+  groupKey: string;
+  count: number;
+  height: number;
+}): JSX.Element {
+  const head = groupHead(groupBy.value, groupKey, count, snapshot.value.bundles);
+  return (
+    <div class="section">
+      <div class="head" style={{ height: height + "px" }} title={head.title}>
+        <span>{head.label}</span>
+        <span class="sub">{head.summary}</span>
+      </div>
+    </div>
   );
 }
 
