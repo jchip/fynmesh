@@ -193,7 +193,16 @@ export class FakeFederation {
   $SS: Record<string, any> = Object.create(null);
   private bundles = new Map<string, string>();
 
-  /** mirror of federation's `_S`: announce a version into a scope */
+  /**
+   * mirror of federation's `_S`: announce a version into a scope
+   *
+   * `id` is the chunk the container announced, which `_S` files on the source
+   * and nowhere else. The store's own `id` and `url` are a later, separate
+   * write -- `_mfLoaded` when a copy arrives, `resolve` when a consumer
+   * settles on one -- so they are set here only alongside a `url`. An `id`
+   * with no `url` is therefore the announced-but-never-supplied version, which
+   * is the shape that had `provides` and Issues contradicting each other.
+   */
   addShare(
     scope: string,
     key: string,
@@ -211,9 +220,9 @@ export class FakeFederation {
     });
     if (opts.url) {
       info.url = opts.url;
-    }
-    if (opts.id) {
-      info.id = opts.id;
+      if (opts.id) {
+        info.id = opts.id;
+      }
     }
     return this;
   }
@@ -351,9 +360,10 @@ export function twoContainerPage(): { loader: FakeLoader; federation: FakeFedera
  * A page built by a minified federation-js, where the only surviving record of
  * what a container provides is the share store.
  *
- * Three things it puts in the collector's way at once: one container sourcing
- * two keys, the same copy filed under both its specifier and its url, and a
- * source that names no container version.
+ * Four things it puts in the collector's way at once: one container sourcing
+ * several keys, the same copy filed under both its specifier and its url, a
+ * source that names no container version, and a version announced into the
+ * scope that nothing ever supplied a copy of.
  */
 export function minifiedSharePage(): {
   loader: FakeLoader;
@@ -374,6 +384,11 @@ export function minifiedSharePage(): {
       { "/": "^19.0.0" }
     )
     .shareMinified("vue", { semver: "^3.5.0" }, { "3.5.13": { id: "./vue-def.js" } })
+    .shareMinified(
+      "marko",
+      { semver: "^5.37.31" },
+      { "5.37.31": { id: "./index-browser-DVoahrR_.js" } }
+    )
     .expose("./main", "./main-min.js");
 
   loader
@@ -409,6 +424,15 @@ export function minifiedSharePage(): {
       url: vue,
       id: "./vue-def.js",
       container: "fynapp-min",
+    })
+    // announced and never supplied, the real marko@5.37.31 on the demo page:
+    // the container declares the share and files its chunk id as a source, and
+    // no copy of it was ever handed over. There is deliberately no
+    // registration for that chunk id.
+    .addShare("fynmesh", "marko", "5.37.31", {
+      id: "./index-browser-DVoahrR_.js",
+      container: "fynapp-min",
+      containerVersion: "1.0.0",
     });
 
   return { loader, federation };

@@ -166,8 +166,13 @@ function VersionBlock({
 
       {v.sources.length ? (
         <div class="node l3 wrapline">
+          {/*
+            * A source is an announcement. Calling the containers behind a
+            * version with no url and no id "provided by" contradicted the
+            * "not provided" chip two lines above it.
+            */}
           <span class="faint rowlabel">
-            provided by
+            {provided ? "provided by" : "declared by"}
           </span>
           <span class="inline">
             {v.sources.map((s, i) => (
