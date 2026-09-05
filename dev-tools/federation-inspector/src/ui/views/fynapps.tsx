@@ -12,11 +12,26 @@
  * page has no FynMesh". Every other empty state here is spelled out for the
  * same reason: nothing in this view is allowed to look like an answer when it
  * is really a gap.
+ *
+ * Above the list sits the bootstrap queue panel. A row says what happened to
+ * one FynApp; the panel says what is happening to all of them right now -- who
+ * holds the kernel's single bootstrap lock, who is parked behind it, and which
+ * middleware provider each of those is still waiting for. It is a panel and not
+ * a tab because it is only ever a handful of lines, and because it is the
+ * context those rows are read in.
  */
 
 import type { JSX } from "preact";
 import { useComputed } from "@preact/signals";
-import type { FynAppNode, FynAppStatus, LoadStage, MiddlewareUseNode } from "../../core/model.js";
+import type {
+  BootstrapDeferredNode,
+  BootstrapQueueNode,
+  FynAppNode,
+  FynAppStatus,
+  FynMeshNode,
+  LoadStage,
+  MiddlewareUseNode,
+} from "../../core/model.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { parseQuery } from "../../analysis/search.js";
 import { Chip, Link, Twisty } from "../components/atoms.jsx";
@@ -107,26 +122,6 @@ export function FynAppsView(): JSX.Element {
     );
   }
 
-  if (!snap.capability.kernelRunTime) {
-    return (
-      <div class="empty">
-        A FynMesh kernel is here, but <code>kernel.runTime.apps</code> could not be read.
-        <br />
-        That is not "no FynApps" — it is no list to read them from.
-      </div>
-    );
-  }
-
-  if (!apps.value.length) {
-    return (
-      <div class="empty">
-        {fynmesh.apps.length
-          ? "No FynApps match this filter."
-          : "The kernel is loaded but has no FynApps registered yet."}
-      </div>
-    );
-  }
-
   // `mountedAt` is a wall clock, which says nothing on its own. Zeroed on the
   // first lifecycle timestamp on the page, the column becomes a mount timeline
   // -- which app came up when, relative to the first one that did.
@@ -142,12 +137,267 @@ export function FynAppsView(): JSX.Element {
 
   return (
     <div class="scroll">
+      <BootstrapPanel fynmesh={fynmesh} />
+      {!snap.capability.kernelRunTime ? (
+        <div class="empty">
+          A FynMesh kernel is here, but <code>kernel.runTime.apps</code> could not be read.
+          <br />
+          That is not "no FynApps" — it is no list to read them from.
+        </div>
+      ) : !apps.value.length ? (
+        <div class="empty">
+          {fynmesh.apps.length
+            ? "No FynApps match this filter."
+            : "The kernel is loaded but has no FynApps registered yet."}
+        </div>
+      ) : (
+        <div class="tree">
+          {apps.value.map((a) => (
+            <AppRow key={a.key} app={a} t0={t0} ambiguous={ambiguous.has(a.name)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The bootstrap queue, in the four states it can be in.
+ *
+ * The kernel bootstraps one FynApp at a time and parks the rest, so "why is my
+ * app not mounted" is usually answered by this panel and nothing else. It reads
+ * `kernel.bootstrapCoordinator`, which the production kernel mangles, and the
+ * whole point of the panel is that the four cases stay four:
+ *
+ * - **absent** — no readable coordinator. One line saying so, because an empty
+ *   queue here would claim every FynApp has finished.
+ * - **unreadable** — the coordinator is there but one of its surfaces is not.
+ *   The surface is named; nothing is inferred from what could not be read.
+ * - **empty** — nobody holds the lock and nothing is queued. A real, healthy
+ *   state, and said as one rather than as a blank panel.
+ * - **readable** — the holder, the queue behind it, and what each is waiting on.
+ */
+function BootstrapPanel({ fynmesh }: { fynmesh: FynMeshNode }): JSX.Element {
+  const queue = fynmesh.bootstrapQueue;
+
+  if (!queue) {
+    return (
+      <div class="section">
+        <div class="head">
+          <span>bootstrap queue</span>
+          <span class="sub">unavailable in this build</span>
+        </div>
+        <div class="tree">
+          <div class="node l1 wrapline">
+            <span class="faint">
+              {fynmesh.build === "minified"
+                ? "kernel.bootstrapCoordinator is mangled in the production kernel — there is no queue to read, which is not the same as an idle one."
+                : "kernel.bootstrapCoordinator could not be read on this kernel — there is no queue to read, which is not the same as an idle one."}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const idle =
+    queue.holder === undefined &&
+    !queue.deferred.length &&
+    !queue.unreadableDeferred &&
+    !queue.unreadable.length;
+
+  return (
+    <div class="section">
+      <div class="head">
+        <span>bootstrap queue</span>
+        <span class="sub" title={summaryTitle(queue)}>
+          {queueSummary(queue, idle)}
+        </span>
+      </div>
       <div class="tree">
-        {apps.value.map((a) => (
-          <AppRow key={a.key} app={a} t0={t0} ambiguous={ambiguous.has(a.name)} />
+        {queue.unreadable.length ? (
+          <div class="node l1 wrapline">
+            <Chip
+              tone="err"
+              title={
+                "these fields of kernel.bootstrapCoordinator could not be read, so " +
+                "nothing below speaks for them — this is a gap, not an empty queue"
+              }
+            >
+              unreadable
+            </Chip>
+            <span class="faint">
+              {queue.unreadable.join(", ")} could not be read
+            </span>
+          </div>
+        ) : null}
+
+        {idle ? (
+          <div class="node l1 wrapline">
+            <span class="faint">
+              Nobody holds the bootstrap lock and nothing is deferred — every FynApp
+              that started has finished. This is the healthy state, not a missing
+              reading.
+            </span>
+          </div>
+        ) : null}
+
+        {queue.holder !== undefined ? (
+          <div class="node l1">
+            <span class="stage executing" role="img" aria-label="bootstrapping" />
+            <span class="label">{queue.holder}</span>
+            <span
+              class="faint"
+              title={
+                "the coordinator's single bootstrap lock. Every other FynApp's " +
+                "bootstrap waits until this one completes, fails or times out"
+              }
+            >
+              holds the bootstrap lock
+            </span>
+          </div>
+        ) : !idle && !queue.unreadable.includes("bootstrappingApp") ? (
+          <div class="node l1">
+            <span class="faint">
+              The bootstrap lock is free — nothing is bootstrapping right now.
+            </span>
+          </div>
+        ) : null}
+
+        {queue.deferred.map((d, i) => (
+          <DeferredRow key={d.key + ":" + i} deferred={d} lockHeld={queue.holder !== undefined} />
         ))}
+
+        {queue.unreadableDeferred ? (
+          <div class="node l1 wrapline">
+            <Chip
+              tone="err"
+              title="queued entries whose fynApp could not be read; they are counted so the queue length stays true"
+            >
+              {queue.unreadableDeferred} unreadable
+            </Chip>
+            <span class="faint">
+              {queue.unreadableDeferred === 1 ? "one queued entry" : "queued entries"} whose FynApp
+              could not be read
+            </span>
+          </div>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+function queueSummary(queue: BootstrapQueueNode, idle: boolean): string {
+  if (idle) {
+    return "idle — lock free, nothing deferred";
+  }
+  // Neither half of the summary is allowed to state a count for a field that
+  // could not be read: "lock free" and "0 deferred" are the two sentences that
+  // would turn a gap back into the idle reading this panel exists to separate.
+  const parts: string[] = [];
+  parts.push(
+    queue.unreadable.includes("bootstrappingApp")
+      ? "lock unreadable"
+      : queue.holder !== undefined
+        ? queue.holder + " bootstrapping"
+        : "lock free"
+  );
+  parts.push(
+    queue.unreadable.includes("deferredBootstraps")
+      ? "queue unreadable"
+      : queue.deferred.length === 1
+        ? "1 deferred"
+        : queue.deferred.length + " deferred"
+  );
+  if (queue.unreadableDeferred) {
+    parts.push(queue.unreadableDeferred + " unreadable");
+  }
+  return parts.join(" · ");
+}
+
+function summaryTitle(queue: BootstrapQueueNode): string {
+  const lines = [
+    "kernel.bootstrapCoordinator: one FynApp bootstraps at a time and the rest are deferred.",
+    queue.bootstrapped.length
+      ? "bootstrapped so far: " + queue.bootstrapped.join(", ")
+      : "the coordinator has recorded no completed bootstrap yet",
+  ];
+  if (queue.modes.length) {
+    lines.push(
+      "provider/consumer roles recorded for: " + queue.modes.map((m) => m.app).join(", ")
+    );
+  }
+  return lines.join("\n");
+}
+
+/**
+ * One parked FynApp, and why.
+ *
+ * `waitingOn` is the coordinator's own dependency rule replayed: a consumer of
+ * a middleware waits until whichever FynApp registered as that middleware's
+ * provider has bootstrapped. Empty means the dependencies are satisfied and the
+ * lock is the only thing left -- unless nobody holds the lock either, which is
+ * a stall the coordinator should not be in and is worth saying out loud.
+ */
+function DeferredRow({
+  deferred,
+  lockHeld,
+}: {
+  deferred: BootstrapDeferredNode;
+  lockHeld: boolean;
+}): JSX.Element {
+  return (
+    <>
+      <div class="node l1">
+        <span class="stage awaiting-deps" role="img" aria-label="deferred" />
+        <span class="label">{deferred.name}</span>
+        <span class="label ver">{deferred.version || "—"}</span>
+        {deferred.waitingOn.length ? (
+          <Chip
+            tone="warn"
+            title={
+              "this FynApp consumes middleware whose provider has not bootstrapped yet; " +
+              "the coordinator will resume it when the provider completes"
+            }
+          >
+            waiting on {deferred.waitingOn.length}
+          </Chip>
+        ) : lockHeld ? (
+          <Chip tone="ok" title="its middleware dependencies are satisfied; it resumes when the lock is released">
+            ready
+          </Chip>
+        ) : (
+          <Chip
+            tone="err"
+            title={
+              "its dependencies are satisfied and nobody holds the bootstrap lock, yet it " +
+              "is still queued — the coordinator resumes the queue on a completion or a " +
+              "failure event, so one of those was missed or has not fired yet"
+            }
+          >
+            stalled
+          </Chip>
+        )}
+      </div>
+      {deferred.waitingOn.map((b) => (
+        <div class="node l2" key={b.middleware + "::" + b.provider}>
+          <span class="faint rowlabel">waiting on</span>
+          <span class="mono" title="the middleware this FynApp registered as a consumer of">
+            {b.middleware}
+          </span>
+          <span class="faint">from</span>
+          <Link
+            title={"jump to " + b.provider + " in this list"}
+            onClick={() => focusOn("fynapps", "app:" + b.provider)}
+          >
+            {b.provider}
+          </Link>
+          <span class="faint">
+            which the coordinator has not recorded as bootstrapped
+          </span>
+        </div>
+      ))}
+    </>
   );
 }
 
