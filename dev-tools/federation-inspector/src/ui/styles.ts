@@ -968,6 +968,22 @@ a.link:hover { text-decoration: underline; }
 .gedge.hot { stroke: var(--accent); stroke-width: 1.5; }
 .gedge.cycle { stroke: var(--err); stroke-width: 1.5; }
 .gnode.dimmed { opacity: 0.25; }
+/*
+ * The hovered node's edges, and everything else.
+ *
+ * Emphasis only, with no colour of its own: an edge that is red for being in a
+ * cycle stays red while it is pointed at, and the accent goes on meaning
+ * "touches the focus" and nothing else. Ordered after .hot and .cycle because
+ * these carry the same specificity and have to win the width.
+ *
+ * 0.18 is where a 1px hairline stops competing without disappearing. The graph
+ * has to keep its shape while one part of it is being read, or the highlight
+ * answers "what connects to this" by deleting the context that made the
+ * question worth asking. Opacity on the path fades its arrowhead with it,
+ * which is why this tone needs no marker of its own.
+ */
+.gedge.lit { stroke-width: 2; }
+.gedge.faded { opacity: 0.18; }
 
 /* ------------------------------------------------------------------ banner */
 

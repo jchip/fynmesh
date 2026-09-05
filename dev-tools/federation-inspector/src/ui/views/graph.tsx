@@ -108,8 +108,12 @@ function clampZoom(z: number): number {
  * the click on the node underneath, so selecting a node by clicking it would
  * stop working; capturing late means a click stays a click and a drag stops
  * being one.
+ *
+ * That capture is also why a pan announces itself: from the moment it takes
+ * the pointer, the node underneath never receives its pointerleave, so a hover
+ * highlight would otherwise survive the canvas sliding out from under it.
  */
-function usePanZoom(): {
+function usePanZoom(onPanStart: () => void): {
   wrapRef: { current: HTMLDivElement | null };
   panProps: JSX.HTMLAttributes<HTMLDivElement>;
   zoomBy: (factor: number, clientX?: number, clientY?: number) => void;
@@ -177,6 +181,7 @@ function usePanZoom(): {
           return;
         }
         p.panning = true;
+        onPanStart();
         el.classList.add("panning");
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
@@ -487,7 +492,23 @@ export function GraphView(): JSX.Element {
   });
 
   const m = model.value;
-  const { wrapRef, panProps, zoomBy, fitTo, resetZoom } = usePanZoom();
+
+  /*
+   * Which node the pointer is resting on, and nothing else.
+   *
+   * Eleven edges arrive at the shared `esm-react` node and share its 34px
+   * side, so "what connects to this" is a question the drawing cannot answer
+   * at rest, however wide the layer gap gets. An edge is a sibling of the node
+   * it leaves, so no selector reaches it from that node's `:hover` -- the
+   * highlight has to be state. It is state about the pointer alone: the model,
+   * the selection and the ELK layout are all untouched, so a hover costs a
+   * re-render of exactly the same shape and never a re-layout.
+   */
+  const [hovered, setHovered] = useState<string | undefined>(undefined);
+
+  const { wrapRef, panProps, zoomBy, fitTo, resetZoom } = usePanZoom(() =>
+    setHovered(undefined)
+  );
 
   /*
    * Click focuses, double-click opens in Modules -- and the two fight unless
@@ -649,10 +670,27 @@ export function GraphView(): JSX.Element {
               </marker>
             ))}
           </defs>
+          {/*
+            * Hover outranks focus, for as long as it lasts.
+            *
+            * Focus dimming is the standing state a click leaves behind; a
+            * hover is a question asked with the pointer and withdrawn when it
+            * moves on. So while a node is hovered the lit set is that node,
+            * its incident edges and whatever is at their far ends, and
+            * everything else falls back -- including the rest of the focus
+            * neighbourhood, which would otherwise leave a dozen bright nodes
+            * competing with the answer. Nothing else changes hands: the accent
+            * ring on the focused node and the red of a cycle are identity and
+            * severity rather than emphasis, so hover is spent entirely on
+            * opacity and stroke width and never on colour. That is also why it
+            * needs no fourth arrowhead marker -- an edge keeps its own tone,
+            * and `opacity` on the path takes its marker down with it.
+            */}
           <g>
             {m.edges.map(([from, to], i) => {
               const hot = from === m.focus || to === m.focus;
               const cycle = m.graph.inCycle.has(from) && m.graph.inCycle.has(to);
+              const incident = hovered !== undefined && (from === hovered || to === hovered);
               const route = place.routes.get(edgeKey(from, to));
               const a = xy(from);
               const b = xy(to);
@@ -664,7 +702,11 @@ export function GraphView(): JSX.Element {
               return (
                 <path
                   key={i}
-                  class={"gedge" + (cycle ? " cycle" : hot ? " hot" : "")}
+                  class={
+                    "gedge" +
+                    (cycle ? " cycle" : hot ? " hot" : "") +
+                    (hovered === undefined ? "" : incident ? " lit" : " faded")
+                  }
                   marker-end={`url(#${cycle ? "ga-cycle" : hot ? "ga-hot" : "ga"})`}
                   d={
                     route
@@ -682,13 +724,19 @@ export function GraphView(): JSX.Element {
               const hue = node.container ? hueFor(node.container.name) : 220;
               const isFocus = id === m.focus;
               const label = labelFor(node, m.multiVersion);
+              const dimmed =
+                hovered === undefined
+                  ? !!m.focus && !isFocus && !isNeighbour(m.graph, m.focus, id)
+                  : id !== hovered && !isNeighbour(m.graph, hovered, id);
               return (
                 <g
                   key={id}
-                  class={"gnode" + (m.focus && !isFocus && !isNeighbour(m, id) ? " dimmed" : "")}
+                  class={"gnode" + (dimmed ? " dimmed" : "")}
                   transform={`translate(${p.x},${p.y})`}
                   onClick={() => onNodeClick(id)}
                   onDblClick={() => onNodeDblClick(id)}
+                  onPointerEnter={() => setHovered(id)}
+                  onPointerLeave={() => setHovered(undefined)}
                 >
                   <title>
                     {id}
@@ -735,13 +783,16 @@ export function GraphView(): JSX.Element {
   );
 }
 
-/** Direct neighbours of the focused node, which stay undimmed. */
-function isNeighbour(m: { graph: Graph; focus?: string }, id: string): boolean {
-  if (!m.focus) {
-    return true;
-  }
+/**
+ * Is `id` one edge from `centre`, in either direction?
+ *
+ * Takes the centre rather than reading the focus out of the model, because the
+ * standing focus and a transient hover ask the same question of the same
+ * graph, and there is no reason for two answers to it.
+ */
+function isNeighbour(graph: Graph, centre: string, id: string): boolean {
   return (
-    (m.graph.out.get(m.focus) ?? []).includes(id) ||
-    (m.graph.in.get(m.focus) ?? []).includes(id)
+    (graph.out.get(centre) ?? []).includes(id) ||
+    (graph.in.get(centre) ?? []).includes(id)
   );
 }
