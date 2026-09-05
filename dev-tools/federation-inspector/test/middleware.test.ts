@@ -25,7 +25,8 @@ import type {
   MiddlewareNode,
   MiddlewareVersionNode,
 } from "../src/core/model.js";
-import { consumerTone, filterMiddleware } from "../src/ui/views/middleware.js";
+import { filterMiddleware } from "../src/ui/views/middleware.js";
+import { consumerTone } from "../src/ui/middleware-resolution.js";
 import { twoContainerPage } from "./fixture.js";
 import {
   autoAppliedShellPage,

@@ -34,9 +34,14 @@ import { useComputed } from "@preact/signals";
 import type {
   MiddlewareConsumerNode,
   MiddlewareNode,
-  MiddlewareResolution,
   MiddlewareVersionNode,
 } from "../../core/model.js";
+import {
+  consumerTone,
+  UNDECLARED_TITLE,
+  VIA_LABEL,
+  VIA_TITLE,
+} from "../middleware-resolution.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { parseQuery } from "../../analysis/search.js";
 import { Chip, Link, Twisty } from "../components/atoms.jsx";
@@ -91,77 +96,6 @@ function scopeLabels(scopes: readonly string[]): string[] {
   }
   return out;
 }
-
-/** How a consumer's declaration landed on this version, in the kernel's own order. */
-const VIA_TITLE: Record<MiddlewareResolution, string> = {
-  exact: "asked for this exact version, and the registry has that key",
-  range: "declared a range, and this is the highest registered version satisfying it",
-  default: "asked for no version, so it got the default slot — the first version registered",
-  fallback:
-    "declared a range that no registered version satisfies, so the kernel fell back to " +
-    "the default slot: this FynApp is running a version it did not ask for",
-  unresolved:
-    "this middleware is registered but which version the declaration resolves to could " +
-    "not be worked out — the registration behind the default slot could not be read",
-};
-
-/**
- * What an undeclared consumer is, said without guessing at a cause.
- *
- * `autoApplyScope` is the usual one, but a middleware may also write straight
- * into another FynApp's `middlewareContext` -- and the kernel records nothing
- * that separates the two, so neither is claimed.
- */
-const UNDECLARED_TITLE =
-  "nothing in this FynApp's __middlewareMeta asks for this middleware, but its " +
-  "middlewareContext carries an entry under the name — so it is running on it " +
-  "without ever declaring it. That is what autoApplyScope does, and it is also " +
-  "what a middleware writing straight into another FynApp's context does; the " +
-  "kernel records no difference between the two.";
-
-/**
- * The resolution branches that are a warning on their own (FYM-354).
- *
- * `fallback` is a consumer running a version it explicitly did not ask for;
- * `unresolved` is one whose version could not be worked out at all. Both used
- * to be drawn in the reassuring colour whenever the middleware was delivered --
- * and delivery is exactly what makes them easy to miss, because from the
- * outside everything appears to have worked.
- *
- * That is the wrong way round for these two in particular. The kernel's own
- * warning about a range nothing satisfies (FYM-321) is compiled out of the
- * browser build by terser's `drop_console: true`, so on a production page this
- * chip is the only surviving signal that it happened. Green removes the last
- * one, two inches from a tooltip saying the app is running a version it did not
- * ask for.
- */
-const WARNING_BRANCHES: ReadonlySet<MiddlewareResolution> = new Set<MiddlewareResolution>([
-  "fallback",
-  "unresolved",
-]);
-
-/**
- * The colour one consumer chip is drawn in.
- *
- * Two independent reasons to warn, and delivery is only one of them: nothing
- * arrived, or what arrived was not what was asked for. An undeclared consumer
- * asked for nothing, so it can only ever fail the first test -- and it cannot,
- * since it exists only because delivery happened.
- */
-export function consumerTone(consumer: MiddlewareConsumerNode): "ok" | "warn" {
-  if (!consumer.delivered) {
-    return "warn";
-  }
-  return consumer.route === "declared" && WARNING_BRANCHES.has(consumer.via) ? "warn" : "ok";
-}
-
-const VIA_LABEL: Record<MiddlewareResolution, string> = {
-  exact: "exact",
-  range: "range",
-  default: "default",
-  fallback: "fallback",
-  unresolved: "unresolved",
-};
 
 /**
  * Filter middleware rows with the query string every other tab shares.
@@ -595,6 +529,14 @@ function VersionBlock({
  * The tick and the colour say different things (FYM-354). The tick is delivery.
  * The colour is delivery *and* the resolution branch, so a `fallback` consumer
  * is amber with a tick: something arrived, and it is not what was asked for.
+ *
+ * The label abbreviates and the colour never does. `default` and `exact` go
+ * unnamed here because the chip already sits inside the version block they
+ * landed on, and repeating it on every chip would bury the two branches worth
+ * reading. The FynApps row is the other way round -- there the branch *is* what
+ * the row is answering, so it names all five. Both take their word and their
+ * tone from `middleware-resolution.ts`, so the two tabs can differ in how much
+ * they spell out and never in how bad they say it is (FYM-353).
  */
 function ConsumerChip({ consumer }: { consumer: MiddlewareConsumerNode }): JSX.Element {
   const [name] = consumer.app.split("@");

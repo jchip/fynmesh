@@ -40,6 +40,14 @@ import type {
 } from "../../core/model.js";
 import type { ExposeLevels } from "../../core/exposes.js";
 import { fynAppExposeLevels } from "../../core/exposes.js";
+import {
+  resolutionTone,
+  UNDECLARED_TITLE,
+  useResolution,
+  useTone,
+  VIA_LABEL,
+  VIA_TITLE,
+} from "../middleware-resolution.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { parseQuery } from "../../analysis/search.js";
 import { Chip, Link, Twisty } from "../components/atoms.jsx";
@@ -436,6 +444,13 @@ function AppRow({
   const exposes = fynAppExposeLevels(app);
   const deliveredCount = app.usesMiddleware.filter((u) => u.delivered).length;
   const unregistered = app.usesMiddleware.filter((u) => !u.registered).length;
+  // Delivered, and still not what was asked for (FYM-356). `mw 3 ✓3` reads as
+  // three out of three and is the only middleware signal on a collapsed row, so
+  // a `fallback` used to be invisible until someone opened the row *and* knew
+  // to compare a range against a version. The count is separate from `✗` above
+  // because "nothing is registered under that name" and "something is, and it is
+  // the wrong version" have nothing to do with each other.
+  const misresolved = app.usesMiddleware.filter((u) => u.delivered && useTone(u) === "warn");
 
   return (
     <>
@@ -485,6 +500,11 @@ function AppRow({
         {unregistered ? (
           <Chip tone="err" title="declared middleware that is not registered on this page">
             ✗{unregistered}
+          </Chip>
+        ) : null}
+        {misresolved.length ? (
+          <Chip tone="warn" title={misresolvedTitle(misresolved)}>
+            ⚠{misresolved.length}
           </Chip>
         ) : null}
         {ambiguous && app.isDefaultForName ? (
@@ -560,6 +580,7 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
   const levels = fynAppExposeLevels(app);
   const notImported = app.declaredExposes.filter((e) => !app.importedExposes.includes(e));
   const undeclared = levels.undeclared ?? [];
+  const undeclaredDelivery = new Set(undeclaredDeliveries(app));
 
   return (
     <>
@@ -668,9 +689,7 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
             title="middlewareContext keys, in the order the middleware wrote them"
           >
             {app.middlewareDelivered.map((k) => (
-              <span key={k} class="mono">
-                {k}
-              </span>
+              <DeliveredKey key={k} name={k} declared={!undeclaredDelivery.has(k)} />
             ))}
           </span>
         ) : (
@@ -696,10 +715,79 @@ function AppDetail({ app }: { app: FynAppNode }): JSX.Element {
   );
 }
 
+/**
+ * The `middlewareContext` keys this app never asked for (FYM-356).
+ *
+ * Matched on the declared name, which is the same join the collector makes when
+ * it sets `use.delivered` -- so a key here is a delivery no row above accounts
+ * for. That is the FynApp side of FYM-347's undeclared route, read from this
+ * app's own two fields and needing nothing from the registry.
+ *
+ * Which is why this can name one the Middleware view cannot: over there an
+ * undeclared consumer has to be attributed to a registration, and two providers
+ * of one name (FYM-333) leave it unattributable, so the chip is dropped. Here
+ * there is nothing to attribute. Both are `ok`-toned either way, so the tabs
+ * differ in what they can say and not in how bad they say it is.
+ */
+export function undeclaredDeliveries(app: FynAppNode): string[] {
+  const declared = new Set(app.usesMiddleware.map((u) => u.name).filter((n) => !!n));
+  return app.middlewareDelivered.filter((k) => !declared.has(k));
+}
+
+/**
+ * One `middlewareContext` key, and whether this app ever asked for it.
+ *
+ * The declared ones have a row of their own above, with the branch that
+ * resolved them. These do not, and they cannot: nothing was declared, so no
+ * resolution ran and there is no branch to draw. Drawing one anyway -- or
+ * leaving the key bare, which is what this row used to do -- is how an
+ * auto-applied middleware ends up looking like a resolved declaration.
+ *
+ * So it is tagged for what is observable and nothing more, in the same words
+ * the Middleware view's `undeclared` chip uses for the same FynApp.
+ */
+function DeliveredKey({ name, declared }: { name: string; declared: boolean }): JSX.Element {
+  if (declared) {
+    return (
+      <span class="mono" title={"declared above, and delivered under this name"}>
+        {name}
+      </span>
+    );
+  }
+  return (
+    <span class="inline" title={UNDECLARED_TITLE}>
+      <span class="mono">{name}</span>
+      <span class="faint">undeclared</span>
+    </span>
+  );
+}
+
+/**
+ * One `__middlewareMeta` declaration: what this app asked for, and what it got.
+ *
+ * Three separate facts, each with its own chip, because collapsing them loses
+ * the one the reader came for. `registered` is whether anything answers to the
+ * name at all. `delivered` is whether an entry appeared in `middlewareContext`.
+ * Between them sits the branch that resolved it (FYM-356) -- the fact this row
+ * used to omit entirely, which left `fallback` (running a version it did not ask
+ * for) rendering exactly like `exact`, two green chips and a tick.
+ *
+ * All five branches are named here even though the Middleware view's chip only
+ * names two. That view's chip already sits under the version it resolved to;
+ * this row has no such context, and "asked for nothing and got the first
+ * version registered" is a different answer from "asked for 2.0.0 and got it"
+ * to someone reading their own app's row. The tone comes from the same table
+ * either way, so the extra detail can never become extra severity.
+ *
+ * There is no branch chip when nothing is registered under the name. The kernel
+ * never reached the version map, so there was no resolution -- and `unresolved`
+ * means something else and narrower: registered, but which version is unreadable.
+ */
 function MiddlewareUseRow({ use }: { use: MiddlewareUseNode }): JSX.Element {
   const label = use.name
     ? (use.provider ? use.provider + "::" : "") + use.name
     : use.raw ?? "unreadable declaration";
+  const via = useResolution(use);
 
   return (
     <div class="node l3">
@@ -724,6 +812,20 @@ function MiddlewareUseRow({ use }: { use: MiddlewareUseNode }): JSX.Element {
           not registered
         </Chip>
       )}
+      {via ? (
+        <Chip
+          tone={resolutionTone(via)}
+          title={
+            (use.range ? "asked for " + use.range : "asked for no version") +
+            "\n" +
+            VIA_TITLE[via] +
+            (use.resolvedVersion ? "\nrunning " + use.resolvedVersion : "")
+          }
+        >
+          {VIA_LABEL[via]}
+          {use.resolvedVersion ? " " + use.resolvedVersion : ""}
+        </Chip>
+      ) : null}
       {use.delivered ? (
         <Chip tone="ok" title="this middleware wrote an entry into the app's middlewareContext">
           delivered
@@ -847,4 +949,22 @@ function middlewareTitle(app: FynAppNode): string {
     `${declared} middleware declared, ${delivered} delivered an API to this app` +
     (missing ? `, ${missing} not registered anywhere on this page` : "")
   );
+}
+
+/**
+ * The `⚠n` chip's tooltip: which declarations resolved badly, and how.
+ *
+ * Named one by one rather than counted, because the two branches under this
+ * chip need different things done about them -- a `fallback` is a range to fix,
+ * an `unresolved` is a registration the inspector could not read -- and a bare
+ * number sends the reader hunting through the expanded rows for which is which.
+ */
+export function misresolvedTitle(uses: MiddlewareUseNode[]): string {
+  return [
+    "delivered, and not what was asked for:",
+    ...uses.map((u) => {
+      const via = useResolution(u) ?? "unresolved";
+      return `· ${u.name ?? u.raw ?? "unreadable declaration"} — ${VIA_LABEL[via]}: ${VIA_TITLE[via]}`;
+    }),
+  ].join("\n");
 }
