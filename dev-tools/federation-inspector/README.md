@@ -125,9 +125,13 @@ container:fynapp-1     stage:errored     kind:exposed
 scope:fynmesh          share:esm-react   version:19
 bundle:true            orphan:true       error:true
 deps:>3                dependents:>=1
-id:<exact>             url:<exact>
+id:<full or part>      url:<full or part>
 -stage:executed        any term negates with a leading "-"
 ```
+
+`id:` and `url:` match alike — a case-insensitive substring — so half of an id
+finds the module you half-remember. Deep links write the whole id, which no
+other module's id contains, so they still land on the one module.
 
 ## How it reads the page
 

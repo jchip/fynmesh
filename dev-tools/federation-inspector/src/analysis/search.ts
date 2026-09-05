@@ -17,8 +17,8 @@
  *   bundle:true                arrived inside a combined file
  *   orphan:true                no deps and no dependents
  *   deps:>3   dependents:>=1   numeric comparison
- *   id:<exact id>              exact match, used by deep links
- *   url:<exact or substring>   exact match, or a case-insensitive substring
+ *   id:<full or partial id>    these two match alike: a case-insensitive
+ *   url:<full or partial url>  substring, which a full value satisfies
  *   -stage:executed            any term may be negated with a leading "-"
  *
  * Boolean fields (`bundle`, `orphan`, `error`) accept `true`/`yes`/`1`/`on`,
@@ -163,9 +163,22 @@ function matchTerm(m: ModuleNode, term: Term): boolean {
     case undefined:
       return freeTextMatch(m, v);
     case "id":
-      return m.id === term.value;
-    case "url":
-      return m.url === term.value || (m.url ? m.url.toLowerCase().includes(v) : false);
+    case "url": {
+      /*
+       * One behaviour for the two, because they read as a pair in the filter
+       * bar and nothing about them says they would differ. `id:` used to
+       * demand `===`, so a half-remembered id and a mistyped one both came
+       * back empty with nothing to tell them apart -- and a half-remembered
+       * id is the normal way to reach for a module whose id is a full url.
+       *
+       * Deep links are unaffected: they write the *whole* id, which no other
+       * module's id contains, and they set the selection alongside the query,
+       * so even a stray extra row could not take the focus from the module
+       * they meant.
+       */
+      const hay = term.field === "id" ? m.id : m.url;
+      return hay ? hay.toLowerCase().includes(v) : false;
+    }
     case "container":
       return !!m.container && m.container.name.toLowerCase().includes(v);
     case "stage":

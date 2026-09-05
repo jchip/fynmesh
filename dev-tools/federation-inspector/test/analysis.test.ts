@@ -231,10 +231,41 @@ describe("search", () => {
     expect(filterModules(all, "-stage:errored").length).toBe(all.length - 1);
   });
 
-  it("matches an exact id, which is what a deep link uses", () => {
+  it("matches a whole id, which is what a deep link writes", () => {
     const all = mods();
     const target = all[0].id;
-    expect(filterModules(all, "id:" + target)).toHaveLength(1);
+    const hit = filterModules(all, "id:" + target);
+    // the deep link still selects exactly its module: no other id contains a
+    // whole one, so widening `id:` to a substring did not widen this
+    expect(hit).toHaveLength(1);
+    expect(hit[0].id).toBe(target);
+  });
+
+  it("matches a partial id, so half-remembering one is enough", () => {
+    const all = mods();
+    // `id:` used to demand ===, which made a partial id and a typo'd one
+    // indistinguishable: both came back empty
+    const hit = filterModules(all, "id:main-aaa");
+    expect(hit).toHaveLength(1);
+    expect(hit[0].id).toContain("main-aaa");
+    // still nothing for something genuinely absent
+    expect(filterModules(all, "id:no-such-module")).toHaveLength(0);
+  });
+
+  it("returns every module a partial id fits, rather than picking one", () => {
+    const all = mods();
+    const hits = filterModules(all, "id:dist/fynapp-entry.js");
+    expect(hits.length).toBeGreaterThan(1);
+    expect(hits.every((m) => m.id.includes("dist/fynapp-entry.js"))).toBe(true);
+    // and it reads the same as `url:` does, which is the point of the change
+    expect(filterModules(all, "url:dist/fynapp-entry.js").map((m) => m.id)).toEqual(
+      hits.map((m) => m.id)
+    );
+  });
+
+  it("matches an id case-insensitively, as url: always has", () => {
+    const all = mods();
+    expect(filterModules(all, "id:MAIN-AAA")).toEqual(filterModules(all, "id:main-aaa"));
   });
 
   it("toggles a facet off when it is already on", () => {
