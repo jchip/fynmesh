@@ -28,12 +28,18 @@ import type {
   MiddlewareUseNode,
 } from "../src/core/model.js";
 import {
+  VIA_LABEL,
   consumerTone,
   resolutionTone,
   useResolution,
   useTone,
 } from "../src/ui/middleware-resolution.js";
-import { misresolvedTitle, undeclaredDeliveries } from "../src/ui/views/fynapps.js";
+import {
+  BARE_NAME_LABEL,
+  bareNameTitle,
+  misresolvedTitle,
+  undeclaredDeliveries,
+} from "../src/ui/views/fynapps.js";
 import { autoAppliedShellPage, devKernel, fakeFynApp, fakeUnit } from "./kernel-fixture.js";
 import type { FakeKernelOptions } from "./kernel-fixture.js";
 
@@ -287,5 +293,82 @@ describe("deliveries this app never declared", () => {
     for (const mw of fynmesh!.middlewares) {
       expect([...mw.versions.flatMap((v) => v.consumers), ...mw.unpinnedConsumers]).toEqual([]);
     }
+  });
+});
+
+
+/*
+ * The row that carries both chips (FYM-361).
+ *
+ * Two versions of one name make the bare registry key ambiguous, so the later
+ * one gets the accent chip; a version-less declaration on that same app takes
+ * the `default` branch. Before this, both chips said `default` about two
+ * registries whose tie-breaks are opposite -- the bare app key moves to the LAST
+ * registration, the middleware slot stays with the FIRST.
+ */
+describe("the bare-name chip and the resolution branch on one row", () => {
+  function ambiguousPair() {
+    const decl = { name: "shell-layout", provider: "fynapp-shell-mw" };
+    return devKernel({
+      apps: [
+        fakeFynApp({
+          name: "fynapp-twice",
+          version: "1.0.0",
+          exposes: { "./main": fakeUnit(["execute"], [{ info: decl, config: {} }]) },
+          delivered: ["shell-layout"],
+        }),
+        fakeFynApp({
+          name: "fynapp-twice",
+          version: "2.0.0",
+          exposes: { "./main": fakeUnit(["execute"], [{ info: decl, config: {} }]) },
+          delivered: ["shell-layout"],
+        }),
+      ],
+      middlewares: [{ provider: "fynapp-shell-mw", name: "shell-layout", hostVersion: "1.0.0" }],
+    });
+  }
+
+  /** The collision is reachable: one app row draws both chips at once. */
+  it("puts both facts on the same FynApp", () => {
+    const { fynmesh } = run(ambiguousPair());
+    const winner = fynmesh!.apps.find((a) => a.key === "fynapp-twice@2.0.0")!;
+
+    expect(winner.isDefaultForName).toBe(true);
+    expect(fynmesh!.apps.find((a) => a.key === "fynapp-twice@1.0.0")!.isDefaultForName).toBe(false);
+    expect(useResolution(winner.usesMiddleware[0])).toBe("default");
+  });
+
+  /** ...and the two chips no longer use the same word for it. */
+  it("spells them differently", () => {
+    expect(Object.values(VIA_LABEL)).not.toContain(BARE_NAME_LABEL);
+    const words = new Set(BARE_NAME_LABEL.split(/\W+/));
+    for (const label of Object.values(VIA_LABEL)) {
+      expect(words.has(label)).toBe(false);
+    }
+  });
+
+  /** The branch vocabulary is the one that may not move: it mirrors `resolvedVia`. */
+  it("leaves the five branch names alone, so both views still read one table", () => {
+    expect(VIA_LABEL).toEqual({
+      exact: "exact",
+      range: "range",
+      default: "default",
+      fallback: "fallback",
+      unresolved: "unresolved",
+    });
+  });
+
+  /*
+   * The tooltip is where the opposite tie-break gets said, because a reader who
+   * has just met a middleware `default` slot will otherwise carry that rule --
+   * first wins, never moves -- straight onto this key, where it is backwards.
+   */
+  it("says which lookups land here and that the key moves", () => {
+    const { fynmesh } = run(ambiguousPair());
+    const title = bareNameTitle(fynmesh!.apps.find((a) => a.key === "fynapp-twice@2.0.0")!);
+
+    expect(title).toContain("fynapp-twice");
+    expect(title).toContain("LAST");
+    expect(title).toContain("opposite");
   });
 });
