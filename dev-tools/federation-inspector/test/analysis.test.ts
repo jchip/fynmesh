@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
-import { buildGraph } from "../src/analysis/graph.js";
+import { buildGraph, neighbourhood, reachByDepth } from "../src/analysis/graph.js";
 import { satisfies, maxSatisfying, compareVersionStrings } from "../src/analysis/semver.js";
 import {
   parseQuery,
@@ -88,6 +88,35 @@ describe("graph", () => {
     expect(g.cycles).toHaveLength(1);
     expect(g.cycles[0].sort()).toEqual(["a", "b", "c"]);
     expect(g.inCycle.has("b")).toBe(true);
+  });
+
+  /*
+   * The depth control's problem: on the demo page depth 3 and depth 4 draw the
+   * same 14 nodes, and pressing 4 was indistinguishable from a broken button.
+   */
+  it("reports what each focus depth would reach, and where it stops growing", () => {
+    const loader = new FakeLoader();
+    const a: any = { id: "a", d: [] };
+    const b: any = { id: "b", d: [] };
+    const c: any = { id: "c", d: [] };
+    a.d = [b];
+    b.d = [c];
+    loader.addRecord(a).addRecord(b).addRecord(c);
+    const g = buildGraph(collect({ loader, federation: null }));
+
+    // a -> b -> c: one hop reaches b, two reach c, and there is nothing left
+    expect(reachByDepth(g, "a", 4)).toEqual([2, 3, 3, 3]);
+    // agrees with the neighbourhood the graph would actually draw
+    expect(neighbourhood(g, "a", 3).nodes.size).toBe(3);
+    // both directions, so the middle of the chain closes in one hop
+    expect(reachByDepth(g, "b", 4)).toEqual([3, 3, 3, 3]);
+  });
+
+  it("computes a focus depth once per graph, not once per render", () => {
+    const loader = new FakeLoader();
+    loader.addRecord({ id: "a", d: [] } as any);
+    const g = buildGraph(collect({ loader, federation: null }));
+    expect(reachByDepth(g, "a", 4)).toBe(reachByDepth(g, "a", 4));
   });
 
   it("survives a chain deeper than the JS stack would allow recursively", () => {

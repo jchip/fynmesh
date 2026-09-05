@@ -462,6 +462,14 @@ select:focus-visible,
 .facet:hover { color: var(--fg-strong); }
 .facet[aria-pressed="true"] { background: var(--bg-sel); color: var(--accent); }
 .facet .n { font-variant-numeric: tabular-nums; opacity: 0.75; }
+/*
+ * A facet that would change nothing -- a graph depth reaching no further than
+ * the one below it. Left in the row rather than hidden, because the reader is
+ * entitled to see that the setting exists and that it is spent, and its title
+ * says which depth already reached those nodes.
+ */
+.facet:disabled { opacity: 0.4; cursor: default; }
+.facet:disabled:hover { color: var(--fg-dim); }
 
 .selectish {
   height: calc(var(--scale) * 24px);

@@ -25,7 +25,12 @@ import {
   snapshot,
   visibleModules,
 } from "../state.js";
-import { layerLayout, neighbourhood, type Graph } from "../../analysis/graph.js";
+import {
+  layerLayout,
+  neighbourhood,
+  reachByDepth,
+  type Graph,
+} from "../../analysis/graph.js";
 import {
   edgeKey,
   elkLayout,
@@ -59,6 +64,8 @@ const SUB_CHARS = 26;
 const GAP_X = 80;
 const GAP_Y = 12;
 const MAX_NODES = 320;
+/** the depths the focus control offers */
+const HOPS = [1, 2, 3, 4];
 
 const ZOOM_MIN = 0.3;
 const ZOOM_MAX = 2.5;
@@ -465,6 +472,13 @@ export function GraphView(): JSX.Element {
       edges,
       graph,
       focus,
+      // what each depth setting would reach, so the control can say so before
+      // it is pressed. Empty when there is nothing focused to widen around --
+      // including a selection this graph does not contain.
+      reach:
+        focus && graph.byId.has(focus)
+          ? reachByDepth(graph, focus, HOPS[HOPS.length - 1])
+          : [],
       multiVersion: multiVersionNames(snapshot.value.containers),
       key: structureKey(ids, edges),
       fallback: fallbackPlacement(ids, edges),
@@ -534,17 +548,43 @@ export function GraphView(): JSX.Element {
         </span>
         {m.focus ? (
           <>
-            <span class="grouplabel">depth</span>
-            {[1, 2, 3, 4].map((h) => (
-              <button
-                key={h}
-                class="facet"
-                aria-pressed={graphHops.value === h}
-                onClick={() => (graphHops.value = h)}
-              >
-                {h}
-              </button>
-            ))}
+            {m.reach.length ? (
+              <>
+                <span class="grouplabel">depth</span>
+                {HOPS.map((h) => {
+                  const nodes = m.reach[h - 1];
+                  // the neighbourhoods are nested, so reaching the same count
+                  // as the depth below means reaching the same nodes: this
+                  // button would redraw the picture already on screen
+                  const closed = h > 1 && nodes === m.reach[h - 2];
+                  /*
+                   * Never take away the depth the reader is standing on. A
+                   * control going dead under the pointer reads as a fault, the
+                   * pressed state has to live somewhere, and `aria-pressed` on
+                   * a disabled button is a contradiction. So a closed depth is
+                   * disabled only while it is not the current one.
+                   */
+                  const dead = closed && graphHops.value !== h;
+                  return (
+                    <button
+                      key={h}
+                      class="facet"
+                      aria-pressed={graphHops.value === h}
+                      disabled={dead}
+                      title={
+                        closed
+                          ? `depth ${h} reaches the same ${nodes} nodes as depth ${h - 1}`
+                          : `depth ${h} reaches ${plural(nodes, "node")}`
+                      }
+                      onClick={() => (graphHops.value = h)}
+                    >
+                      {h}
+                      <span class="n">{nodes}</span>
+                    </button>
+                  );
+                })}
+              </>
+            ) : null}
             <button class="selectish" onClick={() => (selected.value = undefined)}>
               clear focus
             </button>

@@ -207,6 +207,47 @@ export function neighbourhood(
 }
 
 /**
+ * How many nodes `neighbourhood` reaches at each depth from 1 to `maxHops`.
+ *
+ * The graph's depth control has to say what a setting buys before it is
+ * pressed: on the demo page depth 3 and depth 4 both return the same 14 nodes
+ * because the neighbourhood has already closed, and a button that redraws an
+ * identical graph is indistinguishable from a button that does nothing at all.
+ *
+ * It goes back through `neighbourhood` for each depth rather than growing one
+ * search, so the number on a button cannot drift from the graph the button
+ * draws. Counts are enough to compare two depths: the neighbourhoods are
+ * nested by construction -- depth h+1 keeps everything depth h reached -- so
+ * equal sizes mean the same set.
+ *
+ * Cached per graph and focus. `buildGraph` runs on every 500ms collection, so
+ * a strong cache would grow for as long as the panel stays open; a WeakMap
+ * drops the whole entry with the graph it was computed for. Within one
+ * snapshot the view re-renders on every hover, zoom and pan, and this is what
+ * keeps each of those from re-running four searches.
+ */
+const reachCache = new WeakMap<Graph, Map<string, number[]>>();
+
+export function reachByDepth(graph: Graph, id: string, maxHops: number): number[] {
+  let byFocus = reachCache.get(graph);
+  if (!byFocus) {
+    byFocus = new Map();
+    reachCache.set(graph, byFocus);
+  }
+  const key = maxHops + " " + id;
+  const hit = byFocus.get(key);
+  if (hit) {
+    return hit;
+  }
+  const counts: number[] = [];
+  for (let h = 1; h <= maxHops; h++) {
+    counts.push(neighbourhood(graph, id, h).nodes.size);
+  }
+  byFocus.set(key, counts);
+  return counts;
+}
+
+/**
  * Assign nodes to layers for the graph view.
  *
  * Longest-path layering, then a fixed number of median-heuristic sweeps to
