@@ -335,7 +335,34 @@ export interface FynAppManifest {
   name?: string;
   version?: string;
   exposes?: Record<string, string>;
-  "consume-shared"?: Record<string, { semver?: string; singleton?: boolean }>;
+  /**
+   * A shared module this build declared it consumes but does not provide.
+   *
+   * `semver` is the whole entry. The enrichment builds a fresh `{ semver }`
+   * from the shared config and drops the rest, so the `singleton` this used to
+   * declare here never existed in any emitted manifest -- checked against
+   * every built demo manifest, where it appears zero times. Read singleton-ness
+   * off `provide-shared`, or off the live `$SC`.
+   */
+  "consume-shared"?: Record<string, { semver?: string }>;
+  /**
+   * A shared module this build declared it provides.
+   *
+   * Open-ended because the enrichment stores the author's whole shared config
+   * object by reference rather than picking fields out of it, so anything the
+   * config carried lands here. `singleton` and `semver` are on every real
+   * entry; `requiredVersion` shows up as a map of peer ranges, not a string.
+   */
+  "provide-shared"?: Record<
+    string,
+    {
+      semver?: string;
+      singleton?: boolean;
+      eager?: boolean;
+      import?: boolean;
+      [key: string]: unknown;
+    }
+  >;
   "import-exposed"?: Record<
     string,
     Record<
@@ -343,13 +370,24 @@ export interface FynAppManifest {
       {
         semver?: string;
         sites?: string[];
+        /** `"module"` or `"middleware"`; the producer emits no other value */
         type?: string;
+        /** middleware imports only: the expose the middleware was found on */
         exposeModule?: string;
+        /** middleware imports only */
         middlewareName?: string;
       }
     >
   >;
   "shared-providers"?: Record<string, { semver?: string; provides?: string[] }>;
+  /**
+   * The generic dialect's share map.
+   *
+   * Written only by rollup-plugin-federation's no-enrichment branch, and
+   * always written by it -- so its presence, empty or not, is what tells the
+   * two manifest dialects apart. See `manifestDialect` in the containers view.
+   */
+  shared?: Record<string, Record<string, unknown>>;
   [key: string]: unknown;
 }
 

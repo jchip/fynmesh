@@ -802,6 +802,13 @@ export function collectFederation(
   if (containers.length && !sawExposes) {
     cap.notes.push("Container.$E is unreadable, so exposed modules cannot be listed.");
   }
+  if (containers.length && !sawManifest) {
+    cap.notes.push(
+      "No container on this page carries a __FYNAPP_MANIFEST__, so the containers " +
+        "view can only show what the runtime did, never what the build declared. " +
+        "Containers not built by the FynMesh toolchain do not have one."
+    );
+  }
 
   applySingletonFlags(scopes, containers);
   attributeModules(containers, modules, scopes, resolve);

@@ -13,7 +13,12 @@
 
 import type { JSX } from "preact";
 import { useComputed } from "@preact/signals";
-import type { ContainerNode, ContainerVersionNode, ShareDecl } from "../../core/model.js";
+import type {
+  ContainerNode,
+  ContainerVersionNode,
+  FynAppManifest,
+  ShareDecl,
+} from "../../core/model.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
 import { filterContainers } from "../../analysis/search.js";
 import {
@@ -395,63 +400,395 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
   );
 }
 
-/**
- * FynMesh-specific extras.
- *
- * `import-exposed` is the interesting one: it records that this app imports
- * another app's exposed module, which is cross-app wiring that appears nowhere
- * in the loader's own graph until the import actually happens.
- */
-function ManifestBlock({ version: v }: { version: ContainerVersionNode }): JSX.Element {
-  const m = v.manifest!;
-  const importExposed = m["import-exposed"] ?? {};
-  const providers = m["shared-providers"] ?? {};
+/* ------------------------------------------------------- manifest reading */
 
-  const entries = Object.entries(importExposed);
+/**
+ * The manifest keys this view renders, in render order.
+ *
+ * Spelled as the build spells them rather than given friendly names: the
+ * point of showing a manifest is to send a reader to the file, and a label
+ * that does not match the key they will search for costs more than it reads.
+ *
+ * `middlewares` and `requires` are declared on the kernel's own manifest type
+ * but no producer emits them, so listing them here would report every real
+ * manifest as missing two keys it was never going to have.
+ */
+export const MANIFEST_SECTIONS = [
+  "import-exposed",
+  "consume-shared",
+  "provide-shared",
+  "shared-providers",
+  "shared",
+] as const;
+
+/**
+ * The four keys only the FynApp-enriched build emits.
+ *
+ * `shared` is rendered but not counted here: an enriched manifest never
+ * carries it, so reporting it missing would put a false absence on every
+ * FynApp on the page.
+ */
+export const FYNAPP_MANIFEST_SECTIONS = MANIFEST_SECTIONS.filter((k) => k !== "shared");
+
+export type ManifestSectionState = "absent" | "empty" | "filled";
+
+/**
+ * Is this key missing from the manifest, or declared with nothing in it?
+ *
+ * Both render as a row that is not there, and they mean opposite things. A
+ * container built by the plain rollup plugin carries none of these keys, so
+ * `provide-shared` absent says "this build never enriched the manifest";
+ * `provide-shared: {}` says "it did, and this app provides nothing". Reporting
+ * the second as the first is how an empty view comes to read as a broken one.
+ *
+ * A key present holding something that is not an object counts as empty, not
+ * absent -- unreadable is still declared, and the row says so.
+ */
+export function manifestSectionState(m: FynAppManifest, key: string): ManifestSectionState {
+  const value = m[key];
+  if (value === undefined || value === null) {
+    return "absent";
+  }
+  if (typeof value !== "object") {
+    return "empty";
+  }
+  return Object.keys(value as object).length ? "filled" : "empty";
+}
+
+/** The FynApp-enriched keys this manifest does not carry at all. */
+export function absentManifestSections(m: FynAppManifest): string[] {
+  return FYNAPP_MANIFEST_SECTIONS.filter((k) => manifestSectionState(m, k) === "absent");
+}
+
+/**
+ * Which of the two manifest dialects this is.
+ *
+ * `shared` is the discriminator, and it is the only one that works in both
+ * directions. The rollup plugin's no-enrichment branch always writes
+ * `shared: options.shared || {}`, so the key is there even when it is empty;
+ * `create-fynapp`'s enrichment builds its result from a fixed key list that
+ * has no `shared` in it, and drops its own maps when they come out empty. So
+ * the four FynApp keys are each individually optional in an enriched manifest
+ * and their absence proves nothing, while `shared` present proves the build
+ * never ran the enrichment at all.
+ *
+ * Checked with `in` rather than for truthiness precisely because the empty
+ * case is the one that matters.
+ */
+export function manifestDialect(m: FynAppManifest): "generic" | "fynapp" {
+  return "shared" in m ? "generic" : "fynapp";
+}
+
+/** The entries of one manifest section, or nothing when it has none to give. */
+export function manifestEntries(m: FynAppManifest, key: string): Array<[string, unknown]> {
+  const value = m[key];
+  return value && typeof value === "object" ? Object.entries(value as object) : [];
+}
+
+/** One `import-exposed[app][path]` entry, flattened. */
+export interface ImportExposedRow {
+  app: string;
+  path: string;
+  type?: string;
+  semver?: string;
+  sites?: string[];
+  exposeModule?: string;
+  middlewareName?: string;
+}
+
+/**
+ * Flatten `import-exposed` into one row per import.
+ *
+ * Flat rather than grouped under an app chip, which is what this row used to
+ * be: an app that pulls one module and one middleware out of the same
+ * neighbour is doing two unrelated things, and a single chip listing both
+ * paths said neither.
+ */
+export function importExposedRows(m: FynAppManifest): ImportExposedRow[] {
+  const rows: ImportExposedRow[] = [];
+  for (const [app, byPath] of manifestEntries(m, "import-exposed")) {
+    if (!byPath || typeof byPath !== "object") {
+      continue;
+    }
+    for (const [path, info] of Object.entries(byPath as Record<string, any>)) {
+      const e = (info ?? {}) as Record<string, unknown>;
+      rows.push({
+        app,
+        path,
+        type: typeof e.type === "string" ? e.type : undefined,
+        semver: typeof e.semver === "string" ? e.semver : undefined,
+        sites: Array.isArray(e.sites) ? e.sites.map(String) : undefined,
+        exposeModule: typeof e.exposeModule === "string" ? e.exposeModule : undefined,
+        middlewareName: typeof e.middlewareName === "string" ? e.middlewareName : undefined,
+      });
+    }
+  }
+  return rows;
+}
+
+/**
+ * A one-line summary of a `consume-shared` / `provide-shared` /
+ * `shared-providers` entry.
+ *
+ * Shape-tolerant on purpose. These come off an untrusted build artefact whose
+ * per-entry fields differ between the three keys and have changed before, so
+ * the known fields are preferred and anything else falls back to its JSON
+ * rather than rendering as a blank beside a key that is plainly there.
+ */
+export function describeManifestEntry(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return value === undefined ? "" : String(value);
+  }
+  const e = value as Record<string, unknown>;
+  const parts: string[] = [];
+  if (Array.isArray(e.provides) && e.provides.length) {
+    parts.push(e.provides.join(", "));
+  }
+  if (typeof e.version === "string") {
+    parts.push(e.version);
+  }
+  if (typeof e.semver === "string") {
+    parts.push(e.semver);
+  }
+  return parts.length ? parts.join(" ") : safeStringify(value);
+}
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/**
+ * The FynMesh build manifest, as the build declared it.
+ *
+ * Every band above this one is read off the live federation runtime; this one
+ * is read off what the author wrote. That is the reason to render it at all --
+ * a disagreement between the two is a bug, and it is invisible unless both are
+ * on screen.
+ *
+ * `import-exposed` is the richest of the four, and the only record anywhere of
+ * which source file triggered a cross-app import: nothing in the loader's own
+ * graph knows that until the import actually happens.
+ */
+function ManifestBlock({ version: v }: { version: ContainerVersionNode }): JSX.Element | null {
+  const m = v.manifest!;
+  const generic = manifestDialect(m) === "generic";
+  const absent = generic ? [] : absentManifestSections(m);
+  const imports = importExposedRows(m);
+
+  const sections = MANIFEST_SECTIONS.filter((k) => manifestSectionState(m, k) !== "absent");
+  if (!sections.length && !absent.length) {
+    return null;
+  }
+
   return (
     <>
-      {entries.length ? (
-        <div class="node l2 wrapline">
-          <span class="faint rowlabel">
-            imports from
+      <div class="node l2" style={{ borderBottom: 0, minHeight: "20px" }}>
+        <span class="faint rowlabel">
+          manifest
+        </span>
+        <span class="faint" style={{ fontSize: "9.5px" }}>
+          what the build declared, not what the runtime did
+        </span>
+        {/*
+          * A generic manifest is missing all four FynApp keys by construction,
+          * so listing them as absences would read as four faults where there
+          * is one fact.
+          */}
+        {generic ? (
+          <span
+            class="faint"
+            style={{ fontSize: "9.5px" }}
+            title={
+              "this container was built by rollup-plugin-federation with no enrichManifest " +
+              "hook, so its manifest carries a raw `shared` map and none of the FynApp keys " +
+              "(import-exposed, consume-shared, provide-shared, shared-providers). That is " +
+              "the build it asked for, not a gap."
+            }
+          >
+            · plain federation manifest, not FynApp-enriched
           </span>
-          <span class="inline">
-            {entries.map(([app, exposes]) => (
-              <span key={app} class="inline">
-                <ContainerChip
-                  name={app}
-                  onClick={() => focusOn("containers", "container:" + app, app)}
-                />
-                <span class="faint mono">
-                  {Object.keys(exposes).join(" ")}
-                </span>
-              </span>
-            ))}
+        ) : absent.length ? (
+          <span
+            class="faint"
+            style={{ fontSize: "9.5px" }}
+            title={
+              "these keys are not in this container's __FYNAPP_MANIFEST__ at all, which is " +
+              "a different fact from declaring one and leaving it empty. create-fynapp drops " +
+              "a map it built and found empty, so absent here means nothing to declare."
+            }
+          >
+            · not declared: {absent.join(", ")}
           </span>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
-      {Object.keys(providers).length ? (
-        <div class="node l2 wrapline">
-          <span class="faint rowlabel">
-            provided by
-          </span>
-          <span class="inline">
-            {Object.entries(providers).map(([app, info]) => (
-              <span key={app} class="inline">
-                <ContainerChip
-                  name={app}
-                  onClick={() => focusOn("containers", "container:" + app, app)}
-                />
-                <span class="faint">
-                  {(info.provides ?? []).join(", ")}
-                  {info.semver ? " " + info.semver : ""}
-                </span>
-              </span>
-            ))}
-          </span>
-        </div>
-      ) : null}
+      {sections.map((key) =>
+        /*
+         * `import-exposed` is two levels deep, so it can be non-empty at the
+         * top and still flatten to no rows -- an app key holding no imports.
+         * Without the second term that section renders as nothing at all,
+         * which is the one thing this block exists to stop doing.
+         */
+        manifestSectionState(m, key) === "empty" ||
+        (key === "import-exposed" && !imports.length) ? (
+          <div key={key} class="node l3">
+            <ManifestKey name={key} />
+            <span class="faint" title="the key is in the manifest; it carries no entries">
+              declared, and empty
+            </span>
+          </div>
+        ) : key === "import-exposed" ? (
+          imports.map((row, i) => (
+            <ImportExposedRowView key={row.app + " " + row.path} row={row} first={i === 0} />
+          ))
+        ) : (
+          <ManifestEntriesRow key={key} name={key} entries={manifestEntries(m, key)} />
+        )
+      )}
     </>
+  );
+}
+
+/** The literal manifest key, in the column the share rows put their key in. */
+function ManifestKey({ name, blank }: { name: string; blank?: boolean }): JSX.Element {
+  return (
+    <span class="label mono" style={{ flex: "0 1 132px", minWidth: 0 }} title={name}>
+      {blank ? "" : name}
+    </span>
+  );
+}
+
+function ImportExposedRowView({
+  row,
+  first,
+}: {
+  row: ImportExposedRow;
+  first: boolean;
+}): JSX.Element {
+  const mw = row.type === "middleware";
+  return (
+    <div class="node l3">
+      <ManifestKey name="import-exposed" blank={!first} />
+      <ContainerChip
+        name={row.app}
+        onClick={() => focusOn("containers", "container:" + row.app, row.app)}
+      />
+      <span class="label mono" style={{ flex: "0 1 150px", minWidth: 0 }} title={row.path}>
+        {row.path}
+      </span>
+      {/*
+        * A module import and a middleware import read identically without
+        * this, and they are not the same thing: one pulls code, the other
+        * hands this app's FynUnit over to another app's middleware.
+        */}
+      {row.type ? (
+        <Chip
+          tone={mw ? "accent" : undefined}
+          title={
+            mw
+              ? "a middleware import: " +
+                (row.middlewareName ?? "this middleware") +
+                " from the " +
+                (row.exposeModule ?? row.path) +
+                " expose. It runs this app's FynUnit rather than being imported by it."
+              : "a plain module import of another app's expose"
+          }
+        >
+          {mw && row.middlewareName ? row.middlewareName : row.type}
+        </Chip>
+      ) : (
+        <span class="faint" title="the build recorded no type for this import">
+          type not declared
+        </span>
+      )}
+      <span
+        class="faint mono"
+        style={{ flex: "0 1 68px", minWidth: 0 }}
+        title={row.semver ? undefined : "the import attribute declared no semver range"}
+      >
+        {row.semver ?? "any"}
+      </span>
+      <span style={{ flex: 1 }} />
+      <SitesCell sites={row.sites} />
+    </div>
+  );
+}
+
+/**
+ * Which source files import this.
+ *
+ * Absent and empty are spelled differently on purpose. The build only records
+ * `sites` for the import kinds it tracks, so a missing list means "this build
+ * does not say", and an empty one means "it says: nowhere" -- which, next to a
+ * declared import, is a finding.
+ */
+function SitesCell({ sites }: { sites?: string[] }): JSX.Element {
+  if (!sites) {
+    return (
+      <span class="faint" title="this build recorded no import sites for this entry">
+        sites not recorded
+      </span>
+    );
+  }
+  if (!sites.length) {
+    return (
+      <span class="faint" title="the manifest lists no source file importing this">
+        no import sites
+      </span>
+    );
+  }
+  return (
+    <span class="faint mono" title={"imported from\n" + sites.join("\n")}>
+      {sites.length === 1 ? sites[0] : sites.length + " sites"}
+    </span>
+  );
+}
+
+/**
+ * `consume-shared`, `provide-shared`, `shared-providers` and `shared`.
+ *
+ * One wrapping line each rather than a row per entry: unlike `import-exposed`
+ * these carry two or three fields, and the shares band above already gives
+ * every one of these keys a full row with what it actually resolved to. What
+ * this line adds is the declaration to compare that against.
+ *
+ * The full entry goes in the title, because `provide-shared` holds the whole
+ * shared config by reference and so has no fixed field list to render.
+ */
+function ManifestEntriesRow({
+  name,
+  entries,
+}: {
+  name: string;
+  entries: Array<[string, unknown]>;
+}): JSX.Element {
+  return (
+    <div class="node l3 wrapline">
+      <ManifestKey name={name} />
+      <span class="inline">
+        {entries.map(([key, value]) => (
+          <span key={key} class="inline" title={key + " " + safeStringify(value)}>
+            {name === "shared-providers" ? (
+              <ContainerChip
+                name={key}
+                onClick={() => focusOn("containers", "container:" + key, key)}
+              />
+            ) : (
+              <span class="label mono">{key}</span>
+            )}
+            {(value as { singleton?: unknown } | null)?.singleton === true ? (
+              <span class="sgl" title="declared singleton">
+                SGL
+              </span>
+            ) : null}
+            <span class="faint mono">{describeManifestEntry(value)}</span>
+          </span>
+        ))}
+      </span>
+    </div>
   );
 }
