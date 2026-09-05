@@ -209,13 +209,21 @@ function readShareConfig(
   return { consumes, ok: true, rvmOk };
 }
 
-/** One copy the share store says a container filed into a scope. */
+/** One version the share store says a container filed into a scope. */
 interface ProvidedCopy {
   /** the container version the source named; "" when it named none */
   containerVersion: string;
   scope: string;
   key: string;
   version: string;
+  /** a copy of this version was really supplied, not merely announced */
+  supplied: boolean;
+}
+
+/** What one container filed under one share key: announced, and of those, supplied. */
+interface Filed {
+  versions: Set<string>;
+  supplied: Set<string>;
 }
 
 /**
@@ -239,18 +247,31 @@ interface ProvidedCopy {
  * (`./vue.js`) rather than a module url -- see "a specifier is not a module"
  * in the design note. Two spellings of one copy would otherwise be counted as
  * two provisions; keyed on the version they collapse into one.
+ *
+ * A source is an announcement, not a copy. `_S` files one when a container
+ * says it *can* provide a version; the store entry gains `url`/`id` only when
+ * something supplied the module (`_mfLoaded`, or resolving a consumer to it).
+ * Counting sources alone therefore over-claims, and did: the Containers view
+ * said marko provided 5.37.31 while Issues warned that version had sources and
+ * nothing else. `supplied` carries the second fact so neither view has to
+ * guess. It is read off the version, not the source, because the store records
+ * the address once per version -- so co-announcers of a version that was
+ * supplied all count as providers of it, which is what `sources` already means
+ * everywhere else in the UI.
  */
 function indexProvidedCopies(scopes: ShareScopeNode[]): Map<string, ProvidedCopy[]> {
   const byContainer = new Map<string, ProvidedCopy[]>();
   for (const scope of scopes) {
     for (const key of scope.keys) {
       for (const ver of key.versions) {
+        const supplied = !!(ver.url || ver.chunkId);
         for (const src of ver.sources) {
           const copy: ProvidedCopy = {
             containerVersion: src.version ?? "",
             scope: scope.name,
             key: key.key,
             version: ver.version,
+            supplied,
           };
           const list = byContainer.get(src.container);
           if (list) {
@@ -278,6 +299,10 @@ function indexProvidedCopies(scopes: ShareScopeNode[]): Map<string, ProvidedCopy
  * versions live there is no way to tell which of them filed the copy, and
  * telling that apart is the case this tool exists for, so an unattributable
  * copy is dropped rather than guessed onto both.
+ *
+ * Each declaration comes out with `versions` -- everything this container
+ * announced it can provide -- and `supplied`, the subset a copy really exists
+ * for. See `indexProvidedCopies` for why those are not the same list.
  */
 function provisions(
   copies: ProvidedCopy[],
@@ -285,7 +310,7 @@ function provisions(
   sole: boolean,
   consumes: ShareDecl[]
 ): ShareDecl[] {
-  const byScope = new Map<string, Map<string, Set<string>>>();
+  const byScope = new Map<string, Map<string, Filed>>();
   for (const copy of copies) {
     const mine = copy.containerVersion
       ? versionKeys.includes(copy.containerVersion)
@@ -298,23 +323,30 @@ function provisions(
       keys = new Map();
       byScope.set(copy.scope, keys);
     }
-    const versions = keys.get(copy.key);
-    if (versions) {
-      versions.add(copy.version);
-    } else {
-      keys.set(copy.key, new Set([copy.version]));
+    let filed = keys.get(copy.key);
+    if (!filed) {
+      filed = { versions: new Set(), supplied: new Set() };
+      keys.set(copy.key, filed);
+    }
+    filed.versions.add(copy.version);
+    if (copy.supplied) {
+      filed.supplied.add(copy.version);
     }
   }
 
   const extra: ShareDecl[] = [];
   for (const [scope, keys] of byScope) {
-    for (const [key, versions] of keys) {
+    for (const [key, filed] of keys) {
+      const versions = filed.versions;
       const decl = consumes.find((d) => d.key === key && d.shareScope === scope);
       if (decl) {
+        // a version the container's own `$SC` named but the store never saw is
+        // announced by nobody, so it joins `versions` and not `supplied`
         for (const v of decl.versions) {
           versions.add(v);
         }
         decl.versions = [...versions].sort(compareVersionDesc);
+        decl.supplied = [...filed.supplied].sort(compareVersionDesc);
         continue;
       }
       // The container filed a copy under a key its `$SC` did not yield: either
@@ -328,6 +360,7 @@ function provisions(
         importable: true,
         shareScope: scope,
         versions: [...versions].sort(compareVersionDesc),
+        supplied: [...filed.supplied].sort(compareVersionDesc),
         inferred: true,
       });
     }

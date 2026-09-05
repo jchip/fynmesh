@@ -192,6 +192,18 @@ export interface ShareDecl {
    * `indexProvidedCopies` in the federation collector.
    */
   versions: string[];
+  /**
+   * the subset of `versions` something actually supplied a copy of
+   *
+   * Announcing and supplying are two different events in federation-js:
+   * `Federation._S` files a source the moment a container says it *can*
+   * provide a version, while the store entry only gains a `url` or an `id`
+   * once a module was really handed over. Reading a source as a copy is what
+   * had the Containers view claim `marko@5.37.31` while Issues warned nobody
+   * had supplied it -- so both facts are carried, and the reader is told which
+   * one they are looking at.
+   */
+  supplied?: string[];
   /** required-version map: importer dir to the range from its nearest package.json */
   rvm?: Record<string, string>;
   /**

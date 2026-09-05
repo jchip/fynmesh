@@ -96,10 +96,56 @@ describe("collect", () => {
     // so `versions` comes from the store -- and the copy announced twice, once
     // by specifier and once by url, is one provision
     expect(react.versions).toEqual(["19.0.0"]);
-    expect(v.provides.map((d) => d.key).sort()).toEqual(["esm-react", "vue"]);
+    expect(v.provides.map((d) => d.key).sort()).toEqual(["esm-react", "marko", "vue"]);
     // filed with no container version, attributable because this container has
     // only one version on the page
     expect(v.provides.find((d) => d.key === "vue")!.versions).toEqual(["3.5.13"]);
+  });
+
+  it("separates the versions a container announced from the ones supplied", () => {
+    const { loader, federation } = minifiedSharePage();
+    const s = collect({ loader, federation });
+    analyse(s);
+    const v = s.containers.find((c) => c.name === "fynapp-min")!.versions[0];
+
+    // a copy of each of these arrived, so the store carries an address for it
+    for (const key of ["esm-react", "vue"]) {
+      const decl = v.provides.find((d) => d.key === key)!;
+      expect(decl.supplied).toEqual(decl.versions);
+    }
+
+    // marko was announced by the same `_S` call every other key went through
+    // and nothing ever supplied it, so it stays a declaration and does not
+    // become a copy
+    const marko = v.provides.find((d) => d.key === "marko")!;
+    expect(marko.versions).toEqual(["5.37.31"]);
+    expect(marko.supplied).toEqual([]);
+  });
+
+  it("agrees with the share-not-provided diagnostic about every version", () => {
+    const { loader, federation } = minifiedSharePage();
+    const s = collect({ loader, federation });
+    analyse(s);
+
+    // the contradiction FYM-341 is about: whatever Issues calls unsupplied,
+    // no container may be shown providing. Both sides computed independently.
+    const flagged = s.issues
+      .filter((i) => i.code === "share-not-provided")
+      .map((i) => i.title.split(" ")[0])
+      .sort();
+    expect(flagged).toEqual(["marko@5.37.31"]);
+
+    const claimed: string[] = [];
+    for (const c of s.containers) {
+      for (const v of c.versions) {
+        for (const d of [...v.provides, ...v.consumes]) {
+          for (const ver of d.supplied ?? []) {
+            claimed.push(d.key + "@" + ver);
+          }
+        }
+      }
+    }
+    expect(claimed).not.toContain("marko@5.37.31");
   });
 
   it("reports required-version maps as unavailable rather than as none", () => {
@@ -129,9 +175,22 @@ describe("collect", () => {
     const lib = s.containers.find((c) => c.name === "fynapp-react-lib")!.versions[0];
     expect(lib.provides.map((d) => d.key)).toEqual(["esm-react"]);
     expect(lib.provides[0].versions).toEqual(["19.0.0"]);
+    expect(lib.provides[0].supplied).toEqual(["19.0.0"]);
     // reconstructed, so "no range" here means unknown and says so
     expect(lib.provides[0].inferred).toBe(true);
     expect(lib.consumes).toHaveLength(0);
+  });
+
+  it("credits a store-only container with the declaration and not a copy", () => {
+    const s = snap();
+    const tokens = s.containers.find((c) => c.name === "fynapp-design-tokens")!.versions[0];
+    const decl = tokens.provides[0];
+    // the store's only record of this version is a source: nothing resolved to
+    // it and nothing loaded it, which is what Issues reports it for
+    expect(decl.key).toBe("design-tokens");
+    expect(decl.versions).toEqual(["1.0.0"]);
+    expect(decl.supplied).toEqual([]);
+    expect(decl.inferred).toBe(true);
   });
 
   it("builds the share scope tree with sources and loaded state", () => {

@@ -268,6 +268,14 @@ function rvmUnavailable(): boolean {
 function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
   const r = decl.resolved;
   const rvm = decl.rvm ? Object.entries(decl.rvm) : [];
+  /*
+   * Announced and supplied are two facts, and one word for both is what let
+   * this row say marko provides 5.37.31 while Issues said nothing ever
+   * supplied it. Both are worth reading: a container offering a version that
+   * never loaded is exactly the shape a reader is here to find.
+   */
+  const supplied = decl.supplied ?? [];
+  const announced = decl.versions.filter((v) => !supplied.includes(v));
   return (
     <div class="node l3">
       {/*
@@ -333,9 +341,21 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
         </span>
       ) : null}
       <span style={{ flex: 1 }} />
-      {decl.versions.length ? (
-        <span class="faint" title={"this container can provide: " + decl.versions.join(", ")}>
-          provides {decl.versions.join(", ")}
+      {supplied.length ? (
+        <span class="faint" title={"a copy of these versions was supplied: " + supplied.join(", ")}>
+          provides {supplied.join(", ")}
+        </span>
+      ) : null}
+      {announced.length ? (
+        <span
+          class="faint"
+          title={
+            `announced into "${decl.shareScope}" as available, but nothing supplied a ` +
+            "copy: " +
+            announced.join(", ")
+          }
+        >
+          declares {announced.join(", ")}
         </span>
       ) : null}
     </div>
