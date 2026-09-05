@@ -163,7 +163,7 @@ describe("the apps list", () => {
 });
 
 describe("exposes", () => {
-  it("separates what the kernel loaded from what the build declared", () => {
+  it("separates what the kernel imported from what the build declared", () => {
     const { fynmesh } = run(
       devKernel({
         apps: [
@@ -177,19 +177,19 @@ describe("exposes", () => {
       })
     );
     const app = appNamed(fynmesh!.apps, "fynapp-1@1.0.0");
-    expect(app.loadedExposes).toEqual(["./main"]);
+    expect(app.importedExposes).toEqual(["./main"]);
     expect(app.declaredExposes).toEqual(["./main", "./config", "./widget"]);
     expect(app.unitHooks).toEqual(["initialize", "execute", "shutdown"]);
   });
 
-  it("reports no hooks rather than inventing them when ./main was not loaded", () => {
+  it("reports no hooks rather than inventing them when ./main was never imported", () => {
     const { fynmesh } = run(
       devKernel({
         apps: [fakeFynApp({ name: "fynapp-lib", version: "1.0.0", declared: ["./main"] })],
       })
     );
     const app = appNamed(fynmesh!.apps, "fynapp-lib@1.0.0");
-    expect(app.loadedExposes).toEqual([]);
+    expect(app.importedExposes).toEqual([]);
     expect(app.unitHooks).toEqual([]);
   });
 });

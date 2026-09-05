@@ -251,10 +251,42 @@ export interface ShareDecl {
 export interface ExposeInfo {
   /** the expose name, e.g. "./main" */
   name: string;
-  /** the chunk id it maps to, which is what an importer actually gets */
-  chunkId: string;
+  /**
+   * the chunk id it maps to, which is what an importer actually gets
+   *
+   * **Absent** when `$E` holds the name but no chunk id -- the build inlined
+   * that expose into the container entry instead of emitting a chunk for it
+   * (`_E("./main", Promise.resolve().then(...))` rather than `_E(name, _f(id))`).
+   * It is still a declared expose, and dropping it here is how the Containers
+   * tab came to count a smaller denominator than the FynApps tab for
+   * `fynapp-design-tokens`. See `src/core/exposes.ts`.
+   */
+  chunkId?: string;
   url?: string;
   stage?: LoadStage;
+  /**
+   * the loader has a record for `chunkId` past `registered`
+   *
+   * Always `false` when there is no `chunkId`: there is no chunk for the loader
+   * to have. That is why the Containers header says "chunks loaded" and not
+   * "exposes loaded" -- an inlined expose is perfectly usable and still counts
+   * zero chunks.
+   *
+   * Decided in `readExposes` and nowhere else, because it used to be decided in
+   * the Containers view instead -- which is how one screen came to print
+   * `2/5 exposes loaded` next to another printing `ex 1/5` for the same app.
+   * See `src/core/exposes.ts` for the three levels this is the middle of.
+   */
+  loaded: boolean;
+  /**
+   * the FynMesh kernel imported this expose into `fynApp.exposes`
+   *
+   * Filled in by the FynMesh pass, which runs after the federation pass and
+   * knows which FynApp each container version belongs to. **Absent** on a plain
+   * federation page, and on a container whose FynApp is no longer in the
+   * registry -- unknown, which is not the same claim as `false`.
+   */
+  imported?: boolean;
 }
 
 export interface ContainerVersionNode {
@@ -275,6 +307,16 @@ export interface ContainerVersionNode {
   bundles?: Record<string, string[]>;
   /** ids of modules attributed to this container version */
   moduleIds: string[];
+  /**
+   * the FynMesh pass matched a registered FynApp to this version and stamped
+   * `imported` across its exposes
+   *
+   * Recorded rather than sniffed. Reading it back off the exposes array --
+   * "does any row carry `imported`?" -- answers "no" for a container that
+   * declares nothing, which is indistinguishable from "there is no kernel", and
+   * that is the same guess-instead-of-record habit that produced this ticket.
+   */
+  importsKnown?: boolean;
 }
 
 export interface ContainerNode {
@@ -648,8 +690,17 @@ export interface FynAppNode {
   containerId?: string;
   /** set only when the container collector saw this exact version */
   containerVersion?: string;
-  /** exposes the kernel actually pulled in (`fynApp.exposes`) */
-  loadedExposes: string[];
+  /**
+   * exposes the kernel imported into `fynApp.exposes`
+   *
+   * Named `imported` rather than `loaded` deliberately. "Loaded" already means
+   * "the loader has a record" everywhere else in this model -- `ShareVersionNode.loaded`,
+   * `ExposeInfo.loaded` -- and an expose chunk can be loaded without anyone
+   * importing the expose, because a sibling expose imported it. Wearing one
+   * word for both is what had two tabs printing different numbers for the same
+   * app. See `src/core/exposes.ts`.
+   */
+  importedExposes: string[];
   /** exposes the build declared (`container.$E`) */
   declaredExposes: string[];
   /** FynUnit hooks the `./main` expose implements */
