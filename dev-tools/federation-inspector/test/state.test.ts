@@ -28,6 +28,22 @@ describe("persisted ui state", () => {
     expect(sanitise({ size: -5 })).toEqual({});
   });
 
+  // a well-formed number is not enough: below the smaller of Resize.tsx's
+  // MIN_W/MIN_H (240, its dock-bottom height floor) no viewport could ever
+  // have produced this value, so it is rejected rather than repaired.
+  it("drops a well-formed size no viewport could justify", () => {
+    expect(sanitise({ size: 6 })).toEqual({});
+    expect(sanitise({ size: 0 })).toEqual({});
+    expect(sanitise({ size: 239 })).toEqual({});
+  });
+
+  it("keeps a size at or above the floor, even if too small for one axis", () => {
+    expect(sanitise({ size: 240 })).toEqual({ size: 240 });
+    // too small for dock-right's 360 width floor, but a legitimate
+    // dock-bottom height -- sanitise can't tell which axis it was for
+    expect(sanitise({ size: 300 })).toEqual({ size: 300 });
+  });
+
   it("takes a float rect only when every side is a number", () => {
     expect(sanitise({ float: { x: 0, y: 0, w: 900 } })).toEqual({});
     expect(sanitise({ float: null })).toEqual({});

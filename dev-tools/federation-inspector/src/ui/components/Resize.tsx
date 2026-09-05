@@ -211,9 +211,20 @@ function ResizeHandle({ edge }: { edge: Edge }): JSX.Element {
  */
 export function useHeaderDrag(): JSX.HTMLAttributes<HTMLDivElement> {
   const start = useRef({ x: 0, y: 0, rect: { x: 0, y: 0, w: 0, h: 0 } });
+  // `start` is one shared record, not one per pointer, so a second pointer
+  // landing mid-drag (a palm touch, a second finger) would silently rebase it
+  // onto the new pointer's origin and the panel would jump. Tracking which
+  // pointer is actually dragging and ignoring every other id keeps the record
+  // meaningful for as long as it is shared.
+  const activePointerId = useRef<number | undefined>(undefined);
 
   if (dock.value !== "float") {
     return {};
+  }
+
+  function stopDragging(el: HTMLElement): void {
+    el.classList.remove("grabbing");
+    activePointerId.current = undefined;
   }
 
   return {
@@ -222,12 +233,19 @@ export function useHeaderDrag(): JSX.HTMLAttributes<HTMLDivElement> {
       if (target.closest("button, input, select, .rz")) {
         return;
       }
+      if (activePointerId.current !== undefined) {
+        return;
+      }
       const el = e.currentTarget as HTMLElement;
       el.setPointerCapture(e.pointerId);
+      activePointerId.current = e.pointerId;
       el.classList.add("grabbing");
       start.current = { x: e.clientX, y: e.clientY, rect: { ...floatRect.value } };
     },
     onPointerMove(e) {
+      if (e.pointerId !== activePointerId.current) {
+        return;
+      }
       const el = e.currentTarget as HTMLElement;
       if (!el.hasPointerCapture(e.pointerId)) {
         return;
@@ -240,10 +258,23 @@ export function useHeaderDrag(): JSX.HTMLAttributes<HTMLDivElement> {
       });
     },
     onPointerUp(e) {
+      if (e.pointerId !== activePointerId.current) {
+        return;
+      }
       const el = e.currentTarget as HTMLElement;
       el.releasePointerCapture(e.pointerId);
-      el.classList.remove("grabbing");
+      stopDragging(el);
       persist();
+    },
+    // the OS taking the gesture over, a touch turning into a scroll, a context
+    // menu -- any of these end the pointer without an onPointerUp, and without
+    // this the header is left believing it is still mid-drag, stuck with the
+    // grabbing cursor class (the same reason ResizeHandle has one).
+    onPointerCancel(e) {
+      if (e.pointerId !== activePointerId.current) {
+        return;
+      }
+      stopDragging(e.currentTarget as HTMLElement);
     },
   };
 }
@@ -269,12 +300,21 @@ export function reflowFloat(): void {
  *
  * `size` is shared between the two docks -- it means width docked right and
  * height docked bottom -- so the same number has to be clamped against
- * whichever axis it is being used on.
+ * whichever axis it is being used on. That clamp is `fit`, the same one the
+ * drag path uses, not a bare `Math.min` against the cap: capping only the top
+ * end left an unfloored value (state.ts's `sanitise` lets a stored `size`
+ * down to 240, and nothing stopped an even smaller one before this fix from
+ * shipping) drawn exactly as small as it was saved, with the resize handle on
+ * an edge nowhere near the panel it was meant to resize. `fit` gives back
+ * MIN_W/MIN_H unless the viewport itself is smaller, which is the same
+ * "unless the viewport disagrees" rule `sanitise` documents -- sanitise
+ * rejects what no viewport could ever justify; this clamps everything else to
+ * the viewport actually on screen right now.
  */
 export function drawnSize(): number {
   return dock.value === "dock-bottom"
-    ? Math.min(size.value, maxDockH())
-    : Math.min(size.value, maxDockW());
+    ? fit(size.value, MIN_H, maxDockH())
+    : fit(size.value, MIN_W, maxDockW());
 }
 
 export function drawnRect(): FloatRect {

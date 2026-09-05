@@ -80,7 +80,7 @@ export function sanitise(raw: unknown): Persisted {
   if (DENSITIES.includes(o.density as Density)) {
     out.density = o.density as Density;
   }
-  if (isSize(o.size)) {
+  if (isSize(o.size) && o.size >= MIN_PERSISTED_SIZE) {
     out.size = o.size;
   }
   const f = o.float as Record<string, unknown> | null | undefined;
@@ -94,6 +94,26 @@ export function sanitise(raw: unknown): Persisted {
 function isSize(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v) && v >= 0;
 }
+
+/**
+ * The smallest `size` no viewport could ever have produced.
+ *
+ * `size` is shared between dock-right (drawn against Resize.tsx's MIN_W,
+ * 360) and dock-bottom (drawn against MIN_H, 240) -- sanitise sees the bare
+ * number with no idea which axis it was saved for, so it can only reject
+ * what is invalid on *both*: anything under the smaller of the two floors.
+ * A value like 300 survives even though it would be too small for a width,
+ * because it is a perfectly legitimate persisted height, and rejecting it
+ * would throw away a real preference.
+ *
+ * This is deliberately a static, load-time rejection rather than a repair --
+ * unlike the viewport cap, there is no "unless the viewport disagrees"
+ * escape hatch for a value this small, so there is nothing to clamp it to.
+ * drawnSize() (Resize.tsx) still owns clamping the survivors against the
+ * *current* viewport and whichever axis they are drawn on; this only throws
+ * out numbers that could never be valid regardless of viewport.
+ */
+const MIN_PERSISTED_SIZE = 240; // Resize.tsx's MIN_H -- keep in sync if that moves
 
 const saved = load();
 

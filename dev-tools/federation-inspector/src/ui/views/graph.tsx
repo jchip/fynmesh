@@ -43,8 +43,25 @@ const ZOOM_MIN = 0.3;
 const ZOOM_MAX = 2.5;
 /** one wheel notch, and one press of the +/- buttons */
 const ZOOM_STEP = 1.12;
-/** movement before a press becomes a pan rather than a click on a node */
-const PAN_SLOP = 3;
+/*
+ * Movement before a press becomes a pan rather than a click on a node.
+ *
+ * 6, not 3. Chrome does not call a press a drag until about 5px, so at 3 a
+ * hand that wobbled well inside its own click budget panned the canvas and
+ * selected nothing -- the gesture made was a click, and the platform agrees.
+ * Measured as a distance rather than per axis so a diagonal drag still starts
+ * at 6px instead of at the 8.5px corner of a box.
+ */
+const PAN_SLOP = 6;
+
+/*
+ * How long a click waits to find out whether it is half of a double-click.
+ *
+ * The platform double-click interval, near enough: long enough to catch a
+ * deliberate double, short enough that focusing a node still reads as a
+ * response to the press. See the click handlers for why the wait exists.
+ */
+const DBLCLICK_MS = 250;
 
 function clampZoom(z: number): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
@@ -128,7 +145,7 @@ function usePanZoom(): {
       const dx = e.clientX - p.x;
       const dy = e.clientY - p.y;
       if (!p.panning) {
-        if (Math.abs(dx) < PAN_SLOP && Math.abs(dy) < PAN_SLOP) {
+        if (Math.hypot(dx, dy) < PAN_SLOP) {
           return;
         }
         p.panning = true;
@@ -183,7 +200,19 @@ function usePanZoom(): {
     });
   };
 
-  return { wrapRef, panProps, zoomBy, fitTo, resetZoom: () => (graphZoom.value = 1) };
+  /*
+   * Reset is a zoom like any other, so it anchors like one.
+   *
+   * Assigning the zoom directly left the scroll offsets untouched and let the
+   * container clamp them against the now-smaller content, which from 176% at
+   * (1350,702) dumped the reader back at (444,66) -- a different part of the
+   * graph than the one they were looking at. Routing through zoomBy makes the
+   * centre of the viewport hold still, the same promise the -, + and ctrl+wheel
+   * paths already make.
+   */
+  const resetZoom = () => zoomBy(1 / graphZoom.value);
+
+  return { wrapRef, panProps, zoomBy, fitTo, resetZoom };
 }
 
 /**
@@ -369,6 +398,37 @@ export function GraphView(): JSX.Element {
 
   const m = model.value;
   const { wrapRef, panProps, zoomBy, fitTo, resetZoom } = usePanZoom();
+
+  /*
+   * Click focuses, double-click opens in Modules -- and the two fight unless
+   * the first click is held.
+   *
+   * Focusing swaps the model from the filtered set to the neighbourhood, a new
+   * shape, so the layout re-runs and the node slides away (376px, in the case
+   * that found this) long before the second click of a double arrives. The
+   * second click lands on empty canvas, the two clicks share no target, and no
+   * dblclick is ever dispatched for the node: the documented gesture could not
+   * fire at all.
+   *
+   * So the focus change waits one double-click interval and a second click
+   * cancels it. Of the ways out this is the only one that keeps both gestures
+   * on the node: refusing to re-lay-out on click would defeat what the click
+   * is for, and moving "open" onto a modifier would quietly retire a gesture
+   * the README teaches. The price is a beat of latency before the graph
+   * re-focuses, which is cheaper than a gesture that does nothing.
+   */
+  const clickTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(clickTimer.current), []);
+  const onNodeClick = (id: string) => {
+    window.clearTimeout(clickTimer.current);
+    clickTimer.current = window.setTimeout(() => {
+      selected.value = id;
+    }, DBLCLICK_MS);
+  };
+  const onNodeDblClick = (id: string) => {
+    window.clearTimeout(clickTimer.current);
+    focusOn("modules", "id:" + id, id);
+  };
   const z = graphZoom.value;
   const { placement, pending } = useElkLayout(m.key, m.ids, m.edges);
   // the routed layout when it is for this shape, the instant one until then
@@ -511,8 +571,8 @@ export function GraphView(): JSX.Element {
                   key={id}
                   class={"gnode" + (m.focus && !isFocus && !isNeighbour(m, id) ? " dimmed" : "")}
                   transform={`translate(${p.x},${p.y})`}
-                  onClick={() => (selected.value = id)}
-                  onDblClick={() => focusOn("modules", "id:" + id, id)}
+                  onClick={() => onNodeClick(id)}
+                  onDblClick={() => onNodeDblClick(id)}
                 >
                   <title>
                     {id}

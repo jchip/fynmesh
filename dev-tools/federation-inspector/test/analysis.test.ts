@@ -8,6 +8,7 @@ import {
   filterModules,
   filterScopes,
   toggleFacet,
+  facetState,
   fuzzy,
 } from "../src/analysis/search.js";
 import { emptySnapshot } from "../src/core/model.js";
@@ -242,6 +243,66 @@ describe("search", () => {
     // a single-valued field replaces rather than accumulates
     expect(toggleFacet("stage:errored", "stage", "linked")).toBe("stage:linked");
     expect(toggleFacet("react stage:errored", "stage", "linked")).toBe("react stage:linked");
+  });
+
+  it("clears a negated facet instead of flipping it positive", () => {
+    // this used to fall through to the "add positive" branch, so clicking a
+    // negated chip could never get back to "unset" -- only to the opposite
+    expect(facetState("-stage:executed", "stage", "executed")).toBe("negated");
+    expect(toggleFacet("-stage:executed", "stage", "executed")).toBe("");
+    expect(facetState("stage:executed", "stage", "executed")).toBe("on");
+    expect(facetState("", "stage", "executed")).toBe("off");
+  });
+
+  it("reads boolean fields' common spellings, and treats anything else as no-match rather than inverting", () => {
+    const all = mods();
+    const errorTrue = filterModules(all, "error:true");
+    expect(errorTrue).toHaveLength(1);
+    // the obvious truthy spellings, plus a bare "error:" with no value
+    expect(filterModules(all, "error:yes")).toEqual(errorTrue);
+    expect(filterModules(all, "error:1")).toEqual(errorTrue);
+    expect(filterModules(all, "error:on")).toEqual(errorTrue);
+    expect(filterModules(all, "error:")).toEqual(errorTrue);
+    expect(filterModules(all, "error:false")).toHaveLength(all.length - 1);
+    // "error:bogus" used to read as false and return the complement (every
+    // module with NO error) -- an inverted result that looks like an answer.
+    // It must come back empty instead.
+    expect(filterModules(all, "error:bogus")).toHaveLength(0);
+
+    const orphanTrue = filterModules(all, "orphan:true");
+    expect(orphanTrue.length).toBeGreaterThan(0);
+    expect(filterModules(all, "orphan:yes")).toEqual(orphanTrue);
+    expect(filterModules(all, "orphan:bogus")).toHaveLength(0);
+  });
+
+  it("does not read deps:<non-number> as deps:0", () => {
+    const all = mods();
+    const zero = filterModules(all, "deps:0");
+    expect(zero.length).toBeGreaterThan(0);
+    // "abc" is not a number; it must not silently become "= 0" and answer a
+    // question nobody asked
+    expect(filterModules(all, "deps:abc")).toHaveLength(0);
+  });
+
+  it("treats an unknown field as free text on its value, matching the 'narrows instead of emptying' promise", () => {
+    const all = mods();
+    const plain = filterModules(all, "fynapp-1");
+    expect(plain.length).toBeGreaterThan(0);
+    expect(plain.length).toBeLessThan(all.length);
+    // "stag" is a typo for "stage", but the fallback drops the field name and
+    // free-text matches the value -- it used to reassemble "stag:fynapp-1"
+    // (with the colon back in) and match that literal string against the id,
+    // which could never hit
+    expect(filterModules(all, "stag:fynapp-1")).toEqual(plain);
+  });
+
+  it("matches a quoted phrase by requiring each word to hit independently, since nothing here has a literal space", () => {
+    const all = mods();
+    const entry1 = all.find((m) => m.id.includes("fynapp-1") && m.id.includes("fynapp-entry"))!;
+    const hits = filterModules(all, '"fynapp-1 entry"');
+    expect(hits.map((m) => m.id)).toContain(entry1.id);
+    // fynapp-2's entry has "entry" but not "fynapp-1"
+    expect(filterModules(all, '"fynapp-1 zzz-not-present"')).toHaveLength(0);
   });
 });
 

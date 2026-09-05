@@ -46,7 +46,7 @@ import {
   reflowFloat,
   useHeaderDrag,
 } from "./components/Resize.jsx";
-import { toggleFacet } from "../analysis/search.js";
+import { facetState, filterScopes, toggleFacet } from "../analysis/search.js";
 import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
 import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
@@ -455,12 +455,31 @@ function CapabilityBanner(): JSX.Element | null {
  */
 let searchEl: HTMLInputElement | null = null;
 
+/** whether this opening of the panel has already taken the caret */
+let caretClaimed = false;
+
 function SearchBox({ placeholder }: { placeholder: string }): JSX.Element {
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    // the panel is opened to look for something; give it the caret
     searchEl = input.current;
-    input.current?.focus();
+    // The panel is usually opened to look for something, so it takes the caret
+    // -- but never *away* from someone who is already typing. The hotkey can
+    // fire while a page form has the caret (that is what a global hotkey is
+    // for), and an observer that empties the field you were filling in has
+    // changed the page, which is the one thing this tool must not do.
+    /*
+     * Once per opening, not once per mount.
+     *
+     * Crossing between Modules and any other tab swaps FilterBar for
+     * SimpleFilterBar, which remounts this box -- so tabbing with `]` handed
+     * the caret to the filter, and the next `]` was typed into it instead of
+     * moving on. The claim belongs to the act of opening the panel, and
+     * `caretClaimed` is reset when it closes.
+     */
+    if (!caretClaimed && !isEditable(deepActiveElement())) {
+      caretClaimed = true;
+      input.current?.focus();
+    }
     return () => {
       if (searchEl === input.current) {
         searchEl = null;
@@ -517,7 +536,11 @@ function FilterBar(): JSX.Element {
           <button
             key={s}
             class="facet"
-            aria-pressed={query.value.includes("stage:" + s)}
+            // Parsed, not searched: `-stage:executed` *contains* "stage:executed"
+            // but means the opposite of it, and a chip drawn pressed for the
+            // filter that is hiding those rows explains nothing and mis-announces
+            // itself to a screen reader.
+            aria-pressed={facetState(query.value, "stage", s) === "on"}
             title={"Only " + STAGE_LABEL[s]}
             onClick={() => (query.value = toggleFacet(query.value, "stage", s))}
           >
@@ -578,13 +601,12 @@ function ViewSummary(): JSX.Element | null {
       break;
     }
     case "shares": {
-      const q = query.value.trim().toLowerCase().replace(/^share:/, "");
-      const keys = snap.scopes.flatMap((sc) => sc.keys.map((k) => ({ scope: sc.name, key: k.key })));
-      total = keys.length;
-      shown = q
-        ? keys.filter((k) => k.key.toLowerCase().includes(q) || k.scope.toLowerCase().includes(q))
-            .length
-        : total;
+      // Counted with the very filter the tab renders, rather than a second
+      // substring test kept in step by hand. The hand-written one had already
+      // fallen behind `container:`, and read "0 / 7" over two visible rows --
+      // a number that argues with the list under it is worse than no number.
+      total = countShareKeys(snap.scopes);
+      shown = countShareKeys(filterScopes(snap.scopes, query.value));
       noun = "share keys";
       break;
     }
@@ -615,8 +637,29 @@ function ViewSummary(): JSX.Element | null {
   );
 }
 
+function countShareKeys(scopes: ShareScopeNode[]): number {
+  return scopes.reduce((n, s) => n + s.keys.length, 0);
+}
+
 /* ------------------------------------------------------------------- keys */
 
+/**
+ * What the panel is allowed to take from the page.
+ *
+ * This is an observer dropped onto someone else's page, so the page keeps its
+ * keyboard. Only two keys are global: the hotkey the host configured (that is
+ * what configuring it means) and Escape, which never calls preventDefault so
+ * the page still gets its own -- an always-available way out of a panel you
+ * cannot see the close button of.
+ *
+ * Everything else -- `/`, `[`/`]`, j/k and the arrows -- is a single
+ * unmodified keystroke, which is to say it is a character or a caret movement
+ * that belongs to whatever the person is typing into. Those only fire when the
+ * keystroke started *inside the panel*, and never while a field there has the
+ * caret. Nothing is preventDefault'ed outside the panel, so the page's own
+ * shortcuts, forms and scroll behave exactly as they would with no inspector
+ * on the page.
+ */
 function useKeyboard(props: AppProps): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -632,11 +675,17 @@ function useKeyboard(props: AppProps): void {
         return;
       }
 
-      const target = e.composedPath()[0] as HTMLElement | undefined;
-      const typing = target?.tagName === "INPUT" || target?.tagName === "SELECT";
+      // composedPath, not e.target: the panel is in a shadow root, so an event
+      // from our search box is retargeted to the host element by the time the
+      // document sees it. The path is the only place the real element survives.
+      const path = e.composedPath();
+      const target = path[0] as HTMLElement | undefined;
+      const inPanel = !!panelEl && path.includes(panelEl);
+      const typing = isEditable(target);
 
       if (e.key === "Escape") {
-        if (typing && query.value) {
+        // only our own search box clears; a page field's Escape is the page's
+        if (inPanel && typing && query.value) {
           query.value = "";
           return;
         }
@@ -644,7 +693,18 @@ function useKeyboard(props: AppProps): void {
         props.onClose?.();
         return;
       }
-      if (typing) {
+      if (!inPanel || typing) {
+        return;
+      }
+      /*
+       * Everything below is a single unmodified keystroke, and the modifier
+       * check is what makes that true rather than merely intended. Without it
+       * the panel ate Cmd+] and Cmd+[ -- browser Forward and Back on macOS --
+       * and turned Shift+ArrowDown, which means "extend the selection", into a
+       * cursor move. A chord belongs to the browser or the page; the bare key
+       * is the only one this panel has a claim on.
+       */
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
         return;
       }
 
@@ -678,10 +738,47 @@ function useKeyboard(props: AppProps): void {
       }
     };
 
-    // capture, so the page cannot swallow the hotkey before we see it
+    // Capture, so the page cannot swallow the hotkey before we see it. Seeing
+    // a key first is not a claim on it: every branch above either belongs to
+    // the panel or leaves the event untouched for the page to handle.
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
   }, [props.hotkey]);
+}
+
+/**
+ * Is this element somewhere a keystroke turns into text or a caret move?
+ *
+ * TEXTAREA and contenteditable are the two that get forgotten, and forgetting
+ * them is what let the panel eat `j` out of a page's comment box. `isContentEditable`
+ * is inherited, so it answers for a node deep inside an editable region too.
+ */
+function isEditable(el: Element | null | undefined): boolean {
+  if (!el) {
+    return false;
+  }
+  const tag = el.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    (el as HTMLElement).isContentEditable === true
+  );
+}
+
+/**
+ * The focused element, following shadow roots down.
+ *
+ * `document.activeElement` stops at the first host -- on a page whose own
+ * widgets are custom elements it reports the widget, not the field inside it,
+ * and every such field would look like fair game to steal focus from.
+ */
+function deepActiveElement(): Element | null {
+  let el: Element | null = document.activeElement;
+  while (el?.shadowRoot?.activeElement) {
+    el = el.shadowRoot.activeElement;
+  }
+  return el;
 }
 
 function moveCursor(delta: number): void {

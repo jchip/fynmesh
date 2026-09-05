@@ -96,9 +96,15 @@ installed, no global is written.
 | drag | pan the canvas |
 | `Ctrl`/`Cmd` + wheel, trackpad pinch | zoom about the pointer |
 | wheel | scroll |
-| click a node | focus its neighbourhood |
+| click a node | focus its neighbourhood (a beat later, see below) |
 | double-click a node | open it in Modules |
 | `−` / `%` / `+` | zoom out, reset to 100%, zoom in |
+
+Focusing a node re-lays out the graph around it, which moves the node you just
+clicked -- so the click waits one double-click interval before it acts. That is
+the price of keeping both gestures on the same target: without the pause the
+second click of a double-click landed on empty canvas, because the first click
+had already slid the node out from under the pointer.
 
 Layout is [ELK](https://github.com/kieler/elkjs)'s layered algorithm —
 crossing minimisation and orthogonal edge routing — bundled into the drop-in,
