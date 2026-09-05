@@ -105,6 +105,32 @@ export interface FakeMiddlewareOptions {
   unreadable?: boolean;
 }
 
+/** What `bootstrapCoordinator` should be holding. */
+export interface FakeBootstrapOptions {
+  /** the FynApp *name* holding the lock; omitted is the kernel's own `null` */
+  holder?: string;
+  /** the queue behind the lock, in order */
+  deferred?: Array<{ name: string; version: string }>;
+  /** names the coordinator has seen finish, i.e. `fynAppBootstrapStatus` */
+  bootstrapped?: string[];
+  /** `fynAppProviderModes`: app -> middleware -> role */
+  providerModes?: Record<string, Record<string, "provider" | "consumer">>;
+  /**
+   * put something unreadable at these coordinator fields.
+   *
+   * A real coordinator never does this; a partially-mangled or half-built one
+   * can, and the collector has to name the gap rather than report an idle queue.
+   */
+  unreadable?: Array<
+    | "bootstrappingApp"
+    | "deferredBootstraps"
+    | "fynAppBootstrapStatus"
+    | "fynAppProviderModes"
+  >;
+  /** queue entries carrying no readable `fynApp` */
+  unreadableDeferred?: number;
+}
+
 export interface FakeKernelOptions {
   apps?: FakeFynApp[];
   states?: Array<{
@@ -131,6 +157,8 @@ export interface FakeKernelOptions {
    * a kernel with neither, where "does this auto-apply" has no answer at all.
    */
   autoApply?: "runTime" | "mwMgr" | "none";
+  /** what `bootstrapCoordinator` holds; the default is an idle, healthy queue */
+  bootstrap?: FakeBootstrapOptions;
 }
 
 interface Built {
@@ -233,6 +261,68 @@ function build(opts: FakeKernelOptions): Built {
 }
 
 /**
+ * `bootstrapCoordinator`, live collections and all.
+ *
+ * The real coordinator is a closure that publishes its `Array` and its two
+ * `Map`s on the object it returns, so this publishes the same things -- a
+ * deferred entry is a real `{ fynApp, resolve, timeoutId }` holding a whole
+ * FynApp, which is what makes the structured-clone assertion mean something.
+ *
+ * `bootstrappingApp` is an accessor over a `string | null` there, so it is one
+ * here too: a probe that reads it must survive a getter, and `null` -- the
+ * kernel's own "the lock is free" -- must stay distinguishable from a read that
+ * failed. The unreadable variant therefore throws rather than returning junk.
+ */
+function coordinatorOf(opts: FakeBootstrapOptions = {}): Record<string, unknown> {
+  const unreadable = new Set(opts.unreadable ?? []);
+
+  const deferredBootstraps: unknown[] = (opts.deferred ?? []).map((d) => ({
+    fynApp: fakeFynApp({ name: d.name, version: d.version }),
+    resolve: () => undefined,
+    timeoutId: 1 as unknown,
+  }));
+  for (let i = 0; i < (opts.unreadableDeferred ?? 0); i++) {
+    // a queue entry whose fynApp is not there: still an app that is not mounted
+    deferredBootstraps.push({ resolve: () => undefined });
+  }
+
+  const fynAppBootstrapStatus = new Map<string, "bootstrapped">();
+  for (const name of opts.bootstrapped ?? []) {
+    fynAppBootstrapStatus.set(name, "bootstrapped");
+  }
+
+  const fynAppProviderModes = new Map<string, Map<string, "provider" | "consumer">>();
+  for (const [app, roles] of Object.entries(opts.providerModes ?? {})) {
+    fynAppProviderModes.set(app, new Map(Object.entries(roles)));
+  }
+
+  const bc: Record<string, unknown> = {
+    canBootstrap: () => true,
+    acquireBootstrapLock: () => true,
+    releaseBootstrapLock: () => undefined,
+    deferredBootstraps: unreadable.has("deferredBootstraps")
+      ? "[unreadable]"
+      : deferredBootstraps,
+    fynAppBootstrapStatus: unreadable.has("fynAppBootstrapStatus")
+      ? "[unreadable]"
+      : fynAppBootstrapStatus,
+    fynAppProviderModes: unreadable.has("fynAppProviderModes")
+      ? "[unreadable]"
+      : fynAppProviderModes,
+  };
+  Object.defineProperty(bc, "bootstrappingApp", {
+    enumerable: true,
+    get: () => {
+      if (unreadable.has("bootstrappingApp")) {
+        throw new Error("bootstrappingApp is not readable");
+      }
+      return opts.holder ?? null;
+    },
+  });
+  return bc;
+}
+
+/**
  * The dev build: `bootstrapCoordinator` is a real object with real methods.
  */
 export function devKernel(opts: FakeKernelOptions = {}): Record<string, unknown> {
@@ -243,11 +333,7 @@ export function devKernel(opts: FakeKernelOptions = {}): Record<string, unknown>
     shareScopeName: opts.shareScopeName ?? "fynmesh",
     runTime: runTimeOf(opts, built),
     mwMgr: mwMgrOf(opts, built),
-    bootstrapCoordinator: {
-      canBootstrap: () => true,
-      bootstrappingApp: undefined,
-      deferredBootstraps: [],
-    },
+    bootstrapCoordinator: coordinatorOf(opts.bootstrap),
   };
   if (!opts.noLifecycle) {
     kernel.listFynAppStates = () => states;

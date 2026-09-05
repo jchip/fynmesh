@@ -76,6 +76,10 @@ export type {
   MiddlewareResolution,
   MiddlewareUseNode,
   MiddlewareVersionNode,
+  BootstrapBlockerNode,
+  BootstrapDeferredNode,
+  BootstrapModeNode,
+  BootstrapQueueNode,
   KernelBuild,
   ViewName,
 } from "./core/model.js";

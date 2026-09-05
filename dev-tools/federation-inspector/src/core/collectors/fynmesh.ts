@@ -28,6 +28,10 @@
  */
 
 import type {
+  BootstrapBlockerNode,
+  BootstrapDeferredNode,
+  BootstrapModeNode,
+  BootstrapQueueNode,
   Capability,
   ContainerNode,
   FynAppNode,
@@ -186,6 +190,23 @@ export function collectFynMesh(
     );
   }
 
+  // The bootstrap queue, and only where the queue is really there. Which build
+  // this is has already been decided, by shape, in `detectBuild` -- "dev" is
+  // the one and only case where `bootstrapCoordinator` holds the real
+  // coordinator rather than the `__publicField` husk described at the top of
+  // this file. Re-probing here with a second, weaker test is exactly how a
+  // production page ends up rendering an empty queue that reads as an idle one.
+  const coordinator = build === "dev" ? safeGet<any>(kernel, "bootstrapCoordinator") : undefined;
+  const bootstrapQueue = isObject(coordinator) ? buildBootstrapQueue(coordinator) : undefined;
+  cap.kernelBootstrap = bootstrapQueue !== undefined;
+  if (!cap.kernelBootstrap) {
+    cap.notes.push(
+      "kernel.bootstrapCoordinator is not readable in this build: it is " +
+        "mangled in the production kernel, so the bootstrap queue panel says " +
+        "unavailable rather than idle -- the two mean opposite things."
+    );
+  }
+
   const registered = indexRegistry(registry);
   const appNodes = buildApps(registered, states ?? [], mwNodes, containers, middlewares);
 
@@ -211,6 +232,9 @@ export function collectFynMesh(
     middlewares: mwNodes,
     autoApplyReadable: built.autoApplyReadable,
   };
+  if (bootstrapQueue) {
+    fynmesh.bootstrapQueue = bootstrapQueue;
+  }
   const version = safeGet<string>(kernel, "version");
   if (typeof version === "string") {
     fynmesh.kernelVersion = version;
@@ -888,6 +912,204 @@ function fullKeysOf(list: unknown): Set<string> {
     }
   }
   return out;
+}
+
+/* -------------------------------------------------------- bootstrap queue */
+
+/**
+ * The bootstrap queue, off the coordinator that is only there in a dev build.
+ *
+ * `BootstrapCoordinator` serialises bootstraps behind one lock and parks
+ * everything else in `deferredBootstraps`, so "who holds the lock, who is
+ * behind them, and what is each of those waiting for" is the whole answer to
+ * "why is my FynApp not mounted". Today that answer is a `console.debug` trail
+ * that `drop_console: true` removes from the production build; here it is a
+ * structure.
+ *
+ * Four surfaces are read and each can fail on its own, so failures are named
+ * in `unreadable` rather than collapsed into an empty queue: an empty queue is
+ * a page where every FynApp has finished, and saying that when we could not
+ * read the array is the one thing this panel must never do.
+ *
+ * Nothing live crosses into the snapshot. A `Deferred` holds the whole
+ * `FynApp` plus a `resolve` closure and a timer handle; only the identifying
+ * `name`/`version` are copied out, the same discipline the `cc` call context
+ * gets everywhere else in this collector.
+ */
+function buildBootstrapQueue(bc: any): BootstrapQueueNode {
+  const unreadable: string[] = [];
+
+  // `bootstrappingApp` is an accessor over a `string | null`. `null` is the
+  // kernel's own "nobody holds the lock" -- a real state, not a gap -- so the
+  // read is boxed rather than taken through `safeGet`: `safeGet` turns a getter
+  // that throws into `undefined`, which here would be indistinguishable from
+  // "the lock is free" and would report a stuck page as an idle one.
+  const holderRead = attempt(() => ({ value: (bc as any).bootstrappingApp }));
+  let holder: string | undefined;
+  if (!holderRead) {
+    unreadable.push("bootstrappingApp");
+  } else if (typeof holderRead.value === "string") {
+    holder = holderRead.value;
+  } else if (holderRead.value !== null && holderRead.value !== undefined) {
+    unreadable.push("bootstrappingApp");
+  }
+
+  const statusKeys = readMapEntries(safeGet(bc, "fynAppBootstrapStatus"));
+  if (!statusKeys) {
+    unreadable.push("fynAppBootstrapStatus");
+  }
+  const bootstrapped = new Set(
+    (statusKeys ?? []).map(([key]) => key).filter((k): k is string => typeof k === "string")
+  );
+
+  const modeEntries = readMapEntries(safeGet(bc, "fynAppProviderModes"));
+  if (!modeEntries) {
+    unreadable.push("fynAppProviderModes");
+  }
+  const modeMap = readProviderModes(modeEntries ?? []);
+
+  const deferred: BootstrapDeferredNode[] = [];
+  let unreadableDeferred = 0;
+  const rawDeferred = safeGet(bc, "deferredBootstraps");
+  if (Array.isArray(rawDeferred)) {
+    for (const entry of rawDeferred) {
+      const app = safeGet(entry, "fynApp");
+      const name = safeGet<string>(app, "name");
+      if (typeof name !== "string") {
+        // a queue entry whose FynApp cannot be read is still an app that is
+        // not mounted, so it is counted rather than dropped
+        unreadableDeferred++;
+        continue;
+      }
+      const versionRaw = safeGet<string>(app, "version");
+      const version = typeof versionRaw === "string" ? versionRaw : "";
+      deferred.push({
+        name,
+        version,
+        key: name + "@" + version,
+        waitingOn: blockersFor(name, modeMap, bootstrapped),
+      });
+    }
+  } else {
+    unreadable.push("deferredBootstraps");
+  }
+
+  const modes: BootstrapModeNode[] = [...modeMap.entries()]
+    .map(([app, roles]) => ({
+      app,
+      roles: [...roles.entries()]
+        .map(([middleware, mode]) => ({ middleware, mode }))
+        .sort((a, b) => a.middleware.localeCompare(b.middleware)),
+    }))
+    .sort((a, b) => a.app.localeCompare(b.app));
+
+  const node: BootstrapQueueNode = {
+    deferred,
+    unreadableDeferred,
+    bootstrapped: [...bootstrapped].sort(),
+    modes,
+    unreadable,
+  };
+  if (holder !== undefined) {
+    node.holder = holder;
+  }
+  return node;
+}
+
+/**
+ * What a deferred FynApp is still waiting for, the way the coordinator decides
+ * it.
+ *
+ * A mirror of `areBootstrapDependenciesSatisfied` + `findProviderForMiddleware`:
+ * for every middleware this app registered as a *consumer* of, the provider is
+ * the first other app that registered as a `provider` for that name, and the
+ * app is blocked while that provider has no entry in `fynAppBootstrapStatus`.
+ *
+ * One deliberate difference: the kernel returns `false` at the first blocker
+ * because a boolean is all it needs, and this collects every one of them. A
+ * reader asking why an app is parked wants the full list, not whichever
+ * dependency happened to be checked first.
+ */
+function blockersFor(
+  appName: string,
+  modeMap: Map<string, Map<string, "provider" | "consumer">>,
+  bootstrapped: Set<string>
+): BootstrapBlockerNode[] {
+  const modes = modeMap.get(appName);
+  if (!modes) {
+    return [];
+  }
+  const out: BootstrapBlockerNode[] = [];
+  for (const [middleware, mode] of modes) {
+    if (mode !== "consumer") {
+      continue;
+    }
+    const provider = findProvider(middleware, appName, modeMap);
+    if (provider && !bootstrapped.has(provider)) {
+      out.push({ middleware, provider });
+    }
+  }
+  return out;
+}
+
+/** `findProviderForMiddleware`: first other app registered as its provider. */
+function findProvider(
+  middleware: string,
+  exclude: string,
+  modeMap: Map<string, Map<string, "provider" | "consumer">>
+): string | undefined {
+  for (const [app, modes] of modeMap) {
+    if (app === exclude) {
+      continue;
+    }
+    if (modes.get(middleware) === "provider") {
+      return app;
+    }
+  }
+  return undefined;
+}
+
+function readProviderModes(
+  entries: Array<[unknown, unknown]>
+): Map<string, Map<string, "provider" | "consumer">> {
+  const out = new Map<string, Map<string, "provider" | "consumer">>();
+  for (const [app, inner] of entries) {
+    if (typeof app !== "string") {
+      continue;
+    }
+    const roles = new Map<string, "provider" | "consumer">();
+    for (const [middleware, mode] of readMapEntries(inner) ?? []) {
+      if (typeof middleware === "string" && (mode === "provider" || mode === "consumer")) {
+        roles.set(middleware, mode);
+      }
+    }
+    out.set(app, roles);
+  }
+  return out;
+}
+
+/**
+ * A `Map`'s entries, duck-typed and defended.
+ *
+ * `instanceof Map` fails across realms the same way `instanceof Error` does,
+ * so the method is what is tested. An array is rejected outright: it has an
+ * `entries()` of its own that yields `[index, value]`, which would read as a
+ * readable map with no string keys -- an empty answer where the truth is a
+ * shape we do not understand.
+ */
+function readMapEntries(value: unknown): Array<[unknown, unknown]> | undefined {
+  if (!isObject(value) || Array.isArray(value)) {
+    return undefined;
+  }
+  const entries = safeGet(value, "entries");
+  if (!isFn(entries)) {
+    return undefined;
+  }
+  const out = attempt(() => [...entries.call(value)]);
+  if (!Array.isArray(out)) {
+    return undefined;
+  }
+  return out.filter((pair): pair is [unknown, unknown] => Array.isArray(pair) && pair.length >= 2);
 }
 
 /* ------------------------------------------------------------------ config */

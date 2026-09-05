@@ -131,6 +131,14 @@ export interface Capability {
   kernelLifecycle: boolean;
   /** `kernel.runTime.middlewares` -- the middleware registry */
   kernelMiddleware: boolean;
+  /**
+   * `kernel.bootstrapCoordinator` -- the bootstrap lock and its deferred queue.
+   *
+   * Dev builds only, and that is the whole state of it: the field is mangled in
+   * the production kernel, so false here means the queue panel says
+   * "unavailable in this build" rather than drawing an idle one.
+   */
+  kernelBootstrap: boolean;
   /** human-readable notes about anything that probed false */
   notes: string[];
 }
@@ -592,6 +600,84 @@ export interface FynAppNode {
   hasConfig: boolean;
 }
 
+/**
+ * One middleware provider a deferred FynApp is still waiting on.
+ *
+ * The coordinator keys everything by FynApp *name*, never `name@version`, so
+ * `provider` is a name and matches `FynAppNode.name` rather than its `key`.
+ */
+export interface BootstrapBlockerNode {
+  /** the middleware this FynApp registered as a consumer of */
+  middleware: string;
+  /** the FynApp the coordinator's own scan picks as that middleware's provider */
+  provider: string;
+}
+
+/**
+ * One FynApp parked in `deferredBootstraps`.
+ *
+ * The kernel's queue entry holds the live `FynApp` plus a `resolve` closure and
+ * a timer handle; only the identity is copied, because the snapshot has to
+ * survive `structuredClone`.
+ */
+export interface BootstrapDeferredNode {
+  name: string;
+  /** empty string when the queued FynApp carried no readable version */
+  version: string;
+  /** `name@version` -- matches `FynAppNode.key` when the app is in the registry */
+  key: string;
+  /**
+   * Every provider this app is still blocked on, not only the first.
+   *
+   * Empty means its middleware dependencies are satisfied and the bootstrap
+   * lock is the only thing left -- or, when nobody holds the lock either, that
+   * the queue has stalled.
+   */
+  waitingOn: BootstrapBlockerNode[];
+}
+
+/** One FynApp's `registerProviderMode` roles, by middleware name. */
+export interface BootstrapModeNode {
+  /** the FynApp name; the coordinator keys by name, not by `name@version` */
+  app: string;
+  roles: Array<{ middleware: string; mode: "provider" | "consumer" }>;
+}
+
+/**
+ * `kernel.bootstrapCoordinator`, which exists only in a dev build.
+ *
+ * Absent from `FynMeshNode` -- not empty -- when the coordinator could not be
+ * read, which is the ordinary case on a production page: the field is mangled
+ * there and `detectBuild` is what tells the two apart. The absence is what lets
+ * the panel say "unavailable in this build" instead of drawing an empty queue,
+ * because an idle queue and an unreadable one mean opposite things.
+ */
+export interface BootstrapQueueNode {
+  /**
+   * The FynApp name holding the single bootstrap lock.
+   *
+   * Absent means nobody holds it, which the kernel writes as `null` and which
+   * is a real state -- unless `"bootstrappingApp"` is in `unreadable`.
+   */
+  holder?: string;
+  /** the queue behind the lock, in the coordinator's own order */
+  deferred: BootstrapDeferredNode[];
+  /** queued entries whose `fynApp` could not be read, counted rather than dropped */
+  unreadableDeferred: number;
+  /** names in `fynAppBootstrapStatus`: the bootstraps the coordinator saw complete */
+  bootstrapped: string[];
+  /** `fynAppProviderModes`, flattened and sorted */
+  modes: BootstrapModeNode[];
+  /**
+   * Which of the coordinator's fields could not be read, by name.
+   *
+   * One of `bootstrappingApp`, `deferredBootstraps`, `fynAppBootstrapStatus`,
+   * `fynAppProviderModes`. Non-empty means part of this node is a gap and not
+   * an answer, and the panel says which part.
+   */
+  unreadable: string[];
+}
+
 export interface FynMeshNode {
   kernelVersion?: string;
   shareScopeName?: string;
@@ -607,6 +693,14 @@ export interface FynMeshNode {
    * kernel does not say".
    */
   autoApplyReadable: boolean;
+  /**
+   * The bootstrap queue, when `kernel.bootstrapCoordinator` was readable.
+   *
+   * Absent on every production build, by design: the field is mangled there.
+   * Absent rather than empty, because an empty queue is the claim that every
+   * FynApp on the page has finished bootstrapping.
+   */
+  bootstrapQueue?: BootstrapQueueNode;
 }
 
 export interface Snapshot {
@@ -654,6 +748,7 @@ export function emptyCapability(): Capability {
     kernelRunTime: false,
     kernelLifecycle: false,
     kernelMiddleware: false,
+    kernelBootstrap: false,
     notes: [],
   };
 }
