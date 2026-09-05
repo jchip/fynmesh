@@ -24,6 +24,7 @@ import type {
   ShareScopeNode,
 } from "../src/core/model.js";
 import {
+  autoAppliedShellPage,
   devKernel,
   fakeContainerNode,
   fakeFynApp,
@@ -41,6 +42,7 @@ const FYNMESH_CODES = new Set([
   "middleware-range-unsatisfied",
   "middleware-multiple-versions",
   "middleware-provider-ambiguous",
+  "middleware-auto-apply-undelivered",
   "fynapp-name-ambiguous",
   "fynmesh-provider-absent",
   "fynmesh-import-target-absent",
@@ -532,6 +534,324 @@ describe("two providers of one middleware name (FYM-333)", () => {
         })
       )
     ).not.toContain("middleware-provider-ambiguous");
+  });
+});
+
+/* --------------------------------------------------------- auto-apply reach */
+
+describe("a middleware that auto-applies and reached nobody (FYM-357)", () => {
+  /** An auto-applying middleware, two FynApps, and no trace of it on either. */
+  const unreachedPage = (over: Partial<PageOptions> = {}): PageOptions => ({
+    apps: [
+      fakeFynApp({ name: "fynapp-1", version: "1.0.0", exposes: { "./main": fakeUnit(["execute"]) } }),
+      fakeFynApp({ name: "fynapp-shell-mw", version: "1.0.0", exposes: { "./main": fakeUnit(["execute"]) } }),
+    ],
+    states: [
+      { name: "fynapp-1", version: "1.0.0", status: "mounted" },
+      { name: "fynapp-shell-mw", version: "1.0.0", status: "mounted" },
+    ],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["fynapp", "middleware"],
+      },
+    ],
+    ...over,
+  });
+
+  it("says what was intended, what is missing, and what would explain it", () => {
+    const issue = one(issuesOf(unreachedPage()), "middleware-auto-apply-undelivered");
+    expect(issue.severity).toBe("info");
+    expect(issue.title).toContain("fynapp-shell-mw::shell-layout");
+    expect(issue.detail).toContain("autoApplyScope is fynapp, middleware");
+    expect(issue.detail).toContain("2 FynApps the kernel has registered");
+    // the three readings it cannot tell apart, and the way to tell them apart
+    expect(issue.detail).toContain("not proof it never ran");
+    expect(issue.detail).toContain("shouldApply");
+    expect(issue.detail).toContain("context.fynApp.middlewareContext");
+    expect(issue.view).toBe("middleware");
+    expect(issue.focus).toBe("mw:shell-layout");
+    expect(issue.refs).toContain("fynapp-shell-mw@1.0.0");
+  });
+
+  it("names the override hooks, when those are what needs no context entry", () => {
+    const issue = one(
+      issuesOf(
+        unreachedPage({
+          middlewares: [
+            {
+              provider: "fynapp-shell-mw",
+              name: "shell-layout",
+              hostVersion: "1.0.0",
+              autoApplyScope: ["fynapp"],
+              overrideHooks: ["overrideExecute"],
+            },
+          ],
+        })
+      ),
+      "middleware-auto-apply-undelivered"
+    );
+    expect(issue.detail).toContain("It implements overrideExecute");
+  });
+
+  /*
+   * The case that blocked this check until FYM-347, and the reason it is tested
+   * against the real shell page's shape rather than an empty snapshot:
+   * `shell-layout` auto-applies, nothing declares it, and three FynApps carry
+   * it. Reported here, the row would have contradicted the FynApps view on
+   * screen -- and been the first thing a reader learned to ignore.
+   */
+  it("stays quiet when every delivery came by the undeclared route", () => {
+    expect(codes(issuesOf(autoAppliedShellPage()))).not.toContain(
+      "middleware-auto-apply-undelivered"
+    );
+  });
+
+  /*
+   * `fynapp-react-middleware::react-context` is in exactly this state on both
+   * demo pages: registered, declared by nobody, delivered to nobody. A provider
+   * publishing something this page has not needed yet is not broken, and the
+   * narrower condition is what keeps the check off a healthy page.
+   */
+  it("stays quiet for an unused middleware that does not auto-apply", () => {
+    expect(
+      codes(
+        issuesOf(
+          unreachedPage({
+            middlewares: [
+              { provider: "fynapp-react-middleware", name: "react-context", hostVersion: "1.0.0" },
+            ],
+          })
+        )
+      )
+    ).not.toContain("middleware-auto-apply-undelivered");
+  });
+
+  it("stays quiet as soon as one FynApp carries it", () => {
+    expect(
+      codes(
+        issuesOf(
+          unreachedPage({
+            apps: [
+              fakeFynApp({
+                name: "fynapp-1",
+                version: "1.0.0",
+                exposes: { "./main": fakeUnit(["execute"]) },
+                delivered: ["shell-layout"],
+              }),
+              fakeFynApp({ name: "fynapp-shell-mw", version: "1.0.0" }),
+            ],
+          })
+        )
+      )
+    ).not.toContain("middleware-auto-apply-undelivered");
+  });
+});
+
+describe("an auto-applying middleware whose reach cannot be judged", () => {
+  /*
+   * FYM-333 in its sharpest form: `fynapp-1` really is carrying `shell-layout`,
+   * but two providers register that name, so the collector attributes the
+   * delivery to neither and both consumer lists are empty. The consumers exist
+   * and are unattributable -- which is not the same claim as "reached nobody".
+   */
+  const collidingPage = (): PageOptions => ({
+    apps: [
+      fakeFynApp({
+        name: "fynapp-1",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+        delivered: ["shell-layout"],
+      }),
+    ],
+    states: [{ name: "fynapp-1", version: "1.0.0", status: "mounted" }],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["fynapp"],
+      },
+      { provider: "fynapp-other-shell", name: "shell-layout", hostVersion: "1.0.0" },
+    ],
+  });
+
+  it("does not report it as unreached", () => {
+    expect(codes(issuesOf(collidingPage()))).not.toContain(
+      "middleware-auto-apply-undelivered"
+    );
+  });
+
+  it("says so, rather than going silent", () => {
+    const issue = one(issuesOf(collidingPage()), "fynmesh-checks-unavailable");
+    expect(issue.detail).toContain("whether fynapp-shell-mw::shell-layout reached anything");
+    expect(issue.detail).toContain("fynapp-other-shell::shell-layout");
+    expect(issue.detail).toContain("unattributable rather than absent");
+  });
+});
+
+describe("auto-apply reach with nothing to read", () => {
+  const page = (): PageOptions => ({
+    apps: [fakeFynApp({ name: "fynapp-1", version: "1.0.0" })],
+    states: [{ name: "fynapp-1", version: "1.0.0", status: "mounted" }],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["fynapp"],
+      },
+    ],
+  });
+
+  /*
+   * Without `runTime.apps` every middleware has zero consumers, so an ungated
+   * check reports every auto-applying one on the page as unreached. The row
+   * that already names that surface is where this belongs.
+   */
+  it("checks nothing when kernel.runTime.apps could not be read", () => {
+    const kernel = devKernel(page()) as any;
+    kernel.runTime = { middlewares: kernel.runTime.middlewares };
+    const issues = issuesOf({ kernel });
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    expect(one(issues, "fynmesh-checks-unavailable").detail).toContain(
+      "whether an auto-applying middleware reached anything"
+    );
+  });
+
+  it("checks nothing when the registry is readable and holds no FynApp", () => {
+    const issues = issuesOf({ ...page(), apps: [], states: [] });
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    expect(one(issues, "fynmesh-checks-unavailable").detail).toContain(
+      "nothing on this page to reach"
+    );
+  });
+});
+
+describe("an auto-applying middleware scoped at a bucket this page is empty of", () => {
+  /*
+   * "In scope" is not a preference the kernel weighs. `getTargetMiddlewares`
+   * hands a FynApp the `mw` list or the `fynapp` list and never both, chosen by
+   * `isFynAppMiddlewareProvider` -- did it import a `./middleware/*` expose. A
+   * middleware scoped to the bucket this page has nobody in reached nobody by
+   * arithmetic, and reporting that is reporting a page for its own contents.
+   */
+  const page = (over: { providerExpose?: boolean } = {}): PageOptions => ({
+    apps: [
+      fakeFynApp({
+        name: "fynapp-1",
+        version: "1.0.0",
+        exposes: over.providerExpose
+          ? { "./main": fakeUnit(["execute"]), "./middleware/other": { __middleware__other: {} } }
+          : { "./main": fakeUnit(["execute"]) },
+      }),
+      fakeFynApp({
+        name: "fynapp-shell-mw",
+        version: "1.0.0",
+        exposes: { "./main": fakeUnit(["execute"]) },
+      }),
+    ],
+    states: [
+      { name: "fynapp-1", version: "1.0.0", status: "mounted" },
+      { name: "fynapp-shell-mw", version: "1.0.0", status: "mounted" },
+    ],
+    middlewares: [
+      {
+        provider: "fynapp-shell-mw",
+        name: "shell-layout",
+        hostVersion: "1.0.0",
+        autoApplyScope: ["middleware"],
+      },
+    ],
+  });
+
+  it("does not report it, and says the scope is why", () => {
+    const issues = issuesOf(page());
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    const skipped = one(issues, "fynmesh-checks-unavailable");
+    expect(skipped.detail).toContain("whether fynapp-shell-mw::shell-layout reached anything");
+    expect(skipped.detail).toContain("autoApplyScope is middleware");
+    expect(skipped.detail).toContain("is in that scope");
+  });
+
+  it("reports it as soon as one FynApp is in the bucket", () => {
+    const issue = one(
+      issuesOf(page({ providerExpose: true })),
+      "middleware-auto-apply-undelivered"
+    );
+    // one of the two FynApps imported a `./middleware/*` expose, so exactly one
+    // could ever have been offered this middleware
+    expect(issue.detail).toContain("1 of the 2 FynApps the kernel has registered is in that scope");
+  });
+
+  /*
+   * A misspelt scope selects neither list -- registration tests for the exact
+   * strings -- so it auto-applies to nothing, and "nobody is in that scope" is
+   * the literally correct reading rather than a lenient one.
+   */
+  /*
+   * On a kernel with neither `runTime.autoApply` nor `mwMgr.getAutoApply()`
+   * there is no kernel-side bucket list to read, so the registration rule is
+   * re-applied to the declared scopes here. The verdict must come out the same
+   * either way -- otherwise the fallback is a second, quieter opinion.
+   */
+  it("falls back to the declared scope when the kernel exposes no bucket list", () => {
+    expect(codes(issuesOf({ ...page(), autoApply: "none" }))).not.toContain(
+      "middleware-auto-apply-undelivered"
+    );
+    const issue = one(
+      issuesOf({ ...page({ providerExpose: true }), autoApply: "none" }),
+      "middleware-auto-apply-undelivered"
+    );
+    expect(issue.detail).toContain("1 of the 2 FynApps the kernel has registered is in that scope");
+  });
+
+  it("treats a scope the kernel does not recognise as selecting nobody", () => {
+    const issues = issuesOf({
+      ...page(),
+      middlewares: [
+        {
+          provider: "fynapp-shell-mw",
+          name: "shell-layout",
+          hostVersion: "1.0.0",
+          autoApplyScope: ["fynapps"],
+        },
+      ],
+    });
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    expect(one(issues, "fynmesh-checks-unavailable").detail).toContain(
+      "autoApplyScope is fynapps"
+    );
+  });
+});
+
+describe("auto-apply reach against FynApps that are no longer registered", () => {
+  /*
+   * `fynmesh.apps` is the registry unioned with the lifecycle table, and a row
+   * that exists only in the lifecycle table is a shutdown app: no exposes, no
+   * `middlewareDelivered`, and an empty list there means unreadable rather than
+   * empty. Counting one as a FynApp the middleware failed to reach would report
+   * a middleware for not reaching something that is gone.
+   */
+  it("counts registry rows only, and skips when they are all gone", () => {
+    const issues = issuesOf({
+      apps: [],
+      states: [{ name: "fynapp-1", version: "1.0.0", status: "shutdown" }],
+      middlewares: [
+        {
+          provider: "fynapp-shell-mw",
+          name: "shell-layout",
+          hostVersion: "1.0.0",
+          autoApplyScope: ["fynapp"],
+        },
+      ],
+    });
+    expect(codes(issues)).not.toContain("middleware-auto-apply-undelivered");
+    expect(one(issues, "fynmesh-checks-unavailable").detail).toContain(
+      "nothing on this page to reach"
+    );
   });
 });
 
