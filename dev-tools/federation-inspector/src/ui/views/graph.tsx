@@ -30,7 +30,12 @@ import type { ModuleNode } from "../../core/model.js";
 
 const NODE_W = 168;
 const NODE_H = 34;
-const GAP_X = 56;
+/*
+ * 80, not 56. Eleven edges arrive at the shared `esm-react` node, and they
+ * have to fan out into the gap between layers: at 56 the closest pair of edges
+ * ran 1.5px apart, which is one line as far as the eye is concerned.
+ */
+const GAP_X = 80;
 const GAP_Y = 12;
 const MAX_NODES = 320;
 
@@ -63,6 +68,7 @@ function usePanZoom(): {
   wrapRef: { current: HTMLDivElement | null };
   panProps: JSX.HTMLAttributes<HTMLDivElement>;
   zoomBy: (factor: number, clientX?: number, clientY?: number) => void;
+  fitTo: (w: number, h: number) => void;
   resetZoom: () => void;
 } {
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -158,7 +164,26 @@ function usePanZoom(): {
     },
   };
 
-  return { wrapRef, panProps, zoomBy, resetZoom: () => (graphZoom.value = 1) };
+  /**
+   * Zoom so the whole drawing fits, and go to its top-left.
+   *
+   * The one control the zoom buttons cannot substitute for: with the panel
+   * docked at 759px and a graph 1084 wide, "where is the rest of it" is the
+   * first question the view raises and panning is a slow way to answer it.
+   */
+  const fitTo = (w: number, h: number) => {
+    const el = wrapRef.current;
+    if (!el || !w || !h) {
+      return;
+    }
+    graphZoom.value = clampZoom(Math.min(el.clientWidth / w, el.clientHeight / h));
+    requestAnimationFrame(() => {
+      el.scrollLeft = 0;
+      el.scrollTop = 0;
+    });
+  };
+
+  return { wrapRef, panProps, zoomBy, fitTo, resetZoom: () => (graphZoom.value = 1) };
 }
 
 /**
@@ -221,6 +246,13 @@ function towards(from: Point, to: Point, by: number): Point {
   const len = Math.hypot(dx, dy) || 1;
   return { x: from.x + (dx / len) * by, y: from.y + (dy / len) * by };
 }
+
+/** marker id -> fill, matching the three edge tones in ui/styles */
+const ARROWS: Array<[string, string]> = [
+  ["ga", "var(--border-strong)"],
+  ["ga-hot", "var(--accent)"],
+  ["ga-cycle", "var(--err)"],
+];
 
 function clip(text: string, max: number): string {
   return text.length > max ? text.slice(0, max - 1) + "…" : text;
@@ -336,7 +368,7 @@ export function GraphView(): JSX.Element {
   });
 
   const m = model.value;
-  const { wrapRef, panProps, zoomBy, resetZoom } = usePanZoom();
+  const { wrapRef, panProps, zoomBy, fitTo, resetZoom } = usePanZoom();
   const z = graphZoom.value;
   const { placement, pending } = useElkLayout(m.key, m.ids, m.edges);
   // the routed layout when it is for this shape, the instant one until then
@@ -397,6 +429,13 @@ export function GraphView(): JSX.Element {
         <button class="facet" title="Zoom in" onClick={() => zoomBy(ZOOM_STEP)}>
           +
         </button>
+        <button
+          class="selectish"
+          title="Fit the whole graph in the panel"
+          onClick={() => fitTo(place.width, place.height)}
+        >
+          fit
+        </button>
         <span class="meta hide-sm">
           {plural(m.ids.length, "node")} · {plural(m.edges.length, "edge")}
           {m.truncated ? ` · capped at ${MAX_NODES}` : ""}
@@ -412,6 +451,28 @@ export function GraphView(): JSX.Element {
           role="img"
           aria-label="module dependency graph"
         >
+          {/*
+            * Direction is the one thing a dependency graph must say, and a
+            * line says it only by convention. One marker per edge tone,
+            * because `context-stroke` is not honoured everywhere and a marker
+            * inherits nothing else from the path that uses it.
+            */}
+          <defs>
+            {ARROWS.map(([id, color]) => (
+              <marker
+                key={id}
+                id={id}
+                viewBox="0 0 8 8"
+                refX="7"
+                refY="4"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M0,1 L7,4 L0,7 z" fill={color} />
+              </marker>
+            ))}
+          </defs>
           <g>
             {m.edges.map(([from, to], i) => {
               const hot = from === m.focus || to === m.focus;
@@ -428,6 +489,7 @@ export function GraphView(): JSX.Element {
                 <path
                   key={i}
                   class={"gedge" + (cycle ? " cycle" : hot ? " hot" : "")}
+                  marker-end={`url(#${cycle ? "ga-cycle" : hot ? "ga-hot" : "ga"})`}
                   d={
                     route
                       ? roundedPath(route)
