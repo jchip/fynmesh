@@ -56,6 +56,42 @@ const DEFAULT_TITLE =
   "resolves to. It is the FIRST version registered, not the highest, and the " +
   "kernel never re-points it once set. A consumer that cares declares a range.";
 
+/**
+ * One spelling for the auto-apply scopes (FYM-355).
+ *
+ * The same fact reaches this view through two surfaces with two vocabularies.
+ * The runtime's `autoApply` map buckets its registrations under `fynapp` and
+ * `mw`; the registration's own `autoApplyScope` -- the array a middleware author
+ * actually writes -- says `fynapp` and `middleware`, and may say `all` for both.
+ * Rendering each faithfully to its source put `auto: fynapp, mw` two lines above
+ * `auto fynapp, middleware` on the same middleware, leaving the reader to work
+ * out whether that was one scope or two.
+ *
+ * The author's vocabulary wins, because the reader of this row is the person who
+ * writes `autoApplyScope`. `all` is expanded rather than passed through: it is
+ * shorthand for both, and showing it next to a row naming both would be the same
+ * ambiguity in a third form.
+ */
+const SCOPE_LABELS: Record<string, string[]> = {
+  fynapp: ["fynapp"],
+  mw: ["middleware"],
+  middleware: ["middleware"],
+  all: ["fynapp", "middleware"],
+};
+
+/** The scopes as this view names them, deduped and in the order given. */
+function scopeLabels(scopes: readonly string[]): string[] {
+  const out: string[] = [];
+  for (const scope of scopes) {
+    for (const label of SCOPE_LABELS[scope] ?? [scope]) {
+      if (!out.includes(label)) {
+        out.push(label);
+      }
+    }
+  }
+  return out;
+}
+
 /** How a consumer's declaration landed on this version, in the kernel's own order. */
 const VIA_TITLE: Record<MiddlewareResolution, string> = {
   exact: "asked for this exact version, and the registry has that key",
@@ -278,7 +314,8 @@ function MiddlewareRow({
           {mw.provider || "—"}
         </span>
         <span class="muted" title={autoTitle(mw, autoKnown)}>
-          auto: {autoKnown ? mw.autoApply?.join(", ") ?? "—" : "unknown"}
+          auto:{" "}
+          {autoKnown ? (mw.autoApply ? scopeLabels(mw.autoApply).join(", ") : "—") : "unknown"}
         </span>
         <span class="muted" title={versionsTitle(mw)}>
           {mw.versions.length === 1 ? "1 version" : mw.versions.length + " versions"}
@@ -489,11 +526,14 @@ function VersionBlock({
           <Chip
             title={
               "autoApplyScope — the kernel applies this to every " +
-              version.autoApplyScope.join(" and ") +
-              " on the page without anyone declaring it"
+              scopeLabels(version.autoApplyScope).join(" and ") +
+              " on the page without anyone declaring it" +
+              (version.autoApplyScope.includes("all")
+                ? '. Declared as "all", which is both of them'
+                : "")
             }
           >
-            auto {version.autoApplyScope.join(", ")}
+            auto: {scopeLabels(version.autoApplyScope).join(", ")}
           </Chip>
         ) : null}
       </div>
@@ -617,7 +657,7 @@ function autoTitle(mw: MiddlewareNode, known: boolean): string {
   }
   return (
     "the kernel applies this to every " +
-    mw.autoApply.join(" and ") +
+    scopeLabels(mw.autoApply).join(" and ") +
     " on the page, whether or not anything declares it"
   );
 }
