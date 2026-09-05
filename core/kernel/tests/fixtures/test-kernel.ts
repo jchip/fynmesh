@@ -108,7 +108,7 @@ export class TestKernel extends FynMeshKernelCore {
       fynApp,
       this,
       () => this.loader.mkRuntime(fynApp),
-      (name: string, provider?: string) => this.getMiddleware(name, provider)
+      (name: string, provider?: string, opts?: any) => this.getMiddleware(name, provider, opts)
     );
   }
 

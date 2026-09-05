@@ -1428,7 +1428,12 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
           const parts = (meta.mw as string).trim().split(' ');
           if (parts.length >= 3 && parts[0] === '-FYNAPP_MIDDLEWARE') {
             const middlewareName = parts[2].split('/').pop() || parts[2];
-            const mwReg = this.kernel.getMiddleware(middlewareName, parts[1]);
+            // FYM-321: parts[3] is the semver range the build wrote into the id.
+            // Dropping it here would let a re-execution resolve a different
+            // version than the one bootstrap resolved, on the same page.
+            const mwReg = this.kernel.getMiddleware(middlewareName, parts[1], {
+              version: parts[3],
+            });
 
             if (mwReg && mwReg.regKey) {
               const context = {
