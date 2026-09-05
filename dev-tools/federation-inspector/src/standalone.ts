@@ -110,14 +110,28 @@ const api: FederationInspectorGlobal = {
 
 const g = globalThis as any;
 
-// A page can end up with this script twice (a build that includes it and a
-// tag that also loads it). A second inspector would mean a second badge and a
-// second poll, so the first one wins and says so.
+/*
+ * A page can end up with this script twice -- a build that includes it and a
+ * tag that also loads it, which is exactly what the fynmesh demo does. A
+ * second inspector would mean a second badge and a second poll, so the first
+ * one wins and says so.
+ *
+ * `exported` is what the bundle hands back, and the IIFE wrapper assigns that
+ * to `globalThis.FederationInspector`. On the duplicate path it therefore has
+ * to be the copy that is already mounted: returning this copy's own `api`
+ * replaced the live one with a detached object, whose `instance` is never
+ * assigned because this copy never mounts -- so `FederationInspector.instance`
+ * became undefined for everyone, and the advice in the warning below was
+ * invalidated by the very assignment that followed it.
+ */
+let exported = api;
+
 if (g.FederationInspector) {
   console.warn(
     "[federation-inspector] already loaded; ignoring this copy. " +
       "Use the existing globalThis.FederationInspector."
   );
+  exported = g.FederationInspector;
 } else {
   g.FederationInspector = api;
 
@@ -131,4 +145,4 @@ if (g.FederationInspector) {
   }
 }
 
-export default api;
+export default exported;

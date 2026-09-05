@@ -54,11 +54,25 @@ function currentView(): { w: number; h: number } {
   const v = viewport.value;
   return v.w && v.h ? v : { w: viewW(), h: viewH() };
 }
+/**
+ * A comfortable minimum, unless the viewport disagrees.
+ *
+ * MIN_W/MIN_H are a usability floor: narrower than that the panel is not worth
+ * reading. But a floor applied to a viewport smaller than the floor puts the
+ * panel's far edge -- and the resize handle on it -- at a negative coordinate,
+ * off screen and impossible to grab. On a viewport that small, fitting wins.
+ */
+function fit(value: number, min: number, view: number): number {
+  return Math.min(view, Math.max(min, value));
+}
+
 export function maxDockW(): number {
-  return Math.max(MIN_W, Math.round(currentView().w * DOCK_MAX));
+  const vw = currentView().w;
+  return fit(Math.round(vw * DOCK_MAX), MIN_W, vw);
 }
 export function maxDockH(): number {
-  return Math.max(MIN_H, Math.round(currentView().h * DOCK_MAX));
+  const vh = currentView().h;
+  return fit(Math.round(vh * DOCK_MAX), MIN_H, vh);
 }
 
 /** Handles for the current dock mode. */
@@ -85,8 +99,8 @@ export function ResizeHandles(): JSX.Element | null {
 
 export function clampToViewport(rect: FloatRect): FloatRect {
   const { w: vw, h: vh } = currentView();
-  const w = Math.max(MIN_W, Math.min(rect.w, vw));
-  const h = Math.max(MIN_H, Math.min(rect.h, vh));
+  const w = fit(rect.w, MIN_W, vw);
+  const h = fit(rect.h, MIN_H, vh);
   /*
    * Asymmetric on purpose.
    *
@@ -139,12 +153,15 @@ function ResizeHandle({ edge }: { edge: Edge }): JSX.Element {
 
         // the same cap as reflowFloat: clamping only on a dock switch left the
         // drag itself free to produce the covered-page state it guards against
+        // the cap is applied last: on a viewport narrower than MIN_W the cap
+        // is the smaller of the two, and a minimum that wins there is a panel
+        // whose own resize handle is off screen
         if (dock.value === "dock-right") {
-          size.value = Math.max(MIN_W, Math.min(maxDockW(), start.current.size - dx));
+          size.value = fit(start.current.size - dx, MIN_W, maxDockW());
           return;
         }
         if (dock.value === "dock-bottom") {
-          size.value = Math.max(MIN_H, Math.min(maxDockH(), start.current.size - dy));
+          size.value = fit(start.current.size - dy, MIN_H, maxDockH());
           return;
         }
 
