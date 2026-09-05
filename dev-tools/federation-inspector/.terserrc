@@ -1,0 +1,11 @@
+{
+  "mangle": {
+    "toplevel": true,
+    "reserved": ["FederationInspector", "Federation", "System"]
+  },
+  "compress": {
+    "passes": 3,
+    "toplevel": true,
+    "drop_console": true
+  }
+}

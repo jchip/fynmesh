@@ -1,0 +1,66 @@
+{
+  "name": "federation-inspector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Visual module browser for SystemJS + federation-js: containers, share scopes, versions and the dependency graph, as a drop-in IIFE or an ES library",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./model": {
+      "types": "./dist/core/model.d.ts",
+      "import": "./dist/core/model.js"
+    },
+    "./dist/*": "./dist/*"
+  },
+  "homepage": "https://github.com/jchip/fynmesh",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "xrun -s clean tsc rollup minify",
+    "clean": "rm -rf dist",
+    "tsc": "tsc",
+    "rollup": "rollup -c",
+    "minify": "terser --config-file .terserrc -o dist/federation-inspector.min.js -- dist/federation-inspector.js",
+    "test": "vitest run",
+    "test:watch": "vitest --watch"
+  },
+  "author": "Joel Chen",
+  "files": [
+    "LICENSE",
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "keywords": [
+    "systemjs",
+    "module federation",
+    "devtools",
+    "inspector"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jchip/fynmesh.git",
+    "directory": "rollup-federation/federation-inspector"
+  },
+  "devDependencies": {
+    "@fynjs/run": "^1.0.0",
+    "@fynmesh/systemjs": "^6.15.1",
+    "@rollup/plugin-commonjs": "^29.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@types/node": "^24.0.10",
+    "rollup": "^4.44.2",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "terser": "^5.43.1",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.0.0",
+    "elkjs": "^0.12.0",
+    "preact": "^10.27.0"
+  }
+}
