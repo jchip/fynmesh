@@ -438,15 +438,35 @@ function useElkLayout(
   return { placement, pending: placement?.key !== key };
 }
 
+/**
+ * The selection this graph can draw, and the one it cannot.
+ *
+ * `selected` is a single signal shared by every tab, and the tabs do not all
+ * write module ids into it: Containers and Shares select a container name
+ * (`fynapp-x1`), a version row selects an entry url. So arriving here with a
+ * selection that is not a node is the ordinary way this view is reached and
+ * not a corner case, and the answer is worked out once: everything downstream
+ * -- the label, the depth control, the hot edges, the dimming -- then agrees
+ * about what is focused, because there is one place that decided.
+ */
+export function resolveFocus(
+  graph: Graph,
+  selection: string | undefined
+): { focus?: string; missing?: string } {
+  return selection && graph.byId.has(selection)
+    ? { focus: selection }
+    : { missing: selection };
+}
+
 export function GraphView(): JSX.Element {
   const model = useComputed(() => {
     const graph = analysis.value.graph;
-    const focus = selected.value;
+    const { focus, missing } = resolveFocus(graph, selected.value);
 
     let ids: string[];
     let edges: Array<[string, string]>;
 
-    if (focus && graph.byId.has(focus)) {
+    if (focus) {
       const n = neighbourhood(graph, focus, graphHops.value);
       ids = [...n.nodes];
       edges = n.edges;
@@ -477,13 +497,11 @@ export function GraphView(): JSX.Element {
       edges,
       graph,
       focus,
+      missing,
       // what each depth setting would reach, so the control can say so before
       // it is pressed. Empty when there is nothing focused to widen around --
       // including a selection this graph does not contain.
-      reach:
-        focus && graph.byId.has(focus)
-          ? reachByDepth(graph, focus, HOPS[HOPS.length - 1])
-          : [],
+      reach: focus ? reachByDepth(graph, focus, HOPS[HOPS.length - 1]) : [],
       multiVersion: multiVersionNames(snapshot.value.containers),
       key: structureKey(ids, edges),
       fallback: fallbackPlacement(ids, edges),
@@ -558,16 +576,32 @@ export function GraphView(): JSX.Element {
   return (
     <>
       <div class="filterbar" style={{ borderTop: 0 }}>
+        {/*
+          * Name the selection the graph could not draw, rather than saying
+          * nothing about it.
+          *
+          * Dropping the label would be honest too, and cheaper. But this state
+          * is reached by clicking `fynapp-x1` in Containers and switching tab,
+          * and the reader arriving that way has to be told which of the two
+          * things happened: silence leaves them reading the filtered set with
+          * no hint that their own click is why they are not looking at what
+          * they picked. One clause answers that; a missing label does not.
+          */}
         <span class="grouplabel">
           {m.focus ? (
             <>
               focused on <b>{urlTail(m.focus, 1) || m.focus}</b>
             </>
+          ) : m.missing ? (
+            <>
+              showing the filtered set; <b>{urlTail(m.missing, 1) || m.missing}</b> is
+              not a module in this graph
+            </>
           ) : (
             "showing the filtered set"
           )}
         </span>
-        {m.focus ? (
+        {m.focus || m.missing ? (
           <>
             {m.reach.length ? (
               <>
@@ -606,8 +640,10 @@ export function GraphView(): JSX.Element {
                 })}
               </>
             ) : null}
+            {/* the same signal either way, but there is no focus to clear
+                when the graph never found the selection */}
             <button class="selectish" onClick={() => (selected.value = undefined)}>
-              clear focus
+              {m.focus ? "clear focus" : "clear selection"}
             </button>
           </>
         ) : null}

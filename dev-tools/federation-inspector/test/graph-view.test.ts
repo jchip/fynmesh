@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { labelFor, multiVersionNames } from "../src/ui/views/graph.js";
+import { labelFor, multiVersionNames, resolveFocus } from "../src/ui/views/graph.js";
+import { buildGraph } from "../src/analysis/graph.js";
+import { emptySnapshot } from "../src/core/model.js";
 import type { ContainerNode, ModuleNode } from "../src/core/model.js";
 
 /** the fields a node label reads; the rest of a ModuleNode is irrelevant here */
@@ -106,5 +108,38 @@ describe("graph node labels", () => {
   it("keeps a container@version inside the node's text budget", () => {
     expect("fynapp-x1@2.0.0".length).toBeLessThanOrEqual(26);
     expect("fynapp-react-lib@19.0.0".length).toBeLessThanOrEqual(26);
+  });
+});
+
+/** a graph from an id -> dependency-ids map, the way buildGraph will see it */
+function graphOf(deps: Record<string, string[]>) {
+  const snapshot = emptySnapshot();
+  snapshot.modules = Object.entries(deps).map(([id, to], seq) =>
+    mod({ id, seq, deps: to.map((d) => ({ id: d })) })
+  );
+  return buildGraph(snapshot);
+}
+
+/*
+ * `selected` is one signal for the whole panel, and Containers and Shares
+ * write container names and entry urls into it. The graph looks selections up
+ * as module ids, so "a selection this graph has no node for" is a state a
+ * reader reaches by clicking a container and switching tab -- and the view has
+ * to say which of the two things it drew.
+ */
+describe("graph focus resolution", () => {
+  const graph = graphOf({ "app.js": ["dep.js"], "dep.js": [] });
+
+  it("focuses a selection the graph has a node for", () => {
+    expect(resolveFocus(graph, "app.js")).toEqual({ focus: "app.js" });
+  });
+
+  it("reports a selection the graph has no node for instead of focusing it", () => {
+    // what clicking `fynapp-x1` in Containers leaves behind
+    expect(resolveFocus(graph, "fynapp-x1")).toEqual({ missing: "fynapp-x1" });
+  });
+
+  it("has neither focus nor missing selection when nothing is selected", () => {
+    expect(resolveFocus(graph, undefined)).toEqual({ missing: undefined });
   });
 });
