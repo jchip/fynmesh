@@ -206,6 +206,50 @@ export class FakeFederation {
 }
 
 /**
+ * A container whose build emitted an entry *chunk* alongside its entry.
+ *
+ * Reproduces the real demo: a share surface is bound with `e: true` and the
+ * container's version, so it gets an `__mf_entry_<name>_<file>` id. It is not
+ * a second version of the container and must not be reported as one.
+ */
+export function containerWithEntryChunk(): {
+  loader: FakeLoader;
+  federation: FakeFederation;
+} {
+  const loader = new FakeLoader();
+  const federation = new FakeFederation();
+
+  const entry = "https://app.test/fynapp-4-vue/dist/fynapp-entry.js";
+  const surface = "https://app.test/fynapp-4-vue/dist/_mf-share-surface_vue-CmMbG3Pi.js";
+
+  const c = new FakeContainer("__mf_container_fynapp-4-vue", "fynapp-4-vue", "fynmesh", "1.0.0")
+    .share("vue", { semver: "^3.3.4", singleton: true }, { "3.5.13": { id: "./vue.js" } })
+    .expose("./main", "./main-vue.js");
+
+  loader
+    .addRecord({ id: entry, n: { container: c, init: () => {}, get: () => {} }, d: [] })
+    .addRecord({ id: surface, n: { default: {} }, d: [] });
+
+  loader
+    .addRegistration("__mf_container_fynapp-4-vue", { url: entry }, "1.0.0")
+    .addRegistration("__mf_container_fynapp-4-vue", { url: entry })
+    // the entry chunk, filed WITHOUT a version qualifier -- which is what made
+    // it look like a second version of the container
+    .addRegistration("__mf_entry_fynapp-4-vue__mf-share-surface_vue-CmMbG3Pi.js", {
+      url: surface,
+    });
+
+  federation.addShare("fynmesh", "vue", "3.5.13", {
+    url: surface,
+    id: "./vue.js",
+    container: "fynapp-4-vue",
+    containerVersion: "1.0.0",
+  });
+
+  return { loader, federation };
+}
+
+/**
  * A page with two containers, a doubled singleton and a failed module --
  * the shapes every collector and every diagnostic has to handle.
  */

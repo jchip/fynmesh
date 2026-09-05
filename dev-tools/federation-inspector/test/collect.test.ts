@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
-import { FakeLoader, twoContainerPage } from "./fixture.js";
+import { FakeLoader, containerWithEntryChunk, twoContainerPage } from "./fixture.js";
 
 function snap() {
   const { loader, federation } = twoContainerPage();
@@ -120,6 +120,39 @@ describe("collect", () => {
     const broken = s.modules.find((m) => m.id.includes("broken"))!;
     expect(broken.stage).toBe("errored");
     expect(broken.error?.message).toBe("boom");
+  });
+
+  it("does not report an entry chunk as a second container version", () => {
+    // A share surface is bound with isEntry, so it gets an __mf_entry_ id and
+    // the container's version. Treating that as a version slot reported four
+    // single-version demo apps as "2 versions live" -- the one claim this tool
+    // most has to get right.
+    const { loader, federation } = containerWithEntryChunk();
+    const s = collect({ loader, federation });
+    analyse(s);
+
+    const vue = s.containers.find((c) => c.name === "fynapp-4-vue")!;
+    expect(vue.versions).toHaveLength(1);
+    expect(vue.versions[0].version).toBe("1.0.0");
+    expect(vue.versions[0].entryUrl).toBe(
+      "https://app.test/fynapp-4-vue/dist/fynapp-entry.js"
+    );
+    // and no bogus "container has 2 versions" story anywhere
+    expect(s.containers.every((c) => c.versions.length === 1)).toBe(true);
+  });
+
+  it("still finds a container known only by its entry chunk", () => {
+    // the legitimate case the entry-chunk pass exists for: a build whose
+    // container id was never registered with this loader
+    const loader = new FakeLoader()
+      .addRecord({ id: "https://app.test/solo/dist/fynapp-entry.js", d: [] })
+      .addRegistration("__mf_entry_solo-app_fynapp-entry.js", {
+        url: "https://app.test/solo/dist/fynapp-entry.js",
+      });
+    const s = collect({ loader, federation: new (class {
+      $SS = {};
+    })() });
+    expect(s.containers.map((c) => c.name)).toContain("solo-app");
   });
 
   it("produces a snapshot that survives structured cloning", () => {

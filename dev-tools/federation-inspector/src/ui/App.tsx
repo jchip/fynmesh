@@ -283,6 +283,10 @@ function Header(props: AppProps): JSX.Element {
         onClick={() => {
           const order: Dock[] = ["dock-right", "dock-bottom", "float", "full"];
           dock.value = order[(order.indexOf(dock.value) + 1) % order.length];
+          // `size` means width when docked right and height when docked
+          // bottom, so the same number has to be re-clamped against the other
+          // axis -- a 760px-wide panel became a 760px-tall one on a laptop.
+          reflowFloat();
           persist();
         }}
       >

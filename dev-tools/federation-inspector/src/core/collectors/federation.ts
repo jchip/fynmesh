@@ -293,41 +293,70 @@ function discoverContainers(
     }
   });
 
-  // `__mf_entry_<name>_<fileName>` -- the entry chunk, which is a separate id
-  // from the container id and may be the only one present for a build whose
-  // entry is its own chunk. The name is greedy-matched against containers we
-  // already know, because a container name may itself contain "_".
+  /*
+   * `__mf_entry_<name>_<fileName>` -- an entry *chunk*, which is not the same
+   * thing as the container entry.
+   *
+   * A build emits one per chunk rollup marked `isEntry`, and a share surface is
+   * one of those: `_mf-share-surface_vue-CmMbG3Pi.js` is bound with `e: true`
+   * and the container's version. So these ids are only ever used to *fill in*
+   * what the container pass could not find -- a container it never saw, or a
+   * version with no entry url. Letting them open a version slot of their own
+   * reported four single-version demo apps as "2 versions live", with the share
+   * surface standing in as a second entry: exactly the claim this tool exists
+   * to make trustworthy.
+   */
   attempt(() => {
     for (const id of regs.keys()) {
       if (!id.startsWith(ENTRY_ID_PREFIX)) {
         continue;
       }
       const rest = id.slice(ENTRY_ID_PREFIX.length);
+
+      // longest known container name that prefixes the rest, since a container
+      // name may itself contain "_"
       let name = "";
       for (const known of found.keys()) {
         if (rest.startsWith(known + "_") && known.length > name.length) {
           name = known;
         }
       }
+
+      const qualifiers: string[] = attempt(() => regs.qualifiersOf(id)) ?? [];
+      const urlFor = (q?: string) => {
+        const entry = attempt(() => regs.get(id, q));
+        return entry ? safeGet<string>(entry, "url") : undefined;
+      };
+
       if (!name) {
-        // unknown container: take everything up to the last "_" as the name,
-        // since the tail is a fileName
+        // A container the `__mf_container_` pass never saw. This is the only
+        // case where an entry chunk may establish one, and it is a real one:
+        // a build whose container id was never registered with this loader.
         const cut = rest.lastIndexOf("_");
         name = cut > 0 ? rest.slice(0, cut) : rest;
+        if (!name) {
+          continue;
+        }
+        for (const v of qualifiers.length ? qualifiers : [""]) {
+          note(name, v, id, urlFor(qualifiers.length ? v : undefined));
+        }
+        continue;
       }
-      const qualifiers: string[] = attempt(() => regs.qualifiersOf(id)) ?? [];
-      const versions = qualifiers.length ? qualifiers : [""];
-      for (const v of versions) {
-        const entry = attempt(() => regs.get(id, qualifiers.length ? v : undefined));
-        const url = entry ? safeGet<string>(entry, "url") : undefined;
-        const byVersion = found.get(name);
-        const existing = byVersion?.get(v);
-        if (existing) {
-          if (!existing.entryUrl && url) {
-            existing.entryUrl = url;
-          }
-        } else {
-          note(name, v, id, url);
+
+      // Known container: supplement only. Fill an entry url where the
+      // container pass found none, and never add a version.
+      const byVersion = found.get(name)!;
+      for (const v of qualifiers) {
+        const existing = byVersion.get(v);
+        if (existing && !existing.entryUrl) {
+          existing.entryUrl = urlFor(v);
+        }
+      }
+      const unqualified = urlFor(undefined);
+      if (unqualified && byVersion.size === 1) {
+        const only = byVersion.values().next().value;
+        if (only && !only.entryUrl) {
+          only.entryUrl = unqualified;
         }
       }
     }

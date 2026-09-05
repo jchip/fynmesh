@@ -253,3 +253,21 @@ describe("analysis is idempotent", () => {
     ).toEqual(first.consumers);
   });
 });
+
+describe("analysis caching", () => {
+  it("returns the same derived result for the same snapshot", () => {
+    // the adapter and the UI both analyse each snapshot; without a cache that
+    // is two graph builds and two diagnostic passes per 500ms tick
+    const { loader, federation } = twoContainerPage();
+    const s = collect({ loader, federation });
+
+    const a = analyse(s);
+    const b = analyse(s);
+    expect(b).toBe(a);
+    expect(b.graph).toBe(a.graph);
+
+    // a genuinely new snapshot still gets its own analysis
+    const s2 = collect({ loader, federation });
+    expect(analyse(s2)).not.toBe(a);
+  });
+});

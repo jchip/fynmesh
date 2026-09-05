@@ -27,6 +27,15 @@ export interface VirtualListProps<T> {
   keyOf: (item: T) => string;
   /** extra height beyond `rowHeight`; return 0 for a plain row */
   extraHeight?: (item: T, measured: number | undefined) => number;
+  /**
+   * Changes when `extraHeight` would return something different.
+   *
+   * The offsets memo cannot depend on `extraHeight` itself: it is an inline
+   * closure, so its identity changes on every render, and scrolling renders --
+   * which meant the O(n) prefix sum was rebuilt on every scroll frame. Pass the
+   * thing the closure actually reads (the expanded-row set) instead.
+   */
+  heightsKey?: unknown;
   /** rows rendered beyond each edge of the viewport */
   overscan?: number;
   renderRow: (item: T, index: number, measureRef: (el: HTMLElement | null) => void) => JSX.Element;
@@ -67,7 +76,7 @@ export function VirtualList<T>(props: VirtualListProps<T>): JSX.Element {
     }
     offsets[items.length] = acc;
     return { offsets, total: acc };
-  }, [items, rowHeight, measureTick.current, props.extraHeight]);
+  }, [items, rowHeight, measureTick.current, props.heightsKey]);
 
   /** last index whose offset is <= y */
   const indexAt = (y: number): number => {

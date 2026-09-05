@@ -33,7 +33,24 @@ export interface Analysis {
   };
 }
 
+/**
+ * Derived results, keyed by the snapshot they came from.
+ *
+ * Both the adapter and the UI call `analyse` on each new snapshot -- the
+ * adapter so a library consumer gets a resolved one, the UI because it owns the
+ * `Analysis` object. That is two graph builds and two full diagnostic passes
+ * per refresh, on every 500ms tick that changed anything. A snapshot is
+ * immutable once analysed, so the second call can simply return the first
+ * result. WeakMap so a superseded snapshot is still collectable.
+ */
+const cache = new WeakMap<Snapshot, Analysis>();
+
 export function analyse(snapshot: Snapshot): Analysis {
+  const cached = cache.get(snapshot);
+  if (cached) {
+    return cached;
+  }
+
   resolveShares(snapshot);
   const graph = buildGraph(snapshot);
   snapshot.issues = findIssues(snapshot, graph);
@@ -62,7 +79,7 @@ export function analyse(snapshot: Snapshot): Analysis {
     shares += scope.keys.length;
   }
 
-  return {
+  const result: Analysis = {
     graph,
     facets,
     totals: {
@@ -73,6 +90,8 @@ export function analyse(snapshot: Snapshot): Analysis {
       warnings: snapshot.issues.filter((i) => i.severity === "warn").length,
     },
   };
+  cache.set(snapshot, result);
+  return result;
 }
 
 export { buildGraph, neighbourhood, layerLayout } from "./graph.js";

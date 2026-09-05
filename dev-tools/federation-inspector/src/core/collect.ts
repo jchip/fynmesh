@@ -146,24 +146,35 @@ function now(): number {
  */
 export function fingerprint(opts: CollectOptions = {}): string {
   const g = globalThis as any;
-  const S = opts.loader ?? g.System;
-  const F = opts.federation ?? g.Federation;
-  if (!S) {
+  const primary = opts.loader ?? g.System;
+  if (!primary) {
     return "0";
+  }
+  const F = opts.federation ?? g.Federation;
+
+  // every loader the collect would read, or a change in the second one never
+  // triggers a refresh
+  const loaders = [primary];
+  for (const extra of opts.loaders ?? []) {
+    if (extra && !loaders.includes(extra)) {
+      loaders.push(extra);
+    }
   }
 
   let records = 0;
-  attempt(() => {
-    for (const _ of S.records.keys()) {
-      records++;
-    }
-  });
   let regs = 0;
-  attempt(() => {
-    for (const _ of S.registrations.keys()) {
-      regs++;
-    }
-  });
+  for (const S of loaders) {
+    attempt(() => {
+      for (const _ of S.records.keys()) {
+        records++;
+      }
+    });
+    attempt(() => {
+      for (const _ of S.registrations.keys()) {
+        regs++;
+      }
+    });
+  }
 
   let shares = 0;
   const store = safeGet(F, "$SS");

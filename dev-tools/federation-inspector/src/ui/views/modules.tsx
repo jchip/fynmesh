@@ -222,6 +222,7 @@ export function ModulesView(): JSX.Element {
       items={rows.value}
       rowHeight={rowH}
       keyOf={(r) => r.key}
+      heightsKey={expanded.value}
       extraHeight={(r, m) =>
         r.type === "module" && expanded.value.has(r.module.id)
           ? // `m` is the measured height once the detail has rendered; until
