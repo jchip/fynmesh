@@ -1,5 +1,6 @@
 import esbuild from "rollup-plugin-esbuild";
 import resolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 
 /*
  * Two outputs from one source tree, with opposite dependency policies.
@@ -36,7 +37,10 @@ export default [
       sourcemap: true,
       inlineDynamicImports: true,
     },
-    plugins: [resolve({ browser: true }), esbuild(jsx)],
+    // commonjs is here for elkjs: the layout engine ships as a UMD bundle, and
+    // it is the bundled (worker-free) build on purpose -- the worker build
+    // fetches a second file at runtime, which a drop-in observer must not do.
+    plugins: [resolve({ browser: true }), commonjs(), esbuild(jsx)],
   },
   {
     input: "src/index.ts",

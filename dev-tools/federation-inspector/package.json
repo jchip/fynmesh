@@ -49,6 +49,7 @@
   "devDependencies": {
     "@fynjs/run": "^1.0.0",
     "@fynmesh/systemjs": "^6.15.1",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^24.0.10",
     "rollup": "^4.44.2",
@@ -58,7 +59,8 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "preact": "^10.27.0",
-    "@preact/signals": "^2.0.0"
+    "@preact/signals": "^2.0.0",
+    "elkjs": "^0.12.0",
+    "preact": "^10.27.0"
   }
 }

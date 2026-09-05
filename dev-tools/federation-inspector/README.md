@@ -47,11 +47,16 @@ Configuration goes on the script tag:
 | --- | --- | --- |
 | `data-auto` | `true` | mount automatically; `false` to call `mount()` yourself |
 | `data-corner` | `bottom-right` | `bottom-right`, `bottom-left`, `top-right`, `top-left` |
-| `data-theme` | `auto` | `auto`, `light`, `dark` |
+| `data-theme` | remembered, else `auto` | `auto`, `light`, `dark` -- setting it overrides what the panel remembers |
+| `data-density` | remembered, else `normal` | `compact`, `normal`, `relaxed` text size |
 | `data-hotkey` | `ctrl+shift+m` | toggle combination, or `false` for none |
 | `data-open` | `false` | open the panel immediately |
 | `data-launcher` | `true` | `false` hides the badge (hotkey/API only) |
 | `data-poll` | `500` | live-refresh interval in ms, or `false` |
+
+`data-theme` and `data-density` are the two attributes the panel itself can
+change, and it remembers what you set. Omitting the attribute keeps the
+remembered value; supplying one is an instruction and wins over it.
 
 The bundle also installs `globalThis.FederationInspector`:
 
@@ -83,6 +88,25 @@ installed, no global is written.
 | `[` / `]` | previous / next tab |
 | `j` / `k`, arrows | move the row cursor |
 | `Enter` | expand the selected row |
+
+### The graph
+
+| Gesture | Action |
+| --- | --- |
+| drag | pan the canvas |
+| `Ctrl`/`Cmd` + wheel, trackpad pinch | zoom about the pointer |
+| wheel | scroll |
+| click a node | focus its neighbourhood |
+| double-click a node | open it in Modules |
+| `−` / `%` / `+` | zoom out, reset to 100%, zoom in |
+
+Layout is [ELK](https://github.com/kieler/elkjs)'s layered algorithm —
+crossing minimisation and orthogonal edge routing — bundled into the drop-in,
+not fetched. It runs once per *shape*: the panel re-collects every 500ms, and a
+graph that re-laid-out on each pass would move under you while you read it. A
+module changing stage therefore redraws in place. Until the first layout
+resolves (and if it ever fails) the view falls back to the built-in layered
+placement, which is instant and unrouted.
 
 ### Filter grammar
 
@@ -151,6 +175,13 @@ analysis/    graph, share resolution, issues  pure functions over a Snapshot
 adapters/    LiveAdapter | RemoteAdapter      same interface, either realm
 ui/          Preact + signals in a Shadow DOM renders a Snapshot, nothing else
 ```
+
+Everything it needs is compiled into the drop-in: Preact, signals and the ELK
+layout engine. Nothing is imported through the page's SystemJS or federation,
+nothing is fetched at runtime, and no module is registered with the loader —
+an observer that participated in what it observes would be reporting on
+itself. (This is why ELK's *bundled* build is used rather than its worker
+build, which fetches `elk-worker.js` on first layout.)
 
 `adapters/remote.ts` ships both ends of a `postMessage` bridge:
 `serveRemote(transport)` in a content script, `new RemoteAdapter(transport)` in
