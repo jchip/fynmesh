@@ -13,19 +13,35 @@ import { focusOn, query, snapshot } from "../state.js";
 
 const SEV_GLYPH = { error: "!", warn: "!", info: "i" } as const;
 
+/**
+ * The Issues tab's filter.
+ *
+ * Exported because the count above the list has to be this list: a second
+ * substring test kept in step by hand is how the Shares header came to read
+ * "0 / 7" over two visible rows.
+ *
+ * It lives here and not beside `filterScopes` and `filterContainers` because
+ * it is view-shaped, not grammar-shaped. An Issue has no stage, kind or
+ * container of its own for a facet to select on -- it has three lines of prose
+ * which already quote the container names, versions and ids by hand, so plain
+ * text over that prose is the honest search and `container:fynapp-1` here is
+ * literally what the reader typed.
+ */
+export function filterIssues(issues: Issue[], query: string): Issue[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return issues;
+  }
+  return issues.filter(
+    (i) =>
+      i.title.toLowerCase().includes(q) ||
+      i.detail.toLowerCase().includes(q) ||
+      i.code.includes(q)
+  );
+}
+
 export function IssuesView(): JSX.Element {
-  const issues = useComputed(() => {
-    const q = query.value.trim().toLowerCase();
-    if (!q) {
-      return snapshot.value.issues;
-    }
-    return snapshot.value.issues.filter(
-      (i) =>
-        i.title.toLowerCase().includes(q) ||
-        i.detail.toLowerCase().includes(q) ||
-        i.code.includes(q)
-    );
-  });
+  const issues = useComputed(() => filterIssues(snapshot.value.issues, query.value));
 
   if (!issues.value.length) {
     return (

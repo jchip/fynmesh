@@ -5,12 +5,14 @@ import { buildGraph } from "../src/analysis/graph.js";
 import { satisfies, maxSatisfying, compareVersionStrings } from "../src/analysis/semver.js";
 import {
   parseQuery,
+  filterContainers,
   filterModules,
   filterScopes,
   toggleFacet,
   facetState,
   fuzzy,
 } from "../src/analysis/search.js";
+import { filterIssues } from "../src/ui/views/issues.js";
 import { emptySnapshot } from "../src/core/model.js";
 import type { ModuleNode } from "../src/core/model.js";
 import { FakeLoader, twoContainerPage } from "./fixture.js";
@@ -334,6 +336,69 @@ describe("search", () => {
     expect(hits.map((m) => m.id)).toContain(entry1.id);
     // fynapp-2's entry has "entry" but not "fynapp-1"
     expect(filterModules(all, '"fynapp-1 zzz-not-present"')).toHaveLength(0);
+  });
+});
+
+describe("container filter", () => {
+  it("matches on the name, bare or behind the container: facet", () => {
+    const s = snap();
+    expect(filterContainers(s.containers, "").length).toBe(s.containers.length);
+    expect(filterContainers(s.containers, "fynapp-1").map((c) => c.name)).toEqual(["fynapp-1"]);
+    expect(filterContainers(s.containers, "container:fynapp-1").map((c) => c.name)).toEqual([
+      "fynapp-1",
+    ]);
+    expect(filterContainers(s.containers, "no-such-app")).toEqual([]);
+  });
+
+  it("skips a facet that says nothing about a container instead of matching it as text", () => {
+    const s = snap();
+    // this used to strip only a *leading* "container:" and then ask for a
+    // container whose name contains "kind:exposed container:fynapp-1"
+    expect(filterContainers(s.containers, "kind:exposed container:fynapp-1").map((c) => c.name))
+      .toEqual(["fynapp-1"]);
+    // a query that is entirely about modules leaves this tab unnarrowed,
+    // rather than emptying it
+    expect(filterContainers(s.containers, "stage:errored")).toEqual(s.containers);
+  });
+
+  it("excludes a negated container", () => {
+    const s = snap();
+    const rest = filterContainers(s.containers, "-container:fynapp-1");
+    expect(rest.length).toBe(s.containers.length - 1);
+    expect(rest.some((c) => c.name === "fynapp-1")).toBe(false);
+  });
+
+  it("does not mutate the snapshot it filters", () => {
+    const s = snap();
+    const before = JSON.stringify(s.containers);
+    filterContainers(s.containers, "container:fynapp-1");
+    expect(JSON.stringify(s.containers)).toBe(before);
+  });
+});
+
+describe("issue filter", () => {
+  it("matches the prose an issue is made of: title, detail and code", () => {
+    const s = snap();
+    expect(filterIssues(s.issues, "")).toEqual(s.issues);
+    expect(filterIssues(s.issues, "singleton-multiple-copies").map((i) => i.code)).toEqual([
+      "singleton-multiple-copies",
+    ]);
+    // the title quotes the share key, the detail the versions
+    expect(filterIssues(s.issues, "esm-react").length).toBeGreaterThan(0);
+    expect(filterIssues(s.issues, "boom").some((i) => i.code === "module-errored")).toBe(true);
+    expect(filterIssues(s.issues, "NOTHING-HERE")).toEqual([]);
+  });
+
+  it("matches case-insensitively", () => {
+    const s = snap();
+    expect(filterIssues(s.issues, "ESM-REACT")).toEqual(filterIssues(s.issues, "esm-react"));
+  });
+
+  it("does not mutate the snapshot it filters", () => {
+    const s = snap();
+    const before = JSON.stringify(s.issues);
+    filterIssues(s.issues, "esm-react");
+    expect(JSON.stringify(s.issues)).toBe(before);
   });
 });
 

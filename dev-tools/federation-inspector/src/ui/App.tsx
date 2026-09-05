@@ -46,12 +46,12 @@ import {
   reflowFloat,
   useHeaderDrag,
 } from "./components/Resize.jsx";
-import { facetState, filterScopes, toggleFacet } from "../analysis/search.js";
+import { facetState, filterContainers, filterScopes, toggleFacet } from "../analysis/search.js";
 import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
 import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
 import { ContainersView } from "./views/containers.jsx";
-import { IssuesView } from "./views/issues.jsx";
+import { filterIssues, IssuesView } from "./views/issues.jsx";
 import { RawView } from "./views/raw.jsx";
 import { GraphView } from "./views/graph.jsx";
 import { ago, ms } from "../util/format.js";
@@ -578,6 +578,14 @@ function FilterBar(): JSX.Element {
  * Per-view, because the filter string is shared across tabs (deep links depend
  * on that) and a modules count shown while looking at Shares is just wrong --
  * it read "9 / 46" over a list of share keys.
+ *
+ * Every branch counts through the very function its view renders with, never a
+ * second test kept in step by hand. The hand-written one for Shares had
+ * already fallen behind `container:` and read "0 / 7" over two visible rows;
+ * the copies for Containers and Issues agreed with their lists only because
+ * they were copies, and would have parted from them the moment either side
+ * learned a facet the other did not. A number that argues with the list under
+ * it is worse than no number.
  */
 function ViewSummary(): JSX.Element | null {
   const snap = snapshot.value;
@@ -594,33 +602,20 @@ function ViewSummary(): JSX.Element | null {
 
   switch (view.value) {
     case "containers": {
-      const q = query.value.trim().toLowerCase().replace(/^container:/, "");
       total = snap.containers.length;
-      shown = q ? snap.containers.filter((c) => c.name.toLowerCase().includes(q)).length : total;
+      shown = filterContainers(snap.containers, query.value).length;
       noun = "containers";
       break;
     }
     case "shares": {
-      // Counted with the very filter the tab renders, rather than a second
-      // substring test kept in step by hand. The hand-written one had already
-      // fallen behind `container:`, and read "0 / 7" over two visible rows --
-      // a number that argues with the list under it is worse than no number.
       total = countShareKeys(snap.scopes);
       shown = countShareKeys(filterScopes(snap.scopes, query.value));
       noun = "share keys";
       break;
     }
     case "issues": {
-      const q = query.value.trim().toLowerCase();
       total = snap.issues.length;
-      shown = q
-        ? snap.issues.filter(
-            (i) =>
-              i.title.toLowerCase().includes(q) ||
-              i.detail.toLowerCase().includes(q) ||
-              i.code.includes(q)
-          ).length
-        : total;
+      shown = filterIssues(snap.issues, query.value).length;
       noun = "issues";
       break;
     }

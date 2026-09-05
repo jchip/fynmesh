@@ -15,6 +15,7 @@ import type { JSX } from "preact";
 import { useComputed } from "@preact/signals";
 import type { ContainerNode, ContainerVersionNode, ShareDecl } from "../../core/model.js";
 import { expanded, focusOn, query, snapshot, toggleExpanded } from "../state.js";
+import { filterContainers } from "../../analysis/search.js";
 import {
   Chip,
   ContainerChip,
@@ -27,13 +28,10 @@ import {
 import { distinguishingTails } from "../../util/format.js";
 
 export function ContainersView(): JSX.Element {
-  const containers = useComputed(() => {
-    const q = query.value.trim().toLowerCase().replace(/^container:/, "");
-    if (!q) {
-      return snapshot.value.containers;
-    }
-    return snapshot.value.containers.filter((c) => c.name.toLowerCase().includes(q));
-  });
+  // one rule for the list and for the count above it -- see `filterContainers`
+  const containers = useComputed(() =>
+    filterContainers(snapshot.value.containers, query.value)
+  );
 
   if (!snapshot.value.capability.federation) {
     return (

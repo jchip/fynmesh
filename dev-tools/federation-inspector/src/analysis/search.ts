@@ -27,7 +27,12 @@
  * silently inverting the result.
  */
 
-import type { ModuleNode, ShareScopeNode, ShareVersionNode } from "../core/model.js";
+import type {
+  ContainerNode,
+  ModuleNode,
+  ShareScopeNode,
+  ShareVersionNode,
+} from "../core/model.js";
 
 export interface Term {
   field?: string;
@@ -247,12 +252,6 @@ export function filterModules(modules: ModuleNode[], query: string): ModuleNode[
 }
 
 /**
- * Add or replace a single facet in an existing query.
- *
- * Facet chips are toggles over the same string a person types, so clicking
- * "errored" twice has to remove it again rather than appending a second copy.
- */
-/**
  * The Shares tab's filter.
  *
  * Mostly a plain substring against the key and scope name: a person typing
@@ -310,6 +309,41 @@ export function filterScopes(scopes: ShareScopeNode[], query: string): ShareScop
 }
 
 /**
+ * The Containers tab's filter.
+ *
+ * Beside `filterScopes` rather than in the view, and for the same reason: it
+ * reads `container:`, a facet of the shared grammar that the other tabs write
+ * into this same string, so a query that means "fynapp-1" on Modules has to go
+ * on meaning it here. Exported so the count above the list is this list -- two
+ * substring tests kept in step by hand is how the Shares header came to read
+ * "0 / 7" over two visible rows.
+ *
+ * Terms this tab cannot answer -- `kind:`, `stage:`, `deps:`, fields a module
+ * has and a container does not -- are skipped rather than matched as text.
+ * Matching them as text is how `kind:exposed container:fynapp-1` came back
+ * empty: it asked for a container whose *name* contains "kind:exposed". A
+ * query carried in from another tab should narrow this one by whatever part of
+ * it applies and stay silent about the rest.
+ *
+ * Returns the snapshot's own container objects, filtered; nothing is mutated.
+ */
+export function filterContainers(containers: ContainerNode[], query: string): ContainerNode[] {
+  // a bare word is a name search, which is the only free text this tab has to
+  // offer -- there is no id, url or alias here for the module grammar's
+  // fuzzy match to be about
+  const terms = parseQuery(query).filter((t) => t.field === undefined || t.field === "container");
+  if (!terms.length) {
+    return containers;
+  }
+  return containers.filter((c) =>
+    terms.every((t) => {
+      const hit = c.name.toLowerCase().includes(t.value.toLowerCase());
+      return t.negated ? !hit : hit;
+    })
+  );
+}
+
+/**
  * What state one facet (a specific field=value pair) is currently in.
  *
  * Exported so the UI can render a chip's pressed/negated state without
@@ -325,6 +359,12 @@ export function facetState(query: string, field: string, value: string): "on" | 
   return match.negated ? "negated" : "on";
 }
 
+/**
+ * Add or replace a single facet in an existing query.
+ *
+ * Facet chips are toggles over the same string a person types, so clicking
+ * "errored" twice has to remove it again rather than appending a second copy.
+ */
 export function toggleFacet(query: string, field: string, value: string): string {
   const token = `${field}:${value}`;
   // on or negated, clicking the facet again clears it -- a negated facet
