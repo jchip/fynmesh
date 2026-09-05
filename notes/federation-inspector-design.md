@@ -59,28 +59,49 @@ reserves single/double-letter names for core and says as much.
 
 ### 2.2 federation-js — what survives minification
 
-`.terserrc` uses `mangle.properties.only_annotated`, but the emitted
-`federation-js.min.js` does not match the annotations one-for-one. Measured
-against the shipped `dist/federation-js.min.js`:
+`.terserrc` uses `mangle.properties.only_annotated`, and the annotations do not
+predict the result — in **both** directions. Two things cause that:
+
+- `only_annotated` is an **allow-list**. An `@__MANGLE_PROP__` annotation asks
+  terser to rename that property, so an annotated name is deliberately gone
+  from the shipped build. Reading the source and assuming annotated means
+  "kept" inverts it.
+- **esbuild drops the annotation** on a `this.x = ...` statement. federation-js
+  carries 55 annotations in `src/`; only 36 of them survive into
+  `dist/federation-js.dev.js`, the bundle terser then minifies. So the other 19
+  names ship intact despite being marked.
+
+Measured by grepping the shipped `dist/federation-js.min.js`:
 
 | Surface | In min build |
 | --- | --- |
 | `$SS` (share store on the runtime, and on containers) | present |
-| `$SC` (container share config: `options`, `rvm`, `versions`) | present |
+| `$SC` (container share config) and `$SC[key].options` | present |
 | `$E` (container exposes) | present |
+| `$C` (container map), `$B` (bindings) | **present** — annotated, but the annotation never reached terser |
+| `sources[].id` / `.container` / `.version` inside `$SS` | present |
 | `_mfBind` `_mfContainer` `_mfGet` `_mfImport` `_mfInit` `_mfInitScope` `_mfLoaded` `_S` `_B` `_register` `_fetchBundle` | present |
 | `resolve` `import` `register` `bundleUrlFor` `declareBundles` | present |
-| `$C` (container map), `$B` (bindings) | **mangled** |
+| `$SC[key].rvm`, `$SC[key].versions` | **mangled** to `i` and `o` |
 | `getUrlForId`, `_mfGetContainer`, `getRegDefForId` | **mangled** |
 
-So the runtime's *container registry* is not directly reachable in a production
-build, but the *share store* and every container's own fields are. That gap is
-closed without guessing (§3.2): containers are enumerated out of
-`System.registrations`, and the `Container` objects are reached through the
-share store's `sources[].container` plus the entry record's namespace.
+The two maps `Container._S` builds inside a `$SC` entry are therefore the real
+gap, and `rvm` is unrecoverable: nothing retains it once `_S` has returned, so
+the inspector reports it as unavailable (`capability.requiredVersionMaps`)
+rather than showing an empty map. `options.semver` — the range a container
+declared — is unaffected and still shown.
 
-Do not depend on `$C`, `$B`, or any mangled method. Anything that reads them at
-all is behind a capability probe and degrades to "unavailable in this build".
+`versions` is recoverable, because it is not the only record of the same event:
+`_S` announces every copy it offers into `Federation.$SS` as
+`{id, container, version}`, and it does so exactly when `options.import !==
+false`, which is the same test the unmangled path applies. Inverting the share
+store by container is therefore how `ContainerVersion.provides` is built (§3.2,
+FYM-327) — an equivalent source, not a heuristic.
+
+`$C` and `$B` being readable means the container-registry workaround in §3.2 is
+a working choice rather than a forced one: containers are still enumerated from
+`System.registrations`, and switching to the authoritative maps is its own
+change, not a comment fix.
 
 ### 2.3 FynMesh enrichment (optional, never required)
 

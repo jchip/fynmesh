@@ -3,10 +3,15 @@
  *
  * The two runtimes this tool reads are moving targets in one specific way:
  * `federation-js` ships a terser-minified build that mangles some of its own
- * property names and not others. Measured against the shipped
- * `federation-js.min.js`, `$SS`, `$SC`, `$E` and the `_mf*` methods survive
- * while `$C` (the container registry), `$B`, `getUrlForId` and
- * `_mfGetContainer` do not.
+ * property names and not others, and which ones is not guessable from the
+ * source: `only_annotated` is an allow-list, so `/*@__MANGLE_PROP__*\/` marks a
+ * name for *removal*, and esbuild drops the comment on a `this.x = ...`
+ * statement, so a good half of the annotations never reach terser at all.
+ *
+ * Measured by grepping the shipped `federation-js.min.js`: `$SS`, `$SC`, `$E`,
+ * `$C`, `$B`, `options` and the `_mf*` methods are all present; `rvm`,
+ * `versions` (the two maps `Container._S` builds), `getUrlForId`,
+ * `getRegDefForId` and `_mfGetContainer` are gone.
  *
  * So a probe is not paranoia about a missing global -- it is the normal case
  * on a production page. Everything here answers "can I read this?" without

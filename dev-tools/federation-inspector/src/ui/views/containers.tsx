@@ -185,9 +185,44 @@ function VersionBlock({
                 <span class="faint" style={{ fontSize: "9.5px" }}>
                   requested → resolved
                 </span>
+                {rvmUnavailable() ? (
+                  <span
+                    class="faint"
+                    style={{ fontSize: "9.5px" }}
+                    title={
+                      "federation-js mangles Container.$SC[key].rvm, so the per-importer " +
+                      "required-version maps cannot be read in this build. The range each " +
+                      "container declared is still shown."
+                    }
+                  >
+                    · no required-version maps in this build
+                  </span>
+                ) : null}
               </div>
               {v.consumes.map((d) => (
                 <ShareRow key={d.shareScope + ":" + d.key} decl={d} />
+              ))}
+            </>
+          ) : null}
+
+          {/*
+            * Provisions the shares band cannot show, because they were
+            * reconstructed from the share store rather than read off the
+            * container -- which is the only thing there is to show for a
+            * container the loader never fetched an entry for.
+            */}
+          {inferredProvides(v).length ? (
+            <>
+              <div class="node l2" style={{ borderBottom: 0, minHeight: "20px" }}>
+                <span class="faint rowlabel">
+                  provides
+                </span>
+                <span class="faint" style={{ fontSize: "9.5px" }}>
+                  filed into the share store; this container's own declaration was unreadable
+                </span>
+              </div>
+              {inferredProvides(v).map((d) => (
+                <ShareRow key={"p:" + d.shareScope + ":" + d.key} decl={d} />
               ))}
             </>
           ) : null}
@@ -212,8 +247,27 @@ function VersionBlock({
   );
 }
 
+/** Provisions with no declaration behind them -- see `provisions` in the collector. */
+function inferredProvides(v: ContainerVersionNode): ShareDecl[] {
+  return v.provides.filter((d) => d.inferred);
+}
+
+/**
+ * Is the rvm missing, or is it unreadable?
+ *
+ * Worth the distinction in the UI because the answer is always "unreadable" on
+ * a production page -- `rvm` is one of the names federation-js mangles -- and
+ * an empty column there otherwise reads as "no importer pinned a range", which
+ * is the opposite of what it means.
+ */
+function rvmUnavailable(): boolean {
+  const cap = snapshot.value.capability;
+  return cap.shareConfig && !cap.requiredVersionMaps;
+}
+
 function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
   const r = decl.resolved;
+  const rvm = decl.rvm ? Object.entries(decl.rvm) : [];
   return (
     <div class="node l3">
       {/*
@@ -236,8 +290,17 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
           consume-only
         </Chip>
       ) : null}
-      <span class="faint mono" style={{ flex: "0 1 68px", minWidth: 0 }}>
-        {decl.requestedRange ?? "any"}
+      <span
+        class="faint mono"
+        style={{ flex: "0 1 68px", minWidth: 0 }}
+        title={
+          decl.inferred
+            ? "reconstructed from the share store: this container's own declaration " +
+              "could not be read, so the range it asked for is unknown"
+            : undefined
+        }
+      >
+        {decl.requestedRange ?? (decl.inferred ? "?" : "any")}
       </span>
       <span class="faint">→</span>
       {r?.version ? (
@@ -259,6 +322,14 @@ function ShareRow({ decl }: { decl: ShareDecl }): JSX.Element {
       {r?.reason && !r.satisfies ? (
         <span class="faint" style={{ overflow: "hidden", textOverflow: "ellipsis" }} title={r.reason}>
           {r.reason}
+        </span>
+      ) : null}
+      {rvm.length ? (
+        <span
+          class="faint"
+          title={"required by\n" + rvm.map(([dir, range]) => `${dir}: ${range}`).join("\n")}
+        >
+          rvm {rvm.length}
         </span>
       ) : null}
       <span style={{ flex: 1 }} />
