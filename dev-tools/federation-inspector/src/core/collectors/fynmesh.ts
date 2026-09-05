@@ -34,11 +34,14 @@ import type {
   FynAppStatus,
   FynMeshNode,
   KernelBuild,
+  MiddlewareConsumerNode,
   MiddlewareNode,
+  MiddlewareResolution,
   MiddlewareUseNode,
   MiddlewareVersionNode,
 } from "../model.js";
 import { attempt, isFn, safeGet } from "../capability.js";
+import { maxSatisfying } from "../../analysis/semver.js";
 
 /** The five statuses `FynAppLifecycle` records. Anything else is not one. */
 const STATUSES = new Set<string>([
@@ -51,6 +54,15 @@ const STATUSES = new Set<string>([
 
 /** The FynUnit hooks worth reporting, in the order the kernel calls them. */
 const UNIT_HOOKS = ["initialize", "execute", "shutdown", "suspend", "resume"];
+
+/**
+ * The `FynAppMiddleware` hooks that take over a consumer's own execution.
+ *
+ * Any one of them makes the middleware able to run instead of the FynUnit it
+ * was applied to, which is a different order of power from `setup`/`apply` and
+ * is why the Middleware view names which one rather than only marking a tick.
+ */
+const OVERRIDE_HOOKS = ["canOverrideExecution", "overrideInitialize", "overrideExecute"];
 
 /** The prefix `useMiddleware`'s string form carries. */
 const MW_STRING_TAG = "-FYNAPP_MIDDLEWARE";
@@ -155,21 +167,41 @@ export function collectFynMesh(
         "mount status, timings and errors are unavailable in this build."
     );
   }
+  if (!cap.kernelMiddleware) {
+    cap.notes.push(
+      "kernel.runTime.middlewares could not be read: the Middleware view " +
+        "reports the registry as unreadable rather than empty, and every " +
+        "FynApp's declarations are left unresolved."
+    );
+  }
 
-  const mwNodes = cap.kernelMiddleware ? buildMiddlewares(middlewares, runTime) : [];
+  const built = cap.kernelMiddleware
+    ? buildMiddlewares(middlewares, runTime, kernel)
+    : { nodes: [], autoApplyReadable: false };
+  const mwNodes = built.nodes;
+  if (cap.kernelMiddleware && !built.autoApplyReadable) {
+    cap.notes.push(
+      "Neither kernel.runTime.autoApply nor kernel.mwMgr.getAutoApply() could " +
+        "be read: the Middleware view's auto-apply column is unknown, not empty."
+    );
+  }
+
   const registered = indexRegistry(registry);
   const appNodes = buildApps(registered, states ?? [], mwNodes, containers, middlewares);
 
   // consumers are the middleware registry read from the other side; doing it
   // here rather than in `buildMiddlewares` keeps one pass over the apps
+  const byRegKey = new Map(mwNodes.map((m) => [m.regKey, m]));
   for (const node of appNodes) {
     for (const use of node.usesMiddleware) {
-      const mw = use.resolvedRegKey
-        ? mwNodes.find((m) => m.regKey === use.resolvedRegKey)
-        : undefined;
-      if (mw && !mw.consumers.includes(node.key)) {
+      const mw = use.resolvedRegKey ? byRegKey.get(use.resolvedRegKey) : undefined;
+      if (!mw) {
+        continue;
+      }
+      if (!mw.consumers.includes(node.key)) {
         mw.consumers.push(node.key);
       }
+      addConsumer(mw, node.key, use);
     }
   }
 
@@ -177,6 +209,7 @@ export function collectFynMesh(
     build,
     apps: appNodes,
     middlewares: mwNodes,
+    autoApplyReadable: built.autoApplyReadable,
   };
   const version = safeGet<string>(kernel, "version");
   if (typeof version === "string") {
@@ -577,11 +610,12 @@ function fromMiddlewareString(
  * what actually runs and a reader that only checked the exact key would report
  * "not registered" for a middleware the app is successfully using.
  *
- * The version is *not* replayed. The kernel resolves a range with its own
- * semver, and guessing here would put a fullKey on screen that the app may not
- * be running -- so `resolvedFullKey` is filled in only where there is nothing
- * to guess: an exact version key, a single registered version, or no range at
- * all (which is the `default` slot by definition).
+ * The version *is* replayed, and `resolveVersion` below says which of the
+ * kernel's four branches got there. Before FYM-321 a range was carried to the
+ * lookup and then dropped, so there was nothing to replay and this filled in a
+ * version only where there was nothing to guess. There is now a documented
+ * resolution order to mirror, and mirroring it is the only way the Middleware
+ * view can say which version a consumer is actually on.
  */
 function resolveUse(use: MiddlewareUseNode, registry: Record<string, any>): void {
   if (!use.name) {
@@ -603,18 +637,89 @@ function resolveUse(use: MiddlewareUseNode, registry: Record<string, any>): void
   use.registered = true;
   use.resolvedRegKey = regKey;
 
-  const versionMap = registry[regKey];
-  const exact = use.range ? safeGet<any>(versionMap, use.range) : undefined;
-  const versions = Object.keys(versionMap).filter((v) => v !== DEFAULT_SLOT);
-  const unambiguous =
-    exact ??
-    (!use.range || use.range === "*" || versions.length === 1
-      ? safeGet<any>(versionMap, DEFAULT_SLOT) ?? safeGet<any>(versionMap, versions[0])
-      : undefined);
-
-  const fullKey = safeGet<string>(unambiguous, "fullKey");
+  const hit = resolveVersion(registry[regKey], use.range);
+  if (!hit) {
+    return;
+  }
+  use.resolvedVersion = hit.version;
+  use.resolvedVia = hit.via;
+  const fullKey = safeGet<string>(hit.reg, "fullKey");
   if (typeof fullKey === "string") {
     use.resolvedFullKey = fullKey;
+  }
+}
+
+/**
+ * One middleware's version map, resolved the way the kernel resolves it.
+ *
+ * A line-for-line mirror of `MiddlewareManager.resolveFromVersionMap`, in its
+ * order, because the order *is* the semantics:
+ *
+ * 1. no range, `*`, or blank -> the `default` slot, with no parsing at all.
+ * 2. an exact key in the map -> that version. `default` is a slot name and is
+ *    excluded, which is why a middleware may not be versioned "default".
+ * 3. a range some registered version satisfies -> the highest such version.
+ * 4. anything else -> `default` again, and the kernel warns that the FynApp is
+ *    running a version it did not ask for. That fourth branch is reported as
+ *    `"fallback"` rather than folded into `"default"`: they land on the same
+ *    registration and mean opposite things.
+ *
+ * A hyphen range (`1.0.0 - 2.0.0`) is treated as branch 4. This module's
+ * `satisfies` understands one and the kernel's `isSupportedRange` does not, and
+ * where the two disagree the kernel is the one that ran.
+ */
+function resolveVersion(
+  versionMap: any,
+  range?: string
+): { version: string; reg: any; via: MiddlewareResolution } | undefined {
+  const fallbackReg = safeGet<any>(versionMap, DEFAULT_SLOT);
+  const versions = Object.keys(versionMap).filter((v) => v !== DEFAULT_SLOT);
+  const defaultVersion = versions.find((v) => safeGet(versionMap, v) === fallbackReg);
+  const asDefault = (via: MiddlewareResolution) =>
+    defaultVersion && isObject(fallbackReg)
+      ? { version: defaultVersion, reg: fallbackReg, via }
+      : undefined;
+
+  const wanted = range?.trim();
+  if (!wanted || wanted === "*") {
+    return asDefault("default");
+  }
+  if (wanted !== DEFAULT_SLOT && isObject(safeGet(versionMap, wanted))) {
+    return { version: wanted, reg: safeGet<any>(versionMap, wanted), via: "exact" };
+  }
+  const best = /\s-\s/.test(wanted) ? undefined : maxSatisfying(versions, wanted);
+  if (best) {
+    return { version: best, reg: safeGet<any>(versionMap, best), via: "range" };
+  }
+  return asDefault("fallback");
+}
+
+/**
+ * File one consumer under the version it resolved to.
+ *
+ * A consumer that resolves to the middleware but to no version node -- an
+ * empty version map, or one whose `default` slot points at a registration that
+ * is not in it -- is kept in `unpinnedConsumers` instead of being dropped. It
+ * is a consumer of *something*, and a view that silently discarded it would
+ * show a middleware with fewer consumers than the FynApps view shows
+ * declarations against it.
+ */
+function addConsumer(mw: MiddlewareNode, appKey: string, use: MiddlewareUseNode): void {
+  const consumer: MiddlewareConsumerNode = {
+    app: appKey,
+    pinnedProvider: use.provider === mw.provider,
+    delivered: use.delivered,
+    via: use.resolvedVia ?? "unresolved",
+  };
+  if (use.range) {
+    consumer.range = use.range;
+  }
+  const version = use.resolvedVersion
+    ? mw.versions.find((v) => v.version === use.resolvedVersion)
+    : undefined;
+  const list = version ? version.consumers : mw.unpinnedConsumers;
+  if (!list.some((c) => c.app === appKey)) {
+    list.push(consumer);
   }
 }
 
@@ -622,15 +727,24 @@ function resolveUse(use: MiddlewareUseNode, registry: Record<string, any>): void
  * The middleware registry, from the provider's side.
  *
  * `runTime.middlewares[provider::name][version]` plus a `default` slot holding
- * whichever version registered first. The slot is not a version, so it is
+ * whichever version registered *first*. The slot is not a version, so it is
  * reported as a flag on the version it duplicates rather than as a row of its
- * own -- and it earns that flag, because `getMiddleware` returns the default
- * for any range it cannot satisfy.
+ * own -- and it earns that flag, because `default` is what every version-less
+ * lookup resolves to and the kernel never re-points it once set (FYM-332).
+ *
+ * A version key whose value is not a readable registration is counted in
+ * `unreadableVersions` rather than skipped. A middleware showing no versions is
+ * then unambiguous: either the registry really holds none, or it holds some
+ * that could not be read, and the two never look alike.
  */
-function buildMiddlewares(middlewares: any, runTime: any): MiddlewareNode[] {
-  const autoApply = safeGet<any>(runTime, "autoApply");
-  const autoFynapp = fullKeysOf(safeGet(autoApply, "fynapp"));
-  const autoMw = fullKeysOf(safeGet(autoApply, "mw"));
+function buildMiddlewares(
+  middlewares: any,
+  runTime: any,
+  kernel: any
+): { nodes: MiddlewareNode[]; autoApplyReadable: boolean } {
+  const auto = readAutoApply(runTime, kernel);
+  const autoFynapp = fullKeysOf(safeGet(auto.value, "fynapp"));
+  const autoMw = fullKeysOf(safeGet(auto.value, "mw"));
 
   const out: MiddlewareNode[] = [];
 
@@ -645,32 +759,93 @@ function buildMiddlewares(middlewares: any, runTime: any): MiddlewareNode[] {
     const defaultReg = safeGet(versionMap, DEFAULT_SLOT);
 
     const versions: MiddlewareVersionNode[] = [];
+    const unreadableVersions: string[] = [];
     for (const version of Object.keys(versionMap)) {
       if (version === DEFAULT_SLOT) {
         continue;
       }
       const reg = safeGet<any>(versionMap, version);
       if (!isObject(reg)) {
+        unreadableVersions.push(version);
         continue;
       }
       versions.push(versionNode(version, reg, reg === defaultReg));
     }
 
-    const node: MiddlewareNode = { regKey, name, provider, versions, consumers: [] };
-    const scopes: Array<"fynapp" | "mw"> = [];
-    if (versions.some((v) => autoFynapp.has(v.fullKey))) {
-      scopes.push("fynapp");
+    const node: MiddlewareNode = {
+      regKey,
+      name,
+      provider,
+      versions,
+      unreadableVersions,
+      consumers: [],
+      unpinnedConsumers: [],
+      nameCollisions: [],
+    };
+    const defaultVersion = versions.find((v) => v.isDefault);
+    if (defaultVersion) {
+      node.defaultVersion = defaultVersion.version;
     }
-    if (versions.some((v) => autoMw.has(v.fullKey))) {
-      scopes.push("mw");
-    }
-    if (scopes.length) {
-      node.autoApply = scopes;
+    if (auto.readable) {
+      const scopes: Array<"fynapp" | "mw"> = [];
+      if (versions.some((v) => autoFynapp.has(v.fullKey))) {
+        scopes.push("fynapp");
+      }
+      if (versions.some((v) => autoMw.has(v.fullKey))) {
+        scopes.push("mw");
+      }
+      if (scopes.length) {
+        node.autoApply = scopes;
+      }
     }
     out.push(node);
   }
 
-  return out.sort((a, b) => a.regKey.localeCompare(b.regKey));
+  // FYM-333: two providers publishing one name is legal, and a consumer that
+  // names no provider gets whichever the kernel scanned first plus a
+  // console.error nobody is watching for. The collision is a property of the
+  // name, so every node carrying it says so -- there is no "the wrong one".
+  const byName = new Map<string, string[]>();
+  for (const node of out) {
+    const keys = byName.get(node.name) ?? [];
+    keys.push(node.regKey);
+    byName.set(node.name, keys);
+  }
+  for (const node of out) {
+    node.nameCollisions = (byName.get(node.name) ?? [])
+      .filter((k) => k !== node.regKey)
+      .sort();
+  }
+
+  return {
+    nodes: out.sort((a, b) => a.regKey.localeCompare(b.regKey)),
+    autoApplyReadable: auto.readable,
+  };
+}
+
+/**
+ * `autoApply`, through the field first and the method second.
+ *
+ * `runTime.autoApply` is undefined until the first middleware with an
+ * `autoApplyScope` registers, so its absence is genuinely ambiguous: an older
+ * kernel that never had the field looks exactly like a current one where
+ * nothing auto-applies. `mwMgr.getAutoApply()` settles it -- a kernel that has
+ * the method has the feature, and a `undefined` return from it means "none",
+ * not "cannot tell". Only when neither surface answers is the column reported
+ * as unknown.
+ */
+function readAutoApply(runTime: any, kernel: any): { value: unknown; readable: boolean } {
+  const field = safeGet(runTime, "autoApply");
+  if (isObject(field)) {
+    return { value: field, readable: true };
+  }
+  const mgr = safeGet<any>(kernel, "mwMgr");
+  const getter = isObject(mgr) ? safeGet(mgr, "getAutoApply") : undefined;
+  if (isFn(getter)) {
+    const value = attempt(() => getter.call(mgr));
+    return { value, readable: true };
+  }
+  return { value: undefined, readable: false };
 }
 
 function versionNode(version: string, reg: any, isDefault: boolean): MiddlewareVersionNode {
@@ -679,6 +854,8 @@ function versionNode(version: string, reg: any, isDefault: boolean): MiddlewareV
   const hostVersion = safeGet<string>(host, "version");
   const mw = safeGet<any>(reg, "mw");
   const scope = safeGet(mw, "autoApplyScope");
+
+  const overrides = OVERRIDE_HOOKS.filter((hook) => isFn(safeGet(mw, hook)));
 
   const node: MiddlewareVersionNode = {
     version,
@@ -690,10 +867,9 @@ function versionNode(version: string, reg: any, isDefault: boolean): MiddlewareV
     hasSetup: isFn(safeGet(mw, "setup")),
     hasApply: isFn(safeGet(mw, "apply")),
     hasShouldApply: isFn(safeGet(mw, "shouldApply")),
-    overridesExecution:
-      isFn(safeGet(mw, "canOverrideExecution")) ||
-      isFn(safeGet(mw, "overrideInitialize")) ||
-      isFn(safeGet(mw, "overrideExecute")),
+    overridesExecution: overrides.length > 0,
+    overrideHooks: overrides,
+    consumers: [],
   };
   if (Array.isArray(scope)) {
     node.autoApplyScope = scope.filter((s): s is string => typeof s === "string");

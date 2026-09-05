@@ -347,6 +347,18 @@ describe("middleware", () => {
         hasApply: true,
         hasShouldApply: false,
         overridesExecution: false,
+        overrideHooks: [],
+        // the same declaration `usesMiddleware` carries above, pinned to the
+        // version the kernel's resolution order puts it on (FYM-329)
+        consumers: [
+          {
+            app: "fynapp-1@1.0.0",
+            range: "^1.0.0",
+            pinnedProvider: true,
+            delivered: true,
+            via: "range",
+          },
+        ],
       },
     ]);
     expect(mw.autoApply).toEqual(["fynapp"]);

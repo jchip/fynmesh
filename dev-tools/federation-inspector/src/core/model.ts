@@ -49,6 +49,8 @@ export type ViewName =
   | "modules"
   /** only ever offered when `Snapshot.fynmesh` is present */
   | "fynapps"
+  /** likewise: middleware is a kernel concept, so no kernel means no tab */
+  | "middleware"
   | "containers"
   | "shares"
   | "graph"
@@ -442,13 +444,56 @@ export interface MiddlewareUseNode {
    * guess here would name a version the app may not actually be running.
    */
   resolvedFullKey?: string;
+  /** the registered version key it resolved to */
+  resolvedVersion?: string;
+  /** which branch of the kernel's resolution order got there */
+  resolvedVia?: MiddlewareResolution;
   /** `middlewareContext` has an entry under this name */
   delivered: boolean;
 }
 
+/**
+ * How one declaration lands on one registered version.
+ *
+ * The branches of `MiddlewareManager.resolveFromVersionMap`, kept apart because
+ * they mean different things even when they pick the same registration:
+ * `default` asked for nothing and got the slot, while `fallback` asked for a
+ * range, got nothing that satisfied it, and is running a version it did not ask
+ * for. `unresolved` is the collector's own: the middleware is registered but
+ * which version this lands on could not be read.
+ */
+export type MiddlewareResolution = "exact" | "range" | "default" | "fallback" | "unresolved";
+
+/** One FynApp's declaration, seen from the middleware it resolves to. */
+export interface MiddlewareConsumerNode {
+  /** `name@version` of the consuming FynApp */
+  app: string;
+  /** the semver range it declared, when it declared one */
+  range?: string;
+  /**
+   * it named this provider, so the kernel's exact `provider::name` lookup hit.
+   *
+   * False means the kernel resolved it by scanning for the name, which is the
+   * path that picks a provider on the consumer's behalf when a name is
+   * registered more than once (FYM-333).
+   */
+  pinnedProvider: boolean;
+  /** the app's `middlewareContext` carries an entry under this middleware's name */
+  delivered: boolean;
+  via: MiddlewareResolution;
+}
+
 export interface MiddlewareVersionNode {
   version: string;
-  /** also occupies the registry's `default` slot, which every unmatched range falls back to */
+  /**
+   * occupies the registry's `default` slot: what a lookup that asks for no
+   * version resolves to.
+   *
+   * The *first* version registered, and the kernel never re-points it
+   * (FYM-332) -- re-pointing to the highest would move `default` under a page
+   * that is already running. So this is not "the best version", it is "the one
+   * a version-less lookup gets".
+   */
   isDefault: boolean;
   fullKey: string;
   /** `name@version` of the FynApp hosting it */
@@ -460,6 +505,10 @@ export interface MiddlewareVersionNode {
   hasApply: boolean;
   hasShouldApply: boolean;
   overridesExecution: boolean;
+  /** which of the three override hooks it implements; empty, never absent */
+  overrideHooks: string[];
+  /** the declarations that resolve to this version */
+  consumers: MiddlewareConsumerNode[];
 }
 
 export interface MiddlewareNode {
@@ -468,8 +517,22 @@ export interface MiddlewareNode {
   name: string;
   provider: string;
   versions: MiddlewareVersionNode[];
+  /**
+   * version keys in the registry whose registration could not be read.
+   *
+   * Counted rather than skipped: an empty `versions` beside a non-empty this is
+   * unreadable, and beside an empty this is genuinely empty.
+   */
+  unreadableVersions: string[];
+  /** the version occupying the `default` slot; absent when nothing does */
+  defaultVersion?: string;
   /** `name@version` of every FynApp whose `__middlewareMeta` names this */
   consumers: string[];
+  /** consumers that resolve to this middleware but to none of its versions */
+  unpinnedConsumers: MiddlewareConsumerNode[];
+  /** other `provider::name` keys registering this same middleware name */
+  nameCollisions: string[];
+  /** absent, rather than empty, when auto-apply could not be read at all */
   autoApply?: Array<"fynapp" | "mw">;
 }
 
@@ -535,6 +598,15 @@ export interface FynMeshNode {
   build: KernelBuild;
   apps: FynAppNode[];
   middlewares: MiddlewareNode[];
+  /**
+   * `runTime.autoApply` or `mwMgr.getAutoApply()` answered.
+   *
+   * False makes every `MiddlewareNode.autoApply` unknown rather than none:
+   * `runTime.autoApply` is created lazily by the first scoped registration, so
+   * a missing field on its own cannot tell "nothing auto-applies" from "this
+   * kernel does not say".
+   */
+  autoApplyReadable: boolean;
 }
 
 export interface Snapshot {

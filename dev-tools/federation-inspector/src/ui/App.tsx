@@ -52,6 +52,7 @@ import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
 import { ContainersView } from "./views/containers.jsx";
 import { filterFynApps, FynAppsView } from "./views/fynapps.jsx";
+import { filterMiddleware, MiddlewareView } from "./views/middleware.jsx";
 import { filterIssues, IssuesView } from "./views/issues.jsx";
 import { RawView } from "./views/raw.jsx";
 import { GraphView } from "./views/graph.jsx";
@@ -70,6 +71,7 @@ export interface AppProps {
 const TABS: Array<{ id: ViewName; label: string }> = [
   { id: "modules", label: "Modules" },
   { id: "fynapps", label: "FynApps" },
+  { id: "middleware", label: "Middleware" },
   { id: "containers", label: "Containers" },
   { id: "shares", label: "Shares" },
   { id: "graph", label: "Graph" },
@@ -80,15 +82,17 @@ const TABS: Array<{ id: ViewName; label: string }> = [
 /**
  * The tabs this page has anything to put in.
  *
- * FynApps is absent entirely on a page with no `@fynmesh/kernel`, rather than
- * present and empty. An empty table there would read as "this page has zero
- * FynApps", which is a different and much more alarming claim than "this page
- * is not a FynMesh page" -- and it is the second one that is true. It sits
- * ahead of Containers because on a page that does have a kernel it is the view
- * you actually want first.
+ * FynApps and Middleware are absent entirely on a page with no
+ * `@fynmesh/kernel`, rather than present and empty. An empty table there would
+ * read as "this page has zero FynApps", which is a different and much more
+ * alarming claim than "this page is not a FynMesh page" -- and it is the second
+ * one that is true. They sit ahead of Containers because on a page that does
+ * have a kernel they are the views you actually want first.
  */
+const KERNEL_TABS = new Set<ViewName>(["fynapps", "middleware"]);
+
 function tabsFor(snap: Snapshot): Array<{ id: ViewName; label: string }> {
-  return snap.fynmesh ? TABS : TABS.filter((t) => t.id !== "fynapps");
+  return snap.fynmesh ? TABS : TABS.filter((t) => !KERNEL_TABS.has(t.id));
 }
 
 export function App(props: AppProps): JSX.Element {
@@ -266,6 +270,8 @@ function renderView(name: ViewName): JSX.Element {
   switch (name) {
     case "fynapps":
       return <FynAppsView />;
+    case "middleware":
+      return <MiddlewareView />;
     case "containers":
       return <ContainersView />;
     case "shares":
@@ -294,6 +300,10 @@ function Header(props: AppProps): JSX.Element {
       case "fynapps":
         return snap.fynmesh?.apps.length ? (
           <span class={"n" + (fynappErrors(snap) ? " err" : "")}>{snap.fynmesh.apps.length}</span>
+        ) : null;
+      case "middleware":
+        return snap.fynmesh?.middlewares.length ? (
+          <span class="n">{snap.fynmesh.middlewares.length}</span>
         ) : null;
       case "containers":
         return snap.containers.length ? <span class="n">{snap.containers.length}</span> : null;
@@ -536,9 +546,11 @@ function SimpleFilterBar(): JSX.Element {
         ? "filter containers"
         : view.value === "fynapps"
           ? "filter fynapps — try status:failed"
-          : view.value === "issues"
-            ? "filter issues"
-            : "filter";
+          : view.value === "middleware"
+            ? "filter middleware — try mw:design-tokens"
+            : view.value === "issues"
+              ? "filter issues"
+              : "filter";
   return (
     <div class="filterbar">
       <SearchBox placeholder={label} />
@@ -630,6 +642,13 @@ function ViewSummary(): JSX.Element | null {
       total = apps.length;
       shown = filterFynApps(apps, query.value).length;
       noun = "fynapps";
+      break;
+    }
+    case "middleware": {
+      const mws = snap.fynmesh?.middlewares ?? [];
+      total = mws.length;
+      shown = filterMiddleware(mws, query.value).length;
+      noun = "middleware";
       break;
     }
     case "containers": {
