@@ -93,6 +93,35 @@
             "fynapp-notes": true
         };
 
+        /*
+         * Diagnostics lab: opt-in, and absent unless the url asks for it.
+         *
+         * Several of the inspector's diagnostics are held to "fires on nothing
+         * healthy, verified against the real demo", and this page is the
+         * baseline that is verified against. An app added here unconditionally
+         * would be an app every later reader has to subtract by hand, so the
+         * ones that exist to be *looked at* rather than demonstrated live
+         * behind `?lab=`, which no default page carries:
+         *
+         *   ?lab=bundled   fynapp-bundled -- its dist is combined, so the page
+         *                  carries a real combined bundle. Perfectly healthy;
+         *                  it is opt-in only so /demo.html keeps shipping the
+         *                  one-file-per-chunk dev build it always has.
+         *   ?lab=all       every lab app at once.
+         */
+        const lab = new Set(
+            new URLSearchParams(location.search)
+                .getAll("lab")
+                .flatMap((v) => v.split(","))
+                .map((v) => v.trim())
+                .filter(Boolean)
+        );
+        const inLab = (name) => lab.has("all") || lab.has(name);
+
+        if (inLab("bundled")) {
+            features["fynapp-bundled"] = true;
+        }
+
         // Separate eager and lazy apps
         const requested = [];
         const lazyApps = [];
