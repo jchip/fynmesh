@@ -244,17 +244,6 @@ export const Icons = {
       <path d="M5 3.6v8.8L12.5 8z" />
     </svg>
   ),
-  copy: (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-      <rect x="5.5" y="5.5" width="8" height="8" rx="1.4" />
-      <path d="M10.5 3.5h-6a1.5 1.5 0 0 0-1.5 1.5v6" stroke-linecap="round" />
-    </svg>
-  ),
-  check: (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
-      <path d="m3.5 8.4 3 3 6-6.8" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-  ),
   close: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
       <path d="m4.5 4.5 7 7m0-7-7 7" stroke-linecap="round" />
@@ -270,16 +259,11 @@ export const Icons = {
       <path d="M6.5 3.5 11 8l-4.5 4.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   ),
-  dock: (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3">
-      <rect x="2.5" y="3" width="11" height="10" rx="1.4" />
-      <path d="M10 3v10" />
-    </svg>
-  ),
-  theme: (
+  settings: (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-      <circle cx="8" cy="8" r="4" />
-      <path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3 3l1.1 1.1M11.9 11.9 13 13M13 3l-1.1 1.1M4.1 11.9 3 13" stroke-linecap="round" />
+      <circle cx="8" cy="8" r="2.2" />
+      <path d="M8 1.8v1.7M8 12.5v1.7M1.8 8h1.7M12.5 8h1.7M3.6 3.6l1.2 1.2M11.2 11.2l1.2 1.2M12.4 3.6l-1.2 1.2M4.8 11.2l-1.2 1.2" stroke-linecap="round" />
+      <path d="M8 4.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z" />
     </svg>
   ),
 };
