@@ -3,6 +3,8 @@ import { collect } from "../src/core/collect.js";
 import { analyse } from "../src/analysis/index.js";
 import { isLoadedStage } from "../src/core/exposes.js";
 import {
+  FakeContainer,
+  FakeFederation,
   FakeLoader,
   combinedBundlePage,
   containerWithEntryChunk,
@@ -417,11 +419,62 @@ describe("combined bundles", () => {
     const rows = s.modules.filter((m) => (m.id + " " + (m.url ?? "")).includes("rev-fff"));
     expect(rows).toHaveLength(1);
     expect(rows[0].id).toBe(url);
-    // the url-keyed entry carries no url of its own; without the specifier half
-    // the row has none, and readBundles skips a row with no url
+    // the url-keyed entry carries no url of its own -- the specifier half
+    // supplies it here, and the id itself does when there is no such half
     expect(rows[0].url).toBe(url);
     expect(rows[0].aliases).toContain("./rev-fff.js");
     expect(rows[0].registration?.pending).toBe(true);
+  });
+
+  /*
+   * A url-keyed registration with no specifier partner (FYM-373).
+   *
+   * The fold above hides this: it hands the merged row the specifier half's
+   * url. Alone, the url half has only its id -- and its id is the url. Pass 1
+   * has always read a record's id that way; `registerOnly` did not, so the
+   * same file carried a url when a record existed for it and none when only a
+   * registration did, and everything keyed on `mod.url` (the carrier lookup in
+   * `readBundles`, the directory heuristic in `attributeModules`) skipped it.
+   */
+  it("gives a lone url-keyed registration the url its id already is", () => {
+    const url = "https://app.test/fynapp-lone/dist/lone-hhh.js";
+    const loader = new FakeLoader().addRegistration(url, { registration: [[], () => ({})] });
+    const s = collect({ loader });
+    const row = s.modules.find((m) => m.id === url)!;
+    expect(row.stage).toBe("registered");
+    expect(row.url).toBe(url);
+  });
+
+  it("attributes that lone registration to its carrier and its container", () => {
+    const entry = "https://app.test/fynapp-lone/dist/fynapp-entry.js";
+    const url = "https://app.test/fynapp-lone/dist/lone-hhh.js";
+    const carrier = "https://app.test/fynapp-lone/dist/combined-yyy.js";
+    const c = new FakeContainer("__mf_container_fynapp-lone", "fynapp-lone", "fynmesh", "1.0.0");
+    const loader = new FakeLoader()
+      .addRecord({ id: entry, n: { container: c, init: () => {}, get: () => {} }, d: [] })
+      .addRegistration("__mf_container_fynapp-lone", { url: entry })
+      .addRegistration(url, { registration: [[], () => ({})] });
+    const federation = new FakeFederation().addBundle(url, carrier);
+    const s = collect({ loader, federation });
+
+    const row = s.modules.find((m) => m.id === url)!;
+    expect(row.bundle).toBe(carrier);
+    expect(row.container?.name).toBe("fynapp-lone");
+    const bundle = s.bundles.find((b) => b.url === carrier)!;
+    expect(bundle.members).toEqual([url]);
+    // registered is not a loaded stage -- the carrier arrived, this member has
+    // not run
+    expect(bundle.loadedCount).toBe(0);
+  });
+
+  it("still leaves a specifier-keyed registration with no url of its own without one", () => {
+    // `./no-url.js` is not a location, and nothing here says where it is; the
+    // predicate is about the id space, not about filling a blank
+    const loader = new FakeLoader().addRegistration("./no-url.js", {
+      registration: [[], () => ({})],
+    });
+    const s = collect({ loader });
+    expect(s.modules.find((m) => m.id === "./no-url.js")!.url).toBeUndefined();
   });
 
   it("never folds away a specifier that carries a registration of its own", () => {
