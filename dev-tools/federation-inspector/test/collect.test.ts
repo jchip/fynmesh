@@ -314,6 +314,9 @@ describe("combined bundles", () => {
       "./deep-ddd.js",
       "./late-ccc.js",
       "https://app.test/fynapp-combo/dist/main-aaa.js",
+      // the split-key member joins under its url, not its specifier: that is
+      // the id it already has and the id it keeps once something imports it
+      "https://app.test/fynapp-combo/dist/split-eee.js",
     ]);
   });
 
@@ -324,7 +327,7 @@ describe("combined bundles", () => {
     // old lookup missed, and a miss counted as loaded
     expect(late.url).toBe("https://app.test/fynapp-combo/dist/late-ccc.js");
     expect(late.stage).toBe("registered");
-    expect(s.bundles[0].members).toHaveLength(3);
+    expect(s.bundles[0].members).toHaveLength(4);
     expect(s.bundles[0].loadedCount).toBe(2);
   });
 
@@ -343,6 +346,93 @@ describe("combined bundles", () => {
       const loaded = b.members.filter((id) => isLoadedStage(byId.get(id)!.stage));
       expect(b.loadedCount).toBe(loaded.length);
     }
+  });
+
+  /*
+   * The pair, and the one row it is entitled to.
+   *
+   * A member nobody has imported sits in `System.registrations` under two keys
+   * -- `specifier -> { url }` and `url -> { registration }` -- and a row per key
+   * showed it twice, once `exposed` with a container and a bundle and once
+   * `external` with neither, disagreeing about `pending`. They were never two
+   * modules: federation files the pair so that "there is exactly one id for the
+   * member", and that id is the url, which is also the id the module already
+   * has once it runs. The two executed members prove the target shape -- one
+   * row each, keyed by url -- and the unexecuted one now matches it.
+   */
+  const split = "https://app.test/fynapp-combo/dist/split-eee.js";
+
+  it("files a member registered under both its specifier and its url once", () => {
+    const s = comboSnap();
+    const rows = s.modules.filter((m) => (m.id + " " + (m.url ?? "")).includes("split-eee"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe(split);
+    expect(rows[0].url).toBe(split);
+    // the specifier is the redirect it always was, and says so
+    expect(rows[0].aliases).toContain("./split-eee.js");
+    expect(s.modules.some((m) => m.id === "./split-eee.js")).toBe(false);
+  });
+
+  it("still gives each executed member exactly one row", () => {
+    const s = comboSnap();
+    for (const member of ["main-aaa", "deep-ddd"]) {
+      const rows = s.modules.filter((m) => (m.id + " " + (m.url ?? "")).includes(member));
+      expect(rows, member).toHaveLength(1);
+    }
+  });
+
+  it("takes the registration from the key that holds one, the url from the key that holds that", () => {
+    const s = comboSnap();
+    const row = s.modules.find((m) => m.id === split)!;
+    // the specifier half's `pending: false` is not a claim about the module --
+    // that half is filed empty on purpose. The url half carries the code.
+    expect(row.registration?.pending).toBe(true);
+    expect(row.registration?.url).toBe(split);
+    expect(row.stage).toBe("registered");
+  });
+
+  it("gives the merged row the container and carrier the orphan half had neither of", () => {
+    const s = comboSnap();
+    const row = s.modules.find((m) => m.id === split)!;
+    expect(row.kind).toBe("exposed");
+    expect(row.container?.name).toBe("fynapp-combo");
+    expect(row.bundle).toBe("https://app.test/fynapp-combo/dist/combined-zzz.js");
+  });
+
+  it("reports the unconsumed registration once, against the row that carries it", () => {
+    const s = comboSnap();
+    analyse(s);
+    const pending = s.issues.filter((i) => i.code === "registration-pending");
+    // one per unexecuted member, not one per registry key
+    expect(pending.map((i) => i.refs?.[0]).sort()).toEqual(["./late-ccc.js", split]);
+  });
+
+  it("folds the pair whichever key the loader hands over first", () => {
+    const url = "https://app.test/fynapp-combo/dist/rev-fff.js";
+    const loader = new FakeLoader()
+      // url side first -- the reverse of the order the demo page shows
+      .addRegistration(url, { registration: [[], () => ({})] })
+      .addRegistration("./rev-fff.js", { url });
+    const s = collect({ loader });
+    const rows = s.modules.filter((m) => (m.id + " " + (m.url ?? "")).includes("rev-fff"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe(url);
+    // the url-keyed entry carries no url of its own; without the specifier half
+    // the row has none, and readBundles skips a row with no url
+    expect(rows[0].url).toBe(url);
+    expect(rows[0].aliases).toContain("./rev-fff.js");
+    expect(rows[0].registration?.pending).toBe(true);
+  });
+
+  it("never folds away a specifier that carries a registration of its own", () => {
+    const url = "https://app.test/fynapp-combo/dist/own-ggg.js";
+    const loader = new FakeLoader()
+      // both keys hold code: two registrations, and neither is a redirect
+      .addRegistration("./own-ggg.js", { url, registration: [[], () => ({})] })
+      .addRegistration(url, { registration: [[], () => ({})] });
+    const s = collect({ loader });
+    const rows = s.modules.filter((m) => (m.id + " " + (m.url ?? "")).includes("own-ggg"));
+    expect(rows.map((m) => m.id).sort()).toEqual(["./own-ggg.js", url]);
   });
 });
 

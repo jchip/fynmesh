@@ -471,9 +471,13 @@ export function minifiedSharePage(): {
  * - `deep-ddd.js` -- a record under the chunk specifier, with the url arriving
  *   from its registration. id !== url, executed. The old count could not find
  *   it and called it loaded anyway, which was right by accident.
- * - `late-ccc.js` -- a registration nothing consumed, the resting state of a
- *   combined chunk no one has imported. id !== url, `registered`. The old count
- *   could not find it either, and called it loaded, which was wrong.
+ * - `late-ccc.js` -- a registration nothing consumed, carrying its url and its
+ *   registration on one key. id !== url, `registered`. The old count could not
+ *   find it either, and called it loaded, which was wrong.
+ * - `split-eee.js` -- the same resting state as it is actually filed by the
+ *   shipped runtime: **two** entries, `specifier -> { url }` and
+ *   `url -> { registration }` (combined-module-bundles.md 5.3). One module,
+ *   and the only one here whose registry presence is a pair.
  */
 export function combinedBundlePage(): {
   loader: FakeLoader;
@@ -487,6 +491,7 @@ export function combinedBundlePage(): {
   const byUrl = "https://app.test/fynapp-combo/dist/main-aaa.js";
   const bySpecifier = "https://app.test/fynapp-combo/dist/deep-ddd.js";
   const neverRun = "https://app.test/fynapp-combo/dist/late-ccc.js";
+  const splitKeys = "https://app.test/fynapp-combo/dist/split-eee.js";
 
   const c = new FakeContainer(
     "__mf_container_fynapp-combo",
@@ -496,7 +501,8 @@ export function combinedBundlePage(): {
   )
     .expose("./main", "./main-aaa.js")
     .expose("./deep", "./deep-ddd.js")
-    .expose("./late", "./late-ccc.js");
+    .expose("./late", "./late-ccc.js")
+    .expose("./split", "./split-eee.js");
 
   loader
     .addRecord({ id: entry, n: { container: c, init: () => {}, get: () => {} }, d: [] })
@@ -511,12 +517,19 @@ export function combinedBundlePage(): {
     .addRegistration("./main-aaa.js", { url: byUrl })
     .addRegistration("./deep-ddd.js", { url: bySpecifier })
     // known to the loader, url and all, and never instantiated
-    .addRegistration("./late-ccc.js", { url: neverRun, registration: [[], () => ({})] });
+    .addRegistration("./late-ccc.js", { url: neverRun, registration: [[], () => ({})] })
+    // the same state, filed the way a combined member really is: the specifier
+    // side carries the url and no code, the url side carries the code and no
+    // url of its own. Registered specifier-first, which is the order the demo
+    // page shows.
+    .addRegistration("./split-eee.js", { url: splitKeys })
+    .addRegistration(splitKeys, { registration: [[], () => ({})] });
 
   federation
     .addBundle(byUrl, combo)
     .addBundle(bySpecifier, combo)
-    .addBundle(neverRun, combo);
+    .addBundle(neverRun, combo)
+    .addBundle(splitKeys, combo);
 
   return { loader, federation };
 }

@@ -219,11 +219,39 @@ export function collectSystemJs(
   }
 
   // --- registrations: ids the loader knows about, instantiated or not ----
+  //
+  // Known to the loader, but never instantiated. Worth showing: a remote still
+  // in flight, or a registration nothing ever consumed, both look like this and
+  // both are things you go looking for.
+  const registerOnly = (id: string, registration: ModuleNode["registration"]) => {
+    registeredOnly.push(id);
+    const node: ModuleNode = {
+      id,
+      url: registration?.url,
+      kind: "unknown",
+      stage: "registered",
+      aliases: aliasesById.get(id) ?? [],
+      deps: [],
+      dependents: [],
+      registration,
+      loader: loaderIndex,
+      seq: seq++,
+    };
+    modules.set(id, node);
+    return node;
+  };
+
   let registrationCount = 0;
   if (cap.registrations) {
     const regs = loader.registrations;
     const ok = attempt(() => {
-      for (const name of regs.keys()) {
+      // Taken up front so the redirect branch below can ask whether a url is
+      // itself a registered name -- the half of the pair that has no record
+      // yet, and may not have been reached by this loop.
+      const names: string[] = [...regs.keys()];
+      const registered = new Set(names);
+
+      for (const name of names) {
         registrationCount++;
         const qualifiers: string[] = attempt(() => regs.qualifiersOf(name)) ?? [];
         const entry = attempt(() => regs.get(name));
@@ -233,7 +261,24 @@ export function collectSystemJs(
 
         const existing = modules.get(name);
         if (existing) {
-          existing.registration = { qualifiers, url, taken, pending };
+          /*
+           * The registration is read from the key that can hold one.
+           *
+           * A url-keyed entry deliberately carries no url of its own (only the
+           * specifier entry enters federation's reverse index), so overwriting
+           * a url already recovered from the specifier half would drop the one
+           * fact this key never had. `pending` and `taken` are not merged and
+           * not averaged: the url half writes them through here, and the
+           * specifier half only ever seeds a row that has none, so for a pair
+           * the half that can hold code is the half that answers -- whichever
+           * order the loader hands the two keys over in.
+           */
+          existing.registration = {
+            qualifiers,
+            url: url ?? existing.registration?.url,
+            taken,
+            pending,
+          };
           if (!existing.url && url) {
             existing.url = url;
           }
@@ -243,21 +288,44 @@ export function collectSystemJs(
         /*
          * A redirect, not a module.
          *
-         * When this name carries a url that already has its own record, the
-         * two are one module: federation registers the specifier with a url
-         * and no registration, and the url with the registration, precisely so
-         * that the module has exactly ONE address. Making a row for each would
-         * show every code-split chunk twice and -- worse -- would trip the
-         * duplicate-address diagnostic on a page where nothing is wrong.
+         * When this name carries a url, the two are one module: federation
+         * registers the specifier with a url and no registration, and the url
+         * with the registration, precisely so that the module has exactly ONE
+         * address -- and that address is the url ("there is exactly one id for
+         * the member", combined-module-bundles.md 5.3). Making a row for each
+         * would show every code-split chunk twice and -- worse -- would trip
+         * the duplicate-address diagnostic on a page where nothing is wrong.
          *
          * So the specifier becomes an alias of the module it points at, and
          * the index records the mapping for callers holding a specifier.
+         *
+         * The target does not have to be a live record. A combined-bundle
+         * member nobody has imported is the resting state of that pair: the
+         * url side holds the registration and no record exists yet. It is
+         * still one module, and it is already reachable under the id it will
+         * keep once something instantiates it, so it is filed there now rather
+         * than under an address that would change out from under a reader.
+         * Folding is limited to a specifier holding no registration of its
+         * own, which is federation's fingerprint for the redirect half; a name
+         * that carries real code is never merged away.
          */
-        if (url && modules.has(url)) {
-          const target = modules.get(url)!;
+        if (url && url !== name && (modules.has(url) || (!pending && registered.has(url)))) {
+          const target =
+            modules.get(url) ??
+            registerOnly(url, {
+              // seeded from the redirect half; the url's own key overwrites it
+              // with the registration facts when this loop reaches it
+              qualifiers,
+              url,
+              taken,
+              pending,
+            });
           specifiers.set(name, url);
           if (!target.aliases.includes(name)) {
             target.aliases.push(name);
+          }
+          if (!target.url) {
+            target.url = url;
           }
           if (!target.registration) {
             target.registration = { qualifiers, url, taken, pending };
@@ -265,22 +333,7 @@ export function collectSystemJs(
           continue;
         }
 
-        // Known to the loader, but never instantiated. Worth showing: a remote
-        // still in flight, or a registration nothing ever consumed, both look
-        // like this and both are things you go looking for.
-        registeredOnly.push(name);
-        modules.set(name, {
-          id: name,
-          url,
-          kind: "unknown",
-          stage: "registered",
-          aliases: aliasesById.get(name) ?? [],
-          deps: [],
-          dependents: [],
-          registration: { qualifiers, url, taken, pending },
-          loader: loaderIndex,
-          seq: seq++,
-        });
+        registerOnly(name, { qualifiers, url, taken, pending });
       }
       return true;
     });
