@@ -153,9 +153,9 @@ function now(): number {
  * The live poll runs every 500ms and a full collect walks every record; this
  * makes the overwhelmingly common idle tick nearly free. It is deliberately
  * not a hash of the whole state -- it catches modules appearing, registrations
- * arriving and share versions being added, which is everything that changes
- * the shape of the view. A module merely advancing a stage is missed until the
- * next real change, which is an acceptable trade for a poll this frequent.
+ * arriving and share versions being added. Failed record identities are also
+ * included: a rejection must refresh diagnostics even on an otherwise idle
+ * page. Ordinary stage advancement still waits for the next shape change.
  */
 export function fingerprint(opts: CollectOptions = {}): string {
   const g = globalThis as any;
@@ -176,10 +176,18 @@ export function fingerprint(opts: CollectOptions = {}): string {
 
   let records = 0;
   let regs = 0;
-  for (const S of loaders) {
+  let failures = "";
+  for (const [index, S] of loaders.entries()) {
     attempt(() => {
-      for (const _ of S.records.keys()) {
+      const registry = S.records;
+      for (const id of registry.keys()) {
         records++;
+        // Read the failure flag, not the rejection value: `throw 0` is legal.
+        // Include identity rather than a total so one recovery and one failure
+        // in the same tick cannot cancel out. Never run stageOf's graph walk.
+        if (safeGet(registry.get(id), "f")) {
+          failures += JSON.stringify([index, id]);
+        }
       }
     });
     attempt(() => {
@@ -223,5 +231,5 @@ export function fingerprint(opts: CollectOptions = {}): string {
     });
   }
 
-  return records + ":" + regs + ":" + shares + ":" + fynmesh;
+  return records + ":" + regs + ":" + shares + ":" + fynmesh + ":" + failures;
 }

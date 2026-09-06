@@ -169,8 +169,10 @@ federation on the page at all, it is a perfectly good SystemJS module browser.
 ### Live refresh
 
 While open, the panel re-collects every 500ms behind a cheap fingerprint check
-(record count, registration count, share-store shape), so an idle tick costs
-almost nothing and a full collect only runs when something actually changed.
+(record count, failed record identities, registration count, share-store shape),
+so a full collect only runs when the fingerprint changes. A module rejection
+refreshes diagnostics even when no new module has arrived. Ordinary stage
+advancement still waits for the next fingerprint change or a manual refresh.
 
 ## Architecture
 
