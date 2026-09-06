@@ -41,6 +41,20 @@ export interface SystemJsCollection {
 }
 
 /**
+ * Does this id name a location, rather than a name federation coined?
+ *
+ * Two id spaces share the map (see the file header): an absolute url, and a
+ * federation specifier -- `./chunk-abc.js`, `__mf_container_x`. An id in the
+ * first space *is* the module's url, and it has to be read that way by every
+ * path that files a module -- a record-backed one in pass 1, a
+ * registration-only one in `registerOnly` -- or the same file carries a url
+ * under one route and none under the other, which is what FYM-373 was.
+ */
+function looksLikeUrl(id: string): boolean {
+  return /^[a-z]+:\/\//i.test(id) || id.startsWith("/");
+}
+
+/**
  * Derive a stage without `System.stageOf`.
  *
  * Deliberately coarser than the loader's own: `stageOf` walks the dependency
@@ -172,7 +186,7 @@ export function collectSystemJs(
         const stage = stageOf(loader, rec, cap.stageOf);
         modules.set(id, {
           id,
-          url: /^[a-z]+:\/\//i.test(id) || id.startsWith("/") ? id : undefined,
+          url: looksLikeUrl(id) ? id : undefined,
           kind: "unknown",
           stage,
           aliases: aliasesById.get(id) ?? [],
@@ -227,7 +241,12 @@ export function collectSystemJs(
     registeredOnly.push(id);
     const node: ModuleNode = {
       id,
-      url: registration?.url,
+      // The entry is asked first -- a specifier's entry is the only thing that
+      // knows its url -- and the id answers when it did not: federation's
+      // url-keyed half deliberately carries no url of its own, so a lone one
+      // (no specifier partner to supply it) would otherwise be the only module
+      // in the snapshot whose id is a url and whose `url` is absent.
+      url: registration?.url ?? (looksLikeUrl(id) ? id : undefined),
       kind: "unknown",
       stage: "registered",
       aliases: aliasesById.get(id) ?? [],
