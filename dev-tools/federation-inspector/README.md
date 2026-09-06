@@ -58,6 +58,12 @@ Configuration goes on the script tag:
 change, and it remembers what you set. Omitting the attribute keeps the
 remembered value; supplying one is an instruction and wins over it.
 
+The panel's **Settings** menu, in the header at every width, holds the same
+two choices plus the dock mode -- right, bottom, floating, fullscreen -- and
+*Copy snapshot*. When the panel is too narrow for every tab the tab strip
+scrolls: arrows appear at its ends, and the active tab is always brought into
+view.
+
 The bundle also installs `globalThis.FederationInspector`:
 
 ```js
@@ -84,8 +90,9 @@ installed, no global is written.
 | Key | Action |
 | --- | --- |
 | `Ctrl+Shift+M` | toggle the panel |
-| `Esc` | clear the filter, then close |
+| `Esc` | close the settings menu, then clear the filter, then close |
 | `[` / `]` | previous / next tab |
+| `←` / `→`, `Home` / `End` | move between tabs while one has focus |
 | `j` / `k`, arrows | move the row cursor |
 | `Enter` | expand the selected row |
 

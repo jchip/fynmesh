@@ -9,13 +9,12 @@
 
 import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { signal, useComputed } from "@preact/signals";
+import { useComputed } from "@preact/signals";
 import type { ShareScopeNode, Snapshot, ViewName } from "../core/model.js";
 import type { Adapter } from "../adapters/types.js";
 import {
   analysis,
   canGoBack,
-  density,
   canGoForward,
   dock,
   expanded,
@@ -26,18 +25,14 @@ import {
   newSinceOpen,
   open,
   openedWithCount,
-  persist,
   query,
   selected,
   setSnapshot,
   snapshot,
-  theme,
   view,
   visibleModules,
-  type Dock,
   type GroupBy,
 } from "./state.js";
-import type { Density } from "./metrics.js";
 import {
   ResizeHandles,
   drawnRect,
@@ -48,6 +43,7 @@ import {
 import { facetState, filterContainers, filterScopes, toggleFacet } from "../analysis/search.js";
 import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
 import { TabStrip } from "./components/TabStrip.jsx";
+import { SettingsMenu, handleSettingsKey } from "./components/SettingsMenu.jsx";
 import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
 import { ContainersView } from "./views/containers.jsx";
@@ -372,52 +368,12 @@ function Header(props: AppProps): JSX.Element {
       <button class="iconbtn" title="Refresh now" onClick={() => props.adapter.refresh()}>
         {Icons.refresh}
       </button>
-      <button
-        class={"iconbtn hide-sm copybtn" + (copied.value ? " flash " + copied.value : "")}
-        title={COPY_TITLE[copied.value]}
-        onClick={() => copySnapshot()}
-      >
-        {copied.value === "ok" ? Icons.check : Icons.copy}
-      </button>
-      {/* hide-xs, not hide-sm: this is the only control that changes the
-          panel's shape, and a narrow panel is exactly when that is wanted */}
-      <button
-        class="iconbtn hide-xs"
-        title={"Dock: " + dock.value}
-        onClick={() => {
-          const order: Dock[] = ["dock-right", "dock-bottom", "float", "full"];
-          dock.value = order[(order.indexOf(dock.value) + 1) % order.length];
-          // `size` means width when docked right and height when docked
-          // bottom, so the same number has to be re-clamped against the other
-          // axis -- a 760px-wide panel became a 760px-tall one on a laptop.
-          reflowFloat();
-          persist();
-        }}
-      >
-        {Icons.dock}
-      </button>
-      <button
-        class="iconbtn text"
-        title={"Text size: " + density.value + " (click to change)"}
-        onClick={() => {
-          const order: Density[] = ["compact", "normal", "relaxed"];
-          density.value = order[(order.indexOf(density.value) + 1) % order.length];
-          persist();
-        }}
-      >
-        {density.value === "compact" ? "A-" : density.value === "relaxed" ? "A+" : "A"}
-      </button>
-      <button
-        class="iconbtn hide-sm"
-        title={"Theme: " + theme.value}
-        onClick={() => {
-          const order = ["auto", "light", "dark"] as const;
-          theme.value = order[(order.indexOf(theme.value) + 1) % order.length];
-          persist();
-        }}
-      >
-        {Icons.theme}
-      </button>
+      {/* Theme, text size, dock and copy sit behind one labelled trigger
+          rather than as four icon buttons, so they are there at every panel
+          width instead of being the first things a narrow panel drops. Dock,
+          the one control that changes the panel's shape, used to go at 557px
+          -- exactly when the panel was the wrong shape. */}
+      <SettingsMenu />
       <button
         class="iconbtn"
         title="Close (Esc)"
@@ -690,7 +646,9 @@ function fynappErrors(snap: Snapshot): boolean {
  * keyboard. Only two keys are global: the hotkey the host configured (that is
  * what configuring it means) and Escape, which never calls preventDefault so
  * the page still gets its own -- an always-available way out of a panel you
- * cannot see the close button of.
+ * cannot see the close button of. (An open settings menu is the one place
+ * Escape is consumed: it closes the menu rather than the panel, and that
+ * keystroke started inside the panel.)
  *
  * Everything else -- `/`, `[`/`]`, j/k and the arrows -- is a single
  * unmodified keystroke, which is to say it is a character or a caret movement
@@ -722,6 +680,14 @@ function useKeyboard(props: AppProps): void {
       const target = path[0] as HTMLElement | undefined;
       const inPanel = !!panelEl && path.includes(panelEl);
       const typing = isEditable(target);
+
+      // The settings menu owns Escape while it is open, and every key while
+      // the caret is inside it: a select's arrows move between its options,
+      // not the row cursor, and Escape closes the menu before it closes the
+      // panel.
+      if (panelEl && handleSettingsKey(e, path, panelEl)) {
+        return;
+      }
 
       if (e.key === "Escape") {
         // only our own search box clears; a page field's Escape is the page's
@@ -869,43 +835,4 @@ function matchesHotkey(e: KeyboardEvent, hotkey: string | false): boolean {
     e.shiftKey === wantShift &&
     e.altKey === wantAlt
   );
-}
-
-/**
- * "" while idle, then the outcome of the last copy for as long as the button
- * is showing it. A copy produces no visible change anywhere -- without this
- * the only way to tell a click registered is to go and paste somewhere.
- */
-const copied = signal<"" | "ok" | "fail">("");
-let copiedTimer: ReturnType<typeof setTimeout> | undefined;
-
-const COPY_TITLE: Record<"" | "ok" | "fail", string> = {
-  "": "Copy the snapshot as JSON",
-  ok: "Snapshot copied to the clipboard",
-  fail: "Clipboard unavailable -- snapshot logged to the console instead",
-};
-
-function flashCopied(state: "ok" | "fail"): void {
-  copied.value = state;
-  clearTimeout(copiedTimer);
-  // long enough to read the check, short enough not to sit there as state:
-  // the CSS fades the last third of it out.
-  copiedTimer = setTimeout(() => (copied.value = ""), 1400);
-}
-
-function copySnapshot(): void {
-  const text = JSON.stringify(snapshot.value, null, 2);
-  const written = navigator.clipboard?.writeText(text);
-  if (!written) {
-    fallbackCopy();
-    return;
-  }
-  written.then(() => flashCopied("ok")).catch(fallbackCopy);
-}
-
-function fallbackCopy(): void {
-  // clipboard needs a permission or a secure context; fall back to the
-  // console, which is always available and is where this is going anyway
-  console.log("[federation-inspector] snapshot:", snapshot.value);
-  flashCopied("fail");
 }

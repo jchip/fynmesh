@@ -277,7 +277,9 @@ select:focus-visible,
 .overlay.float .header { cursor: grab; }
 .overlay.float .header.grabbing { cursor: grabbing; }
 .overlay.float .header button,
-.overlay.float .header input { cursor: default; }
+.overlay.float .header input,
+.overlay.float .header summary,
+.overlay.float .header select { cursor: default; }
 
 /* ------------------------------------------------------------------ header */
 
@@ -373,24 +375,76 @@ select:focus-visible,
 .iconbtn[aria-pressed="true"] { color: var(--accent); background: var(--bg-sel); }
 .iconbtn svg { width: calc(var(--scale) * 15px); height: calc(var(--scale) * 15px); }
 /*
- * The copy button is the one control whose effect is entirely off-screen, so
- * it acknowledges itself: the outcome colour snaps on at click time and then
- * fades back over ~0.6s once the class comes off, which reads as "done" the
- * way an instant revert does not.
+ * Settings are one labelled trigger and a popover, not a row of icon buttons.
+ * Four icons cost the header ~110px and were the first things a narrow panel
+ * dropped; one trigger costs a fixed ~90px at every width, and the popover
+ * has room for a word beside each control, which "A+" never did.
  */
-.copybtn { transition: color 0.6s ease 0.2s, background 0.6s ease 0.2s; }
-.copybtn.flash { transition: none; }
-.copybtn.flash.ok { color: var(--ok); background: var(--chip); }
-.copybtn.flash.fail { color: var(--err); background: var(--chip); }
-@media (prefers-reduced-motion: reduce) {
-  .copybtn { transition: none; }
-}
-
-.iconbtn.text {
+.settings-menu { position: relative; flex: none; }
+.settings-menu > summary { list-style: none; cursor: pointer; user-select: none; }
+.settings-menu > summary::-webkit-details-marker { display: none; }
+.settings-trigger {
   width: auto;
-  padding: 0 7px;
-  font: 600 var(--fs-sm)/1 var(--sans);
+  gap: 5px;
+  padding: 0 8px 0 6px;
+  font: 500 var(--fs-sm)/1 var(--sans);
 }
+.settings-menu[open] > .settings-trigger { background: var(--chip); color: var(--fg-strong); }
+/*
+ * Anchored to the trigger's right edge, which is a few px inside the panel's.
+ * The overlay clips at its border, so a popover that opened past the right
+ * edge of a right-docked panel would simply not be there; and it is capped to
+ * the panel's width for the same reason.
+ */
+.settings-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
+  min-width: calc(var(--scale) * 210px);
+  max-width: calc(100cqw - 16px);
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+.settings-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font: 500 var(--fs-sm)/1 var(--sans);
+  color: var(--fg);
+}
+.settings-field select {
+  height: calc(var(--scale) * 24px);
+  min-width: calc(var(--scale) * 104px);
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-alt);
+  color: var(--fg);
+  font: 500 var(--fs-sm)/1 var(--sans);
+}
+.settings-field select:hover { border-color: var(--border-strong); }
+.settings-copy {
+  height: calc(var(--scale) * 26px);
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-alt);
+  color: var(--fg);
+  font: 500 var(--fs-sm)/1 var(--sans);
+}
+.settings-copy:hover { color: var(--fg-strong); border-color: var(--border-strong); }
+.settings-copy:disabled { opacity: 0.5; cursor: default; }
+.settings-status { font: 400 var(--fs-xs)/1.4 var(--sans); color: var(--fg-dim); }
+.settings-status:empty { display: none; }
 
 /* -------------------------------------------------------------- filter bar */
 

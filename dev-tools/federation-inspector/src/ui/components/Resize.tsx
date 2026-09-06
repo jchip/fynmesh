@@ -230,7 +230,7 @@ export function useHeaderDrag(): JSX.HTMLAttributes<HTMLDivElement> {
   return {
     onPointerDown(e) {
       const target = e.target as HTMLElement;
-      if (target.closest("button, input, select, .rz")) {
+      if (target.closest("button, input, select, summary, .settings-popover, .rz")) {
         return;
       }
       if (activePointerId.current !== undefined) {
