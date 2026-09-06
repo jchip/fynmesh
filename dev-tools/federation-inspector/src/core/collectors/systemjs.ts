@@ -32,8 +32,6 @@ export interface SystemJsCollection {
    * map, a share source) finds the module it points at.
    */
   specifiers: Map<string, string>;
-  /** ids that only exist as registrations, never instantiated */
-  registeredOnly: string[];
   recordCount: number;
   registrationCount: number;
   baseUrl?: string;
@@ -155,7 +153,6 @@ export function collectSystemJs(
   const modules = new Map<string, ModuleNode>();
   const records = new Map<string, any>();
   const specifiers = new Map<string, string>();
-  const registeredOnly: string[] = [];
   const errors: string[] = [];
   let seq = 0;
 
@@ -237,8 +234,14 @@ export function collectSystemJs(
   // Known to the loader, but never instantiated. Worth showing: a remote still
   // in flight, or a registration nothing ever consumed, both look like this and
   // both are things you go looking for.
+  //
+  // Which ids those are is not accumulated into a list of its own: the node
+  // says so, as `stage === "registered"`, and that is the one spelling the rest
+  // of the package reads it in (`isLoadedStage`, the `registration-pending`
+  // diagnostic). A parallel array would be a second derivation of a fact one
+  // pass already files, and it was one -- written on every collect, read by
+  // nobody, until FYM-374 removed it.
   const registerOnly = (id: string, registration: ModuleNode["registration"]) => {
-    registeredOnly.push(id);
     const node: ModuleNode = {
       id,
       // The entry is asked first -- a specifier's entry is the only thing that
@@ -388,7 +391,6 @@ export function collectSystemJs(
     modules,
     records,
     specifiers,
-    registeredOnly,
     recordCount,
     registrationCount,
     baseUrl: isFn(safeGet(loader, "resolve")) ? baseUrlOf(loader) : undefined,
