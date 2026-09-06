@@ -31,6 +31,7 @@ import {
   snapshot,
   view,
   visibleModules,
+  type Dock,
   type GroupBy,
 } from "./state.js";
 import {
@@ -211,6 +212,19 @@ function Launcher({ corner }: { corner: Corner }): JSX.Element {
  */
 let panelEl: HTMLElement | null = null;
 
+/**
+ * The overlay's classes for one frame.
+ *
+ * `opening` and `closing` are the two enter/leave animations, and each dock
+ * mode names its own keyframes -- so `opening` is not a synonym for "not
+ * closing". Left on for the panel's whole life it replays the enter animation
+ * every time the dock changes, because that swaps the `animation-name`
+ * underneath it. It comes off once the animation has ended.
+ */
+export function overlayClass(dock: Dock, closing: boolean, entering: boolean): string {
+  return "overlay " + dock + (closing ? " closing" : entering ? " opening" : "");
+}
+
 function Overlay(props: AppProps & { closing: boolean }): JSX.Element {
   /*
    * Drawn from the remembered geometry clamped to the *current* viewport, and
@@ -220,6 +234,8 @@ function Overlay(props: AppProps & { closing: boolean }): JSX.Element {
    * has ever been.
    */
   const r = drawnRect();
+  // this mount *is* one opening: the panel unmounts once it has closed
+  const [entering, setEntering] = useState(true);
   const drawn = drawnSize();
   const style =
     dock.value === "dock-right"
@@ -247,7 +263,12 @@ function Overlay(props: AppProps & { closing: boolean }): JSX.Element {
       ref={(el) => {
         panelEl = el;
       }}
-      class={"overlay " + dock.value + (props.closing ? " closing" : " opening")}
+      class={overlayClass(dock.value, props.closing, entering)}
+      // animation events bubble, and rows inside the panel have animations of
+      // their own -- only the overlay's own end says the enter is over
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) setEntering(false);
+      }}
       style={style}
       role="dialog"
       aria-label="Federation inspector"
