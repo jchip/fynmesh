@@ -102,7 +102,7 @@ export function App(props: AppProps): JSX.Element {
   // still has a badge, and the badge's error count is the whole reason to put
   // one on the page -- stopping the poll would freeze it at whatever the page
   // looked like when you last closed the panel. The cost is a `fingerprint()`
-  // every 500ms, which walks registry keys and allocates nothing; the full
+  // every 500ms, which checks registry keys and failure flags; the full
   // collect only runs when that changes.
   useEffect(() => {
     let cancelled = false;
@@ -780,6 +780,12 @@ function useKeyboard(props: AppProps): void {
         return;
       }
       if (e.key === "Enter" && selected.value) {
+        // Enter belongs to the focused control, even when a module remains
+        // selected. Inspect the composed path for controls containing an icon
+        // or living in a nested shadow root before claiming row expansion.
+        if (path.slice(0, path.indexOf(panelEl!)).some(isActivationControl)) {
+          return;
+        }
         e.preventDefault();
         const set = new Set(expanded.value);
         if (set.has(selected.value)) {
@@ -797,6 +803,18 @@ function useKeyboard(props: AppProps): void {
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
   }, [props.hotkey]);
+}
+
+function isActivationControl(target: EventTarget): boolean {
+  const el = target as Element;
+  return (
+    el.tagName === "BUTTON" ||
+    el.tagName === "SUMMARY" ||
+    (el.tagName === "A" && el.hasAttribute("href")) ||
+    ["button", "link", "tab", "menuitem", "checkbox", "radio", "switch"].includes(
+      el.getAttribute?.("role") ?? ""
+    )
+  );
 }
 
 /**
