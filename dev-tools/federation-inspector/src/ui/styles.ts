@@ -305,11 +305,17 @@ select:focus-visible,
   color: var(--accent);
 }
 
-/*
- * Tabs shrink, actions do not. At a narrow dock width the action group used to
- * be pushed off the panel entirely -- including Close, which left no way to
- * dismiss the overlay with the mouse.
- */
+.tab-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-alt);
+  flex: none;
+  min-width: 0;
+}
+.tab-scroll:disabled { opacity: 0.3; cursor: default; }
 .tabs {
   display: flex;
   gap: 1px;
@@ -319,22 +325,9 @@ select:focus-visible,
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
-/*
- * A tab strip with tabs off the end says so.
- *
- * There is no scrollbar (a horizontal bar across a 26px strip is worse than
- * the thing it solves), so a scrolled-away tab was simply invisible -- and the
- * history arrows sitting next to the strip read as its scroll controls. The
- * fades are set from JS (useTabScroll) because whether it overflows depends on
- * the panel width, the text size and the live counts together.
- */
-.tabs.more-l { mask-image: linear-gradient(to right, transparent, #000 16px); }
-.tabs.more-r { mask-image: linear-gradient(to left, transparent, #000 16px); }
-.tabs.more-l.more-r {
-  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
-}
 .actions { display: flex; align-items: center; gap: 1px; flex: none; }
 .tab {
+  flex: none;
   padding: 0 9px;
   height: var(--h-tab);
   border-radius: 3px;
@@ -1028,9 +1021,7 @@ a.link:hover { text-decoration: underline; }
 @container (max-width: 897px) { .hide-md { display: none !important; } }
 @container (max-width: 697px) {
   .hide-sm { display: none !important; }
-  /* buy back ~130px of strip before falling back to scrolling it */
   .tab { padding: 0 6px; }
-  .tab .n { display: none; }
 }
 @container (max-width: 557px) {
   .hide-xs { display: none !important; }

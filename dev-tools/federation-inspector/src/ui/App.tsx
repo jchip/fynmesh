@@ -8,7 +8,6 @@
  */
 
 import type { JSX } from "preact";
-import type { RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { signal, useComputed } from "@preact/signals";
 import type { ShareScopeNode, Snapshot, ViewName } from "../core/model.js";
@@ -48,6 +47,7 @@ import {
 } from "./components/Resize.jsx";
 import { facetState, filterContainers, filterScopes, toggleFacet } from "../analysis/search.js";
 import { Icons, STAGE_LABEL, STAGE_ORDER } from "./components/atoms.jsx";
+import { TabStrip } from "./components/TabStrip.jsx";
 import { ModulesView } from "./views/modules.jsx";
 import { SharesView } from "./views/shares.jsx";
 import { ContainersView } from "./views/containers.jsx";
@@ -291,7 +291,6 @@ function Header(props: AppProps): JSX.Element {
   const totals = useComputed(() => analysis.value.totals);
   const snap = snapshot.value;
   const drag = useHeaderDrag();
-  const { tabsRef, updateTabScroll } = useTabScroll();
 
   const tabCount = (id: ViewName): JSX.Element | null => {
     switch (id) {
@@ -328,26 +327,14 @@ function Header(props: AppProps): JSX.Element {
   };
 
   return (
+    <>
     <div class="header" {...drag}>
       <span class="title">
         {Icons.logo}
         <span class="hide-sm">federation</span>
       </span>
 
-      <span class="tabs" role="tablist" ref={tabsRef} onScroll={updateTabScroll}>
-        {tabsFor(snap).map((t) => (
-          <button
-            key={t.id}
-            class="tab"
-            role="tab"
-            aria-selected={view.value === t.id}
-            onClick={() => (view.value = t.id)}
-          >
-            {t.label}
-            {tabCount(t.id)}
-          </button>
-        ))}
-      </span>
+      <span class="spacer" />
 
       <span class="meta hide-md" title={`collected in ${ms(snap.collectMs)}`}>
         {ago(snap.takenAt)}
@@ -443,6 +430,9 @@ function Header(props: AppProps): JSX.Element {
       </button>
       </span>
     </div>
+    <TabStrip tabs={tabsFor(snap).map((tab) => ({ ...tab, count: tabCount(tab.id) }))}
+      active={view.value} onSelect={(id) => (view.value = id)} />
+    </>
   );
 }
 
@@ -901,56 +891,6 @@ function flashCopied(state: "ok" | "fail"): void {
   // long enough to read the check, short enough not to sit there as state:
   // the CSS fades the last third of it out.
   copiedTimer = setTimeout(() => (copied.value = ""), 1400);
-}
-
-/**
- * Mark the tab strip when it has tabs off either end.
- *
- * The strip scrolls when the panel is narrow -- at 420px only two of six tabs
- * are in view -- and it scrolls with no scrollbar (a horizontal bar over a
- * 26px strip is worse than the problem). Without a mark there is nothing to
- * say the other four exist: the `<` `>` beside it are history buttons, which
- * is actively misleading. So the ends get a fade, and only when there is
- * something behind it.
- *
- * Measured rather than assumed, because the widths depend on the text size,
- * the tab counts and the panel width all at once.
- */
-function useTabScroll(): {
-  tabsRef: RefObject<HTMLElement>;
-  updateTabScroll: () => void;
-} {
-  const tabsRef = useRef<HTMLElement>(null);
-
-  const apply = () => {
-    const el = tabsRef.current;
-    if (!el) {
-      return;
-    }
-    // 1px of slack: fractional scroll widths at a non-integer zoom otherwise
-    // leave the end fade permanently on
-    const max = el.scrollWidth - el.clientWidth;
-    el.classList.toggle("more-l", el.scrollLeft > 1);
-    el.classList.toggle("more-r", el.scrollLeft < max - 1);
-  };
-
-  useEffect(() => {
-    const el = tabsRef.current;
-    if (!el || typeof ResizeObserver === "undefined") {
-      return;
-    }
-    apply();
-    // the strip resizes with the panel, and its contents resize with the text
-    // size and the live counts, so both are watched
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    for (const child of Array.from(el.children)) {
-      ro.observe(child);
-    }
-    return () => ro.disconnect();
-  }, []);
-
-  return { tabsRef, updateTabScroll: apply };
 }
 
 function copySnapshot(): void {
