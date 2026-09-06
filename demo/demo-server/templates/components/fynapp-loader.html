@@ -93,6 +93,7 @@
             "fynapp-notes": true
         };
 
+{% if not isProduction %}
         /*
          * Diagnostics lab: opt-in, and absent unless the url asks for it.
          *
@@ -111,6 +112,12 @@
          *                  the two amber resolution branches have something to
          *                  report. This one really is unhealthy.
          *   ?lab=all       every lab app at once.
+         *
+         * Dev build only. The published site copies an explicit list of app
+         * directories and the lab apps are not in it, so a shipped switch would
+         * ask the kernel for a dist that is not there -- broken rather than
+         * inert. Omitting the block instead makes `?lab=` do nothing in
+         * production, which is what a dev-only affordance should do.
          */
         const lab = new Set(
             new URLSearchParams(location.search)
@@ -146,6 +153,7 @@
             }
             features["fynapp-mw-mismatch"] = true;
         }
+{% endif %}
 
         // Separate eager and lazy apps
         const requested = [];
