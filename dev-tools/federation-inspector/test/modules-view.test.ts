@@ -38,15 +38,15 @@ describe("group header, bundle grouping", () => {
 
   it("reads the carrier's own loaded tally, which no row could show", () => {
     const bundles = bundlesOf(combinedBundlePage());
-    // three chunks in one file; the never-instantiated one is not loaded
+    // four chunks in one file; the two never-instantiated ones are not loaded
     expect(bundles).toHaveLength(1);
     expect(bundles[0].url).toBe(combo);
-    expect(bundles[0].members).toHaveLength(3);
+    expect(bundles[0].members).toHaveLength(4);
     expect(bundles[0].loadedCount).toBe(2);
 
-    const head = groupHead("bundle", combo, 3, bundles);
+    const head = groupHead("bundle", combo, 4, bundles);
     expect(head.label).toBe("combined-zzz.js");
-    expect(head.summary).toBe("3 modules · 2 loaded");
+    expect(head.summary).toBe("4 modules · 2 loaded");
     // the full url is only ever hover text; the header prints the basename
     expect(head.title).toContain(combo);
   });
@@ -54,7 +54,7 @@ describe("group header, bundle grouping", () => {
   it("does not pass a filtered row count off as the bundle's size", () => {
     const bundles = bundlesOf(combinedBundlePage());
     const head = groupHead("bundle", combo, 1, bundles);
-    expect(head.summary).toBe("1 of 3 shown · 2 loaded");
+    expect(head.summary).toBe("1 of 4 shown · 2 loaded");
   });
 
   it("says only what is on screen for a carrier the snapshot holds no record of", () => {
