@@ -23,6 +23,24 @@ describe("published package artifact", () => {
     expect(rollupConfig).toContain('file: "dist/index.js"');
   });
 
+  /*
+   * FYM-393. `build-dist` is the fast inner loop while iterating on
+   * rollup.config.ts, and rollup only overwrites what it writes -- it does not
+   * remove what an earlier build left. Running it directly used to leave the
+   * previous build's `.map` files in dist/ beside fresh bundles that no longer
+   * reference them. The existing `clean` cannot be reused for this: it also
+   * removes `lib`, which `compile-lib` owns and produces earlier in the chain.
+   */
+  it("clears dist before rollup writes, so an earlier build cannot linger", () => {
+    expect(pkg.scripts["build-dist"]).toBe("rm -rf dist && rollup -c");
+  });
+
+  it("leaves lib alone, since compile-lib owns it and runs first", () => {
+    expect(pkg.scripts["build-dist"]).not.toContain("lib");
+    expect(pkg.scripts["compile-lib"]).toContain("tsconfig.lib.json");
+    expect(pkg.scripts.clean).toBe("rm -rf dist lib");
+  });
+
   it("keeps the development error overlay out of the production browser entry", () => {
     const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
 

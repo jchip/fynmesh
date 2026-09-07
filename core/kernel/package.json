@@ -27,7 +27,7 @@
     "clean": "rm -rf dist lib",
     "gen-version": "node build/gen-version.mjs",
     "compile-lib": "tsc --build tsconfig.lib.json",
-    "build-dist": "rollup -c",
+    "build-dist": "rm -rf dist && rollup -c",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
