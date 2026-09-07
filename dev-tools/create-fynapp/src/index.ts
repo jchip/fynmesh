@@ -25,8 +25,11 @@ export {
   fynappEntryFilename,
   fynmeshShareScope,
 } from "./constants.js";
+export { shouldEmitSourceMap } from "./build-env.js";
+export type { BuildEnv } from "./build-env.js";
 
 import process from "node:process";
+import { shouldEmitSourceMap } from "./build-env.js";
 import virtual from "@rollup/plugin-virtual";
 import noEmit from "rollup-plugin-no-emit";
 import alias from "@rollup/plugin-alias";
@@ -93,9 +96,18 @@ export type FynAppManifest = {
 export const env = process.env.NODE_ENV || "development";
 export const isProduction = env === "production";
 
+/**
+ * Rollup `output` options every FynApp build shares.
+ *
+ * @param format - module format to emit.
+ * @param sourceMap - emit source maps; defaults to {@link shouldEmitSourceMap},
+ *   which is off for a production build. Pass an explicit boolean only when an
+ *   app has a reason to disagree with that policy.
+ * @returns the partial rollup options carrying `output`.
+ */
 export function setupFynAppOutputConfig(
   format: ModuleFormat = "systemjs",
-  sourceMap = true,
+  sourceMap = shouldEmitSourceMap(),
 ): Partial<RollupOptions> {
   return {
     output: {
@@ -143,7 +155,7 @@ export function setupTypeScriptPlugins(options: Record<string, any> = {}) {
   return [
     newRollupPlugin(esbuild)({
       tsconfig: "./tsconfig.json",
-      sourceMap: true,
+      sourceMap: shouldEmitSourceMap(),
       ...options,
       supported: {
         ...fynappEsbuildSupported,
