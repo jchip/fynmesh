@@ -15,6 +15,8 @@
     "build-prod": "NODE_ENV=production xrun -s build combine-demo _shell-templates",
     "_shell-templates": "cd demo/demo-server && xrun build-templates",
     "clean:demo": "rm -rf demo/*/dist",
+    "build-demo": "NODE_ENV=production xrun -s clean:demo build-prod _build-demo-site",
+    "_build-demo-site": "cd demo/demo-server && xrun build-demo-site",
     "publish-demo": "NODE_ENV=production xrun -s clean:demo build-prod _gh-publish",
     "_gh-publish": "cd demo/demo-server && xrun gh-publish",
     "start": "cd demo/demo-server && fyn start",

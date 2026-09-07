@@ -55,8 +55,16 @@ load({
         }
     },
 
-    "gh-publish": {
-        desc: "Deploy demo site to Cloudflare Pages via the gh-pages branch",
+    "gh-deploy": {
+        desc: "DESTRUCTIVE: publish an already-built .temp/docs to the LIVE site",
+        /*
+         * Not a build step, and not safe to run for its side effects. This
+         * force-pushes to the branch Cloudflare Pages serves, so it changes the
+         * live site, and step 6 is a `git checkout -f main` that discards
+         * uncommitted work anywhere in the tree. Run it only when publishing is
+         * the intent. To produce the artifact without publishing it, use
+         * `build-demo-site` (or `fyn build-demo` from the repo root).
+         */
         task: () => {
             // Generate timestamp in MM/DD/YYYY HH:MM format
             const now = new Date();
@@ -70,25 +78,27 @@ load({
             // gh-pages is a disposable branch: always latest main + a built docs/
             // commit on top, force-pushed. Cloudflare Pages serves the docs/ dir.
             return serial([
-                // Step 1: Build demo site (on main) to .temp/docs
-                //         (.temp/docs persists because .temp is in .gitignore)
-                "build-demo-site",
-                // Step 2: Hard reset gh-pages to latest main (creates or resets it)
+                // Step 1: Hard reset gh-pages to latest main (creates or resets it)
                 exec("git checkout -B gh-pages main"),
-                // Step 3: Drop the freshly built docs onto the tree
+                // Step 2: Drop the freshly built docs onto the tree
                 exec("rm -rf ../../docs"),
                 exec("mv ../../.temp/docs ../../docs"),
-                // Step 4: Force add docs directory (it's in .gitignore on main)
+                // Step 3: Force add docs directory (it's in .gitignore on main)
                 exec("git add -f ../../docs"),
-                // Step 5: Commit the built docs with a timestamp
+                // Step 4: Commit the built docs with a timestamp
                 exec(`git commit -m "build demo site ${timestamp}"`),
-                // Step 6: Force push — triggers a Cloudflare Pages deploy
+                // Step 5: Force push — triggers a Cloudflare Pages deploy
                 exec("git push --force origin gh-pages"),
-                // Step 7: Return to a clean main
+                // Step 6: Return to a clean main
                 exec("git checkout -f main"),
                 exec("rm -rf ../../docs")
             ])
         }
+    },
+
+    "gh-publish": {
+        desc: "Build the demo site and publish it to the LIVE site",
+        task: () => serial(["build-demo-site", "gh-deploy"])
     }
 });
 
