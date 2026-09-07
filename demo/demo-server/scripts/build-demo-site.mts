@@ -247,7 +247,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         }
 
         // Note: no CNAME file — Cloudflare Pages configures the custom domain
-        // (www.lm360.ai) in its dashboard, so a CNAME file is not used.
+        // (www.fynmesh.win) in its dashboard, so a CNAME file is not used.
 
         // Copy Google verification file
         const googleVerifySource = path.join(__dirname, "../googlee9bcb5713536aa25.html");
