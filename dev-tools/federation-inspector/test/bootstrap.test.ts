@@ -309,8 +309,12 @@ describe("an unreadable coordinator", () => {
       },
     ]);
 
+    // Reading through the hatch is a supported result, not a degraded one, so
+    // it raises no capability note -- the banner those land in reads "limited",
+    // which made the panel the hatch fixed look broken (FYM-399). The
+    // genuinely-unreadable case still reports, as the next test asserts.
     const notes = cap.notes.join(" ");
-    expect(notes).toContain("kernel.__I()");
+    expect(notes).not.toContain("kernel.__I()");
     expect(notes).not.toContain("says unavailable rather than idle");
   });
 
