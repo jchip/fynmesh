@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { findMissingLocalRefs } from "../scripts/build-demo-site.mts";
+import { findMissingLocalRefs, prepareOutputDir } from "../scripts/build-demo-site.mts";
 
 /**
  * findMissingLocalRefs is the guard from FYM-199. A page that references an
@@ -100,5 +100,68 @@ describe("findMissingLocalRefs", () => {
 
     it("finds nothing when the output dir has no pages", () => {
         expect(findMissingLocalRefs(outputDir, "/")).toEqual([]);
+    });
+});
+
+/**
+ * prepareOutputDir is the guard from FYM-387. The publish flow builds into
+ * `.temp/docs`, which is gitignored and therefore survives between runs, so a
+ * build that does not clean first ships whatever the last one left -- 86 stale
+ * `.map` files on the first live deploy. The catch is that the default
+ * outputDir *is* the source `public/` directory, so the clean has to refuse
+ * that one case rather than delete checked-in assets.
+ */
+describe("prepareOutputDir", () => {
+    let root: string;
+    let outputDir: string;
+    let sourceDir: string;
+    const logged: string[] = [];
+    const log = (m: string) => void logged.push(m);
+
+    beforeEach(() => {
+        root = mkdtempSync(path.join(tmpdir(), "fynmesh-outdir-"));
+        outputDir = path.join(root, "docs");
+        sourceDir = path.join(root, "public");
+        mkdirSync(sourceDir, { recursive: true });
+        logged.length = 0;
+    });
+
+    afterEach(() => {
+        rmSync(root, { recursive: true, force: true });
+    });
+
+    it("removes stale files from a distinct build directory", () => {
+        mkdirSync(path.join(outputDir, "fynapp-6-react", "dist"), { recursive: true });
+        writeFileSync(path.join(outputDir, "main-oldhash.js.map"), "{}");
+        writeFileSync(path.join(outputDir, "fynapp-6-react", "dist", "stale.js"), "");
+
+        expect(prepareOutputDir(outputDir, sourceDir, log)).toBe(true);
+
+        expect(existsSync(outputDir)).toBe(true);
+        expect(readdirSync(outputDir)).toEqual([]);
+    });
+
+    it("creates the build directory when it does not exist yet", () => {
+        expect(prepareOutputDir(outputDir, sourceDir, log)).toBe(true);
+
+        expect(existsSync(outputDir)).toBe(true);
+    });
+
+    it("refuses to clean the source public directory", () => {
+        writeFileSync(path.join(sourceDir, "favicon.ico"), "icon");
+
+        expect(prepareOutputDir(sourceDir, sourceDir, log)).toBe(false);
+
+        expect(readdirSync(sourceDir)).toEqual(["favicon.ico"]);
+        expect(logged.join("\n")).toContain("Not cleaning");
+    });
+
+    it("compares directories after resolving, not by string", () => {
+        writeFileSync(path.join(sourceDir, "favicon.ico"), "icon");
+        const indirect = path.join(sourceDir, "..", "public");
+
+        expect(prepareOutputDir(indirect, sourceDir, log)).toBe(false);
+
+        expect(readdirSync(sourceDir)).toEqual(["favicon.ico"]);
     });
 });
