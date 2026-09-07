@@ -255,6 +255,22 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(landingOutputPath, landingHtml);
         log("📄 Generated: " + landingOutputPath);
 
+        /*
+         * The 404 page. Cloudflare Pages infers its not-found behavior from the
+         * deployed files: with no top-level 404.html it treats the deployment as
+         * a single-page application and answers every unmatched path with
+         * index.html and a 200, so a missing asset reaches the browser as
+         * text/html instead of an error (FYM-390). Shipping this file is the
+         * whole switch -- there is no project setting for it.
+         */
+        const notFoundHtml = env.render("pages/404.html", {
+            isProduction,
+            pathPrefix,
+        });
+        const notFoundOutputPath = path.join(outputDir, "404.html");
+        writeFileSync(notFoundOutputPath, notFoundHtml);
+        log("📄 Generated: " + notFoundOutputPath);
+
         // Build the demo page (demo.html)
         const demoHtml = env.render("pages/demo.html", templateData);
         const demoOutputPath = path.join(outputDir, "demo.html");
