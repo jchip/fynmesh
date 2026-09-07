@@ -1,6 +1,11 @@
 import esbuild from "rollup-plugin-esbuild";
 import terser from "@rollup/plugin-terser";
 import { reservedNames } from "./build/reserved-names.mjs";
+import { shouldEmitSourceMap } from "./build/sourcemap-policy.mjs";
+
+// Dev builds get maps, production builds do not -- see build/sourcemap-policy.mjs
+// for why the comment left behind by a stripped map is the thing that matters.
+const sourcemap = shouldEmitSourceMap();
 
 export default [
   {
@@ -8,7 +13,7 @@ export default [
     output: {
       file: "dist/fynmesh-browser-kernel.dev.js",
       format: "iife",
-      sourcemap: true,
+      sourcemap,
       inlineDynamicImports: true,
     },
     plugins: [
@@ -22,7 +27,7 @@ export default [
     output: {
       file: "dist/fynmesh-browser-kernel.min.js",
       format: "iife",
-      sourcemap: true,
+      sourcemap,
       inlineDynamicImports: true,
       plugins: [
         terser({
@@ -71,7 +76,7 @@ export default [
       {
         file: "dist/fynmesh-node-kernel.js",
         format: "esm",
-        sourcemap: true,
+        sourcemap,
         inlineDynamicImports: true,
       },
     ],
@@ -87,7 +92,7 @@ export default [
       {
         file: "dist/index.js",
         format: "esm",
-        sourcemap: true,
+        sourcemap,
         inlineDynamicImports: true,
       },
     ],
