@@ -112,7 +112,18 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
   private kernel: any = null; // Store kernel reference for dynamic loading
   private fynappContainers = new Map<string, HTMLElement>(); // Store container elements for each FynApp
   private selfManagedApps = new Map<string, SelfManagedResult>(); // Track self-managed FynApps
-  private reactRoots = new Map<string, any>(); // Track React roots for each FynApp to avoid double-mounting
+  /**
+   * FynApp name -> (render container -> its React root).
+   *
+   * Keyed by container, not by name alone. One container must never get two
+   * roots -- `apply()` and `overrideExecute()` both reach the render path for
+   * the same container during one bootstrap, and a second `createRoot` there
+   * makes two React trees fight over the same nodes (FYM-145). But a FynApp can
+   * legitimately be mounted in more than one region at once, and a name-only key
+   * handed the second region the first region's root, so its container was never
+   * rendered into and stayed empty (FYM-398).
+   */
+  private reactRoots = new Map<string, Map<HTMLElement, any>>();
 
   // Multi-region layout support
   private regions = new Map<RegionName, RegionInfo>([
@@ -637,7 +648,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // mutate regionApps while this loop is suspended.
     const destroyed = regionApps.size;
     for (const [appName, entry] of Array.from(regionApps)) {
-      await this.cleanupFynApp(appName, entry.fynApp);
+      await this.cleanupFynApp(appName, entry.fynApp, entry.container);
       entry.container.remove();
     }
 
@@ -686,7 +697,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     }
 
     // Clean up the FynApp
-    await this.cleanupFynApp(fynAppName, entry.fynApp);
+    await this.cleanupFynApp(fynAppName, entry.fynApp, entry.container);
     entry.container.remove();
     if (regionApps.get(fynAppName) !== entry) {
       // The region moved on while the shutdown was in flight: a concurrent
@@ -743,7 +754,62 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
    * the FYNAPP_SHUTDOWN event and telemetry. Callers await this before dropping
    * the container so a shutdown hook still sees the DOM it rendered into.
    */
-  private async cleanupFynApp(fynAppName: string, fynApp: FynApp): Promise<void> {
+  /**
+   * The React root for one FynApp instance, created on first use.
+   *
+   * @param fynAppName - the FynApp being rendered
+   * @param container - the element it renders into; identity is the cache key
+   * @param ReactDOM - the ReactDOM that owns the root (the FynApp's own, not the shell's)
+   * @returns the root for this container, reused across re-renders
+   */
+  private getReactRoot(fynAppName: string, container: HTMLElement, ReactDOM: any): any {
+    let byContainer = this.reactRoots.get(fynAppName);
+    if (!byContainer) {
+      byContainer = new Map<HTMLElement, any>();
+      this.reactRoots.set(fynAppName, byContainer);
+    }
+
+    let root = byContainer.get(container);
+    if (!root) {
+      root = ReactDOM.createRoot(container);
+      byContainer.set(container, root);
+    }
+    return root;
+  }
+
+  /**
+   * Unmount this FynApp's React roots and stop tracking them.
+   *
+   * @param fynAppName - the FynApp being torn down
+   * @param within - when given, only roots rendering inside this element are
+   *   unmounted. Tearing down one region must not unmount the same FynApp's
+   *   other instance in a region nobody touched.
+   */
+  private unmountReactRoots(fynAppName: string, within?: HTMLElement): void {
+    const byContainer = this.reactRoots.get(fynAppName);
+    if (!byContainer) return;
+
+    for (const [container, root] of Array.from(byContainer)) {
+      if (within && !within.contains(container)) continue;
+      try {
+        root?.unmount?.();
+      } catch (error) {
+        console.warn(`Failed to unmount React root for ${fynAppName}:`, error);
+      }
+      byContainer.delete(container);
+    }
+
+    if (byContainer.size === 0) this.reactRoots.delete(fynAppName);
+  }
+
+  /**
+   * @param fynAppName - the FynApp to tear down
+   * @param fynApp - its loaded instance, for the kernel shutdown
+   * @param container - the region container being removed. Given it, only the
+   *   instance inside it is unmounted and the name-keyed tracking is left alone
+   *   while the FynApp is still mounted somewhere else (FYM-398).
+   */
+  private async cleanupFynApp(fynAppName: string, fynApp: FynApp, container?: HTMLElement): Promise<void> {
     if (this.kernel) {
       try {
         console.debug(`🔄 Shutting down ${fynAppName} through the kernel`);
@@ -753,20 +819,16 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       }
     }
 
-    // Unmount React root if tracked by shell
-    const root = this.reactRoots.get(fynAppName);
-    if (root?.unmount) {
-      try {
-        root.unmount();
-      } catch (error) {
-        console.warn(`Failed to unmount React root for ${fynAppName}:`, error);
-      }
-    }
+    // Unmount the roots being removed, leaving any other region's alone.
+    this.unmountReactRoots(fynAppName, container);
 
-    // Clean up tracking maps
+    // The remaining maps are keyed by name and cannot describe two instances,
+    // so they may only be dropped once the last one is gone. Otherwise clearing
+    // one region deregisters a FynApp still mounted in another.
+    if (this.reactRoots.has(fynAppName)) return;
+
     this.loadedFynApps.delete(fynAppName);
     this.fynappContainers.delete(fynAppName);
-    this.reactRoots.delete(fynAppName);
     this.selfManagedApps.delete(fynAppName);
   }
 
@@ -1302,16 +1364,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
             runtime: fynAppRuntime
           });
 
-          // Reuse existing root or create new one — apply() and overrideExecute()
-          // both land here for the same container during one bootstrap, and a
-          // second createRoot on the same container makes the two React trees
-          // fight over the same DOM nodes (FYM-145)
-          let root = this.reactRoots.get(fynApp.name);
-          if (!root) {
-            root = ReactDOM.createRoot(container);
-            this.reactRoots.set(fynApp.name, root);
-          }
-          root.render(element);
+          // Keyed by container: one container never gets two roots (FYM-145),
+          // and a second region gets its own rather than the first's (FYM-398).
+          this.getReactRoot(fynApp.name, container, ReactDOM).render(element);
 
           console.log(`✅ Component rendered for ${fynApp.name}`);
           return; // Successfully rendered
@@ -1633,13 +1688,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         ...result.props
       });
 
-      // Reuse existing root or create new one
-      let root = this.reactRoots.get(fynAppName);
-      if (!root) {
-        root = ReactDOM.createRoot(container);
-        this.reactRoots.set(fynAppName, root);
-      }
-      root.render(element);
+      this.getReactRoot(fynAppName, container, ReactDOM).render(element);
 
       console.log(`✅ React component rendered for ${fynAppName}`);
     } catch (error) {
@@ -1675,13 +1724,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
         ...props
       });
 
-      // Reuse existing root or create new one
-      let root = this.reactRoots.get(fynAppName);
-      if (!root) {
-        root = ReactDOM.createRoot(container);
-        this.reactRoots.set(fynAppName, root);
-      }
-      root.render(element);
+      this.getReactRoot(fynAppName, container, ReactDOM).render(element);
 
       console.log(`✅ Component factory rendered for ${fynAppName}`);
 
