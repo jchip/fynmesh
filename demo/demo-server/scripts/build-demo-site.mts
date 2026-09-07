@@ -3,7 +3,12 @@ import nunjucks from "nunjucks";
 import { existsSync, mkdirSync, rmSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectShellPreloadModules, collectShellBundleMaps } from "./shell-preload.mts";
+import {
+    collectShellPreloadModules,
+    collectShellBundleMaps,
+    readBundles,
+    carriersOf,
+} from "./shell-preload.mts";
 import { generateCacheHeaders } from "./cache-headers.mts";
 import { resolveLoaderVariant } from "../src/loader-variant.ts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
@@ -85,6 +90,84 @@ function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
                 missing.push(`${page} -> ${ref}`);
             }
         }
+    }
+
+    return missing;
+}
+
+/**
+ * The federation chunks each built FynApp declares, checked against what was
+ * actually copied into the output.
+ *
+ * {@link findMissingLocalRefs} is the FYM-199 guard, and it only sees `src=` and
+ * `href=` in the generated pages. The chunks that carry the FynApps are not in
+ * any page: `fynapp-6-react`'s federation.json names `main-DWprtUVa.js`, and
+ * that string appears in no HTML at all -- the loader reads the manifest and
+ * fetches the chunk at runtime. So the assets that actually load the apps sat
+ * entirely outside the guard (FYM-392), which is the same shape as the two P1
+ * bugs that already shipped, FYM-155 and FYM-199.
+ *
+ * The failure mode is worth the check. Cloudflare Pages answers an unknown path
+ * with 200 and the landing page HTML rather than a 404, so a missing chunk
+ * reaches the browser as `text/html` for a `.js` request and the page dies on an
+ * undefined global far from the cause. Worse, the generated `_headers` rule
+ * `/:pkg/dist/main-*` is a glob that matches a chunk which does not exist, so
+ * that wrong HTML is cached `immutable` for a year at a content-hashed url that
+ * never changes -- a redeploy cannot heal it for whoever got it.
+ *
+ * A chunk resolves when its own file is present OR when the combined file
+ * carrying it is. That is exactly how the runtime resolves one, and it is read
+ * through the same {@link readBundles} the preload pass uses, so this cannot
+ * disagree with what the shell page preloads.
+ *
+ * @param outputDir - the built site
+ * @returns list of `app/dist/federation.json -> missing chunk` descriptions
+ */
+function findMissingChunkRefs(outputDir: string): string[] {
+    const missing: string[] = [];
+
+    for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+
+        const distDir = path.join(outputDir, entry.name, "dist");
+        const manifestPath = path.join(distDir, "federation.json");
+        if (!existsSync(manifestPath)) continue;
+
+        const where = `${entry.name}/dist/federation.json`;
+        let manifest: any;
+        try {
+            manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        } catch (err) {
+            missing.push(`${where} -> unreadable (${(err as Error).message})`);
+            continue;
+        }
+
+        const bundles = readBundles(distDir, entry.name, msg => missing.push(`${where} -> ${msg}`));
+        const carrierOf = carriersOf(bundles);
+        const present = (file: string) => existsSync(path.join(distDir, file));
+        const resolves = (file: string) => {
+            if (present(file)) return true;
+            const carrier = carrierOf.get(file);
+            return carrier !== undefined && present(carrier);
+        };
+
+        const check = (what: string, file: unknown) => {
+            if (typeof file !== "string" || !file) return;
+            if (!resolves(file)) missing.push(`${where} -> ${file} (${what})`);
+        };
+
+        // The container entry is what the kernel imports; everything else hangs
+        // off it, so its absence is the loudest possible version of this bug.
+        check("container entry", manifest.filename);
+
+        for (const [name, exposed] of Object.entries<any>(manifest.exposes ?? {})) {
+            for (const chunk of exposed?.chunks ?? []) check(`exposes ${name}`, chunk);
+        }
+        for (const [name, shared] of Object.entries<any>(manifest.shared ?? {})) {
+            for (const chunk of shared?.chunks ?? []) check(`shared ${name}`, chunk);
+        }
+        // A carrier that is itself missing takes every member down with it.
+        for (const carrier of Object.keys(bundles)) check("combined bundle", carrier);
     }
 
     return missing;
@@ -377,15 +460,19 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             log("⚠️  No content-hashed chunks found — skipped _headers");
         }
 
-        const missingRefs = findMissingLocalRefs(outputDir, pathPrefix);
+        const missingRefs = [
+            ...findMissingLocalRefs(outputDir, pathPrefix),
+            ...findMissingChunkRefs(outputDir),
+        ];
         if (missingRefs.length > 0) {
             throw new Error(
                 `${missingRefs.length} referenced asset(s) missing from the build output:\n` +
                 missingRefs.map(m => `    ${m}`).join("\n") +
-                "\n  Add the file to `staticFiles` or to the `packages` copy list."
+                "\n  A page ref needs the file in `staticFiles` or the `packages` copy list;" +
+                "\n  a federation.json ref means the app's dist did not ship what it declares."
             );
         }
-        log("🔎 Verified: every referenced local asset is present");
+        log("🔎 Verified: every referenced local asset and federation chunk is present");
 
         log("✅ Demo site built successfully with all assets!");
         log(`🌐 Path prefix: ${pathPrefix}`);
@@ -403,4 +490,4 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 }
 
 // ES module exports
-export { buildDemoSite, findMissingLocalRefs, prepareOutputDir };
+export { buildDemoSite, findMissingLocalRefs, findMissingChunkRefs, prepareOutputDir };
