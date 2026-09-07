@@ -1,6 +1,6 @@
 
 import nunjucks from "nunjucks";
-import { existsSync, mkdirSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectShellPreloadModules, collectShellBundleMaps } from "./shell-preload.mts";
@@ -91,6 +91,39 @@ function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
 }
 
 /**
+ * Empty `outputDir` so the build starts from nothing, and return it ready to
+ * write into.
+ *
+ * A build directory has to start empty. The publish flow builds into
+ * `.temp/docs`, which is gitignored and so survives between runs -- whatever an
+ * earlier build left there ships. That is how 86 stale `.map` files reached the
+ * first live deploy, and content-hashed chunk names strand exactly the same way.
+ *
+ * The guard is not optional. `buildDemoSite` defaults `outputDir` to
+ * demo-server's own `public/`, which is also the *source* of the static file
+ * copy -- cleaning that would delete checked-in assets. When the two resolve to
+ * the same directory this leaves it alone and says so.
+ *
+ * @param outputDir - directory the build writes into
+ * @param sourceDir - directory static assets are copied *from*; never cleaned
+ * @param log - verbose logger
+ * @returns true if the directory was cleaned, false if the guard declined
+ */
+function prepareOutputDir(outputDir: string, sourceDir: string, log: (m: string) => void): boolean {
+    const isSourceDir = path.resolve(outputDir) === path.resolve(sourceDir);
+
+    if (isSourceDir) {
+        log(`⚠️  Not cleaning ${outputDir}: it is the source public/ directory`);
+    } else if (existsSync(outputDir)) {
+        rmSync(outputDir, { recursive: true, force: true });
+        log(`Cleaned output directory: ${outputDir}`);
+    }
+
+    mkdirSync(outputDir, { recursive: true });
+    return !isSourceDir;
+}
+
+/**
  * Build the demo site with configurable path prefix
  */
 async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolean> {
@@ -125,11 +158,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 
         log("Rendering templates...");
 
-        // Ensure output directory exists
-        if (!existsSync(outputDir)) {
-            mkdirSync(outputDir, { recursive: true });
-            log(`Created output directory: ${outputDir}`);
-        }
+        // Start from an empty output directory -- see prepareOutputDir.
+        const publicDir = path.join(__dirname, "../public");
+        prepareOutputDir(outputDir, publicDir, log);
 
         // Build the landing page (index.html)
         const landingHtml = env.render("pages/landing.html", {
@@ -199,7 +230,6 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             staticFiles = staticFiles.filter(f => !f.endsWith('.map'));
         }
         
-        const publicDir = path.join(__dirname, "../public");
         staticFiles.forEach(file => {
             const src = path.join(publicDir, file);
             const dest = path.join(outputDir, file);
@@ -373,4 +403,4 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 }
 
 // ES module exports
-export { buildDemoSite, findMissingLocalRefs };
+export { buildDemoSite, findMissingLocalRefs, prepareOutputDir };
