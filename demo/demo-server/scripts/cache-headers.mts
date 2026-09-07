@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { HASHED_CHUNK_RE } from "./shell-preload.mts";
 
@@ -6,6 +6,45 @@ import { HASHED_CHUNK_RE } from "./shell-preload.mts";
 const PAGES_HEADER_RULE_LIMIT = 100;
 
 const IMMUTABLE = "public, max-age=31536000, immutable";
+
+/**
+ * A `//# sourceMappingURL=` comment on the last line of a chunk.
+ *
+ * Its presence is the tell that a chunk carries bytes rollup did not hash --
+ * anchored to the end of the file so a `sourceMappingURL` string appearing
+ * inside application code is not mistaken for one.
+ */
+const TRAILING_SOURCEMAP_COMMENT = /\n\/\/# sourceMappingURL=\S*[ \t]*\n?$/;
+
+/**
+ * Whether a chunk's bytes are exactly what its content hash covers.
+ *
+ * `immutable` is a promise that the bytes at a url will never change, and a
+ * content hash in the filename is what makes that promise keepable -- change the
+ * bytes, get a different name. Rollup breaks that in one specific way: it
+ * computes the hash and only then appends the `//# sourceMappingURL=` comment.
+ * A build that stops emitting source maps therefore changes every chunk's bytes
+ * while every filename stays put, and any url already marked `immutable` keeps
+ * serving the old body for up to a year -- the edge and the visitor's browser
+ * both have no reason to ask again.
+ *
+ * That is not hypothetical: FYM-386 did exactly this, and 27 of 50 live bundles
+ * went on serving the previous build's trailing comment after the deploy
+ * (FYM-394). Rather than promise immutability for bytes we cannot vouch for,
+ * a chunk carrying appended content keeps the revalidating default. Slower;
+ * never a frozen lie.
+ *
+ * @param file - absolute path to the chunk
+ * @returns true when nothing was appended after hashing
+ */
+function isSealed(file: string): boolean {
+    try {
+        return !TRAILING_SOURCEMAP_COMMENT.test(readFileSync(file, "utf8"));
+    } catch {
+        // Unreadable: do not promise anything about it.
+        return false;
+    }
+}
 
 /**
  * Generate the body of a Cloudflare Pages `_headers` file that marks
@@ -53,6 +92,8 @@ function generateCacheHeaders(
     if (!existsSync(outputDir)) return null;
 
     const stems = new Set<string>();
+    /** stem -> the first chunk found carrying content rollup did not hash */
+    const unsealed = new Map<string, string>();
 
     for (const pkg of readdirSync(outputDir)) {
         const distDir = path.join(outputDir, pkg, "dist");
@@ -70,8 +111,28 @@ function generateCacheHeaders(
                 continue;
             }
             const stem = entry.name.match(HASHED_CHUNK_RE)?.[1];
-            if (stem) stems.add(stem);
+            if (!stem) continue;
+
+            /*
+             * One rule covers a stem across every package, so a single chunk
+             * with appended content disqualifies the whole stem -- there is no
+             * way to exempt one file from `/:pkg/dist/<stem>-*`.
+             */
+            if (isSealed(path.join(distDir, entry.name))) {
+                stems.add(stem);
+            } else if (!unsealed.has(stem)) {
+                unsealed.set(stem, `${pkg}/dist/${entry.name}`);
+            }
         }
+    }
+
+    for (const [stem, file] of unsealed) {
+        stems.delete(stem);
+        warn(
+            `${file} carries a sourceMappingURL comment appended after its content hash, ` +
+            `so "${stem}-*" is not marked immutable — the url could serve stale bytes ` +
+            `for a year if the comment is ever removed (FYM-394)`
+        );
     }
 
     if (stems.size === 0) return null;
@@ -93,6 +154,10 @@ function generateCacheHeaders(
         "#",
         "# Rules must stay disjoint — Pages joins duplicate header values with a",
         "# comma rather than letting the most specific rule win.",
+        "#",
+        "# A stem is listed only if every chunk carrying it is exactly the bytes its",
+        "# hash covers. Rollup appends the sourceMappingURL comment AFTER hashing, so",
+        "# a chunk carrying one keeps revalidating: its url is not really immutable.",
         "",
     ];
 
