@@ -30,7 +30,7 @@ Production build: `fyn build-prod` · Clean Demo build: `fyn clean:demo`
 | fynapp-1           | React 19  | Middleware consumer   |
 | fynapp-1-b         | React 19  | Design tokens         |
 | fynapp-2-react18   | React 18  | Multi-version demo    |
-| fynapp-3-marko     | Marko     |                       |
+| fynapp-3-marko     | Marko     | Negative demo: unprovided shared module (see its README) |
 | fynapp-4-vue       | Vue 3     |                       |
 | fynapp-5-preact    | Preact    |                       |
 | fynapp-6-react     | React 19  | Dashboard UI          |
