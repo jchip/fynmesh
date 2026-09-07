@@ -12,8 +12,10 @@
     <meta name="description" content="FynMesh - Enterprise micro frontend framework for building scalable web applications. Module Federation with Rollup, supporting React, Vue, Preact, Solid, Svelte, and Marko micro frontends.">
     <meta name="keywords" content="micro frontend, microfrontend, micro-frontend, micro frontend framework, module federation, micro frontend architecture, react micro frontend, vue micro frontend, independent deployment, shared dependencies, enterprise frontend, javascript framework, rollup, systemjs">
     <meta name="author" content="FynMesh">
+    {% block robots %}
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    {% endblock %}
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -32,7 +34,9 @@
     <meta name="twitter:image" content="https://www.fynmesh.win/favicon.ico">
 
     <!-- Canonical URL -->
+    {% block canonical %}
     <link rel="canonical" href="https://www.fynmesh.win/{% block canonical_path %}{% endblock %}">
+    {% endblock %}
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
