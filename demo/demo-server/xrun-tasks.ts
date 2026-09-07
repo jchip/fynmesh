@@ -25,7 +25,7 @@ load({
     },
 
     "build-demo-site": {
-        desc: "Build demo site for custom domain (www.lm360.ai) with root path",
+        desc: "Build demo site for custom domain (www.fynmesh.win) with root path",
         task: async () => {
             const fs = await import("node:fs");
             const path = await import("node:path");
@@ -39,7 +39,7 @@ load({
             // Dynamic import of the TypeScript build function
             const { buildDemoSite } = await import("./scripts/build-demo-site.mts");
 
-            console.log("🚀 Building demo site for custom domain (www.lm360.ai)...");
+            console.log("🚀 Building demo site for custom domain (www.fynmesh.win)...");
 
             const success = await buildDemoSite({
                 verbose: true,

@@ -135,16 +135,16 @@ publishes `docs/` as-is on every push to `gh-pages`.
 - **Output Directory**: `/docs` (at repository root) — Cloudflare Pages build output setting.
 - **Cloudflare build config**: build command empty, build output `docs`, root directory empty.
 - **Base Path**: Auto-detected at runtime
-  - `https://www.lm360.ai/` → `/` (custom domain, root path)
+  - `https://www.fynmesh.win/` → `/` (custom domain, root path)
   - `*.github.io/fynmesh/` → `/fynmesh/` (subdirectory, if ever served from GitHub Pages)
-- **Live URL**: https://www.lm360.ai/
+- **Live URL**: https://www.fynmesh.win/
 - **Custom Domain**: Configured in the Cloudflare Pages dashboard (no `CNAME` file).
 
 #### Path Prefix Auto-Detection
 
 The demo site automatically detects the correct path prefix based on the domain:
 
-- **Custom Domain** (`www.lm360.ai` or `lm360.ai`): Uses `/` as the base path
+- **Custom Domain** (`www.fynmesh.win` or `fynmesh.win`): Uses `/` as the base path
 - **GitHub Pages** (`*.github.io`): Extracts repo name from pathname (e.g., `/fynmesh/`)
 - **Fallback**: Uses build-time configured path prefix
 
