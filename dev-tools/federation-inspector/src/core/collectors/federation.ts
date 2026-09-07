@@ -288,8 +288,12 @@ function readShareConfig(
     // the container's own live map, while `req` is a copy taken when `__I`
     // ran. It is only reached for on a build that mangled the live one away.
     if (!rvmOk) {
+      // `__I` files a row under `options.shareScope || container.scope`, so an
+      // empty string falls back there where the `typeof` above keeps it.
+      // Federation's own rule is what makes the join hit, and it is applied
+      // only here: `entryScope` feeds joins that other code keys off unchanged.
       const fromSnapshot = rvmSnapshot.get(
-        rvmKey(containerName, containerVersion, entryScope, key) ?? ""
+        rvmKey(containerName, containerVersion, entryScope || defaultScope, key) ?? ""
       );
       if (fromSnapshot) {
         Object.assign(rvm, fromSnapshot);
