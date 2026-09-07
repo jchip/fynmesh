@@ -42,7 +42,7 @@ const PUBLIC_MODULES = [
  * FynApp build tooling. Quoted accesses (`manifest["import-exposed"]`) need no
  * entry — `keep_quoted` reserves those automatically.
  */
-const EXTERNAL_CONTRACT = [
+export const EXTERNAL_CONTRACT = [
   // Globals the bundle publishes or consumes.
   "fynMeshKernel",
   "Federation",
@@ -85,6 +85,15 @@ const EXTERNAL_CONTRACT = [
   "mkRuntime",
   "createFynModuleRuntime",
   "getAutoApply",
+  // `kernel.__I()`, the debug snapshot — see the docblock on
+  // `FynMeshKernelCore.__I`. It exists because `bootstrapCoordinator` above
+  // stays manglable: a tool that wants the bootstrap queue asks for a copy of
+  // it rather than reaching into the wiring. Reserved here rather than
+  // declared on `FynMeshKernel` in types.ts, so that it stays a debugging
+  // hatch instead of becoming public API — and so that the names in its
+  // return type are not reserved along with it. The keys of what it returns
+  // are quoted, which `keep_quoted` holds back on its own.
+  "__I",
 ];
 
 /** Identifiers in a `.d.ts`, with comments removed so prose does not leak in. */

@@ -10,6 +10,11 @@
  * `Container._S` builds inside a `$SC` entry -- `rvm` and `versions` -- are
  * not. See `capability.ts` for why the annotations do not predict this.
  *
+ * Of the two, `rvm` has a way back: `Federation.__I()` is a debug snapshot
+ * federation ships unmangled for exactly this reason, and `readRvmSnapshot`
+ * below joins its rows onto the containers. `versions` has no such route and
+ * is reconstructed from the share store instead (`indexProvidedCopies`).
+ *
  * Containers are therefore enumerated from the *loader* rather than from
  * `$C`. That is a historical choice, not a forced one -- `$C` is readable and
  * would be authoritative -- but it is also a working one, because federation
@@ -155,6 +160,77 @@ function findContainer(
   );
 }
 
+/** Join key for `__I` rows: container, its version, share scope, share key. */
+function rvmKey(
+  container: string | undefined,
+  containerVersion: string | undefined,
+  scope: string | undefined,
+  shareKey: string | undefined
+): string | undefined {
+  if (!container || !scope || !shareKey) {
+    return undefined;
+  }
+  return [container, containerVersion ?? "", scope, shareKey].join("\u0000");
+}
+
+/**
+ * Required-version maps from federation's own debug snapshot.
+ *
+ * `Container.$SC[key].rvm` is mangled away in a production build, but it is
+ * not lost with it: `Federation.__I()` exists precisely because nothing else
+ * on the page keeps a copy, and it returns `req` -- "a copy of that share's
+ * whole `rvm` map" -- for every (chunk, share key) pair it walks. The hatch
+ * survives the build that needs it because it is deliberately *not* annotated
+ * in federation-js's `.terserrc`, whose `mangle.properties.only_annotated` is
+ * an ALLOW-list: annotating a name is what mangles it.
+ *
+ * Rows are per chunk, so one (container, version, scope, key) arrives once per
+ * chunk carrying that share. `req` is the whole map in every one of them, so
+ * the first row wins and the rest are redundant rather than in conflict.
+ *
+ * Read-only, like the rest of this file: `__I` walks `$B`, looks containers up
+ * and runs federation's own semver over what it finds. It registers, loads and
+ * resolves nothing.
+ */
+function readRvmSnapshot(federation: any): Map<string, Record<string, string>> {
+  const out = new Map<string, Record<string, string>>();
+  if (!isFn(safeGet(federation, "__I"))) {
+    return out;
+  }
+  const snap = attempt(() => (federation as any).__I());
+  // `v` is the envelope version, which federation stamps from the first commit
+  // so that a consumer keys off the shape. An envelope we do not recognise is
+  // one whose rows we cannot claim to understand, so it is left alone.
+  if (!snap || safeGet(snap, "v") !== 1) {
+    return out;
+  }
+  const rows = safeGet(snap, "r");
+  if (!Array.isArray(rows)) {
+    return out;
+  }
+  for (const row of rows) {
+    const key = rvmKey(
+      safeGet<string>(row, "c"),
+      safeGet<string>(row, "cv"),
+      safeGet<string>(row, "s"),
+      safeGet<string>(row, "k")
+    );
+    if (!key || out.has(key)) {
+      continue;
+    }
+    const req = safeGet(row, "req");
+    const map: Record<string, string> = {};
+    for (const dir of keysOf(req)) {
+      const v = safeGet<string>(req, dir);
+      if (typeof v === "string") {
+        map[dir] = v;
+      }
+    }
+    out.set(key, map);
+  }
+  return out;
+}
+
 /**
  * Read `$SC` into the share declarations one container version makes.
  *
@@ -175,14 +251,20 @@ function findContainer(
  */
 function readShareConfig(
   container: any,
-  defaultScope: string
-): { consumes: ShareDecl[]; ok: boolean; rvmOk: boolean } {
+  defaultScope: string,
+  rvmSnapshot: Map<string, Record<string, string>>
+): { consumes: ShareDecl[]; ok: boolean; rvmOk: boolean; rvmFromSnapshot: boolean } {
   const sc = safeGet(container, "$SC");
   if (!sc || typeof sc !== "object") {
-    return { consumes: [], ok: false, rvmOk: false };
+    return { consumes: [], ok: false, rvmOk: false, rvmFromSnapshot: false };
   }
   const consumes: ShareDecl[] = [];
   let rvmOk = false;
+  let rvmFromSnapshot = false;
+  // Read off the live container, which is the same object `__I` reads its `c`
+  // and `cv` from, so the two sides of the join cannot drift apart.
+  const containerName = safeGet<string>(container, "name");
+  const containerVersion = safeGet<string>(container, "version");
 
   for (const key of keysOf(sc)) {
     const entry = safeGet(sc, key);
@@ -197,6 +279,23 @@ function readShareConfig(
         rvm[dir] = v;
       }
     }
+    // `Container._S` files an entry under `options.shareScope || this.scope`
+    // and `__I` reports the row under that same name, so the join key is
+    // decided here rather than taken from `defaultScope`.
+    const entryScope =
+      typeof options.shareScope === "string" ? options.shareScope : defaultScope;
+    // The snapshot is the fallback, never the preference: a readable `rvm` is
+    // the container's own live map, while `req` is a copy taken when `__I`
+    // ran. It is only reached for on a build that mangled the live one away.
+    if (!rvmOk) {
+      const fromSnapshot = rvmSnapshot.get(
+        rvmKey(containerName, containerVersion, entryScope, key) ?? ""
+      );
+      if (fromSnapshot) {
+        Object.assign(rvm, fromSnapshot);
+        rvmFromSnapshot = true;
+      }
+    }
     // `import: false` is the generated marker for consume-only: this container
     // can use the share but never offers a copy of its own.
     const importable = safeGet(options, "import") !== false;
@@ -207,13 +306,12 @@ function readShareConfig(
       requestedRange: typeof options.semver === "string" ? options.semver : undefined,
       singleton: options.singleton === true,
       importable,
-      shareScope:
-        typeof options.shareScope === "string" ? options.shareScope : defaultScope,
+      shareScope: entryScope,
       versions,
       rvm: Object.keys(rvm).length ? rvm : undefined,
     });
   }
-  return { consumes, ok: true, rvmOk };
+  return { consumes, ok: true, rvmOk, rvmFromSnapshot };
 }
 
 /** One version the share store says a container filed into a scope. */
@@ -717,6 +815,7 @@ export function collectFederation(
 
   const resolve = makeResolver(modules, specifiers);
   const scopes = readShareStore(federation, resolve);
+  const rvmSnapshot = readRvmSnapshot(federation);
   const discovered = discoverContainers(loader, cap);
   const containers: ContainerNode[] = [];
 
@@ -752,6 +851,7 @@ export function collectFederation(
 
   let sawShareConfig = false;
   let sawRvm = false;
+  let sawRvmSnapshot = false;
   let sawExposes = false;
   let sawManifest = false;
 
@@ -813,9 +913,9 @@ export function collectFederation(
       // misses regardless of the name we hand it.
       const declScope = scopeName ?? scopes[0]?.name ?? "default";
 
-      const { consumes, ok: scOk, rvmOk } = container
-        ? readShareConfig(container, declScope)
-        : { consumes: [], ok: false, rvmOk: false };
+      const { consumes, ok: scOk, rvmOk, rvmFromSnapshot } = container
+        ? readShareConfig(container, declScope, rvmSnapshot)
+        : { consumes: [], ok: false, rvmOk: false, rvmFromSnapshot: false };
       const { exposes, ok: expOk } = container
         ? readExposes(container, resolve)
         : { exposes: [], ok: false };
@@ -823,6 +923,7 @@ export function collectFederation(
 
       sawShareConfig ||= scOk;
       sawRvm ||= rvmOk;
+      sawRvmSnapshot ||= rvmFromSnapshot;
       sawExposes ||= expOk;
       sawManifest ||= !!manifest;
 
@@ -863,7 +964,7 @@ export function collectFederation(
   containers.sort((a, b) => a.name.localeCompare(b.name));
 
   cap.shareConfig = sawShareConfig;
-  cap.requiredVersionMaps = sawRvm;
+  cap.requiredVersionMaps = sawRvm || sawRvmSnapshot;
   cap.exposes = sawExposes;
   cap.manifest = sawManifest;
   if (containers.length && !sawShareConfig) {
@@ -872,11 +973,21 @@ export function collectFederation(
         "required-version maps are unavailable. Share versions are still listed."
     );
   }
-  if (sawShareConfig && !sawRvm) {
+  if (sawShareConfig && !sawRvm && sawRvmSnapshot) {
+    cap.notes.push(
+      "Required-version maps come from Federation.__I() in this build, not " +
+        "from Container.$SC[key].rvm, which federation-js mangles away. They " +
+        "are a copy taken when the snapshot ran rather than the container's " +
+        "live map, so a range registered after collection is not in them."
+    );
+  }
+  if (sawShareConfig && !sawRvm && !sawRvmSnapshot) {
     cap.notes.push(
       "Required-version maps are unavailable in this build: federation-js " +
-        "mangles Container.$SC[key].rvm, and nothing else on the page keeps a " +
-        "copy. The semver range each container declared is still shown."
+        "mangles Container.$SC[key].rvm, and Federation.__I() -- the debug " +
+        "snapshot that carries a copy -- is missing or returned an envelope " +
+        "this build does not understand. The semver range each container " +
+        "declared is still shown."
     );
   }
   if (containers.length && !sawExposes) {

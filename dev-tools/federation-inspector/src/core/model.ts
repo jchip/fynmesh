@@ -107,9 +107,12 @@ export interface Capability {
    *
    * Split from `shareConfig` because the two do not travel together: `options`
    * survives federation-js's mangling and `rvm` does not, so a build can hand
-   * us every declared semver range and none of the maps behind them. Nothing
-   * else on the page retains an rvm once `_S` has returned, so false here
-   * means unavailable, not empty.
+   * us every declared semver range and none of the maps behind them.
+   *
+   * True covers two routes, and a note says which one answered: the live
+   * `rvm` where the build left it readable, and `Federation.__I()` -- whose
+   * `req` is a copy of the same map -- where it did not. False means both
+   * were unavailable, so it is still "unavailable", never "empty".
    */
   requiredVersionMaps: boolean;
   /** `Container.$E` -- exposes map */
@@ -132,11 +135,14 @@ export interface Capability {
   /** `kernel.runTime.middlewares` -- the middleware registry */
   kernelMiddleware: boolean;
   /**
-   * `kernel.bootstrapCoordinator` -- the bootstrap lock and its deferred queue.
+   * The bootstrap lock and its deferred queue.
    *
-   * Dev builds only, and that is the whole state of it: the field is mangled in
-   * the production kernel, so false here means the queue panel says
-   * "unavailable in this build" rather than drawing an idle one.
+   * True covers two routes, and a note says which one answered:
+   * `kernel.bootstrapCoordinator` on a dev build, and `kernel.__I()` -- the
+   * kernel's debug snapshot, which carries a copy of the queue -- where the
+   * production kernel has mangled the coordinator away. False means neither
+   * answered, so the panel says "unavailable in this build" rather than
+   * drawing an idle queue, which is the opposite state.
    */
   kernelBootstrap: boolean;
   /** human-readable notes about anything that probed false */
