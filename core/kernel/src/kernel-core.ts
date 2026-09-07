@@ -684,6 +684,64 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
   }
 
   /**
+   * ***Debug snapshot*** -- `kernel.__I()`.
+   *
+   * Named after `Federation.__I()`, and a hatch for the same reason: the
+   * production kernel mangles property names, and `bootstrapCoordinator` is
+   * one of the five fields `build/reserved-names.mjs` deliberately leaves
+   * manglable, because reaching for kernel-internal wiring from a host page is
+   * unsupported. The cost of that was a reader who could not tell a bootstrap
+   * queue that is *idle* from one it cannot *read* -- opposite states that
+   * both render as an empty panel. This returns the queue, and only the queue:
+   * everything else a tool wants off the kernel is already declared in
+   * `types.ts` and therefore already survives.
+   *
+   * Two things keep it readable in the shipped bundle, and both are load-
+   * bearing:
+   *
+   * - `__I` is held back by `EXTERNAL_CONTRACT` in `build/reserved-names.mjs`,
+   *   pinned by `tests/debug-snapshot.test.ts`. Deliberately *not* declared on
+   *   `FynMeshKernel` in `types.ts`: that would reserve it by derivation, but
+   *   it would also make a debugging hatch part of the kernel's public API,
+   *   and it would drag every name in the return type into the reserved list
+   *   along with it.
+   * - every key below is **quoted**. The kernel's terser config mangles
+   *   properties by default and `keep_quoted: true` is the documented escape
+   *   hatch for names no declaration describes. Unquote one and the shipped
+   *   snapshot carries a one-letter key nothing can read.
+   *
+   * `v` is an envelope version, stamped from the first commit so a consumer
+   * keys off the shape rather than guessing at it.
+   *
+   * Plain data throughout -- strings, arrays and object literals, no live
+   * kernel objects and no functions -- so it survives `structuredClone` and
+   * can cross a message boundary into a devtools panel. `holder` is `null`,
+   * never absent, when nobody holds the lock: that is the kernel's own way of
+   * writing "free", and it is a state, not a gap.
+   */
+  __I(): Record<string, unknown> {
+    const bc = this.bootstrapCoordinator;
+    return {
+      "v": 1,
+      "bootstrap": {
+        "holder": bc.bootstrappingApp,
+        "deferred": bc.deferredBootstraps.map((d) => ({
+          "name": d.fynApp.name,
+          "version": d.fynApp.version,
+        })),
+        "bootstrapped": [...bc.fynAppBootstrapStatus.keys()],
+        "modes": [...bc.fynAppProviderModes.entries()].map(([app, roles]) => ({
+          "app": app,
+          "roles": [...roles.entries()].map(([middleware, mode]) => ({
+            "middleware": middleware,
+            "mode": mode,
+          })),
+        })),
+      },
+    };
+  }
+
+  /**
    * Protected helper to build fynapp URL
    */
   protected buildFynAppUrl(baseUrl: string, entryFile: string = "fynapp-entry.js"): string {

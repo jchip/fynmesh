@@ -199,13 +199,35 @@ export function collectFynMesh(
   // this file. Re-probing here with a second, weaker test is exactly how a
   // production page ends up rendering an empty queue that reads as an idle one.
   const coordinator = build === "dev" ? safeGet<any>(kernel, "bootstrapCoordinator") : undefined;
-  const bootstrapQueue = isObject(coordinator) ? buildBootstrapQueue(coordinator) : undefined;
+  let bootstrapQueue = isObject(coordinator) ? buildBootstrapQueue(coordinator) : undefined;
+  // The wiring is unreachable on a production page by design, so the kernel
+  // hands out a copy instead: `kernel.__I()`. Second, not first -- the live
+  // coordinator is the real thing, and the snapshot is a copy taken when
+  // `__I` ran.
+  let bootstrapFromSnapshot = false;
+  if (!bootstrapQueue) {
+    const snapshot = readKernelBootstrapSnapshot(kernel);
+    if (snapshot) {
+      bootstrapQueue = buildBootstrapQueueFromSnapshot(snapshot);
+      bootstrapFromSnapshot = true;
+    }
+  }
   cap.kernelBootstrap = bootstrapQueue !== undefined;
-  if (!cap.kernelBootstrap) {
+  if (bootstrapFromSnapshot) {
+    cap.notes.push(
+      "The bootstrap queue comes from kernel.__I() in this build, not from " +
+        "kernel.bootstrapCoordinator, which the production kernel mangles. It " +
+        "is a copy taken when the snapshot ran, so an app that queued after " +
+        "collection is not in it."
+    );
+  } else if (!cap.kernelBootstrap) {
     cap.notes.push(
       "kernel.bootstrapCoordinator is not readable in this build: it is " +
-        "mangled in the production kernel, so the bootstrap queue panel says " +
-        "unavailable rather than idle -- the two mean opposite things."
+        "mangled in the production kernel, and kernel.__I() -- the debug " +
+        "snapshot that carries a copy of the queue -- is missing or returned " +
+        "an envelope this build does not understand. The bootstrap queue " +
+        "panel says unavailable rather than idle -- the two mean opposite " +
+        "things."
     );
   }
 
@@ -1009,6 +1031,119 @@ function fullKeysOf(list: unknown): Set<string> {
  * `name`/`version` are copied out, the same discipline the `cc` call context
  * gets everywhere else in this collector.
  */
+/**
+ * The bootstrap half of `kernel.__I()`, the kernel's own debug snapshot.
+ *
+ * `bootstrapCoordinator` is one of the five kernel-internal fields
+ * `core/kernel/build/reserved-names.mjs` deliberately leaves manglable, so on
+ * a production page there is nothing to read and no way to tell an idle queue
+ * from an unreadable one. `__I` exists to close exactly that gap: it is
+ * reserved by name, returns plain data, and mirrors `Federation.__I()` in both
+ * naming and intent.
+ *
+ * Read-only, and cheap: the kernel copies four collections and returns.
+ */
+function readKernelBootstrapSnapshot(kernel: any): any | undefined {
+  if (!isFn(safeGet(kernel, "__I"))) {
+    return undefined;
+  }
+  const snap = attempt(() => (kernel as any).__I());
+  // `v` is the envelope version. An envelope this build does not recognise is
+  // one whose contents it cannot claim to read, so it is left alone rather
+  // than parsed hopefully.
+  if (!snap || safeGet(snap, "v") !== 1) {
+    return undefined;
+  }
+  const bootstrap = safeGet(snap, "bootstrap");
+  return isObject(bootstrap) ? bootstrap : undefined;
+}
+
+/**
+ * The same `BootstrapQueueNode` as `buildBootstrapQueue`, from the snapshot.
+ *
+ * `unreadable` is empty and `unreadableDeferred` is zero, and both are facts
+ * rather than optimism: the kernel assembled this object from its own live
+ * state, so a field is either in it or the kernel chose not to send it. There
+ * is no partially-readable case to report the way there is when prodding a
+ * live coordinator through `safeGet`.
+ *
+ * `waitingOn` is recomputed here rather than sent, because `blockersFor` is
+ * already the mirror of the kernel's own rule and the snapshot carries both
+ * inputs it needs. Sending it would be a second implementation to keep in step.
+ */
+function buildBootstrapQueueFromSnapshot(bootstrap: any): BootstrapQueueNode {
+  const rawBootstrapped = safeGet(bootstrap, "bootstrapped");
+  const bootstrapped = new Set<string>(
+    (Array.isArray(rawBootstrapped) ? rawBootstrapped : []).filter(
+      (n): n is string => typeof n === "string"
+    )
+  );
+
+  const modeMap = new Map<string, Map<string, "provider" | "consumer">>();
+  const rawModes = safeGet(bootstrap, "modes");
+  for (const entry of Array.isArray(rawModes) ? rawModes : []) {
+    const app = safeGet<string>(entry, "app");
+    if (typeof app !== "string") {
+      continue;
+    }
+    const roles = new Map<string, "provider" | "consumer">();
+    const rawRoles = safeGet(entry, "roles");
+    for (const role of Array.isArray(rawRoles) ? rawRoles : []) {
+      const middleware = safeGet<string>(role, "middleware");
+      const mode = safeGet<string>(role, "mode");
+      if (typeof middleware === "string" && (mode === "provider" || mode === "consumer")) {
+        roles.set(middleware, mode);
+      }
+    }
+    modeMap.set(app, roles);
+  }
+
+  const deferred: BootstrapDeferredNode[] = [];
+  let unreadableDeferred = 0;
+  const rawDeferred = safeGet(bootstrap, "deferred");
+  for (const entry of Array.isArray(rawDeferred) ? rawDeferred : []) {
+    const name = safeGet<string>(entry, "name");
+    if (typeof name !== "string") {
+      // the kernel sends a name for every entry, so one without is a queued
+      // app all the same: counted, not dropped
+      unreadableDeferred++;
+      continue;
+    }
+    const versionRaw = safeGet<string>(entry, "version");
+    const version = typeof versionRaw === "string" ? versionRaw : "";
+    deferred.push({
+      name,
+      version,
+      key: name + "@" + version,
+      waitingOn: blockersFor(name, modeMap, bootstrapped),
+    });
+  }
+
+  const modes: BootstrapModeNode[] = [...modeMap.entries()]
+    .map(([app, roles]) => ({
+      app,
+      roles: [...roles.entries()]
+        .map(([middleware, mode]) => ({ middleware, mode }))
+        .sort((a, b) => a.middleware.localeCompare(b.middleware)),
+    }))
+    .sort((a, b) => a.app.localeCompare(b.app));
+
+  const node: BootstrapQueueNode = {
+    deferred,
+    unreadableDeferred,
+    bootstrapped: [...bootstrapped].sort(),
+    modes,
+    unreadable: [],
+  };
+  // `null` is the kernel's "nobody holds the lock", and absent on the node is
+  // how that is spelled here; anything else is left off rather than coerced.
+  const holder = safeGet(bootstrap, "holder");
+  if (typeof holder === "string") {
+    node.holder = holder;
+  }
+  return node;
+}
+
 function buildBootstrapQueue(bc: any): BootstrapQueueNode {
   const unreadable: string[] = [];
 

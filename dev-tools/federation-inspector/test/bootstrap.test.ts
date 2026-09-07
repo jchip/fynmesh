@@ -268,6 +268,75 @@ describe("an unreadable coordinator", () => {
     expect(cap.notes.some((n) => n.includes("bootstrapCoordinator"))).toBe(true);
   });
 
+  /**
+   * The hatch the min build ships *for* this: `bootstrapCoordinator` stays
+   * manglable, so the kernel hands out a copy of the queue through `__I()`
+   * instead. "Absent" therefore has to stop meaning "production", or the
+   * fourth claim above is unreachable on the only pages that matter.
+   */
+  it("builds the queue from kernel.__I() when the coordinator is mangled", () => {
+    const min = minifiedKernel({ apps: [fakeFynApp({ name: "fynapp-1", version: "1.0.0" })] });
+    min.__I = () => ({
+      v: 1,
+      bootstrap: {
+        holder: "fynapp-design-tokens",
+        deferred: [{ name: "fynapp-2", version: "1.0.0" }],
+        bootstrapped: ["fynapp-1"],
+        modes: [
+          { app: "fynapp-design-tokens", roles: [{ middleware: "design-tokens", mode: "provider" }] },
+          { app: "fynapp-2", roles: [{ middleware: "design-tokens", mode: "consumer" }] },
+        ],
+      },
+    });
+
+    const { cap, fynmesh } = run(min);
+    expect(fynmesh!.build).toBe("minified");
+    expect(cap.kernelBootstrap).toBe(true);
+
+    const queue = fynmesh!.bootstrapQueue!;
+    expect(queue.holder).toBe("fynapp-design-tokens");
+    expect(queue.bootstrapped).toEqual(["fynapp-1"]);
+    expect(queue.unreadable).toEqual([]);
+    expect(queue.unreadableDeferred).toBe(0);
+    // recomputed here, not sent: fynapp-2 consumes design-tokens, and its
+    // provider has not bootstrapped
+    expect(queue.deferred).toEqual([
+      {
+        name: "fynapp-2",
+        version: "1.0.0",
+        key: "fynapp-2@1.0.0",
+        waitingOn: [{ middleware: "design-tokens", provider: "fynapp-design-tokens" }],
+      },
+    ]);
+
+    const notes = cap.notes.join(" ");
+    expect(notes).toContain("kernel.__I()");
+    expect(notes).not.toContain("says unavailable rather than idle");
+  });
+
+  it("says unavailable when __I() returns an envelope it does not understand", () => {
+    const min = minifiedKernel();
+    // a future kernel that changed the shape: guessing at it would be worse
+    // than saying nothing, because a wrong queue reads as an authoritative one
+    min.__I = () => ({ v: 2, bootstrap: { holder: "fynapp-1" } });
+
+    const { cap, fynmesh } = run(min);
+    expect(fynmesh!.bootstrapQueue).toBeUndefined();
+    expect(cap.kernelBootstrap).toBe(false);
+    expect(cap.notes.some((n) => n.includes("bootstrapCoordinator"))).toBe(true);
+  });
+
+  it("prefers the live coordinator over the snapshot on a dev build", () => {
+    const kernel = devKernel({ bootstrap: { holder: "from-coordinator" } }) as any;
+    // present, and deliberately disagreeing: the live object is the real
+    // thing and the snapshot is a copy, so a dev page must not read the copy
+    kernel.__I = () => ({ v: 1, bootstrap: { holder: "from-snapshot" } });
+
+    const { cap, fynmesh } = run(kernel);
+    expect(fynmesh!.bootstrapQueue!.holder).toBe("from-coordinator");
+    expect(cap.notes.join(" ")).not.toContain("kernel.__I()");
+  });
+
   it("collects no queue on a kernel of some third shape", () => {
     const { cap, fynmesh } = run({ runTime: { apps: {} }, listFynAppStates: () => [] });
     expect(fynmesh!.build).toBe("unknown");

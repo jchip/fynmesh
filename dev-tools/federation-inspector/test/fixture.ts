@@ -208,6 +208,33 @@ export class FakeContainer {
 export class FakeFederation {
   $SS: Record<string, any> = Object.create(null);
   private bundles = new Map<string, string>();
+  private debugRows: any[] | undefined;
+
+  /**
+   * A row of `Federation.__I()`, the debug snapshot a minified federation-js
+   * still ships because `rvm` does not survive its own mangling.
+   *
+   * Only the fields the collector joins on are modelled. Federation's real
+   * rows also carry `use` and `sat`, which nothing reads yet.
+   */
+  addRvmRow(row: {
+    c: string;
+    cv?: string;
+    s: string;
+    k: string;
+    req: Record<string, string>;
+  }): this {
+    (this.debugRows ??= []).push({ f: "chunk.js", cv: "", ...row });
+    return this;
+  }
+
+  /**
+   * Absent rows mean a build with no usable hatch, which is the shape that has
+   * to keep reporting the maps as unavailable rather than as empty.
+   */
+  __I(): { v: number; r: any[] } | undefined {
+    return this.debugRows ? { v: 1, r: this.debugRows } : undefined;
+  }
 
   /**
    * mirror of federation's `_S`: announce a version into a scope

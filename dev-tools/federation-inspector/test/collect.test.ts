@@ -167,6 +167,33 @@ describe("collect", () => {
     expect(s2.capability.notes.join(" ")).not.toContain("Required-version maps");
   });
 
+  it("recovers required-version maps from Federation.__I() when rvm is mangled", () => {
+    const { loader, federation } = minifiedSharePage();
+    // the same page, now carrying the debug snapshot a real minified build ships
+    federation.addRvmRow({
+      c: "fynapp-min",
+      cv: "1.0.0",
+      s: "fynmesh",
+      k: "esm-react",
+      req: { "/": "^19.0.0" },
+    });
+    const s = collect({ loader, federation });
+
+    expect(s.capability.shareConfig).toBe(true);
+    expect(s.capability.requiredVersionMaps).toBe(true);
+    const notes = s.capability.notes.join(" ");
+    expect(notes).toContain("come from Federation.__I()");
+    expect(notes).not.toContain("Required-version maps are unavailable");
+
+    const v = s.containers.find((c) => c.name === "fynapp-min")!.versions[0];
+    expect(v.consumes.find((d) => d.key === "esm-react")!.rvm).toEqual({
+      "/": "^19.0.0",
+    });
+    // a key the snapshot said nothing about stays without a map rather than
+    // borrowing another key's
+    expect(v.consumes.find((d) => d.key === "vue")!.rvm).toBeUndefined();
+  });
+
   it("still reads provides off an unmangled container", () => {
     const { loader, federation } = containerWithEntryChunk();
     const s = collect({ loader, federation });
