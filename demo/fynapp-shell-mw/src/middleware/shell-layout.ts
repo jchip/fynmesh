@@ -160,6 +160,15 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     { id: "fynapp-5-preact", name: "FynApp 5 (Preact)", url: "/fynapp-5-preact/dist", framework: "Preact" },
     { id: "fynapp-7-solid", name: "FynApp 7 (Solid)", url: "/fynapp-7-solid/dist", framework: "Solid" },
     { id: "fynapp-3-marko", name: "FynApp 3 (Marko)", url: "/fynapp-3-marko/dist", framework: "Marko" },
+    /*
+     * The shell auto-loads this one into the sidebar region at startup, but it
+     * is an ordinary FynApp and belongs in the list like any other: it is
+     * region-agnostic (a plain React component that reads the shell API off
+     * runtime.middlewareContext), so it renders wherever it is put, and loading
+     * it into Main is a legitimate composition demo. Leaving it out was also
+     * what made FYM-397 unrecoverable -- once cleared, nothing could load it.
+     */
+    { id: "fynapp-sidebar", name: "Sidebar Nav (React 19)", url: "/fynapp-sidebar/dist", framework: "React 19" },
   ];
 
   async setup(context: FynAppMiddlewareCallContext): Promise<{ status: string }> {
@@ -486,15 +495,32 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     this.autoLoadSidebar();
   }
 
+  /**
+   * Put the navigation sidebar into the sidebar region.
+   *
+   * Anything that tears the sidebar down has to call this again. It is the only
+   * thing that places the shell's own navigation, so a teardown that does not
+   * restore it leaves the shell with no navigation at all (FYM-397).
+   *
+   * @returns resolves once the sidebar has loaded, or immediately if there is
+   *   no kernel to load it with. Never rejects: a failed sidebar must not take
+   *   down whatever operation asked for it.
+   */
+  private async loadSidebar(): Promise<void> {
+    if (!this.kernel) return;
+
+    console.log("📎 Loading fynapp-sidebar into sidebar region");
+    try {
+      await this.loadIntoRegion('/fynapp-sidebar/dist', 'sidebar');
+    } catch (err) {
+      console.warn("Failed to load sidebar:", (err as Error).message);
+    }
+  }
+
   private autoLoadSidebar(): void {
     // Load sidebar after a short delay to ensure kernel is ready
     setTimeout(() => {
-      if (this.kernel) {
-        console.log("📎 Auto-loading fynapp-sidebar into sidebar region");
-        this.loadIntoRegion('/fynapp-sidebar/dist', 'sidebar').catch(err => {
-          console.warn("Failed to auto-load sidebar:", err.message);
-        });
-      }
+      void this.loadSidebar();
     }, 100);
   }
 
@@ -589,6 +615,15 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // Note: loadedFynApps and fynappContainers are cleaned up by cleanupFynApp in clearRegion
     this.updateLoadedCount();
     console.log("🧹 All content cleared");
+
+    /*
+     * Clear All means all -- the sidebar is torn down with everything else, and
+     * that teardown is the point of the button. But the sidebar is the shell's
+     * navigation, so leaving it destroyed strands the user: before FYM-397 the
+     * only way back was a full page reload. Load it again once the clear is
+     * done, so the demo shows a real teardown and still ends up usable.
+     */
+    await this.loadSidebar();
   }
 
   private async clearRegion(region: RegionName): Promise<void> {
