@@ -331,7 +331,9 @@ function collectShellBundleMaps(
 export {
     collectShellPreloadModules,
     collectShellBundleMaps,
+    readBundles,
+    carriersOf,
     SHELL_STARTUP_FYNAPPS,
     HASHED_CHUNK_RE,
 };
-export type { ShellPreloadHint, ShellStartupFynApp };
+export type { ShellPreloadHint, ShellStartupFynApp, BundleMap };

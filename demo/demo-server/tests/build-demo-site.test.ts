@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { findMissingLocalRefs, prepareOutputDir } from "../scripts/build-demo-site.mts";
+import { findMissingLocalRefs, findMissingChunkRefs, prepareOutputDir } from "../scripts/build-demo-site.mts";
 
 /**
  * findMissingLocalRefs is the guard from FYM-199. A page that references an
@@ -163,5 +163,147 @@ describe("prepareOutputDir", () => {
         expect(prepareOutputDir(indirect, sourceDir, log)).toBe(false);
 
         expect(readdirSync(sourceDir)).toEqual(["favicon.ico"]);
+    });
+});
+
+/**
+ * findMissingChunkRefs is the FYM-392 half of the same guard. The chunks that
+ * carry a FynApp are named only in its federation.json and fetched at runtime,
+ * so findMissingLocalRefs -- which reads `src`/`href` out of the pages -- never
+ * sees them. The subtlety is that a member chunk folded into a combined file is
+ * legitimately absent from disk, so "the file is not there" is not the test;
+ * "the runtime cannot reach it" is.
+ */
+describe("findMissingChunkRefs", () => {
+    let outputDir: string;
+
+    /** Write an app's dist: its federation.json plus whatever files exist. */
+    const writeApp = (
+        app: string,
+        manifest: Record<string, unknown>,
+        files: string[] = [],
+        bundlesJson?: Record<string, string[]> | string
+    ) => {
+        const dist = path.join(outputDir, app, "dist");
+        mkdirSync(dist, { recursive: true });
+        writeFileSync(path.join(dist, "federation.json"), JSON.stringify(manifest));
+        for (const f of files) writeFileSync(path.join(dist, f), "");
+        if (bundlesJson !== undefined) {
+            writeFileSync(
+                path.join(dist, "federation.bundles.json"),
+                typeof bundlesJson === "string" ? bundlesJson : JSON.stringify(bundlesJson)
+            );
+        }
+    };
+
+    const exposing = (chunk: string) => ({
+        filename: "fynapp-entry.js",
+        exposes: { "./main": { chunks: [chunk] } },
+    });
+
+    beforeEach(() => {
+        outputDir = mkdtempSync(path.join(tmpdir(), "fynmesh-chunks-"));
+    });
+
+    afterEach(() => {
+        rmSync(outputDir, { recursive: true, force: true });
+    });
+
+    it("reports an exposed chunk that never shipped", () => {
+        writeApp("fynapp-6-react", exposing("main-DWprtUVa.js"), ["fynapp-entry.js"]);
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([
+            "fynapp-6-react/dist/federation.json -> main-DWprtUVa.js (exposes ./main)",
+        ]);
+    });
+
+    it("passes when the chunk is present", () => {
+        writeApp("fynapp-6-react", exposing("main-DWprtUVa.js"), [
+            "fynapp-entry.js",
+            "main-DWprtUVa.js",
+        ]);
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+
+    it("accepts a member chunk carried by a combined bundle that shipped", () => {
+        writeApp(
+            "fynapp-1",
+            exposing("hello-B9dQ6FmL.js"),
+            ["fynapp-entry.js", "combo-R7IaSAnm.js"],
+            { "combo-R7IaSAnm.js": ["hello-B9dQ6FmL.js"] }
+        );
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+
+    it("reports the carrier when the combined bundle itself is missing", () => {
+        writeApp("fynapp-1", exposing("hello-B9dQ6FmL.js"), ["fynapp-entry.js"], {
+            "combo-R7IaSAnm.js": ["hello-B9dQ6FmL.js"],
+        });
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([
+            "fynapp-1/dist/federation.json -> hello-B9dQ6FmL.js (exposes ./main)",
+            "fynapp-1/dist/federation.json -> combo-R7IaSAnm.js (combined bundle)",
+        ]);
+    });
+
+    it("reports a missing container entry", () => {
+        writeApp("fynapp-6-react", { filename: "fynapp-entry.js", exposes: {} }, []);
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([
+            "fynapp-6-react/dist/federation.json -> fynapp-entry.js (container entry)",
+        ]);
+    });
+
+    it("checks shared chunks as well as exposed ones", () => {
+        writeApp(
+            "fynapp-react-19",
+            {
+                filename: "fynapp-entry.js",
+                shared: { "esm-react": { chunks: ["react-CIkKfoRV.js"] } },
+            },
+            ["fynapp-entry.js"]
+        );
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([
+            "fynapp-react-19/dist/federation.json -> react-CIkKfoRV.js (shared esm-react)",
+        ]);
+    });
+
+    it("falls back to the bundles field inside federation.json", () => {
+        writeApp(
+            "fynapp-1",
+            {
+                filename: "fynapp-entry.js",
+                exposes: { "./main": { chunks: ["hello-B9dQ6FmL.js"] } },
+                bundles: { "combo-R7IaSAnm.js": ["hello-B9dQ6FmL.js"] },
+            },
+            ["fynapp-entry.js", "combo-R7IaSAnm.js"]
+        );
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+
+    it("reports an unreadable manifest instead of skipping it", () => {
+        const dist = path.join(outputDir, "fynapp-1", "dist");
+        mkdirSync(dist, { recursive: true });
+        writeFileSync(path.join(dist, "federation.json"), "{");
+
+        const missing = findMissingChunkRefs(outputDir);
+
+        expect(missing).toHaveLength(1);
+        expect(missing[0]).toContain("fynapp-1/dist/federation.json -> unreadable");
+    });
+
+    it("ignores directories that are not FynApp dists", () => {
+        mkdirSync(path.join(outputDir, "federation-js", "dist"), { recursive: true });
+        writeFileSync(path.join(outputDir, "index.html"), "");
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+
+    it("finds nothing when no app has been copied", () => {
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
     });
 });
