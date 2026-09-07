@@ -204,23 +204,22 @@ export function collectFynMesh(
   // hands out a copy instead: `kernel.__I()`. Second, not first -- the live
   // coordinator is the real thing, and the snapshot is a copy taken when
   // `__I` ran.
-  let bootstrapFromSnapshot = false;
   if (!bootstrapQueue) {
     const snapshot = readKernelBootstrapSnapshot(kernel);
     if (snapshot) {
       bootstrapQueue = buildBootstrapQueueFromSnapshot(snapshot);
-      bootstrapFromSnapshot = true;
     }
   }
   cap.kernelBootstrap = bootstrapQueue !== undefined;
-  if (bootstrapFromSnapshot) {
-    cap.notes.push(
-      "The bootstrap queue comes from kernel.__I() in this build, not from " +
-        "kernel.bootstrapCoordinator, which the production kernel mangles. It " +
-        "is a copy taken when the snapshot ran, so an app that queued after " +
-        "collection is not in it."
-    );
-  } else if (!cap.kernelBootstrap) {
+  /*
+   * Reading the queue through `kernel.__I()` earns no note. The hatch is there
+   * so a minified build has a readable queue at all, and the result is neither
+   * degraded nor staler than the live read: `buildBootstrapQueue` copies the
+   * coordinator's fields while collecting too, so "an app that queued after
+   * collection is not in it" was equally true of the dev path, which never
+   * warned. Saying it only here made the supported path look broken (FYM-399).
+   */
+  if (!cap.kernelBootstrap) {
     cap.notes.push(
       "kernel.bootstrapCoordinator is not readable in this build: it is " +
         "mangled in the production kernel, and kernel.__I() -- the debug " +

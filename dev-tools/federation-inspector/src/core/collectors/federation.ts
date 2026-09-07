@@ -977,14 +977,17 @@ export function collectFederation(
         "required-version maps are unavailable. Share versions are still listed."
     );
   }
-  if (sawShareConfig && !sawRvm && sawRvmSnapshot) {
-    cap.notes.push(
-      "Required-version maps come from Federation.__I() in this build, not " +
-        "from Container.$SC[key].rvm, which federation-js mangles away. They " +
-        "are a copy taken when the snapshot ran rather than the container's " +
-        "live map, so a range registered after collection is not in them."
-    );
-  }
+  /*
+   * No note when the maps came from `Federation.__I()`. The hatch exists so a
+   * minified build can be read at all, and taking it is not a degraded result:
+   * `cap.requiredVersionMaps` is true either way and the data is the same
+   * shape. Nor is it staler -- the live path is a collection-time copy too,
+   * since `readShareConfig` builds `consumes[].rvm` off `$SC` while collecting
+   * rather than holding a reference that keeps updating. Warning about the
+   * hatch drew a distinction that does not exist, on the panel the hatch was
+   * added to make work (FYM-399). The genuinely-unreadable case below still
+   * says so.
+   */
   if (sawShareConfig && !sawRvm && !sawRvmSnapshot) {
     cap.notes.push(
       "Required-version maps are unavailable in this build: federation-js " +

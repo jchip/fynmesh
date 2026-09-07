@@ -181,8 +181,12 @@ describe("collect", () => {
 
     expect(s.capability.shareConfig).toBe(true);
     expect(s.capability.requiredVersionMaps).toBe(true);
+    // Taking the hatch is a supported read, not a degraded one, so it must not
+    // raise a capability note -- the banner it lands in reads as "limited"
+    // (FYM-399). The unavailable case still has to say so; that is asserted in
+    // its own test below.
     const notes = s.capability.notes.join(" ");
-    expect(notes).toContain("come from Federation.__I()");
+    expect(notes).not.toContain("Federation.__I()");
     expect(notes).not.toContain("Required-version maps are unavailable");
 
     const v = s.containers.find((c) => c.name === "fynapp-min")!.versions[0];
