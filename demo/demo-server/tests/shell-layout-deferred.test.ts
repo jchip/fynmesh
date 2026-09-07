@@ -11,7 +11,7 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     regionFynApps: Map<string, Map<string, { container: unknown; fynApp: unknown }>>;
     loadedFynApps: Map<string, unknown>;
     fynappContainers: Map<string, unknown>;
-    reactRoots: Map<string, unknown>;
+    reactRoots: Map<string, Map<unknown, { unmount?: () => void }>>;
     activeRegionLoadIds: Map<string, number>;
     isShellInitiated(fynAppName: string): boolean;
     pendingRegionLoad: Map<string, { region: string; token: number }>;
@@ -21,7 +21,7 @@ type MiddlewareHarness = ShellLayoutMiddleware & {
     loadIntoRegion(url: string, region: string): Promise<unknown>;
     manageAppLayout(fynApp: unknown): Promise<void>;
     renderFynAppIntoRegion(fynApp: unknown, region: string): Promise<void>;
-    cleanupFynApp(fynAppName: string, fynApp: unknown): Promise<void>;
+    cleanupFynApp(fynAppName: string, fynApp: unknown, container?: unknown): Promise<void>;
     unloadFynAppFromRegion(fynAppName: string, region: string): Promise<void>;
     clearRegion(region: string): Promise<void>;
     updateLoadedCount(): void;
@@ -232,7 +232,8 @@ describe("ShellLayoutMiddleware cleanup", () => {
             shutdownFynApp: vi.fn(() => shutdownGate.promise),
         };
         const root = { unmount: vi.fn() };
-        middleware.reactRoots.set(fynApp.name, root);
+        // roots are per render container now, not per FynApp name (FYM-398)
+        middleware.reactRoots.set(fynApp.name, new Map([[{}, root]]));
         middleware.loadedFynApps.set(fynApp.name, fynApp);
 
         const cleanup = middleware.cleanupFynApp(fynApp.name, fynApp);
@@ -407,5 +408,71 @@ describe("ShellLayoutMiddleware pending-region bookkeeping", () => {
             region: "main",
             token: 99,
         });
+    });
+});
+
+/**
+ * FYM-398. A FynApp can be mounted in more than one region at once. The root
+ * cache used to be keyed by FynApp name, so the second region was handed the
+ * first region's root and its container was never rendered into — it just sat
+ * empty, while the render logged success. Tearing one region down then has to
+ * leave the other alone, which is the half that is easy to get wrong.
+ */
+describe("ShellLayoutMiddleware multi-region instances", () => {
+    /** A stand-in region container that "contains" only what it is given. */
+    const regionHolding = (...owned: unknown[]) => ({ contains: (el: unknown) => owned.includes(el) });
+
+    it("gives each container its own root instead of reusing the first", () => {
+        const middleware = createMiddleware();
+        const mainEl = {} as HTMLElement;
+        const sidebarEl = {} as HTMLElement;
+        const created: unknown[] = [];
+        const ReactDOM = { createRoot: (el: unknown) => { created.push(el); return { unmount: vi.fn() }; } };
+
+        const a = (middleware as any).getReactRoot("fynapp-sidebar", mainEl, ReactDOM);
+        const b = (middleware as any).getReactRoot("fynapp-sidebar", sidebarEl, ReactDOM);
+
+        expect(created).toEqual([mainEl, sidebarEl]);
+        expect(a).not.toBe(b);
+    });
+
+    it("never gives one container two roots", () => {
+        const middleware = createMiddleware();
+        const el = {} as HTMLElement;
+        let calls = 0;
+        const ReactDOM = { createRoot: () => { calls++; return { unmount: vi.fn() }; } };
+
+        const first = (middleware as any).getReactRoot("fynapp-1", el, ReactDOM);
+        const second = (middleware as any).getReactRoot("fynapp-1", el, ReactDOM);
+
+        expect(calls).toBe(1);
+        expect(second).toBe(first);
+    });
+
+    it("unmounts only the region being cleared and keeps tracking until the last one goes", async () => {
+        const middleware = createMiddleware();
+        const fynApp = createFynApp();
+        middleware.kernel = { shutdownFynApp: vi.fn().mockResolvedValue(true) };
+
+        const mainEl = {};
+        const sidebarEl = {};
+        const mainRoot = { unmount: vi.fn() };
+        const sidebarRoot = { unmount: vi.fn() };
+        middleware.reactRoots.set(fynApp.name, new Map([[mainEl, mainRoot], [sidebarEl, sidebarRoot]]));
+        middleware.loadedFynApps.set(fynApp.name, fynApp);
+
+        await middleware.cleanupFynApp(fynApp.name, fynApp, regionHolding(mainEl));
+
+        expect(mainRoot.unmount).toHaveBeenCalledOnce();
+        expect(sidebarRoot.unmount).not.toHaveBeenCalled();
+        // still mounted in the sidebar, so it must stay registered
+        expect(middleware.reactRoots.has(fynApp.name)).toBe(true);
+        expect(middleware.loadedFynApps.has(fynApp.name)).toBe(true);
+
+        await middleware.cleanupFynApp(fynApp.name, fynApp, regionHolding(sidebarEl));
+
+        expect(sidebarRoot.unmount).toHaveBeenCalledOnce();
+        expect(middleware.reactRoots.has(fynApp.name)).toBe(false);
+        expect(middleware.loadedFynApps.has(fynApp.name)).toBe(false);
     });
 });
