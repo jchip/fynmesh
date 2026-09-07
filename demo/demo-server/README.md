@@ -365,9 +365,10 @@ Both build scripts provide the same template data structure:
 
 1. Create the FynApp in `demo/`
 2. Add it to `package.json` devDependencies
-3. Update both build scripts:
-   - `scripts/build-templates.mts` - Add to `features` and `fynApps`
-   - `scripts/build-demo-site.mts` - Add to `packages` array
+3. Update template and build configurations:
+   - `scripts/demo-template-data.mts` - Add to `DEMO_FYNAPPS`
+   - `templates/components/styles.html` - Add color variables and classes
+   - `scripts/build-demo-site.mts` - Add to `packages` array (if deployable)
 4. Update `templates/components/fynapp-loader.html`
 5. Run `fyn bootstrap` to build
 6. Test locally with `fyn start`
