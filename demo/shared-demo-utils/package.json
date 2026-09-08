@@ -8,6 +8,6 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@fynmesh/kernel": "^1.1.2"
+    "@fynmesh/kernel": "^1.1.3"
   }
 }
