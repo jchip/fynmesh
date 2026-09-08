@@ -51,6 +51,16 @@ startDevProxy([
     { path: "/federation-inspector.js.map" },
     { protocol: "file", path: Path.join(inspectorDist, "federation-inspector.js.map") },
   ],
+  // The minified build is served too, because which one the page asks for is
+  // not the dev server's choice: `build-prod` re-renders the demo templates
+  // with isProduction true, and those pages point at .min.js. A tree left in
+  // that state -- `publish-demo` leaves every tree in it -- then 404'd the
+  // inspector under `fyn start` until someone re-ran `bootstrap`.
+  // No .min.js.map: terser is configured without sourceMap, so none is emitted.
+  [
+    { path: "/federation-inspector.min.js" },
+    { protocol: "file", path: Path.join(inspectorDist, "federation-inspector.min.js") },
+  ],
   [
     { path: "/spectre.css" },
     { protocol: "file", path: Path.join(__dirname, "../node_modules/spectre.css") },
