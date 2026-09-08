@@ -1,3 +1,224 @@
+# 9/8/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.3` `(1.1.2 => 1.1.3)`
+-   `create-fynapp@1.1.5` `(1.1.4 => 1.1.5)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-406: approve esbuild 0.25.x install scripts and pin tsx to the 0.25 line
+    -   FYM-393: clear dist in build-dist so an earlier build cannot linger
+    -   FYM-391: gate kernel sourcemaps on the build env so production ships no dangling refs
+    -   read production builds through the federation and kernel debug hatches
+    -   FYM-333: the provider fallback scan reports when more than one provider matched the name it took
+    -   FYM-332: default stays the first version registered, and says so once when a second one arrives
+    -   FYM-321: getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches
+    -   FYM-321: failing tests for getMiddleware resolving default instead of the requested semver range
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/create-fynapp`
+
+    -   FYM-386: stop emitting sourcemaps in production builds, FYNMESH_SOURCEMAP overrides
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/demo-server`
+
+    -   FYM-405: serve the inspectors minified build from the dev proxy
+    -   FYM-398: key react roots by container so a fynapp can render in two regions
+    -   FYM-397: restore the sidebar after Clear All and offer it as a loadable fynapp
+    -   FYM-394: never mark a chunk immutable when bytes were appended after its hash
+    -   FYM-390: ship a 404.html so cloudflare stops answering unknown paths with the landing page
+    -   FYM-392: fail the build when a federation chunk did not ship
+    -   FYM-389: point sitemap and canonical urls at the extensionless paths cloudflare serves
+    -   FYM-388: split the demo site build out of the live publish chain
+    -   FYM-387: clean the demo site output dir before building, never the source public dir
+    -   retarget demo domain from lm360.ai to fynmesh.win
+    -   FYM-385: include fynapp-notes in demo site build and styles
+    -   FYM-372: the diagnostics lab is a dev-build affordance, so the switch is absent from the published page rather than broken on it
+    -   FYM-362: a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch
+    -   FYM-363: one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free
+    -   FYM-309: document the PORT override and that whoever binds 3000 first wins it
+    -   FYM-309: demo loads the federation inspector at idle after paint, served from its own dist
+
+-   `packages/federation-inspector`
+
+    -   FYM-404: soften the inspectors light theme off pure white and name the header
+    -   FYM-399: stop flagging the __I debug hatches as a limited capability
+    -   match federations own scope fallback when joining __I rows
+    -   read production builds through the federation and kernel debug hatches
+    -   FYM-384: the overlay drops its opening class when the enter animation ends, so a dock change no longer replays it
+    -   FYM-379: dock, theme, text size and copy move into a settings menu that stays reachable at every panel width
+    -   FYM-378: cover the tab strips reveal-on-view-change and its overflow controls
+    -   FYM-378: the tab strip has its own row, reveals the active tab on every view change, and shows scroll controls when it overflows
+    -   FYM-377: preserve Enter activation on focused controls
+    -   FYM-376: refresh live diagnostics when module failures change
+    -   FYM-374: drop the registered-only list nobody read; the nodes registered stage is the packages one spelling of it
+    -   FYM-373: a registration-only module whose id is a url carries it, through the one predicate pass 1 already used
+    -   FYM-371: a combined member registered under both its specifier and its url is one module, keyed by the url it already has
+    -   FYM-364: a bundle group header says how many of its modules loaded, keyed on the file rather than its basename
+    -   FYM-366: a container scope nobody could read is absent rather than invented, and says so where it used to say default
+    -   FYM-360: the reach check withholds its verdict while a FynApp is still bootstrapping, and says which one it is waiting on
+    -   FYM-361: the FynApp chip says bare name, leaving default to mean one thing on the row
+    -   FYM-359: an inlined expose has no chunk to go and find, and the FynApps view now says so from the same derivation the Containers tab reads
+    -   FYM-358: a bundle member is counted loaded by its own stage, not by a lookup that could not find it
+    -   FYM-356: the FynApps view names the branch a middleware resolved through, toned from the same table the Middleware view reads
+    -   FYM-357: report an auto-applying middleware that reached nothing, and say so rather than go quiet where a name collision makes reach unknowable
+    -   FYM-348: three names for the three expose levels, each derived in one place, so two views stop printing different counts for one app
+    -   FYM-355: one spelling for the auto-apply scopes, so the row and its version chip stop disagreeing
+    -   FYM-354: tone a consumer chip by its resolution branch, so a fallback stops rendering green
+    -   FYM-347: a middlewares consumers include the FynApps it was delivered to without declaring it, tagged by route
+    -   FYM-331: a bootstrap queue panel on the FynApps view, absent rather than idle where the coordinator is mangled
+    -   FYM-325: FynMesh diagnostics derived from the kernel registries, for the conditions the production kernel is silent about
+    -   FYM-329: middleware view reads the registry from the providers side, one row per provider::name
+    -   FYM-324: the containers view renders every manifest key, and names the ones the build never declared
+    -   FYM-323: a FynApps tab, read entirely off reserved kernel surfaces, absent rather than empty when there is no kernel
+    -   FYM-342: a store-only container counts its provisions as shares, and an inferred row stops calling itself unresolved
+    -   FYM-341: a share source is an announcement, not a copy, so the views say declares where nothing was supplied
+    -   FYM-327: rebuild container provides from the share store, since $SC.versions is mangled
+    -   FYM-320: depth buttons count the nodes the cap lets them draw, so two capped depths close instead of advertising different graphs
+    -   FYM-319: the graph names a selection it has no node for instead of claiming to be focused on it
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free
+    -   FYM-310: the disabled-depth title counts nodes with plural, not a hardcoded s
+    -   FYM-311: hovering a graph node lights its incident edges and dims the rest
+    -   FYM-310: each graph depth says how many nodes it reaches, and a depth that reaches no further is disabled
+    -   FYM-312: graph nodes carry container@version where two versions of a container are live
+    -   FYM-314: every view counts with the filter it renders with
+    -   FYM-317: id: and url: match alike, so a partial id narrows instead of returning nothing
+    -   FYM-313: stop stealing the pages keys, and stop the filter and the graph answering questions nobody asked
+    -   FYM-316: the module detail url is a link out to the file
+    -   FYM-315: animate the overlay open and closed, and keep it mounted until the exit plays
+    -   FYM-307: share rows line up on a shrinkable basis, not a min-width that clipped the range mark
+    -   FYM-308: graph arrowheads, wider layer gap, fit-to-window
+    -   FYM-307: let a small viewport override the panel minimum, and keep the live api on a duplicate load
+    -   FYM-308: graph drag-to-pan, wheel zoom, and ELK layered layout with orthogonal routing
+    -   FYM-307: copy-button feedback, dock caps on both axes, strict cell shrink order, container: facet in shares, validated persisted state
+    -   FYM-301: fix id overflowing onto chips, theme restore, off-left drag trap, indistinguishable container versions
+    -   FYM-301: fix phantom container versions from entry chunks, cache analysis, avoid per-scroll layout rebuild
+    -   FYM-305: federation-inspector modules, containers, shares, graph, issues and raw views
+    -   FYM-304: federation-inspector shadow-DOM shell, adapters, resizable overlay and virtual table
+    -   FYM-303: federation-inspector dependency graph, semver, share resolution and diagnostics
+    -   FYM-302: federation-inspector snapshot model, capability probing and collectors
+    -   FYM-306: scaffold federation-inspector package with rollup/terser/tsc build
+
+-   `packages/fynapp-1`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-1-b`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-2-react18`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-3-marko`
+
+    -   FYM-396: document markos unprovided share as a deliberate negative demo
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-4-vue`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-5-preact`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-6-react`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-7-solid`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-8-svelte`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-ag-grid`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-ag-grid-lib`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-bundled`
+
+    -   FYM-363: one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page
+
+-   `packages/fynapp-design-tokens`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-mw-mismatch`
+
+    -   FYM-362: a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch
+
+-   `packages/fynapp-notes`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-react-18`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-react-middleware`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-398: key react roots by container so a fynapp can render in two regions
+    -   FYM-397: restore the sidebar after Clear All and offer it as a loadable fynapp
+    -   FYM-321: getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-sidebar`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-test-shared`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/fynapp-x1-v1`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/shared-demo-utils`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `packages/test-nested-deps`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release
+
+-   `notes`
+
+    -   FYM-396: document markos unprovided share as a deliberate negative demo
+    -   retarget demo domain from lm360.ai to fynmesh.win
+    -   FYM-327: rebuild container provides from the share store, since $SC.versions is mangled
+    -   FYM-318: the design doc records the answers to its own open questions
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free
+    -   FYM-306: scaffold federation-inspector package with rollup/terser/tsc build
+
+-   `MISC`
+
+    -   chore: upgrade fyn and fynpo to 3.1.2 and approve esbuild install scripts
+    -   FYM-388: document the build-only demo site path and the publish blast radius
+    -   FYM-309: AGENTS.md documents the PORT override, and drops the CRLF endings no other file in the repo uses
+    -   gitignore .local safesh state dir
+
 # 9/1/2026
 
 ## Packages
