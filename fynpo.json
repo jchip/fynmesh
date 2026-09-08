@@ -11,7 +11,12 @@
     "demo-rollup-externals/*",
     "rollup-federation/*"
   ],
-  "versionLocks": [["@fynmesh/kernel", "create-fynapp"]],
+  "versionLocks": [
+    [
+      "@fynmesh/kernel",
+      "create-fynapp"
+    ]
+  ],
   "command": {
     "publish": {
       "tags": {},
@@ -20,6 +25,15 @@
         "path:core/*",
         "path:dev-tools/*"
       ]
+    }
+  },
+  "fyn": {
+    "options": {
+      "allowScripts": {
+        "esbuild": {
+          "semver": "^0.25.12"
+        }
+      }
     }
   }
 }
