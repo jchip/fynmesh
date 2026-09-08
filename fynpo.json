@@ -7,6 +7,7 @@
     "core/*",
     "demo/*",
     "dev-tools/*",
+    "dev-tools/*/examples/*",
     "misc/*",
     "demo-rollup-externals/*",
     "rollup-federation/*"
