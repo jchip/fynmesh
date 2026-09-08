@@ -1,0 +1,41 @@
+{
+  "name": "fynapp-design-tokens",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "fynapp-entry.js"
+      ]
+    },
+    "./middleware/design-tokens": {
+      "path": "./src/middleware/design-tokens.ts",
+      "chunks": [
+        "design-tokens-BN_9zyG6.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-09-08T04:36:11.481Z",
+  "version": "1.0.0"
+}

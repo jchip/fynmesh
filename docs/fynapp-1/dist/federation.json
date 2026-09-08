@@ -1,0 +1,67 @@
+{
+  "name": "fynapp-1",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-0SABD0a0.js"
+      ]
+    },
+    "./hello": {
+      "path": "./src/hello.ts",
+      "chunks": [
+        "hello-B9dQ6FmL.js"
+      ]
+    },
+    "./getInfo": {
+      "path": "./src/getInfo.ts",
+      "chunks": [
+        "getInfo-CH7m3ozA.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-CTLIHg5m.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-EiyQU3mJ.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-09-08T04:36:20.719Z",
+  "version": "1.0.0",
+  "bundles": {
+    "combo-R7IaSAnm.js": [
+      "hello-B9dQ6FmL.js",
+      "getInfo-CH7m3ozA.js",
+      "components-AjD3cTm0.js",
+      "fynbus-hooks-Dv0zvHwJ.js"
+    ]
+  }
+}

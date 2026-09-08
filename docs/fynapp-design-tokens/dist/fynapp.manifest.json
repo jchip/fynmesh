@@ -1,0 +1,16 @@
+{
+  "name": "fynapp-design-tokens",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./middleware/design-tokens": "./src/middleware/design-tokens.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "name": "fynapp-react-lib",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "node_modules/esm-react/src/react-esm-19.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-BiJXemGR.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "^19.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/index.ts",
+          "path": "node_modules/esm-react/src/react-esm-19.production.js"
+        },
+        {
+          "from": "node_modules/esm-react-dom/dist/react-dom-esm-19-client.production.js",
+          "path": "node_modules/esm-react/src/react-esm-19.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "19.2.8",
+          "path": "node_modules/esm-react/src/react-esm-19.production.js"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "node_modules/esm-react-dom/dist/react-dom-esm-19-client.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-dom-Bn8NSrK6.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "^19.0.0"
+      },
+      "importers": [],
+      "versions": [
+        {
+          "version": "19.2.8",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-19-client.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-09-08T04:36:10.878Z",
+  "version": "19.2.8"
+}

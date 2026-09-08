@@ -1,0 +1,13 @@
+{
+  "name": "fynapp-5-preact",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.js"
+  },
+  "provide-shared": {
+    "preact": {
+      "singleton": true,
+      "semver": "^10.18.1"
+    }
+  }
+}

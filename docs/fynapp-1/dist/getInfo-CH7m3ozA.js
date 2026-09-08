@@ -1,0 +1,1 @@
+globalThis.Federation._mfBind({n:"getInfo",f:"getInfo-CH7m3ozA.js",c:"fynapp-1",s:"fynmesh",e:!1,v:"1.0.0",b:"getInfo-CH7m3ozA.js"},[]).register([],(function(n){"use strict";return{execute:function(){n("getInfo",(function(){return{name:"fynapp-1",version:"1.0.0",timestamp:(new Date).toISOString()}}))}}}));

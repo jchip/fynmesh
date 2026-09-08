@@ -1,0 +1,37 @@
+{
+  "name": "fynapp-ag-grid",
+  "version": "1.0.0",
+  "exposes": {
+    "./component": "./src/component.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    },
+    "esm-ag-grid": {
+      "semver": "^33.0.0"
+    },
+    "esm-ag-grid-react": {
+      "semver": "^33.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    },
+    "fynapp-ag-grid-lib": {
+      "semver": "^33.3.2",
+      "provides": [
+        "esm-ag-grid",
+        "esm-ag-grid-react"
+      ]
+    }
+  }
+}

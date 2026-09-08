@@ -1,0 +1,97 @@
+{
+  "name": "fynapp-2-react18",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-CEepACMw.js"
+      ]
+    },
+    "./App": {
+      "path": "./src/App.tsx",
+      "chunks": [
+        "App-C0MjetH9.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-Bdj-ZOeT.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "node_modules/esm-react/src/react-esm-18.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-SYn_LH4H.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/component.ts",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "src/main.ts",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "src/App.tsx",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "src/components.ts",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-dom-DI9pQI88.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/component.ts",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        },
+        {
+          "from": "src/main.ts",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-09-08T04:36:16.722Z",
+  "version": "1.0.0"
+}

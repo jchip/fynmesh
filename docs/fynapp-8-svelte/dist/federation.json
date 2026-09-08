@@ -1,0 +1,36 @@
+{
+  "name": "fynapp-8-svelte",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-Bi3LXrjA.js"
+      ]
+    }
+  },
+  "shared": {
+    "svelte": {
+      "moduleIds": [
+        "node_modules/svelte/src/runtime/index.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_svelte-DvC2WdZh.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^4.0.0"
+      },
+      "importers": [],
+      "versions": [
+        {
+          "version": "4.2.20",
+          "path": "node_modules/svelte/src/runtime/index.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-09-08T04:36:13.421Z",
+  "version": "1.0.0"
+}

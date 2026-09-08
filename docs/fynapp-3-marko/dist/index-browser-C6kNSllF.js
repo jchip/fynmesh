@@ -1,0 +1,1 @@
+globalThis.Federation._mfBind({n:"index-browser",f:"index-browser-C6kNSllF.js",c:"fynapp-3-marko",s:"fynmesh",e:!0,v:"1.0.0",b:"index-browser-C6kNSllF.js"},[]).register([],(function(){"use strict";return{execute:function(){}}}));

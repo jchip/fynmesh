@@ -1,0 +1,41 @@
+{
+  "name": "fynapp-sidebar",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-MThzo-zq.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.ts",
+      "chunks": [
+        "component-CZJ6YXu9.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-09-08T04:36:16.685Z",
+  "version": "1.0.0"
+}
