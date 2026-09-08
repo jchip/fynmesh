@@ -348,7 +348,7 @@ function Header(props: AppProps): JSX.Element {
     <div class="header" {...drag}>
       <span class="title">
         {Icons.logo}
-        <span class="hide-sm">federation</span>
+        <span class="name">FynMesh Module Federation Inspector</span>
       </span>
 
       <span class="spacer" />

@@ -252,8 +252,7 @@ function BootstrapPanel({ fynmesh }: { fynmesh: FynMeshNode }): JSX.Element {
           <div class="node l1 wrapline">
             <span class="faint">
               Nobody holds the bootstrap lock and nothing is deferred — every FynApp
-              that started has finished. This is the healthy state, not a missing
-              reading.
+              that started has finished.
             </span>
           </div>
         ) : null}

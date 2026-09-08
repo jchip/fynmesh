@@ -49,23 +49,36 @@ export const STYLES = `
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --bg: #ffffff;
-  --bg-alt: #f7f8fa;
-  --bg-sunken: #eceff3;
-  --bg-hover: rgba(37, 99, 235, 0.06);
-  --bg-sel: rgba(37, 99, 235, 0.11);
-  --border: #e3e6ec;
-  --border-strong: #c9cfd9;
-  --fg-strong: #12161d;
-  --fg: #333c49;
-  --fg-dim: #626c7b;
-  --fg-faint: #7f8a99;
-  --accent: #2563eb;
-  --ok: #12905a;
-  --warn: #a24a05;
-  --err: #cf3329;
-  --chip: rgba(18, 22, 29, 0.06);
-  --shadow: 0 8px 28px rgba(16, 22, 34, 0.18);
+  /*
+   * Light is paper, not white.
+   *
+   * A full-height overlay read for long stretches is a glare surface, and
+   * #ffffff is the worst version of one: the eye stops down to the brightest
+   * thing in view and every foreground below --fg-strong washes out with it.
+   * Contrast ratio was never the problem here -- luminance was.
+   *
+   * So the ground sits near 96% with a trace of warm chroma and the foreground
+   * ramp deepens to match, instead of leaning on the white to carry it. The
+   * hue stays barely there: enough to read as paper, not enough to look tinted
+   * over an arbitrary host page.
+   */
+  --bg: #f6f4f0;
+  --bg-alt: #efede7;
+  --bg-sunken: #e5e2da;
+  --bg-hover: rgba(33, 89, 208, 0.07);
+  --bg-sel: rgba(33, 89, 208, 0.13);
+  --border: #dedad1;
+  --border-strong: #bcb7ab;
+  --fg-strong: #1c1a16;
+  --fg: #35322b;
+  --fg-dim: #5c584e;
+  --fg-faint: #7a7568;
+  --accent: #2159d0;
+  --ok: #0f7a4d;
+  --warn: #9a4506;
+  --err: #c22f26;
+  --chip: rgba(40, 34, 22, 0.07);
+  --shadow: 0 8px 28px rgba(48, 40, 26, 0.16);
 
   all: initial;
   font-family: var(--sans);
@@ -299,13 +312,26 @@ select:focus-visible,
   gap: 6px;
   font: 600 var(--fs-ui)/1 var(--sans);
   color: var(--fg-strong);
-  flex: none;
+  /*
+   * The name shrinks; it does not disappear.
+   *
+   * Hiding it by breakpoint tier was the wrong shape for a product name -- the
+   * panel is resizable to any width, so a tier boundary is just a place where
+   * the header suddenly has no name at all. Shrinking with a zero min-width
+   * lets it give ground continuously instead, showing as much of the name as
+   * the width allows and ellipsising the rest -- never blinking out.
+   */
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
 }
 .title .glyph {
   width: calc(var(--scale) * 14px);
   height: calc(var(--scale) * 14px);
   color: var(--accent);
+  flex: none;
 }
+.title .name { overflow: hidden; text-overflow: ellipsis; }
 
 .tab-row {
   display: flex;
