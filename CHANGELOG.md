@@ -1,3 +1,224 @@
+# 9/8/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.3` `(1.1.2 => 1.1.3)`
+-   `create-fynapp@1.1.5` `(1.1.4 => 1.1.5)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   FYM-406: approve esbuild 0.25.x install scripts and pin tsx to the 0.25 line [commit](/commit/66d6dc8e3822c918af6edd0f8463b53316c4ea31)
+    -   FYM-393: clear dist in build-dist so an earlier build cannot linger [commit](/commit/232f1f37c207358edd4fb96b59fb72604d702f63)
+    -   FYM-391: gate kernel sourcemaps on the build env so production ships no dangling refs [commit](/commit/4435ed92cce3b539539798ea86e9aa714e854a6e)
+    -   read production builds through the federation and kernel debug hatches [commit](/commit/970f53f3aa28ee0bb0c59d2a1a0c9089a9624c9e)
+    -   FYM-333: the provider fallback scan reports when more than one provider matched the name it took [commit](/commit/af7c330c8931a3fa8a69c7dcc200afade31b3bc7)
+    -   FYM-332: default stays the first version registered, and says so once when a second one arrives [commit](/commit/01a2c2b6f2d9a9075a30e3d2b686e860fc06b1ec)
+    -   FYM-321: getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches [commit](/commit/d2a0cd65df3eab67ba7688912c1dbca3a98ea844)
+    -   FYM-321: failing tests for getMiddleware resolving default instead of the requested semver range [commit](/commit/0378013b2991031b4a0705046c601253f7cf910a)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/create-fynapp`
+
+    -   FYM-386: stop emitting sourcemaps in production builds, FYNMESH_SOURCEMAP overrides [commit](/commit/b68f3c08b570f94c309e637bdb3dbfc57de7171f)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/demo-server`
+
+    -   FYM-405: serve the inspectors minified build from the dev proxy [commit](/commit/d463cb1a6fc27eded90ac467ce3fb6550bac59e7)
+    -   FYM-398: key react roots by container so a fynapp can render in two regions [commit](/commit/4af8b584466acfa4587533c6628a10c947bce0f8)
+    -   FYM-397: restore the sidebar after Clear All and offer it as a loadable fynapp [commit](/commit/e910893497de9581b57dc71123e84a9ef34a08d5)
+    -   FYM-394: never mark a chunk immutable when bytes were appended after its hash [commit](/commit/2100d0e2689fd8b3353275a75a5e5de95b9d5413)
+    -   FYM-390: ship a 404.html so cloudflare stops answering unknown paths with the landing page [commit](/commit/ba6bb972dfad51da27b81b765399d4e1dc135cf8)
+    -   FYM-392: fail the build when a federation chunk did not ship [commit](/commit/465519d7407005ef91d3fc1c601859186b9afadf)
+    -   FYM-389: point sitemap and canonical urls at the extensionless paths cloudflare serves [commit](/commit/7159628cbfd1fe3d9be8e548c64709566cb6898d)
+    -   FYM-388: split the demo site build out of the live publish chain [commit](/commit/6f5376c12433ba26f0ab0512a4c5e31f8d43abc0)
+    -   FYM-387: clean the demo site output dir before building, never the source public dir [commit](/commit/6990814916407bba677a3b3810e797124c4a87ac)
+    -   retarget demo domain from lm360.ai to fynmesh.win [commit](/commit/cc4c4cfa1cd46d2d7122c1b3b9656c27993804eb)
+    -   FYM-385: include fynapp-notes in demo site build and styles [commit](/commit/68df5fd4e6b2bc7b0f5a94a39c6bb7d932d05823)
+    -   FYM-372: the diagnostics lab is a dev-build affordance, so the switch is absent from the published page rather than broken on it [commit](/commit/85172a2795d28c201fe27e978aa2c99ff58bb811)
+    -   FYM-362: a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch [commit](/commit/fb47a9ec5ffbb6c3e968f9a90c215efe5cac383c)
+    -   FYM-363: one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page [commit](/commit/fd6b7c1a5f40381b025fcce0134caef0cfc4df60)
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free [commit](/commit/cc150659ec5a9632e5e82f4730abd88e012c7eab)
+    -   FYM-309: document the PORT override and that whoever binds 3000 first wins it [commit](/commit/7ee03f308dbdc93616171f399e087054064631fb)
+    -   FYM-309: demo loads the federation inspector at idle after paint, served from its own dist [commit](/commit/37b05953d1ea1a7df895abae02a5ee3fa528f0aa)
+
+-   `packages/federation-inspector`
+
+    -   FYM-404: soften the inspectors light theme off pure white and name the header [commit](/commit/e6f8a9e3f7d6a7801734c9ac0970c6749566999d)
+    -   FYM-399: stop flagging the __I debug hatches as a limited capability [commit](/commit/80bc73bd414a36fac530c1c93ce6729bf0223b7a)
+    -   match federations own scope fallback when joining __I rows [commit](/commit/7e2f481b164f4fd1263db9012fbb0530df27a0a7)
+    -   read production builds through the federation and kernel debug hatches [commit](/commit/970f53f3aa28ee0bb0c59d2a1a0c9089a9624c9e)
+    -   FYM-384: the overlay drops its opening class when the enter animation ends, so a dock change no longer replays it [commit](/commit/65bd8029269421dfae85f61139ece89912eda9f2)
+    -   FYM-379: dock, theme, text size and copy move into a settings menu that stays reachable at every panel width [commit](/commit/67a7d587a34c78c767b104fd949880f9da500404)
+    -   FYM-378: cover the tab strips reveal-on-view-change and its overflow controls [commit](/commit/9477fdc33518839e43591693083412a6a974dd43)
+    -   FYM-378: the tab strip has its own row, reveals the active tab on every view change, and shows scroll controls when it overflows [commit](/commit/2ab9700ad936d87a5fd34165a1c34503cba388a8)
+    -   FYM-377: preserve Enter activation on focused controls [commit](/commit/5703bcc2e4d28dec403754a15316263a515ccf5f)
+    -   FYM-376: refresh live diagnostics when module failures change [commit](/commit/1ff6ff06ccd14cc3a3cc14bcfe34a504358e3536)
+    -   FYM-374: drop the registered-only list nobody read; the nodes registered stage is the packages one spelling of it [commit](/commit/d48bc22bad439c9356560f9486df5b48b20cbefb)
+    -   FYM-373: a registration-only module whose id is a url carries it, through the one predicate pass 1 already used [commit](/commit/5c7d369488f1d4f58c1f52643f99c95323975f21)
+    -   FYM-371: a combined member registered under both its specifier and its url is one module, keyed by the url it already has [commit](/commit/b0233afa67112df8b4171c2eb6b971e6ade46153)
+    -   FYM-364: a bundle group header says how many of its modules loaded, keyed on the file rather than its basename [commit](/commit/bcbf548d86633ebf97da9fecf1074d44c65221f0)
+    -   FYM-366: a container scope nobody could read is absent rather than invented, and says so where it used to say default [commit](/commit/ea765c58c9abd7496493f991487307ceb156c9d3)
+    -   FYM-360: the reach check withholds its verdict while a FynApp is still bootstrapping, and says which one it is waiting on [commit](/commit/96c5d6f6d0fc42a83bb27cacdc1cbc261c5af500)
+    -   FYM-361: the FynApp chip says bare name, leaving default to mean one thing on the row [commit](/commit/f93711d47e0d5403ed982ea36fe77efe89559dac)
+    -   FYM-359: an inlined expose has no chunk to go and find, and the FynApps view now says so from the same derivation the Containers tab reads [commit](/commit/87c05248ceccd0252617902581cfab2c8b82526f)
+    -   FYM-358: a bundle member is counted loaded by its own stage, not by a lookup that could not find it [commit](/commit/36e89f18ee9a4be05108c9ce833b7c06fd371ac7)
+    -   FYM-356: the FynApps view names the branch a middleware resolved through, toned from the same table the Middleware view reads [commit](/commit/2ef0130a2dc6e551f05151f94603716fca95b91c)
+    -   FYM-357: report an auto-applying middleware that reached nothing, and say so rather than go quiet where a name collision makes reach unknowable [commit](/commit/6593c335e7485368fce51945d8bc05a5b7c7c995)
+    -   FYM-348: three names for the three expose levels, each derived in one place, so two views stop printing different counts for one app [commit](/commit/83b75cdd29afea528673f94bbd6c000144b29088)
+    -   FYM-355: one spelling for the auto-apply scopes, so the row and its version chip stop disagreeing [commit](/commit/c601b4a82ac3a92044d347e080bdfb3683394324)
+    -   FYM-354: tone a consumer chip by its resolution branch, so a fallback stops rendering green [commit](/commit/ec63174ec9bf33fc1c4bb7816ace4de4c3cc5a8d)
+    -   FYM-347: a middlewares consumers include the FynApps it was delivered to without declaring it, tagged by route [commit](/commit/c0c1003711f00f68c038fbed6ad400021f1347f9)
+    -   FYM-331: a bootstrap queue panel on the FynApps view, absent rather than idle where the coordinator is mangled [commit](/commit/8e2b3c3431e898a916b9ef4a7044cabfcd894d89)
+    -   FYM-325: FynMesh diagnostics derived from the kernel registries, for the conditions the production kernel is silent about [commit](/commit/7389bb008265eade07a95c63792dc1a99b0e6051)
+    -   FYM-329: middleware view reads the registry from the providers side, one row per provider::name [commit](/commit/591675b047268583130ab686232e1e93d87e70a1)
+    -   FYM-324: the containers view renders every manifest key, and names the ones the build never declared [commit](/commit/a37a18a2df78bd432b1246bcfed1e06f278a0ccc)
+    -   FYM-323: a FynApps tab, read entirely off reserved kernel surfaces, absent rather than empty when there is no kernel [commit](/commit/7b81295f63ef5eaf3e21d0a42e7b40ad6332485f)
+    -   FYM-342: a store-only container counts its provisions as shares, and an inferred row stops calling itself unresolved [commit](/commit/148f00d1d892c01486a0ccbc45c2312353cad802)
+    -   FYM-341: a share source is an announcement, not a copy, so the views say declares where nothing was supplied [commit](/commit/1f317450ecdaab83db73218c5a19b165c1e5ccd0)
+    -   FYM-327: rebuild container provides from the share store, since $SC.versions is mangled [commit](/commit/24438cc8379eb0262197d03d428676f0da14ff0c)
+    -   FYM-320: depth buttons count the nodes the cap lets them draw, so two capped depths close instead of advertising different graphs [commit](/commit/979b1db7ea942ba5cd61a81593172a8cda4d6305)
+    -   FYM-319: the graph names a selection it has no node for instead of claiming to be focused on it [commit](/commit/cd9f52cd714189db9582dd7a18c03ac462fe11df)
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free [commit](/commit/cc150659ec5a9632e5e82f4730abd88e012c7eab)
+    -   FYM-310: the disabled-depth title counts nodes with plural, not a hardcoded s [commit](/commit/ff7f9d7593139e7850c7b3450b0ab7df6e7b1443)
+    -   FYM-311: hovering a graph node lights its incident edges and dims the rest [commit](/commit/d6382f2568ccaf933af30e47d564d55daa1589ad)
+    -   FYM-310: each graph depth says how many nodes it reaches, and a depth that reaches no further is disabled [commit](/commit/01c2209fe7d6a907d93815033a573e1d97bed7a2)
+    -   FYM-312: graph nodes carry container@version where two versions of a container are live [commit](/commit/fdff460e154fe697e4ae2f99b7251b9f0b711528)
+    -   FYM-314: every view counts with the filter it renders with [commit](/commit/ad5b561d86de78b6350ea6cb65f653bd4730ab7a)
+    -   FYM-317: id: and url: match alike, so a partial id narrows instead of returning nothing [commit](/commit/862030f24906c655c0c4d1732225e480564b96f5)
+    -   FYM-313: stop stealing the pages keys, and stop the filter and the graph answering questions nobody asked [commit](/commit/6acb4d295ba26910b097c77cd2eedd1daeb0edcb)
+    -   FYM-316: the module detail url is a link out to the file [commit](/commit/b3198188ed3e2d324696c3224b63606162d71618)
+    -   FYM-315: animate the overlay open and closed, and keep it mounted until the exit plays [commit](/commit/da6c0536bb9f880b208effb84caf3380a3f8f34e)
+    -   FYM-307: share rows line up on a shrinkable basis, not a min-width that clipped the range mark [commit](/commit/4a8d0da425e757f6a9b4d08554c0bfac3090d9a6)
+    -   FYM-308: graph arrowheads, wider layer gap, fit-to-window [commit](/commit/dc60e9b50a0e7f07b204f9523257314294901174)
+    -   FYM-307: let a small viewport override the panel minimum, and keep the live api on a duplicate load [commit](/commit/8518ad849fb98b26a82e3c02564b93caed8954e3)
+    -   FYM-308: graph drag-to-pan, wheel zoom, and ELK layered layout with orthogonal routing [commit](/commit/1823fdbbbea85f0ab236224a3dda7554a7bd5e36)
+    -   FYM-307: copy-button feedback, dock caps on both axes, strict cell shrink order, container: facet in shares, validated persisted state [commit](/commit/117949d4002fe0a06c7e52a1381abe0517888a0c)
+    -   FYM-301: fix id overflowing onto chips, theme restore, off-left drag trap, indistinguishable container versions [commit](/commit/227e61f9b3c681b94864711555e79ec6296934ec)
+    -   FYM-301: fix phantom container versions from entry chunks, cache analysis, avoid per-scroll layout rebuild [commit](/commit/2090153529430775b732417a2d02bc6fcc6b8756)
+    -   FYM-305: federation-inspector modules, containers, shares, graph, issues and raw views [commit](/commit/1ff1614b1b6668b8c3a046647fa0948ebd070666)
+    -   FYM-304: federation-inspector shadow-DOM shell, adapters, resizable overlay and virtual table [commit](/commit/9dfee350ca17bdae1d77f04ac473574b0bcbe710)
+    -   FYM-303: federation-inspector dependency graph, semver, share resolution and diagnostics [commit](/commit/1ef60393a01f4b93133edf9c898e28f2d019bbfa)
+    -   FYM-302: federation-inspector snapshot model, capability probing and collectors [commit](/commit/2e5b3a76d0a6846443c713710cb4228c672f3961)
+    -   FYM-306: scaffold federation-inspector package with rollup/terser/tsc build [commit](/commit/4858dc34df100a2c6226fd8092a9bb16026673a7)
+
+-   `packages/fynapp-1`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-1-b`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-2-react18`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist [commit](/commit/c056b9317bcdd2ea8b1984e59e92a28d7decf766)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-3-marko`
+
+    -   FYM-396: document markos unprovided share as a deliberate negative demo [commit](/commit/abeb73888a5dca133062f6e2e3db974f46ec853c)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-4-vue`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-5-preact`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-6-react`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-7-solid`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-8-svelte`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-ag-grid`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-ag-grid-lib`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-bundled`
+
+    -   FYM-363: one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page [commit](/commit/fd6b7c1a5f40381b025fcce0134caef0cfc4df60)
+
+-   `packages/fynapp-design-tokens`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-mw-mismatch`
+
+    -   FYM-362: a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch [commit](/commit/fb47a9ec5ffbb6c3e968f9a90c215efe5cac383c)
+
+-   `packages/fynapp-notes`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-react-18`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist [commit](/commit/c056b9317bcdd2ea8b1984e59e92a28d7decf766)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-react-middleware`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-shell-mw`
+
+    -   FYM-398: key react roots by container so a fynapp can render in two regions [commit](/commit/4af8b584466acfa4587533c6628a10c947bce0f8)
+    -   FYM-397: restore the sidebar after Clear All and offer it as a loadable fynapp [commit](/commit/e910893497de9581b57dc71123e84a9ef34a08d5)
+    -   FYM-321: getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches [commit](/commit/d2a0cd65df3eab67ba7688912c1dbca3a98ea844)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-sidebar`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-test-shared`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/fynapp-x1-v1`
+
+    -   FYM-299: demo React fynapps share esm-react non-singleton so 18 and 19 coexist [commit](/commit/c056b9317bcdd2ea8b1984e59e92a28d7decf766)
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/shared-demo-utils`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `packages/test-nested-deps`
+
+    -   Refresh lockfiles and kernel version stamp after the 1.1.2 release [commit](/commit/a8f6143b64f8094bf734085610fe6aaa7c596f68)
+
+-   `notes`
+
+    -   FYM-396: document markos unprovided share as a deliberate negative demo [commit](/commit/abeb73888a5dca133062f6e2e3db974f46ec853c)
+    -   retarget demo domain from lm360.ai to fynmesh.win [commit](/commit/cc4c4cfa1cd46d2d7122c1b3b9656c27993804eb)
+    -   FYM-327: rebuild container provides from the share store, since $SC.versions is mangled [commit](/commit/24438cc8379eb0262197d03d428676f0da14ff0c)
+    -   FYM-318: the design doc records the answers to its own open questions [commit](/commit/647e5808c625ef72916e8c6a807d1c48771ed5d0)
+    -   FYM-318: federation-inspector lives in dev-tools, dependency-free [commit](/commit/cc150659ec5a9632e5e82f4730abd88e012c7eab)
+    -   FYM-306: scaffold federation-inspector package with rollup/terser/tsc build [commit](/commit/4858dc34df100a2c6226fd8092a9bb16026673a7)
+
+-   `MISC`
+
+    -   chore: upgrade fyn and fynpo to 3.1.2 and approve esbuild install scripts [commit](/commit/24221078e9ee9a16c693434f15765aebddae3dd4)
+    -   FYM-388: document the build-only demo site path and the publish blast radius [commit](/commit/8faa40d7a0b91c95a782c77cd98036307dd3a2cd)
+    -   FYM-309: AGENTS.md documents the PORT override, and drops the CRLF endings no other file in the repo uses [commit](/commit/cb608f6a944a46b728edc275a6a3639053bf495f)
+    -   gitignore .local safesh state dir [commit](/commit/090a1f4a8822392bf0c040893382b5d8a402a6b0)
+
 # 9/1/2026
 
 ## Packages
