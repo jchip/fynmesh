@@ -11,17 +11,51 @@ const { load, exec } = xrun;
 /**
  * Explicit combine groups, by demo app directory.
  *
- * Only one app needs one. `fynapp-react-19`'s 314-byte `index.js` and its
- * 9.4 KB React ESM chunk are both in the startup set, so they are worth a
- * single request even though the React chunk is far over `maxModuleSize` --
- * which is exactly what an explicit group is for. Every other app is left to
- * the size policy, which is the case worth demonstrating by default.
+ * Only one app needs one. `fynapp-react-19`'s tiny `index.js` and its React ESM
+ * chunk are both fetched at startup, so they are worth a single request even
+ * though the React chunk is far over `maxModuleSize` -- which is exactly what an
+ * explicit group is for. Every other app is left to the size policy, which is
+ * the case worth demonstrating by default.
  *
- * Referenced by chunk stem, not fileName, because the hashes move every build.
+ * Refs are chunk stems, not fileNames, because the hashes move every build: a
+ * share surface is `_mf-share-surface_<shared module>`, and an unhashed file is
+ * its own stem. `assertGroupsFormed` fails the build if a ref stops matching.
  */
 const COMBINE_GROUPS: Record<string, Record<string, string[]>> = {
-    "fynapp-react-19": { startup: ["index", "react-esm-19.production"] },
+    "fynapp-react-19": { startup: ["index", "_mf-share-surface_esm-react"] },
 };
+
+/**
+ * Fail the build when a configured group produced no combined file.
+ *
+ * `planGroups` only logs an unmatched ref, and one line in a build this long is
+ * effectively invisible -- FYM-412 lived in that blind spot, where the repo's
+ * only explicit group named a chunk that does not exist and did nothing for as
+ * long as nobody read the log. A configured group is a deliberate claim that
+ * these chunks ship together, so failing to form one is a build error, not a
+ * note.
+ *
+ * @param app demo app directory name
+ * @param groups the app's configured groups, if it has any
+ * @param bundles combined files written, keyed `<group name>-<hash>.js`
+ */
+function assertGroupsFormed(
+    app: string,
+    groups: Record<string, string[]> | undefined,
+    bundles: Record<string, string[]>,
+): void {
+    const written = Object.keys(bundles);
+    const missing = Object.keys(groups || {}).filter(
+        (name) => !written.some((file) => file.startsWith(`${name}-`)),
+    );
+    if (missing.length) {
+        throw new Error(
+            `combine: ${app} group(s) ${missing.map((m) => `"${m}"`).join(", ")} produced no ` +
+            `combined file -- a named chunk is missing or renamed. Refs are stems, so a new ` +
+            `build hash is not the cause; see the [combine ${app}] lines above.`,
+        );
+    }
+}
 
 /**
  * Every built FynApp dist directory: `demo/*` that has a `federation.json`.
@@ -89,10 +123,12 @@ load({
 
             let saved = 0;
             for (const [app, dist] of apps) {
+                const groups = COMBINE_GROUPS[app];
                 const result = combineDist(dist, {
-                    groups: COMBINE_GROUPS[app],
+                    groups,
                     log: (m: string) => console.log(`[combine ${app}] ${m}`),
                 });
+                assertGroupsFormed(app, groups, result.bundles);
                 saved += result.requestsSaved;
             }
             console.log(`[combine] ${apps.length} FynApps, ${saved} fewer requests`);
