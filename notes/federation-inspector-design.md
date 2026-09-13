@@ -6,7 +6,24 @@ themselves), puts a small badge in a page corner, and opens a dense inspector
 overlay on click. The same code is consumable as an ES library so a Chrome
 DevTools extension can be built on it without a rewrite.
 
-Status: design. Package lives at `dev-tools/federation-inspector/`.
+Status: **built and shipped.** Package lives at `dev-tools/federation-inspector/`
+(private, `0.1.0`, ~16.5k LOC), and the minified bundle deploys with the demo site as
+`docs/federation-inspector.min.js`.
+
+> Read the rest as design *rationale*, which is what it is good for — the reasoning
+> behind the snapshot model, container discovery without federation internals, and the
+> density rules all still hold. §3.1 below is the as-built tree, re-synced with the
+> source on 2026-09-13; it had drifted, still describing a vanilla-DOM UI that §5.1
+> already (correctly) said was Preact. Where a later section disagrees with the code,
+> the code wins.
+>
+> **On the Chrome extension** referenced throughout as a design target: it is
+> cancelled (FYM-31 `wont_do`) — the in-page overlay needs no install and no
+> cooperation from the page, which turned out to be the better shape. The constraint
+> it imposed was still worth it and was honoured: the UI renders only a
+> structured-clone-safe snapshot, and `RemoteAdapter` / `serveRemote` /
+> `windowTransport` are built and exported, so a different-realm panel remains
+> buildable without a rewrite.
 
 ---
 
@@ -131,7 +148,7 @@ that can cross the bridge is JSON. It also keeps the UI trivially testable
                     ┌──────────────────────────────────────┐
    live page realm  │  collectors/  (read-only probes)     │
                     │   systemjs.ts   federation.ts        │
-                    │   manifest.ts   bundles.ts           │
+                    │   fynmesh.ts    (kernel, optional)   │
                     └───────────────┬──────────────────────┘
                                     │  builds
                     ┌───────────────▼──────────────────────┐
@@ -150,6 +167,9 @@ that can cross the bridge is JSON. It also keeps the UI trivially testable
 
 ### 3.1 Package layout
 
+As built (re-synced 2026-09-13). The UI is Preact + `@preact/signals` (§5.1), so it
+is `.tsx`; there is no hand-rolled DOM helper.
+
 ```
 dev-tools/federation-inspector/
   src/
@@ -159,33 +179,49 @@ dev-tools/federation-inspector/
       model.ts               Snapshot types — the whole contract
       collect.ts             orchestrates collectors → Snapshot
       capability.ts          probes what this build exposes
+      exposes.ts             the three levels at which an expose can "be there"
       collectors/
         systemjs.ts          records, registrations, aliases, stages
         federation.ts        share store, containers, exposes, bundles
-        manifest.ts          __FYNAPP_MANIFEST__ / federation.json (optional)
+        fynmesh.ts           kernel enrichment: FynApps + middleware (optional)
     analysis/
+      index.ts               everything derived from a snapshot, in one pass
       graph.ts               forward + reverse deps, cycles, roots, depth
+      elk-layout.ts          layered graph layout, by ELK (`elkjs`)
+      issues.ts              derived diagnostics (feeds the issues view)
       resolution.ts          per-share "why this version" explanation
-      diff.ts                snapshot A→B (for live refresh + timeline)
+      semver.ts              small semver range matcher
       search.ts              tokenised filter/fuzzy over the snapshot
     adapters/
+      types.ts               how the UI gets snapshots — the adapter contract
       live.ts                same-realm adapter (collect + poll)
       remote.ts              postMessage transport, both ends
     ui/
-      overlay.ts             <fed-inspector> host element, shadow root
-      launcher.ts            corner badge
-      theme.ts               design tokens (CSS custom properties)
+      App.tsx                overlay shell: launcher, chrome, tabs, filter, keyboard
+      mount.tsx              <fed-inspector> element, shadow root, public handle
+      state.ts               UI state as signals (snapshot / query / selection)
       styles.ts              stylesheet as a string, adopted by the shadow root
-      components/            table, row-detail, tree, chips, facet-bar, graph
-      views/                 modules · containers · shares · graph · issues · raw
+      metrics.ts             sizes the stylesheet and layout code must agree on
+      middleware-resolution.ts  how a middleware declaration resolved, named+coloured
+      components/            atoms · TabStrip · VirtualList · Resize · SettingsMenu
+      views/                 modules · containers · shares · fynapps · middleware
+                             · graph · issues · raw
     util/
-      dom.ts                 ~50-line h()/reactive helper (see §5.1)
       format.ts              url shortening, byte/ms, semver rendering
+  test/
   rollup.config.js
+  vitest.config.ts
   package.json
   tsconfig.json
   README.md
 ```
+
+Two views exist that this document originally did not plan for, both because the
+kernel collector makes them possible: **`fynapps`** (loaded FynApps and their state)
+and **`middleware`** (registrations, providers, and how each consumer resolved).
+`diff.ts`, `overlay.ts`, `launcher.ts`, `theme.ts` and `util/dom.ts` were planned and
+never built — the overlay and launcher live in `App.tsx`/`mount.tsx`, theming folded
+into `styles.ts`, and live refresh replaces the whole snapshot rather than diffing it.
 
 ### 3.2 Container discovery without federation internals
 
@@ -334,7 +370,7 @@ interface ShareScopeNode {
 ### 4.2 Density rules
 
 The brief is "pack as much as possible per row, not cramped". Concretely, as
-tokens in `theme.ts`:
+tokens in `styles.ts` (a planned `theme.ts` was folded into it):
 
 - Row height **24px**, cell padding `2px 6px`, hairline `1px` separators —
   no card padding, no rounded row containers, no shadow per row.
