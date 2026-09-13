@@ -3,10 +3,16 @@
 Every FynApp build emits JSON alongside its JavaScript. This is the reference for what each
 file is, who writes it, who reads it, and what breaks if it goes missing.
 
+> Line numbers verified 2026-09-13. Note that `rollup-federation/` is a **separate git repo**,
+> nested here and gitignored (`.gitignore:5`) — not a submodule. Citations into it drift with
+> *its* history, independently of any fynmesh commit, so they go stale without anything in this
+> repo changing. Checked against `rollup-plugin-federation@1.1.2` / `federation-js@1.1.3`
+> (`56ffefc`).
+
 | Artifact | Purpose | Written by | Read by | Missing it breaks |
 | --- | --- | --- | --- | --- |
 | `fynapp.manifest.json` | The FynApp's **public contract**: identity, exposes, shared modules, dependencies | `create-fynapp` via the plugin's `emitFederationMeta` hook | kernel (fallback), peer builds, `cfa check` | peer builds lose `shared-providers`; runtime falls back |
-| `__FYNAPP_MANIFEST__` (embedded in `fynapp-entry.js`) | The **same manifest**, carried inside the entry file so resolution costs zero extra requests | the plugin, spliced into the container chunk after render | kernel manifest resolver, kernel module loader | **middleware pre-loading silently stops working** |
+| `__FYNAPP_MANIFEST__` (embedded in `fynapp-entry.js`) | The **same manifest**, carried inside the entry file so resolution costs zero extra requests | the plugin, spliced into the container chunk after render | kernel manifest resolver, kernel module loader | middleware pre-loading stops working — but the build now fails rather than ship it |
 | `federation.json` | Build/serving **plumbing**: which chunks back which expose, share config | the plugin, unless `emitFederationJson: false` | xrun tasks, demo-server cache headers | nothing required — every runtime path works without it |
 | `federation.bundles.json` | The **combined-bundle map an app offers**: which file carries which module, readable without executing anything | `federation-combine`, only when it combined something | demo-server preload + shell declaration | preloads name files the runtime never requests |
 | `__collected_shares.json` | Debug dump of collected share records | the plugin, only under `debugging: true` | nothing | nothing |
@@ -45,25 +51,26 @@ kernel's dependency graph.
 }
 ```
 
-**Produced by** `createEmitFederationMeta()` — `dev-tools/create-fynapp/src/index.ts:443`.
-The content is built earlier by `createEnrichManifest()` (`dev-tools/create-fynapp/src/index.ts:282`),
-which the plugin calls from `generateBundle` (`rollup-federation/rollup-plugin-federation/src/index.mts:378`).
-That ordering matters: dynamic imports are only fully collected once every module has been
-processed, so `import-exposed` cannot be computed any earlier.
+**Produced by** `createEmitFederationMeta()` — `dev-tools/create-fynapp/src/index.ts:528`,
+emitting the asset at `:547`. The content is built earlier by `createEnrichManifest()`
+(`dev-tools/create-fynapp/src/index.ts:357`), which the plugin calls from `generateBundle`
+(`rollup-federation/rollup-plugin-federation/src/index.mts:527`). That ordering matters:
+dynamic imports are only fully collected once every module has been processed, so
+`import-exposed` cannot be computed any earlier.
 
 **Read by:**
 
-- `core/kernel/src/modules/manifest-resolver.ts:166` — fetched only when the embedded copy
+- `core/kernel/src/modules/manifest-resolver.ts:178` — fetched only when the embedded copy
   was unavailable. Tier 2 of the resolution chain below.
-- `detectSharedProviders()` — `dev-tools/create-fynapp/src/index.ts:511`. **Build time, and
+- `detectSharedProviders()` — `dev-tools/create-fynapp/src/index.ts:566`. **Build time, and
   load bearing.** It reads *other* FynApps' manifests from `node_modules/<dep>/dist/` or
-  `../<dep>/dist/` to work out which peer provides each shared module. A dependency that has
-  not been built yet has no manifest to read, so the consumer's `shared-providers` comes out
-  empty and the kernel never learns to load the provider. This is why build order across the
-  monorepo is not incidental.
-- `check-fynapp.ts:92` — `cfa check` asserts the file exists, parses, and carries identity
-  plus a `./main` expose.
-- `demo/demo-server/scripts/cache-headers.mts` — deliberately *excluded* from immutable
+  `../<dep>/dist/` (`:606-615`) to work out which peer provides each shared module. A
+  dependency that has not been built yet has no manifest to read, so the consumer's
+  `shared-providers` comes out empty and the kernel never learns to load the provider. This is
+  why build order across the monorepo is not incidental.
+- `check-fynapp.ts:98-127` — `cfa check` asserts the file exists, parses, carries a `name` and
+  `version` matching `package.json`, and has a `./main` expose.
+- `demo/demo-server/scripts/cache-headers.mts:74-78` — deliberately *excluded* from immutable
   caching. The filename is not content-hashed, so freezing it would break deploys.
 
 ## `__FYNAPP_MANIFEST__` — the embedded copy
@@ -75,24 +82,26 @@ multiplied across the dependency graph.
 
 **Produced in two steps**, because the manifest isn't known when the entry code is generated:
 
-1. `container-code.mts:188` emits a placeholder — `{"__placeholder": true}`.
-2. `index.mts:404-441` replaces it with the real manifest in `generateBundle`, matching both
-   the development form and terser's mangled form.
+1. The load hook sets `runtime.fynappManifest = { __placeholder: true }` (`index.mts:470`),
+   and `container-code.mts:220` bakes that stub into the generated entry code.
+2. `index.mts:539-597` replaces it with the real manifest in `generateBundle`, matching both
+   the development form and terser's mangled form. A miss is a **hard build error**
+   (`index.mts:580-585`) — see [Two copies, one contract](#two-copies-one-contract).
 
 The name is registered in `core/kernel/build/reserved-names.mjs:50` so minification cannot
 rename it.
 
 **Read by:**
 
-- `core/kernel/src/modules/manifest-resolver.ts:157` — tier 1, the fast path. Falls back
+- `core/kernel/src/modules/manifest-resolver.ts:169` — tier 1, the fast path. Falls back
   cleanly if absent.
-- `core/kernel/src/modules/module-loader.ts:243` — **load bearing, no fallback.** See below.
-- `demo/fynapp-shell-mw/src/middleware/shell-layout.ts:1051` — expose probe, falls back to
+- `core/kernel/src/modules/module-loader.ts:265` — **load bearing, no fallback.** See below.
+- `demo/fynapp-shell-mw/src/middleware/shell-layout.ts:1304` — expose probe, falls back to
   the container's `$E` map.
 
 ### The one place with no fallback
 
-`module-loader.ts:243` is Step 6 of FynApp loading — "proactively load middleware from
+`module-loader.ts:252-265` is Step 6 of FynApp loading — "proactively load middleware from
 dependencies". It reads the manifest straight off the container:
 
 ```ts
@@ -130,20 +139,22 @@ Not a contract between FynApps; a record of what the build actually produced.
 }
 ```
 
-**Produced by** `emitFederationJson()` — `rollup-federation/rollup-plugin-federation/src/code-generation/federation-json.mts:207`.
-On by default; suppressed by `emitFederationJson: false`.
+**Produced by** `emitFederationJson()` — `rollup-federation/rollup-plugin-federation/src/code-generation/federation-json.mts:269`.
+On by default; suppressed by `emitFederationJson: false`, which still returns the info object
+because `emitFederationMeta` consumers need it either way.
 
 **Nothing requires it.** No runtime path needs it, and `emitFederationJson: false` is a
 legal way to build a FynApp. Its readers are all tooling:
 
-- `scripts/xrun-tasks.ts:34` — its *presence* is the test for "this `demo/*` directory is a
+- `scripts/xrun-tasks.ts:40` — its *presence* is the test for "this `demo/*` directory is a
   built FynApp", used instead of a hardcoded list.
-- `demo/demo-server/scripts/cache-headers.mts` — excluded from immutable caching, same reason
-  as the manifest.
-- `combine.mts` — keeps its `bundles` record current when the file is there, and reads it as
-  a fallback for a dist combined before `federation.bundles.json` existed. Neither required.
-- `core/kernel/src/modules/manifest-resolver.ts:171` — last-ditch runtime fallback, and only
-  a partial one. See the resolution chain below.
+- `demo/demo-server/scripts/cache-headers.mts:74-78` — excluded from immutable caching, same
+  reason as the manifest.
+- `rollup-federation/rollup-plugin-federation/src/combine.mts:321-330,727-732` — keeps its
+  `bundles` record current when the file is there (never creating one), and reads it as a
+  fallback for a dist combined before `federation.bundles.json` existed. Neither required.
+- `core/kernel/src/modules/manifest-resolver.ts:181-184` — last-ditch runtime fallback, and
+  only a partial one. See the resolution chain below.
 
 ## `federation.bundles.json` — the map an app offers
 
@@ -165,28 +176,33 @@ Reading this file answers "what will actually be fetched?" without executing a l
 without the app having to emit `federation.json` at all. A host hands it to the runtime with
 `Federation.declareBundles(map, distBase)`.
 
-**Produced by** `federation-combine`, only when a run actually combined something, and
-removed again when a run does not — so its presence is itself the signal that a dist has
-bundles to offer.
+**Produced by** `federation-combine` (`combine.mts:714-726`), only when a run actually
+combined something, and removed again when a run does not — so its presence is itself the
+signal that a dist has bundles to offer, and a leftover file can never describe a dist that no
+longer matches it.
 
-**Read by** `demo/demo-server/scripts/shell-preload.mts`, for the two things a page needs it
-for: `collectShellPreloadModules` inverts it so preload tags name the carrier, and
-`collectShellBundleMaps` passes it through for the shell to declare. Both go through one
-reader, so a page cannot preload one file while telling the runtime another. It falls back to
-`federation.json`'s `bundles` field for a dist built by older tooling — which is the ordinary
-condition for a host that consumes apps it did not build.
+**Read by** `demo/demo-server/scripts/shell-preload.mts:114-115`, for the two things a page
+needs it for: `collectShellPreloadModules` (`:223`) inverts it so preload tags name the
+carrier, and `collectShellBundleMaps` (`:309`) passes it through for the shell to declare.
+Both go through one reader, so a page cannot preload one file while telling the runtime
+another. It falls back to `federation.json`'s `bundles` field for a dist built by older
+tooling — which is the ordinary condition for a host that consumes apps it did not build.
+
+Like the two manifests, it is excluded from immutable caching (`cache-headers.mts:74-78`) —
+and it is the worst of the three to freeze, because a stale copy names carrier files a later
+deploy no longer has.
 
 ## `__collected_shares.json` — debug only
 
-Emitted at `index.mts:465-480`, and only when the plugin runs with `debugging: true`. Nothing
-reads it. It exists to inspect what the share-collection pass saw. Ignore it; deleting it
-affects nothing.
+Emitted from the `banner` hook at `index.mts:630-643`, and only when the plugin runs with
+`debugging: true`. Nothing reads it. It exists to inspect what the share-collection pass saw.
+Ignore it; deleting it affects nothing.
 
 ---
 
 ## How the kernel resolves a manifest
 
-`manifest-resolver.ts:132-180`, in order, first success wins:
+`manifest-resolver.ts:132-192`, in order, first success wins:
 
 | Tier | Source | Cost | Completeness |
 | --- | --- | --- | --- |
@@ -200,27 +216,43 @@ and no `shared-providers`, and its `exposes` values are objects rather than sour
 strings. A FynApp resolved that way comes up with **no dependency edges at all** — it loads,
 but nothing it depends on gets loaded with it.
 
-The fields `buildGraph` walks to find dependencies (`manifest-resolver.ts:226-263`):
+The fields `buildGraph` walks to find dependencies (`manifest-resolver.ts:238-275`):
 `requires`, `import-exposed`, `shared-providers`.
 
 ## Two copies, one contract
 
 Both manifests are serialized from the same `runtime.fynappManifest`, so their **content**
-cannot drift. What can drift is whether the embedded copy exists at all:
+cannot drift. What could drift is whether the embedded copy exists at all — injection works by
+regex-matching generated code, before and after minification, so a change in terser's output
+shape can stop it matching.
 
-- Injection works by regex-matching generated code, including terser's output shape. A miss
-  logs `console.warn` from `index.mts:435` and the build still succeeds.
-- `cfa check` inspects the emitted **file** only. It never looks at the embedded export.
+That used to fail quietly: a miss logged a `console.warn`, the build succeeded, and the
+container shipped with `__FYNAPP_MANIFEST__` still set to the stub. Nothing downstream caught
+it, because the copy with no runtime fallback is the copy nothing checks — `cfa check`
+inspects the emitted **file**, a different artifact. And it was not hypothetical: the regex
+pinned the export-name quote to `"`, while rollup's systemjs output writes `'`, so the splice
+missed on every unminified build and the placeholder shipped unnoticed.
 
-So the copy with no runtime fallback is the copy nothing checks. A terser version bump that
-changes codegen shape is a plausible way to lose it quietly. Two ways to close that gap, if
-it ever bites: assert the embedded export in `check-fynapp.ts`, or give `module-loader.ts:243`
-the same fallback chain `manifest-resolver` already has.
+**Closed at the build (FYM-296).** A container chunk carrying the stub is not a usable
+artifact, so a miss now calls `this.error` (`index.mts:580-585`) and fails the build. Both
+quote forms are matched (`index.mts:572-578`), and the regression is covered:
+`tests/index.test.mts:334` asserts the build rejects, `tests/embedded-manifest.test.mts:79-83`
+asserts no `__placeholder` survives into a real build.
 
-## Known inaccuracy in the type
+The asymmetry itself remains, and is deliberate — noted in-source at `check-fynapp.ts:91-96`
+and `module-loader.ts:255-264`. `cfa check` still never looks at the embedded export, and
+`module-loader.ts:265` still has no fallback. What changed is that a build can no longer
+produce the artifact that would expose either gap.
 
-`FynAppManifest.exposes` in `core/kernel/src/types.ts:293` is declared as
-`Record<string, { path: string; chunk: string }>`. The emitted manifest actually holds plain
-source-path strings (`"./main": "./src/main.ts"`), and `federation.json` uses `{ path, chunks }`
-with the key pluralized. Nothing reads past truthiness of the value, so nothing is broken —
-but don't write code against that type's shape without checking the real data first.
+## Two `exposes`, two shapes
+
+The same expose keys appear in both JSON artifacts with different value shapes, which is worth
+keeping straight when reading either one:
+
+| File | Shape | Example |
+| --- | --- | --- |
+| `fynapp.manifest.json` | source path, a plain string | `"./main": "./src/main.ts"` |
+| `federation.json` | `{ path, chunks }`, key pluralized | `"./main": { "path": "./src/main.ts", "chunks": [...] }` |
+
+`FynAppManifest.exposes` (`core/kernel/src/types.ts:329-337`) declares the string form, which
+is the one the kernel reads; `federation.json` is the only artifact that names build output.

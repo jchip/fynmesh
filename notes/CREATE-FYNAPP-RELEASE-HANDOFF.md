@@ -1,7 +1,24 @@
 # create-fynapp Release Handoff
 
+> **Superseded on the central question (checked 2026-09-13).** This document's premise — that
+> nothing is on npm — stopped being true the day after its last re-verification. All four core
+> packages are published and current:
+>
+> | package | npm latest | first published | last updated |
+> | --- | --- | --- | --- |
+> | `federation-js` | 1.1.3 | 2026-08-12 | 2026-09-08 |
+> | `@fynmesh/kernel` | 1.1.3 | 2026-08-12 | 2026-09-08 |
+> | `rollup-plugin-federation` | 1.1.2 | 2026-08-12 | 2026-09-08 |
+> | `create-fynapp` | 1.1.5 | 2026-08-12 | 2026-09-08 |
+>
+> **The 404 observations below (`:162`, `:188`) are historical.** Do not cite them as current
+> state — that mistake has already been made once, in `MF2-VS-FEDERATION-JS.md`. Whether the
+> CFA-20/25/33/34 gates were formally closed or simply overtaken is not recorded here; the
+> licensing and metadata questions may still deserve an answer even though publication happened.
+> Check the registry, not this file.
+
 Date: 2026-07-10 (America/Los_Angeles). Provenance details re-verified and corrected 2026-08-11;
-the release blockers below were re-checked and all still stand.
+the release blockers below were re-checked and all still stood **as of that date**.
 
 ## Current state
 

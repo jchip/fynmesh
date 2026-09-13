@@ -30,6 +30,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`TODO.md`](./TODO.md)                                     | Development roadmap / completed-vs-pending checklist            |
 | [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Pointer → canonical FynApp docs in `dev-tools/create-fynapp/agent/` |
 | [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md)               | The JSON a FynApp build emits: purpose, producers, consumers, what breaks |
+| [`MF2-VS-FEDERATION-JS.md`](./MF2-VS-FEDERATION-JS.md)     | Module Federation 2.0 (2.9.0) vs FynMesh's SystemJS federation: full capability comparison + gap analysis |
 | [`DEMO.md`](./DEMO.md)                                     | Demo quick reference: live URLs and local commands             |
 | [`KERNEL_PRINCIPAL_REVIEW.md`](./KERNEL_PRINCIPAL_REVIEW.md) | Principal-engineer review of kernel risks (FYM-66/FYM-77)    |
 | [`KERNEL_TELEMETRY_DESIGN.md`](./KERNEL_TELEMETRY_DESIGN.md) | KernelTelemetry runtime-observability design (FYM-49/53/54) — implemented |
