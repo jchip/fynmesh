@@ -15,6 +15,10 @@ Off-cycle MF versions worth knowing: `@module-federation/vite` **1.21.6**, `node
 `nextjs-mf` **8.8.74** (deprecated), `observability-plugin` **2.6.0**, `esbuild` **0.0.114**
 (experimental), `nuxt` **0.1.0**.
 
+**Companion doc:** this file scores capabilities. [`MF2-DETAILS.md`](./MF2-DETAILS.md) records
+*mechanism* for MF features traced line-by-line through the checkout, so a claim here can be checked
+or costed before we consider building an equivalent. Currently covers shared tree-shaking.
+
 ---
 
 ## The one-paragraph answer
@@ -200,7 +204,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | Multi-version coexistence across containers | ✅ | ✅ | |
 | **Two versions of one share key inside one container** | ❌ structurally impossible | ✅ | **Unique to FynMesh** |
 | **Per-importer declared ranges (`rvm`)** | ❌ one `requiredVersion` per key | ✅ all applicable ranges must hold | **Unique to FynMesh** |
-| Shared tree-shaking | ✅ Rspack-first, 75% reported on antd | ❌ | |
+| Shared tree-shaking | ✅ opt-in per share; ~75% reported on antd | ❌ | webpack is the reference implementation, Rspack the recommended one (§13) |
 
 ### Runtime & extensibility
 
@@ -437,7 +441,7 @@ unique keys on `window`.
 | **Per-share `shareScope` silently dropped** | The runtime honours `options.shareScope` (`container.ts:99`) but `PICK_SHARE_KEYS` omits it, so it is never emitted. |
 | **Subpath exports are not shared** | Declaring `share-a` does not share `share-a/lib` — that must be its own key. MF solves this with trailing-slash prefix matching (`'react-dom/'`). |
 | **Transitive deps must be listed manually** | *"A dependency consumed only transitively still has to appear in `shared` with its semver range… a mismatch shows up at runtime as a duplicate-instance error rather than a build failure"* (`rollup-plugin-federation/README.md:73-75`). Webpack MF auto-infers from `package.json`. |
-| **No shared tree-shaking** | MF's `server-calc` mode reportedly took antd from 1404 KB → 344 KB. |
+| **No shared tree-shaking** | MF prunes a shared package to the exports a build actually references, keeping a full copy as fallback — antd 1404 KB → 344 KB reported. Opt-in per share, gated on `"sideEffects": false`, and the mode that delivers that number (`server-calc`) needs deploy-time infrastructure. Mechanism in §13 / [`MF2-DETAILS.md`](./MF2-DETAILS.md#1-shared-dependency-tree-shaking). |
 | **Scope cannot be torn down** | A container's share scope has no teardown path. |
 
 > **Note on a stale in-repo claim:** `rollup-federation/README.md:61-69` lists `singleton` as "Not
@@ -740,7 +744,7 @@ day-to-day developer-experience gap in the comparison.
 | Requires app cooperation | **Yes — `mf-manifest.json` is a hard requirement** | **No** — reads the loader's record-exposure API |
 | Panels | Proxy · Module Info · Dependency Graph · Shared · Loading Trace | Modules · Graph (ELK) · Containers · Shares · Issues · Middleware · FynApps · Raw |
 | Killer feature | **Proxy** — redirect a producer to `localhost:3000/mf-manifest.json`, keeping HMR, per-tab isolated | **Issues** — 24 named diagnostics |
-| Diagnostics depth | Whether `singleton`/`strictVersion` took effect; tree-shaking status tags | `singleton-multiple-copies`, `range-unsatisfied`, `duplicate-address`, `dependency-cycle`, `orphan-modules`, `fynmesh-provider-mismatch`, `middleware-auto-apply-undelivered`, … |
+| Diagnostics depth | Whether `singleton`/`strictVersion` took effect; tree-shaking status tags (`Tree Shaking Loaded` / `Loading` / `Loaded` = fell back to full) | `singleton-multiple-copies`, `range-unsatisfied`, `duplicate-address`, `dependency-cycle`, `orphan-modules`, `fynmesh-provider-mismatch`, `middleware-auto-apply-undelivered`, … |
 | Trace export | ✅ JSON with `config`, `scopes`, `reports`, `diagnosis`, `summary.outcome` | ❌ |
 | Agent-facing CLI | ✅ **Divebell** — `divebell mf status\|module-info\|remote trace\|shared status\|module-perf` | ❌ |
 | Telemetry | `observability-plugin` (2.6.0); Node variant writes `.mf/observability/latest.json` + `events.jsonl` | `KernelTelemetry` built (~25 capture points) but **inert by default** — no entry point passes a `TelemetryConfig` |
@@ -849,7 +853,7 @@ Three-layer strategy: network (retry plugin) → loading (`errorLoadRemote`) →
 | Preload result reporting | Promise rejects with `error.results[]` carrying per-URL `status: success\|error\|timeout\|cached` | ❌ |
 | Link type | `preload as=script` / `as=style` / `modulepreload` | **Deliberately `preload as=script`, never `modulepreload`** — entries are `System.register` loaded by injected classic scripts, so a modulepreload would fetch in CORS mode and double-fetch (`browser-kernel.ts:89-99`) |
 | Data prefetch | 🟡 `<Component>.data.ts` exporting `fetchData` → injected as `mfData`; `instance.prefetch({id, dataFetchParams})` | ❌ |
-| Shared tree-shaking | ✅ `runtime-infer` / `server-calc`; antd 1404 KB → 344 KB reported | ❌ |
+| Shared tree-shaking | ✅ `runtime-infer` / `server-calc`; antd 1404 KB → 344 KB reported, opt-in per share | ❌ |
 | Runtime size knobs | ✅ `experiments.optimization.{disableRemote (−27.7%), disableShared (−31.6%), disableSnapshot}` off a 73,154 B baseline | ❌ |
 | Chunk combination | ❌ | ✅ **`federation-combine`** |
 
@@ -867,6 +871,42 @@ This matters because it attacks the problem MF's preloading cannot: federation's
 MF's counterpart advantage is that it attacks **bytes** (tree-shaking shared deps) while FynMesh
 attacks **requests**. They are complementary, and neither has the other's.
 
+### How MF's shared tree-shaking actually works
+
+Worth stating, because the headline number is easy to over-read. Full trace in
+[`MF2-DETAILS.md §1`](./MF2-DETAILS.md#1-shared-dependency-tree-shaking).
+
+A build that opts in (`shared: { antd: { treeShaking: { mode } } }` — **off by default**, per share)
+emits **two** copies of the package. The copy inside its own bundle is **pruned** to the exports it
+referenced; a separately compiled standalone container holds the **full** package. At runtime a plugin
+swaps the getters — `get` → full container, `treeShaking.get` → pruned copy — and a decision function
+picks one per consumer. Every failure path resolves to the full copy; there are eight such paths.
+
+Three things bound the win:
+
+1. **`"sideEffects": false` is a hard gate.** If webpack can't prove the real module side-effect free,
+   the referenced-export set is cleared and nothing is pruned — silently. An `import()` webpack
+   resolves opaquely drops the share key entirely.
+2. **The cheap mode under-delivers.** `runtime-infer` is supposed to reuse a loaded pruned copy when
+   it covers the consumer, but the bundler emits only `{mode}` into the runtime's share record — never
+   the *candidate's* used-export set — so the subset check has no data and degenerates to "prefer the
+   pruned copy." Its own docs concede this breaks `singleton`: two apps can end up with a minimal and
+   a full antd on one page, *"style conflicts, non-shared state, or even crashes."* Raising the hit
+   rate means hand-writing the other app's exports into your config — which the official demo does, in
+   both directions.
+3. **The expensive mode needs a platform.** `server-calc` is where the 75% lives. It requires a build
+   service (`@module-federation/treeshake-server`: tmp project → `pnpm i` → Rspack build → CDN upload),
+   **a CI step you write yourself** that unions `usedExports` across every app's `mf-stats.json`, and a
+   third step that writes `secondarySharedTreeShakingEntry` + `treeShakingStatus` into the snapshot.
+   The server takes a pre-computed union; it does not aggregate.
+
+So the comparison is not "MF shakes shared deps, FynMesh doesn't." It is that MF built a
+**deployment-platform-shaped** answer to shared bytes — same bet as its manifest protocol (§4) — and
+the cheap on-ramp is materially weaker than the number suggests. The structural prerequisite FynMesh
+would have to answer first is identity, not algorithm: MF can hold a pruned and a full shape of the
+same version because they are two slots on one share entry, which is exactly what *"One File, One
+Address"* (§3) exists to forbid.
+
 > **Caveat on MF's data prefetch:** this area was rearchitected, not merely extended.
 > `@module-federation/data-prefetch` — the `prefetchInterface` / `*.prefetch.ts` convention — was
 > **deleted** from the repo in commit `13b1e843e` (2026-04-28). The replacement is bridge-react's
@@ -882,8 +922,8 @@ attacks **requests**. They are complementary, and neither has the other's.
 
 | Target | Package | Version | State |
 | --- | --- | --- | --- |
-| webpack 5 | `@module-federation/enhanced/webpack` | 2.9.0 | ✅ reference |
-| **Rspack** | `@module-federation/enhanced/rspack` | 2.9.0 | ✅ **recommended** — only bundler with shared tree-shaking |
+| webpack 5 | `@module-federation/enhanced/webpack` | 2.9.0 | ✅ reference — including the full TS implementation of shared tree-shaking, auto-applied whenever `shared` exists |
+| **Rspack** | `@module-federation/enhanced/rspack` | 2.9.0 | ✅ **recommended** — native (Rust) shared tree-shaking, though the path pins an `@rspack-canary` build and `ModuleFederationPlugin` does not auto-apply it |
 | Rsbuild / Rslib | `@module-federation/rsbuild-plugin` | 2.9.0 | ✅ |
 | **Vite 5–8** | `@module-federation/vite` | **1.21.6** | ✅ mature — but a **separate repo and release line**, not in `module-federation/core`; build target `chrome89`+ |
 | Rollup / Rolldown | via `@module-federation/vite` | 1.21.6 | ✅ / 🟡 — **no standalone rollup plugin exists** |
@@ -1045,7 +1085,9 @@ the reason the project exists, and the reason a loader registry was chosen over 
 4. **Bundler reach.** webpack + Rspack + Vite + Rsbuild + Metro, with documented cross-bundler
    interop. FynMesh is rollup + SystemJS only.
 5. **A versioned, published manifest schema** designed as a deployment-platform protocol.
-6. **Shared tree-shaking.** ~75% reported on antd.
+6. **Shared tree-shaking.** ~75% reported on antd — the one axis that attacks *bytes inside shared
+   dependencies*, which `federation-combine` does not touch. Caveated: opt-in, `sideEffects`-gated,
+   and the mode that delivers that number needs a deploy-time build service plus a CI aggregator (§13).
 7. **Sharing ergonomics** — `shareKey`/`request`, subpath prefix matching, auto-inferred versions,
    per-share scopes, layers, working `eager`, `strictVersion`, `shareStrategy`.
 8. **Resilience** — `retry-plugin`, four-lifecycle `errorLoadRemote`, an error-code taxonomy.
@@ -1086,6 +1128,14 @@ Ranked by leverage-to-effort, based on what the code already supports.
 Two things **not** worth chasing: a Chrome extension (already decided `wont_do`, and the in-page
 inspector is arguably better for this architecture), and multi-bundler support (the SystemJS registry
 *is* the product — a webpack adapter would give up every differentiator in §17).
+
+**Shared tree-shaking is off this list for a different reason** — not low value, but a blocked
+prerequisite. MF holds a pruned and a full shape of the same version as two slots on one share entry;
+*"One File, One Address"* (§3) exists to forbid exactly that, so the question to answer first is
+identity, not algorithm. Worth noting for whenever it is asked: `rvm` already carries the importer
+directory per chunk, so a per-importer used-export set is computable *within one build* — which would
+skip the cross-app CI aggregator MF pushes onto its users
+([`MF2-DETAILS.md` §1.14](./MF2-DETAILS.md#114-what-this-means-for-fynmesh)).
 
 ---
 
