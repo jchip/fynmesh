@@ -15,21 +15,44 @@ const read = (rel: string) => readFileSync(path.join(demoServer, rel), "utf8");
  * paths, and `findMissingLocalRefs` resolves each local ref to a real file in
  * the output directory.
  */
+/**
+ * Asserted against the generator rather than a generated `sitemap.xml`, because
+ * that file is written into the site build's output directory and never into
+ * `public/`. Reading it made these tests depend on someone having run
+ * `fyn build-demo` first, so they failed on a clean checkout against a path that
+ * is never written -- see the same reasoning behind the 404 tests below, which
+ * have always read the build script.
+ */
+const sitemapLocs = (): string[] => {
+    const build = read("scripts/build-demo-site.mts");
+    const block = /const sitemapPages = \[([\s\S]*?)\];/.exec(build);
+    expect(block, "sitemapPages array not found in build-demo-site.mts").toBeTruthy();
+    return [...block![1].matchAll(/loc:\s*"([^"]+)"/g)].map(m => m[1]);
+};
+
 describe("public URLs", () => {
     it("lists only extensionless page URLs in the sitemap", () => {
-        const locs = [...read("public/sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+        const locs = sitemapLocs();
 
         expect(locs.length).toBeGreaterThan(1);
         expect(locs.filter(loc => loc.endsWith(".html"))).toEqual([]);
     });
 
+    /**
+     * `canonicalPath` is a render variable supplied per page by
+     * `build-demo-site.mts` and consumed by `layouts/base.html`, which builds
+     * canonical / og:url / twitter:url from it. It used to be a
+     * `{% block canonical_path %}` in each page template; the assertion moved
+     * with the mechanism.
+     */
     it("declares extensionless canonicals on the demo and shell pages", () => {
-        expect(read("templates/pages/demo.html")).toContain(
-            "{% block canonical_path %}demo{% endblock %}"
-        );
-        expect(read("templates/pages/shell.html")).toContain(
-            'href="https://www.fynmesh.win/shell"'
-        );
+        const build = read("scripts/build-demo-site.mts");
+        const paths = [...build.matchAll(/canonicalPath:\s*"([^"]*)"/g)].map(m => m[1]);
+
+        expect(paths).toContain("demo");
+        expect(paths).toContain("shell");
+        expect(paths.filter(p => p.endsWith(".html"))).toEqual([]);
+        expect(read("templates/layouts/base.html")).toContain('<link rel="canonical"');
     });
 
     it("keeps the .html extension on internal links, which the dev server serves", () => {
@@ -71,7 +94,7 @@ describe("404 page", () => {
     });
 
     it("stays out of the sitemap", () => {
-        expect(read("public/sitemap.xml")).not.toContain("404");
+        expect(sitemapLocs().filter(loc => loc.includes("404"))).toEqual([]);
     });
 
     it("depends on no FynApp, loader or chunk — the things that fail to load", () => {

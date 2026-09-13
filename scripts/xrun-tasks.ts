@@ -52,7 +52,10 @@ function assertGroupsFormed(
         throw new Error(
             `combine: ${app} group(s) ${missing.map((m) => `"${m}"`).join(", ")} produced no ` +
             `combined file -- a named chunk is missing or renamed. Refs are stems, so a new ` +
-            `build hash is not the cause; see the [combine ${app}] lines above.`,
+            `build hash is not the cause; see the [combine ${app}] lines above. ` +
+            `combineDist has already rewritten ${app}/dist by this point (it drops a stale ` +
+            `federation.bundles.json when no group forms), so fix the ref and re-run the ` +
+            `build -- regenerating templates alone would ship hints for chunks nothing carries.`,
         );
     }
 }

@@ -273,7 +273,7 @@ const App: React.FC<AppProps> = ({ appName }) => {
 
       <footer className="app-footer">
         <p>
-          AG Grid Community {React.version} | {rowData.length} total orders |
+          AG Grid Community · React {React.version} | {rowData.length} total orders |
           Double-click Status or Qty to edit
         </p>
       </footer>
