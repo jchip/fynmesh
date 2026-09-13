@@ -52,15 +52,15 @@ export default [
           "esm-ag-grid": {
             import: false,
             singleton: true,
-            semver: "^33.0.0",
+            semver: "^35.0.0",
           },
           "esm-ag-grid-react": {
             import: false,
             singleton: true,
-            semver: "^33.0.0",
+            semver: "^35.0.0",
             requiredVersion: {
               "esm-react": "^19.0.0",
-              "esm-ag-grid": "^33.0.0",
+              "esm-ag-grid": "^35.0.0",
             },
           },
         },
@@ -71,7 +71,7 @@ export default [
             provides: ["esm-react", "esm-react-dom"],
           },
           "fynapp-ag-grid-lib": {
-            semver: "^33.3.2",
+            semver: "^35.3.1",
             provides: ["esm-ag-grid", "esm-ag-grid-react"],
           },
         },

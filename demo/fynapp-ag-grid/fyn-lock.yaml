@@ -1258,23 +1258,23 @@ escalade:
   $: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==
   _: 'https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz'
 esm-ag-grid:
- _latest: 33.3.2-fynlocal_h
+ _latest: 35.3.1-fynlocal_h
  _:
-  '../../misc/esm-ag-grid,../esm-ag-grid': 33.3.2-fynlocal_h
- 33.3.2-fynlocal_h:
+  '../../misc/esm-ag-grid,../esm-ag-grid': 35.3.1-fynlocal_h
+ 35.3.1-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-ag-grid
 esm-ag-grid-react:
- _latest: 33.3.2-fynlocal_h
+ _latest: 35.3.1-fynlocal_h
  _:
-  ../../misc/esm-ag-grid-react: 33.3.2-fynlocal_h
- 33.3.2-fynlocal_h:
+  ../../misc/esm-ag-grid-react: 35.3.1-fynlocal_h
+ 35.3.1-fynlocal_h:
   top: 1
   $: local
   _: ../../misc/esm-ag-grid-react
   dependencies:
-   esm-ag-grid: ^33.3.2
+   esm-ag-grid: ^35.3.1
    esm-react: ^19.1.0
 esm-react:
  _latest: 19.2.8-fynlocal_h
@@ -1353,10 +1353,10 @@ function-bind:
   $: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==
   _: 'https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz'
 fynapp-ag-grid-lib:
- _latest: 33.3.2-fynlocal_h
+ _latest: 35.3.1-fynlocal_h
  _:
-  ../fynapp-ag-grid-lib: 33.3.2-fynlocal_h
- 33.3.2-fynlocal_h:
+  ../fynapp-ag-grid-lib: 35.3.1-fynlocal_h
+ 35.3.1-fynlocal_h:
   top: 1
   $: local
   _: ../fynapp-ag-grid-lib

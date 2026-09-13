@@ -7,7 +7,7 @@ $pkg:
   '@rollup/plugin-node-resolve': ^16.0.1
   '@rollup/plugin-replace': ^6.0.2
   '@rollup/plugin-terser': ^0.4.4
-  ag-grid-community: ^33.3.2
+  ag-grid-community: ^35.3.1
   rollup: ^4.40.2
 '@jridgewell/gen-mapping':
  _latest: 0.3.13
@@ -391,22 +391,22 @@ acorn:
   $: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==
   _: 'https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz'
 ag-charts-types:
- _latest: 12.3.1
+ _latest: 14.1.0
  _:
-  11.3.2: 11.3.2
- 11.3.2:
-  $: sha512-trPGqgGYiTeLgtf9nLuztDYOPOFOLbqHn1g2D99phf7QowcwdX0TPx0wfWG8Hm90LjB8IH+G2s3AZe2vrdAtMQ==
-  _: 'https://registry.npmjs.org/ag-charts-types/-/ag-charts-types-11.3.2.tgz'
+  13.3.1: 13.3.1
+ 13.3.1:
+  $: sha512-m37eUe4g//swvGh8PWMlYQH3gknjSsPeW4sQwBhM3/auGAHmN0wvxEWlrdAn98pBPg4HoKbtOy+yf7gPCYsnvQ==
+  _: 'https://registry.npmjs.org/ag-charts-types/-/ag-charts-types-13.3.1.tgz'
 ag-grid-community:
- _latest: 34.3.1
+ _latest: 36.1.0
  _:
-  ^33.3.2: 33.3.2
- 33.3.2:
+  ^35.3.1: 35.3.1
+ 35.3.1:
   top: 1
-  $: sha512-9bx0e/+ykOyLvUxHqmdy0cRVANH6JAtv0yZdnBZEXYYqBAwN+G5a4NY+2I1KvoOCYzbk8SnStG7y4hCdVAAWOQ==
-  _: 'https://registry.npmjs.org/ag-grid-community/-/ag-grid-community-33.3.2.tgz'
+  $: sha512-Wmkd/xYTCbAApcZZO74nBggZCnd/oX753NY3MJ4zYARVpfBHRWWhIBJ2sFTFKbDWwHZOWsx3YT9+kkyeuyLKlw==
+  _: 'https://registry.npmjs.org/ag-grid-community/-/ag-grid-community-35.3.1.tgz'
   dependencies:
-   ag-charts-types: 11.3.2
+   ag-charts-types: 13.3.1
 buffer-from:
  _latest: 1.1.2
  _:

@@ -43,9 +43,9 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "esm-ag-grid": "^33.3.2",
-    "esm-ag-grid-react": "^33.3.2",
+    "esm-ag-grid": "^35.3.1",
+    "esm-ag-grid-react": "^35.3.1",
     "fynapp-react-lib": "^19.0.0",
-    "fynapp-ag-grid-lib": "^33.3.2"
+    "fynapp-ag-grid-lib": "^35.3.1"
   }
 }

@@ -3,4 +3,4 @@
 export * from "ag-grid-react";
 export { AgGridReact } from "ag-grid-react";
 
-console.log("ESM_AG_GRID_REACT_VERSION 33.3.2");
+console.log("ESM_AG_GRID_REACT_VERSION 35.3.1");

@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "fynapp-ag-grid-lib",
-  "version": "33.3.2",
+  "version": "35.3.1",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -17,11 +17,11 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^6.0.2",
     "@types/node": "^20.8.9",
-    "ag-grid-community": "^33.3.2",
+    "ag-grid-community": "^35.3.1",
     "create-fynapp": "^1.1.5",
     "esbuild": "^0.25.12",
-    "esm-ag-grid": "^33.3.2",
-    "esm-ag-grid-react": "^33.3.2",
+    "esm-ag-grid": "^35.3.1",
+    "esm-ag-grid-react": "^35.3.1",
     "esm-react": "^19.1.0",
     "rollup": "^4.9.1",
     "rollup-plugin-esbuild": "^6.2.1",

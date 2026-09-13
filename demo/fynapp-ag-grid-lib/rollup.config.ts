@@ -57,18 +57,18 @@ export default [
           },
           "esm-ag-grid": {
             singleton: true,
-            semver: "^33.0.0",
+            semver: "^35.0.0",
           },
           "esm-ag-grid-react": {
             singleton: true,
-            semver: "^33.0.0",
+            semver: "^35.0.0",
             requiredVersion: {
-              // AG Grid React 33.x supports React 19; bind the wrapper to the
+              // AG Grid React 35.x supports React 19; bind the wrapper to the
               // same React 19 the consuming fynapp uses to avoid mixed React
               // copies (React error #525 when elements come from React 18).
               "esm-react": "^19.0.0",
               "esm-react-dom": "^19.0.0",
-              "esm-ag-grid": "^33.0.0",
+              "esm-ag-grid": "^35.0.0",
             },
           },
         },
