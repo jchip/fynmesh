@@ -17,6 +17,9 @@ import { getDemoTemplateData } from "./demo-template-data.mts";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/** Canonical origin of the published site, as Cloudflare Pages serves it. */
+const SITE_ORIGIN = "https://www.fynmesh.win";
+
 /**
  * Options for building the demo site
  */
@@ -250,6 +253,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             title: "FynMesh - Enterprise Micro Frontend Framework",
             isProduction,
             pathPrefix,
+            siteOrigin: SITE_ORIGIN,
+            canonicalPath: "",
         });
         const landingOutputPath = path.join(outputDir, "index.html");
         writeFileSync(landingOutputPath, landingHtml);
@@ -266,13 +271,26 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const notFoundHtml = env.render("pages/404.html", {
             isProduction,
             pathPrefix,
+            siteOrigin: SITE_ORIGIN,
+            canonicalPath: "",
         });
         const notFoundOutputPath = path.join(outputDir, "404.html");
         writeFileSync(notFoundOutputPath, notFoundHtml);
         log("📄 Generated: " + notFoundOutputPath);
 
         // Build the demo page (demo.html)
-        const demoHtml = env.render("pages/demo.html", templateData);
+        const demoHtml = env.render("pages/demo.html", {
+            ...templateData,
+            siteOrigin: SITE_ORIGIN,
+            canonicalPath: "demo",
+            ogTitle: "FynMesh Demo - Six Frameworks, One Page",
+            ogDescription:
+                "A live micro frontend demo: React, Vue, Preact, Solid, Svelte and Marko apps " +
+                "loaded independently into one page, sharing dependencies through Module Federation.",
+            metaDescription:
+                "Live FynMesh demo running React, Vue, Preact, Solid, Svelte and Marko micro " +
+                "frontends together on one page with shared dependencies and independent deployment.",
+        });
         const demoOutputPath = path.join(outputDir, "demo.html");
         writeFileSync(demoOutputPath, demoHtml);
         log("📄 Generated: " + demoOutputPath);
@@ -300,6 +318,15 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             pathPrefix,
             preloadModules,
             bundleMaps,
+            siteOrigin: SITE_ORIGIN,
+            canonicalPath: "shell",
+            ogTitle: "FynMesh Shell Demo - Middleware-Driven Layout",
+            ogDescription:
+                "A micro frontend shell that composes its layout from independently deployed " +
+                "FynApps using FynMesh middleware.",
+            metaDescription:
+                "FynMesh shell demo: a middleware-driven micro frontend layout composed from " +
+                "independently deployed FynApps.",
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
         writeFileSync(shellOutputPath, shellHtml);
@@ -319,8 +346,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "sw.js",
             "lazy-loader.js",  // Defines LazyLoader, used by the demo page's fynapp loader
             "favicon.ico",     // Favicon
-            "sitemap.xml",     // SEO: XML Sitemap
-            "robots.txt"       // SEO: Robots.txt
+            "og-image.png",    // SEO: Open Graph / Twitter card image (1200x630)
+            "robots.txt"       // SEO: Robots.txt (sitemap.xml is generated below)
             // Note: shell.html is now generated from template
         ];
         
@@ -337,6 +364,41 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 log(`📄 Copied: ${file}`);
             }
         });
+
+        // SEO: generate sitemap.xml rather than shipping a static one, whose
+        // `lastmod` was frozen at a date in the file and went ~20 months stale.
+        // Publishing is a deliberate act (`fyn publish-demo`), so the build date
+        // is an honest `lastmod`.
+        //
+        // Cloudflare Pages serves pages extensionless and 308s the `.html` form,
+        // so `/demo` is canonical and `/demo.html` is a redirect -- a sitemap
+        // must list the former or every entry costs Google a redirect hop.
+        //
+        // Each page is listed only if it actually landed in the output, so a page
+        // that stops shipping drops out instead of becoming a 404 in the sitemap.
+        const sitemapPages = [
+            { file: "index.html", loc: "/", priority: "1.0" },
+            { file: "demo.html", loc: "/demo", priority: "0.8" },
+            { file: "shell.html", loc: "/shell", priority: "0.8" },
+        ];
+        const lastmod = new Date().toISOString().slice(0, 10);
+        const sitemapUrls = sitemapPages
+            .filter(p => existsSync(path.join(outputDir, p.file)))
+            .map(p => [
+                `    <url>`,
+                `        <loc>${SITE_ORIGIN}${p.loc}</loc>`,
+                `        <lastmod>${lastmod}</lastmod>`,
+                `        <changefreq>weekly</changefreq>`,
+                `        <priority>${p.priority}</priority>`,
+                `    </url>`,
+            ].join("\n"));
+        writeFileSync(
+            path.join(outputDir, "sitemap.xml"),
+            `<?xml version="1.0" encoding="UTF-8"?>\n` +
+            `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+            `${sitemapUrls.join("\n")}\n</urlset>\n`
+        );
+        log(`🗺️  Generated: sitemap.xml (${sitemapUrls.length} urls, lastmod ${lastmod})`);
 
         // The loader ships from the FEDERATION variant (fork by default), the
         // same source the dev server mounts -- never from public/ or from

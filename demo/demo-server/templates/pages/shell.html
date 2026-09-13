@@ -5,10 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FynMesh Shell Demo - Dynamic Micro Frontend Loading</title>
 
+    {#
+      This page does NOT extend layouts/base.html, so every SEO tag base.html
+      provides has to be repeated here or it does not exist on this page at all.
+      It previously had no Open Graph or Twitter tags, so a link to it shared as
+      a bare url with no title, description or image. Keep in sync with
+      layouts/base.html.
+    #}
     <!-- SEO Meta Tags -->
-    <meta name="description" content="FynMesh Shell Demo - See how micro frontends load dynamically in a shell layout. Experience Module Federation with React, Vue, Preact, Solid, Svelte, and Marko.">
+    <meta name="description" content="{{ metaDescription }}">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://www.fynmesh.win/shell">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="canonical" href="{{ siteOrigin }}/{{ canonicalPath }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ siteOrigin }}/{{ canonicalPath }}">
+    <meta property="og:title" content="{{ ogTitle }}">
+    <meta property="og:description" content="{{ ogDescription }}">
+    <meta property="og:image" content="{{ siteOrigin }}/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ siteOrigin }}/{{ canonicalPath }}">
+    <meta name="twitter:title" content="{{ ogTitle }}">
+    <meta name="twitter:description" content="{{ ogDescription }}">
+    <meta name="twitter:image" content="{{ siteOrigin }}/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">

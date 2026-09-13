@@ -8,10 +8,22 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">
 
+    {#
+      One page identity, used by canonical / og:url / twitter:url alike. These
+      used to be three hardcoded homepage URLs on every page, so sharing /demo
+      resolved to / and contradicted that page's own canonical tag.
+
+      `canonicalPath` is supplied per page by build-demo-site.mts and is the
+      EXTENSIONLESS form, because Cloudflare Pages 308s `/demo.html` -> `/demo`.
+    #}
+    {% set pageUrl = siteOrigin + "/" + (canonicalPath | default("")) %}
+    {% set socialTitle = ogTitle | default("FynMesh - Enterprise Micro Frontend Framework") %}
+    {% set socialDesc = ogDescription | default("Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.") %}
+
     <!-- SEO Meta Tags -->
-    <meta name="description" content="FynMesh - Enterprise micro frontend framework for building scalable web applications. Module Federation with Rollup, supporting React, Vue, Preact, Solid, Svelte, and Marko micro frontends.">
-    <meta name="keywords" content="micro frontend, microfrontend, micro-frontend, micro frontend framework, module federation, micro frontend architecture, react micro frontend, vue micro frontend, independent deployment, shared dependencies, enterprise frontend, javascript framework, rollup, systemjs">
+    <meta name="description" content="{{ metaDescription | default('FynMesh - Enterprise micro frontend framework for building scalable web applications. Module Federation with Rollup, supporting React, Vue, Preact, Solid, Svelte, and Marko micro frontends.') }}">
     <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
     {% block robots %}
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -19,23 +31,27 @@
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.fynmesh.win/">
-    <meta property="og:title" content="FynMesh - Enterprise Micro Frontend Framework">
-    <meta property="og:description" content="Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.">
-    <meta property="og:image" content="https://www.fynmesh.win/favicon.ico">
+    <meta property="og:url" content="{{ pageUrl }}">
+    <meta property="og:title" content="{{ socialTitle }}">
+    <meta property="og:description" content="{{ socialDesc }}">
+    <meta property="og:image" content="{{ siteOrigin }}/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
     <meta property="og:site_name" content="FynMesh">
     <meta property="og:locale" content="en_US">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://www.fynmesh.win/">
-    <meta name="twitter:title" content="FynMesh - Enterprise Micro Frontend Framework">
-    <meta name="twitter:description" content="Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.">
-    <meta name="twitter:image" content="https://www.fynmesh.win/favicon.ico">
+    <meta name="twitter:url" content="{{ pageUrl }}">
+    <meta name="twitter:title" content="{{ socialTitle }}">
+    <meta name="twitter:description" content="{{ socialDesc }}">
+    <meta name="twitter:image" content="{{ siteOrigin }}/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
 
     <!-- Canonical URL -->
     {% block canonical %}
-    <link rel="canonical" href="https://www.fynmesh.win/{% block canonical_path %}{% endblock %}">
+    <link rel="canonical" href="{{ pageUrl }}">
     {% endblock %}
 
     <!-- Schema.org Structured Data -->
@@ -47,11 +63,11 @@
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
         "description": "Enterprise micro frontend framework for building scalable applications with Module Federation. Support for React, Vue, Preact, Solid, Svelte, and Marko.",
-        "url": "https://www.fynmesh.win/",
+        "url": "{{ siteOrigin }}/",
         "author": {
             "@type": "Organization",
             "name": "FynMesh",
-            "url": "https://www.fynmesh.win/"
+            "url": "{{ siteOrigin }}/"
         },
         "offers": {
             "@type": "Offer",
@@ -61,18 +77,20 @@
         "keywords": "micro frontend, microfrontend, module federation, react, vue, preact, solid, svelte, marko, javascript framework, web framework, independent deployment, shared dependencies, enterprise architecture"
     }
     </script>
+    {#
+      No `potentialAction`/SearchAction here. That property describes a search
+      endpoint ON THIS SITE for Google's sitelinks searchbox; this one pointed at
+      GitHub's search, which the site does not host and Google will not honour.
+      An unsupported action is noise at best, so it is omitted until the site has
+      a real search of its own.
+    #}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "FynMesh",
-        "url": "https://www.fynmesh.win/",
-        "description": "Enterprise micro frontend framework with Module Federation support",
-        "potentialAction": {
-            "@type": "SearchAction",
-            "target": "https://github.com/jchip/fynmesh/search?q={search_term_string}",
-            "query-input": "required name=search_term_string"
-        }
+        "url": "{{ siteOrigin }}/",
+        "description": "Enterprise micro frontend framework with Module Federation support"
     }
     </script>
     {% block schema_extra %}{% endblock %}
