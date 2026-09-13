@@ -73,7 +73,7 @@
     "tsx": "~4.20.6",
     "typedoc": "^0.28.7",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   },
   "dependencies": {
     "federation-js": "^1.0.0"
