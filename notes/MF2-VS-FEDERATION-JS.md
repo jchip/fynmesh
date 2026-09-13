@@ -112,10 +112,17 @@ global (`FederationRuntimePlugin.ts:186-201`): the first to execute populates it
 and skip re-init. **Only one instance runs — but all N copies are downloaded, parsed, and executed
 to reach that guard.**
 
-**FynMesh loads its runtime exactly once, as a genuine prerequisite.** SystemJS + `federation-js`
+**FynMesh loads its runtime exactly once, and requires it explicitly.** SystemJS + `federation-js`
 must be present before anything else, because they *are* the loader — every FynApp is
-`System.register` output against an already-present registry. That is a hard bootstrap requirement
-MF does not have, and it is what buys the flat cost below.
+`System.register` output against an already-present registry.
+
+This is a deliberate stance, not a tax to apologise for. **Federation is a capability an application
+opts into and initializes, at a defined point, once** — not ambient behaviour that arrives welded
+into whatever bundle happens to load first. MF's self-contained artifacts are what force the
+reconciliation above: because no one initializes federation deliberately, every copy must assume it
+might be the first, and the winner is decided by execution order. FynMesh has no such guard because
+there is nothing to reconcile — the capability was established before any app ran. The O(1) payload
+below is a consequence of that choice, not its justification.
 
 Measured from built artifacts, both sides minified with esbuild `--minify`, gzip at level 9:
 
@@ -163,7 +170,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 
 | Capability | MF 2.0 | FynMesh | Notes |
 | --- | --- | --- | --- |
-| Runtime delivery | embedded into **every** build (~26 KB gz per artifact) | loaded **once** as the loader (~8.7 KB gz, flat) | MF needs no bootstrap; FynMesh needs one and pays O(1) instead of O(N) (§1) |
+| Runtime delivery | embedded into **every** build (~26 KB gz per artifact), initialization settled by execution order | initialized **once**, explicitly, before any app runs (~8.7 KB gz, flat) | Federation as a deliberate capability vs ambient bundle content; O(1) vs O(N) (§1) |
 | Expose modules from a build | ✅ `exposes` | ✅ `exposes` | Equivalent |
 | Consume remote modules | ✅ `remotes` + `loadRemote` | ✅ import attributes + `_importExpose` | Different binding model (§6) |
 | Container protocol | `{ get, init }` | `{ init, get, container, __FYNAPP_MANIFEST__ }` | FynMesh also exposes a live container object |
@@ -1046,10 +1053,7 @@ the reason the project exists, and the reason a loader registry was chosen over 
 10. **A shipped Chrome extension**, plus an agent-facing CLI (Divebell).
 11. **Data prefetch** as an isomorphic, first-class concern.
 12. **Framework bridges** with router isolation.
-13. **No bootstrap requirement.** Each artifact is self-contained, so a remote can be dropped onto
-    a page that knows nothing about MF. FynMesh cannot load anything until SystemJS +
-    `federation-js` are present — the flip side of the O(1) payload in §1.
-14. **Ecosystem and adoption.** The decisive one — not distribution, which FynMesh now has, but
+13. **Ecosystem and adoption.** The decisive one — not distribution, which FynMesh now has, but
     the four orders of magnitude of usage, integrations, and third-party investment behind it.
 
 ### Where they're even
