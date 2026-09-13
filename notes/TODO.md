@@ -1,10 +1,14 @@
 # FynMesh Development Roadmap
 
+_Status reviewed 2026-09-13 against the source; see "Known gaps" for items that are
+built but not switched on._
+
 ## Current State (Completed)
 
 - [x] Kernel with module loading via SystemJS federation
 - [x] Middleware system with setup/apply/execute phases
 - [x] Middleware execution override capability
+- [x] Middleware version map with semver-range lookup (FYM-321)
 - [x] Manifest resolution and bootstrap coordination
 - [x] Multi-framework support (React, Vue, Marko, Preact, Solid, Svelte)
 - [x] Multi-version module support
@@ -12,8 +16,15 @@
 - [x] Shell layout middleware with multi-region support
 - [x] React Context middleware
 - [x] Design tokens middleware
-- [x] Runtime telemetry & observability (KernelTelemetry: ring buffer, scopes, transports)
 - [x] FynBus inter-FynApp messaging (pub/sub + request/response + channels)
+- [x] In-page federation inspector, deployed with the demo site
+      (`docs/federation-inspector.min.js`; design: [`federation-inspector-design.md`](./federation-inspector-design.md))
+- [x] Combined-bundle optimization (`federation-combine`) with pre-execution bundle maps
+- [x] Embedded manifest (`__FYNAPP_MANIFEST__`) — a splice miss now fails the build (FYM-296)
+- [x] **Published to npm** — `federation-js` 1.1.3, `@fynmesh/kernel` 1.1.3,
+      `rollup-plugin-federation` 1.1.2, `create-fynapp` 1.1.5
+- [~] Runtime telemetry & observability (KernelTelemetry: ring buffer, scopes, transports)
+      — built, but no entry point passes a `TelemetryConfig`, so it is off in practice
 
 ---
 
@@ -43,7 +54,8 @@
 ### 3. **Developer Experience & Tooling** ⭐ Priority 3
 
 #### create-fynapp Improvements
-- [ ] Complete all framework templates (Preact, Solid, Marko, Svelte)
+- [x] Complete all framework templates — `react`, `react18`, `vue`, `preact`, `solid`,
+      `svelte`, `marko`, `vanilla` (+ `_generic`) all present in `templates/`
 - [ ] Replace string templating with proper template engine
 - [ ] Add `cfa dev` command with built-in dev server + HMR
 - [ ] Add `cfa add middleware` command
@@ -54,22 +66,34 @@
 - [ ] Dev overlay showing FynApp boundaries and names
 - [ ] Console integration (prefix logs with FynApp name)
 - [x] Error overlay with stack traces (FYM-29; development browser bundle)
+- [ ] Keep diagnostics in production — `drop_console: true` strips the error codes and
+      inspector diagnostics exactly where they are hardest to reproduce
 
-#### Chrome Extension
-- [ ] FynApp Panel (list loaded FynApps with status)
-- [ ] Federation Inspector (modules, versions, sharing)
-- [ ] Dependency Graph visualization
-- [ ] Middleware Viewer
-- [ ] Event Monitor (FynBus stream)
-- [ ] Performance Tab
+#### Chrome Extension — cancelled (FYM-31 `wont_do`)
+Superseded by the in-page federation inspector, which needs no install and no
+cooperation from the page. What shipped there instead, as views under
+`dev-tools/federation-inspector/src/ui/views/`:
+
+- [x] FynApp panel (`fynapps`) and container list (`containers`)
+- [x] Federation inspector — modules (`modules`) and sharing (`shares`)
+- [x] Dependency graph visualization (`graph`)
+- [x] Middleware viewer (`middleware`)
+- [x] Diagnostics (`issues`) and raw snapshot (`raw`) — no extension equivalent
+- [ ] Event monitor (FynBus stream)
+- [ ] Performance tab
 
 ### 4. **Performance & Optimization** ⭐ Priority 4
 - [ ] Lazy region loading (Intersection Observer)
 - [x] Preload hints in manifest (`shared-providers`, `import-exposed`, `requires`)
 - [x] Entry file preloading with depth-based prioritization
+- [x] Combined bundles (`federation-combine`) — folds a dist's small chunks together and
+      publishes `federation.bundles.json` so a host can preload the carrier, not the member
+- [x] Immutable cache headers for content-hashed chunks (`_headers`), with the
+      non-hashed artifacts deliberately excluded
+- [ ] Implement preload **priority** — `priorityByDepth` and the types exist but
+      `fetchpriority` is never set from them
 - [ ] Performance event emission
 - [ ] Bundle analysis tooling
-- [ ] Intelligent caching strategies
 
 ---
 
@@ -85,7 +109,7 @@
 - [x] Runtime dependency graph with topological sort (`buildGraph`, `topoBatches`)
 - [x] Intelligent preloading and prefetching (entry file preloading with depth tracking)
 - [x] Circular dependency detection (warning + best-effort loading)
-- [ ] federation.json generation
+- [x] federation.json generation (`emitFederationJson`, on by default)
 
 ### 7. **Observability & APM**
 - [ ] Structured logging with correlation IDs
@@ -132,6 +156,32 @@
 - [ ] A/B testing framework
 - [ ] Feature flag management
 - [ ] Progressive rollout
+
+---
+
+## Known gaps
+
+Verified against the source on 2026-09-13. These are not roadmap items so much as
+things that already exist and do not do what their presence implies — the kind that
+cost the most time when discovered from a symptom.
+
+- **No config system.** `KernelConfig` (`types.ts`, fields `baseUrl` / `debug` /
+  `bootstrapTimeout`) is imported by `kernel-core.ts` and read by nothing. Anything
+  configurable today is configured some other way.
+- **Telemetry is off.** ~25 capture points exist, but `browser.ts`, `browser-dev.ts`
+  and `node.ts` pass no `TelemetryConfig`, so nothing is collected. Pure wiring.
+- **`eager` does nothing.** Accepted on the share config and emitted into the
+  container, read by nothing — documented as such at `federation-js/src/types.ts`.
+  It is a build-time concern the runtime cannot act on.
+- **Deferred middleware never times out.** `middleware-executor.ts` has no
+  `setTimeout` anywhere: a provider that never arrives parks the waiting group
+  indefinitely, with no error and no diagnostic.
+- **One manifest read has no fallback.** `module-loader.ts` step 6 reads
+  `__FYNAPP_MANIFEST__` straight off the container to register middleware from
+  `import-exposed`. Absent, the block is skipped in silence and the failure surfaces
+  later at a consumer. See [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md).
+- **The JSON artifacts are unversioned.** No `schemaVersion` on any of them, and the
+  packages are now published — so a shape change is someone else's breakage.
 
 ---
 
