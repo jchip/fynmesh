@@ -109,7 +109,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | Container protocol | `{ get, init }` | `{ init, get, container, __FYNAPP_MANIFEST__ }` | FynMesh also exposes a live container object |
 | Bidirectional host/remote | ✅ | ✅ | |
 | Build-time `remotes` declaration | ✅ | ❌ **by design** | FynMesh resolves remotes at runtime (§6) |
-| Runtime remote registration | ✅ `registerRemotes(..., {force})` | 🟡 no API; register by loading the entry | `_mfContainer`/`_mfBind` are the primitives |
+| Runtime remote resolution | ✅ `registerRemotes(..., {force})` — a name→URL **table** | ✅ `setRegistryResolver((name, range) => …)` — a resolution **policy** | Not a gap: a resolver subsumes a table. No registration step exists or is needed (§6) |
 | Semver-range remote selection | ❌ | ✅ `_mfGetContainer(name, "^2.0.0")` | Unique to FynMesh |
 | Same container name at two versions in one page | ❌ names are unique globals | ✅ `$C[name][version]` | Unique to FynMesh |
 | Per-chunk binding metadata | ❌ | ✅ `_mfBind({n,f,c,s,e,v,b}, [importerDirs])` | Every non-entry chunk is bound |
@@ -438,9 +438,52 @@ batches with bounded concurrency** (`manifest-resolver.ts:194-266`;
 `kernel.loadFynAppsByName(reqs, { concurrency: 4 })`). MF loads remotes on demand with no notion of
 inter-remote ordering.
 
-**Cost of FynMesh's model:** no `registerRemotes` equivalent, and the kernel's *app* registry has no
-semver range matching — it silently overwrites on a name collision
-(`notes/KERNEL_PRINCIPAL_REVIEW.md` #6).
+### This is a philosophical difference, not a feature gap
+
+The two models disagree about what a remote *is*, and that disagreement is the reason `federation-js`
+was written.
+
+**MF treats a remote as a name bound to a URL.** `registerRemotes([{ name, entry }])` pushes an entry
+into a lookup table; whatever that URL serves is the version you get. Resolution is an act of
+*wiring*, performed by whoever holds the table.
+
+**FynMesh treats a remote as a dependency with a range** — the package-manager model, applied at
+runtime. A consumer declares `fynapp-x1@^2.0.0` in source. A host supplies a resolver —
+`setRegistryResolver((name, range) => …)`, a public kernel method callable at any point
+(`kernel-core.ts:165`) — which answers *which build satisfies that range*. Nothing is ever
+registered by name.
+
+The inversion is the point: **a resolver can implement a name→URL table, but a table cannot
+implement semver resolution.** So this is not "FynMesh lacks `registerRemotes`" — the runtime
+capability is present and strictly more general. What FynMesh omits is the imperative wiring model,
+deliberately. Declaration plus resolution *is* the thesis, and the capabilities in §17 — per-importer
+version resolution, two versions of one share key, versioned containers, swapping a build without
+rebuilding consumers — are all downstream of this single choice. None of them are reachable from a
+model where a remote is a name someone pointed at a URL.
+
+**The result, at the call site: there is nothing to register.** You ask for a FynApp by name and the
+kernel works out the rest —
+
+```ts
+await kernel.loadFynAppsByName([{ name: "fynapp-1" }], { concurrency: 4 });
+```
+
+From that one call (`kernel-core.ts:234-242`) the kernel resolves the manifest, walks
+`requires` + `import-exposed` + `shared-providers` to build the dependency graph, resolves every
+shared module against the declared ranges of the code actually importing it, orders the result
+topologically, and loads it in batches. No remote list, no host config enumerating what exists, no
+registration step — **load a FynApp normally and the plumbing is figured out for you.** MF's
+equivalent starting point is a table someone has to populate and keep correct.
+
+**Implementation notes** — sharp edges in what ships today, not costs of the model:
+
+- The default browser resolver is a demo stub: it ignores `range`, hardcodes `version: "0.0.0"`, and
+  maps name to a path convention (`browser-kernel.ts:200-207`). The design is the resolver
+  *interface*; a real deployment supplies its own. The shipped default is not an example of it.
+- `FynAppRegistry` keys each app under **both** `name@version` and bare `name`
+  (`fynapp-registry.ts:22,30-32`). Versioned keys coexist without issue; the bare-name alias is
+  last-write-wins. The sharp edge is in the alias, not an inability to hold two versions
+  (`notes/KERNEL_PRINCIPAL_REVIEW.md` #6 flags the dual-key ambiguity).
 
 ---
 
@@ -905,8 +948,11 @@ the reason the project exists, and the reason a loader registry was chosen over 
 2. **Two versions of one share key inside one container.** Structurally impossible in MF.
 3. **Versioned containers + semver container selection.** Two builds publishing the same container
    name at different versions into one page. MF container names are unique globals.
-4. **Runtime, semver-keyed remote resolution.** Swap which build satisfies `fynapp-x1@^2.0.0` without
-   rebuilding any consumer. MF's `registerRemotes` is name-keyed, not range-keyed.
+4. **Runtime, semver-keyed remote resolution — and therefore no registration step at all.** Load a
+   FynApp by name and the kernel derives the rest: graph, shares, order. Swap which build satisfies
+   `fynapp-x1@^2.0.0` without rebuilding any consumer. MF's `registerRemotes` is a name-keyed table
+   someone must populate and keep correct. This is the foundational difference (§6), not a feature
+   comparison.
 5. **Cross-app dependency graph with topological batching.** MF has no notion of inter-remote ordering.
 6. **The middleware system.** A cross-app DI + lifecycle layer with execution override. MF has no
    application-level extension layer at all.
