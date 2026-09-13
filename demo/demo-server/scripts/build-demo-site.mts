@@ -378,12 +378,15 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Note: no CNAME file — Cloudflare Pages configures the custom domain
         // (www.fynmesh.win) in its dashboard, so a CNAME file is not used.
 
-        // Copy Google verification file
-        const googleVerifySource = path.join(__dirname, "../googlee9bcb5713536aa25.html");
-        if (existsSync(googleVerifySource)) {
-            const googleVerifyDest = path.join(outputDir, "googlee9bcb5713536aa25.html");
-            writeFileSync(googleVerifyDest, readFileSync(googleVerifySource));
-            log(`📄 Copied: googlee9bcb5713536aa25.html (Google verification)`);
+        // Copy Google verification files. Search Console wants each token served
+        // from the site root under its own filename, and a property can carry
+        // more than one, so copy every `google*.html` rather than naming one --
+        // adding a token is then a file drop, not a code change.
+        const serverDir = path.join(__dirname, "..");
+        for (const name of readdirSync(serverDir)) {
+            if (!name.startsWith("google") || !name.endsWith(".html")) continue;
+            writeFileSync(path.join(outputDir, name), readFileSync(path.join(serverDir, name)));
+            log(`📄 Copied: ${name} (Google verification)`);
         }
 
         // Copy dist directories from various packages
