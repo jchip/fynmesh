@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { PAGE_SEO } from "../scripts/page-seo.mts";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const demoServer = path.join(repoRoot, "demo/demo-server");
@@ -39,20 +40,36 @@ describe("public URLs", () => {
     });
 
     /**
-     * `canonicalPath` is a render variable supplied per page by
-     * `build-demo-site.mts` and consumed by `layouts/base.html`, which builds
-     * canonical / og:url / twitter:url from it. It used to be a
-     * `{% block canonical_path %}` in each page template; the assertion moved
-     * with the mechanism.
+     * `canonicalPath` is a render variable consumed by `layouts/base.html`,
+     * which builds canonical / og:url / twitter:url from it. It has moved twice:
+     * it was a `{% block canonical_path %}` in each page template, then an
+     * inline literal in `build-demo-site.mts`, and now lives in `page-seo.mts`
+     * so the site build and the dev-server build cannot disagree about it.
+     * Asserted against that module directly rather than by pattern-matching a
+     * build script, which is what made the previous two spellings brittle.
      */
     it("declares extensionless canonicals on the demo and shell pages", () => {
-        const build = read("scripts/build-demo-site.mts");
-        const paths = [...build.matchAll(/canonicalPath:\s*"([^"]*)"/g)].map(m => m[1]);
+        const paths = Object.values(PAGE_SEO).map(p => p.canonicalPath);
 
-        expect(paths).toContain("demo");
-        expect(paths).toContain("shell");
+        expect(PAGE_SEO.demo.canonicalPath).toBe("demo");
+        expect(PAGE_SEO.shell.canonicalPath).toBe("shell");
         expect(paths.filter(p => p.endsWith(".html"))).toEqual([]);
         expect(read("templates/layouts/base.html")).toContain('<link rel="canonical"');
+    });
+
+    /**
+     * The drift this module exists to prevent: the deployed build and the dev
+     * server render the same templates, so both must supply the same identity or
+     * a dev page describes itself differently from the published one.
+     */
+    it("feeds both the site build and the dev template build from one definition", () => {
+        for (const script of ["scripts/build-demo-site.mts", "scripts/build-templates.mts"]) {
+            const src = read(script);
+            expect(src, `${script} must import the shared SEO identity`).toContain("page-seo.mts");
+            for (const page of ["landing", "notFound", "demo", "shell"]) {
+                expect(src, `${script} must render ${page} with it`).toContain(`pageSeo("${page}")`);
+            }
+        }
     });
 
     it("keeps the .html extension on internal links, which the dev server serves", () => {

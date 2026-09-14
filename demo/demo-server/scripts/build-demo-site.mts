@@ -12,13 +12,11 @@ import {
 import { generateCacheHeaders } from "./cache-headers.mts";
 import { resolveLoaderVariant } from "../src/loader-variant.ts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
+import { SITE_ORIGIN, pageSeo } from "./page-seo.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-/** Canonical origin of the published site, as Cloudflare Pages serves it. */
-const SITE_ORIGIN = "https://www.fynmesh.win";
 
 /**
  * Options for building the demo site
@@ -253,8 +251,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             title: "FynMesh - Enterprise Micro Frontend Framework",
             isProduction,
             pathPrefix,
-            siteOrigin: SITE_ORIGIN,
-            canonicalPath: "",
+            ...pageSeo("landing"),
         });
         const landingOutputPath = path.join(outputDir, "index.html");
         writeFileSync(landingOutputPath, landingHtml);
@@ -271,8 +268,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const notFoundHtml = env.render("pages/404.html", {
             isProduction,
             pathPrefix,
-            siteOrigin: SITE_ORIGIN,
-            canonicalPath: "",
+            ...pageSeo("notFound"),
         });
         const notFoundOutputPath = path.join(outputDir, "404.html");
         writeFileSync(notFoundOutputPath, notFoundHtml);
@@ -281,15 +277,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Build the demo page (demo.html)
         const demoHtml = env.render("pages/demo.html", {
             ...templateData,
-            siteOrigin: SITE_ORIGIN,
-            canonicalPath: "demo",
-            ogTitle: "FynMesh Demo - Six Frameworks, One Page",
-            ogDescription:
-                "A live micro frontend demo: React, Vue, Preact, Solid, Svelte and Marko apps " +
-                "loaded independently into one page, sharing dependencies through Module Federation.",
-            metaDescription:
-                "Live FynMesh demo running React, Vue, Preact, Solid, Svelte and Marko micro " +
-                "frontends together on one page with shared dependencies and independent deployment.",
+            ...pageSeo("demo"),
         });
         const demoOutputPath = path.join(outputDir, "demo.html");
         writeFileSync(demoOutputPath, demoHtml);
@@ -318,15 +306,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             pathPrefix,
             preloadModules,
             bundleMaps,
-            siteOrigin: SITE_ORIGIN,
-            canonicalPath: "shell",
-            ogTitle: "FynMesh Shell Demo - Middleware-Driven Layout",
-            ogDescription:
-                "A micro frontend shell that composes its layout from independently deployed " +
-                "FynApps using FynMesh middleware.",
-            metaDescription:
-                "FynMesh shell demo: a middleware-driven micro frontend layout composed from " +
-                "independently deployed FynApps.",
+            ...pageSeo("shell"),
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
         writeFileSync(shellOutputPath, shellHtml);

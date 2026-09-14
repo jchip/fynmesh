@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { collectShellPreloadModules, collectShellBundleMaps } from "./shell-preload.mts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
+import { pageSeo } from "./page-seo.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -67,10 +68,20 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         }
 
         // Build the landing page (index.html)
+        /*
+         * The same per-page SEO identity the deployed build renders, from the
+         * one definition both share. Without it these pages fell back to
+         * base.html's generic defaults with `siteOrigin` undefined, so every dev
+         * page claimed `<link rel="canonical" href="undefined/">`. Nothing here
+         * is deployed, but a dev page that describes itself differently from the
+         * published one hides exactly the drift that let shell.html sit outside
+         * the base layout unnoticed.
+         */
         const landingHtml = env.render("pages/landing.html", {
             title: "FynMesh - Enterprise Micro Frontend Framework",
             isProduction,
             pathPrefix,
+            ...pageSeo("landing"),
         });
         const landingOutputPath = path.join(outputDir, "index.html");
         writeFileSync(landingOutputPath, landingHtml);
@@ -88,12 +99,16 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const notFoundHtml = env.render("pages/404.html", {
             isProduction,
             pathPrefix,
+            ...pageSeo("notFound"),
         });
         const notFoundOutputPath = path.join(outputDir, "404.html");
         writeFileSync(notFoundOutputPath, notFoundHtml);
         log("📄 Generated: " + notFoundOutputPath);
 
-        const demoHtml = env.render("pages/demo.html", templateData);
+        const demoHtml = env.render("pages/demo.html", {
+            ...templateData,
+            ...pageSeo("demo"),
+        });
         const demoOutputPath = path.join(outputDir, "demo.html");
         writeFileSync(demoOutputPath, demoHtml);
         log(`📄 Generated: ${demoOutputPath}`);
@@ -121,6 +136,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             pathPrefix,
             preloadModules,
             bundleMaps,
+            ...pageSeo("shell"),
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
         writeFileSync(shellOutputPath, shellHtml);
