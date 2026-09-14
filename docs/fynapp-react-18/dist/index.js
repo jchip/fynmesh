@@ -1,0 +1,1 @@
+globalThis.Federation._mfBind({n:"index",f:"index.js",c:"fynapp-react-lib",s:"fynmesh",e:!0,v:"18.3.0",b:"index.js"},["src"]).register(["./_mf-share-surface_esm-react-BeKV73vu.js"],(function(e){"use strict";return{setters:[function(n){e("React",n.default)}],execute:function(){}}}));
