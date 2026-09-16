@@ -26,12 +26,14 @@ or costed before we consider building an equivalent. Currently covers shared tre
 **FynMesh and MF attack the same problem from opposite substrates: MF from the bundler's module
 runtime, FynMesh from a mutable loader registry.** FynMesh is not a re-implementation of MF, and
 reading it as one inverts the history — see [Why `federation-js` exists](#why-federation-js-exists)
-below. The capabilities that distinguish it — per-importer semver resolution, two versions of one
-share key inside one container, versioned containers selected by range, a runtime remote resolver —
-are not by-products of the registry choice; they are what the registry was chosen to deliver. The
-costs are equally direct, and all trace to *not* being a first-party bundler feature: ESM output,
-SSR, federated types, a runtime plugin API, multi-bundler reach. MF 2.0, meanwhile, has spent its
-2.x cycle turning federation into a *platform*: a published manifest protocol, an extracted
+below. The capabilities that distinguish it — per-importer semver resolution, self-sufficient
+containers that federate when co-loaded without declaring each other as remotes, two versions of one
+share key inside one container, versioned containers selected by range, a runtime resolver for apps
+not yet loaded — are not by-products of the registry choice; they are what the registry was chosen
+to deliver. The costs are equally direct, and all trace to *not* being a first-party bundler
+feature: ESM output, SSR, federated types, a runtime plugin API, multi-bundler reach. MF 2.0,
+meanwhile, has spent its 2.x cycle turning federation into a *platform*: a published manifest
+protocol, an extracted
 bundler-free runtime, a 40-hook plugin system, generated cross-app types, a Chrome extension, and
 shared tree-shaking. On raw federation semantics FynMesh is ahead in the places that matter for
 genuinely independent deployment; on everything surrounding federation, MF is several years ahead.
@@ -94,6 +96,14 @@ Every chunk is `System.register` output. The fork of SystemJS adds a **record-ex
 
 Because the registry is mutable and inspectable *after* load, resolution decisions can be made per
 import site rather than per build. That is the whole trade.
+
+**Federation is therefore a property of module resolution, not a relationship configured between
+containers.** A normal container is expected to be self-sufficient: it can run with the modules it
+ships. When several containers are loaded into one application, their module records enter the same
+registry and compatible imports resolve across them by semver. They become federated by coexisting;
+none has to pre-declare the others as remotes. A consume-only share (`import: false`) is the explicit
+exception: because that container omitted its own implementation, the application, kernel, or other
+composition layer must ensure a satisfying producer is loaded.
 
 ### Runtime delivery: embedded per artifact vs loaded once
 
@@ -180,7 +190,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | Container protocol | `{ get, init }` | `{ init, get, container, __FYNAPP_MANIFEST__ }` | FynMesh also exposes a live container object |
 | Bidirectional host/remote | ✅ | ✅ | |
 | Build-time `remotes` declaration | ✅ | ❌ **by design** | FynMesh resolves remotes at runtime (§6) |
-| Runtime remote resolution | ✅ `registerRemotes(..., {force})` — a name→URL **table** | ✅ `setRegistryResolver((name, range) => …)` — a resolution **policy** | Not a gap: a resolver subsumes a table. No registration step exists or is needed (§6) |
+| Runtime remote resolution | ✅ `registerRemotes(..., {force})` — a name→URL **table** | ✅ `setRegistryResolver((name, range) => …)` — a resolution **policy** | Not a gap: a resolver subsumes a table. No consumer-authored remote table is needed (§6) |
 | Semver-range remote selection | ❌ | ✅ `_mfGetContainer(name, "^2.0.0")` | Unique to FynMesh |
 | Same container name at two versions in one page | ❌ names are unique globals | ✅ `$C[name][version]` | Unique to FynMesh |
 | Per-chunk binding metadata | ❌ | ✅ `_mfBind({n,f,c,s,e,v,b}, [importerDirs])` | Every non-entry chunk is bound |
@@ -481,8 +491,18 @@ Public path is handled by `getPublicPath` — a **stringified** function evaluat
 
 ### FynMesh
 
-There is **no build-time `remotes` config at all.** A remote is named in *source*, via an import
-attribute:
+There is **no build-time `remotes` config at all.** Two cases that MF's remote model makes easy to
+conflate are separate here.
+
+**When containers are already loaded, no name→URL remote lookup occurs.** Each normal container is
+self-sufficient, and loading it registers its modules in the shared loader registry. If A and B are
+loaded by the same application, compatible shared-package imports resolve across their combined
+records by the importer's semver constraints. An exposed-module import still names a FynApp/module
+namespace and requires that container to be registered, but A does not pre-declare B's URL and B
+does not pre-declare A's. Co-location is enough to federate their module records.
+
+**When the requested FynApp is not loaded, the composition layer locates it.** The dependency is
+named in *source*, via an import attribute:
 
 ```ts
 import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^2.0.0" } })
@@ -499,6 +519,17 @@ type RegistryResolver = (name: string, range?: string) => Promise<{
 A host maps **(package name, semver range) → manifest URL** at runtime
 (`demo/demo-server/templates/components/fynapp-loader.html:18-70`). **A host can swap which build
 satisfies `fynapp-x1@^2.0.0` without rebuilding any consumer.**
+
+The resolver is therefore a way to load an absent application dependency, not mandatory wiring for
+every federated module import. The other non-self-sufficient case is an `import: false` consume-only
+share: it deliberately carries no fallback, so the application, kernel, or bootstrap process must
+load a satisfying producer before the consumer asks for it
+(`rollup-federation/README.md:33-47`).
+
+This is **not automatic network discovery**: `federation-js` resolves modules and containers already
+present in its loader registry. The kernel's manifest graph and registry resolver are the higher
+composition layer that can locate and load something absent; ordinary co-resident federation does
+not depend on them.
 
 MF2 does have runtime `registerRemotes`, but nothing **semver-range-keyed** — its resolution is by
 name, and the version is whatever that URL happens to serve.
@@ -521,8 +552,8 @@ into a lookup table; whatever that URL serves is the version you get. Resolution
 **FynMesh treats a remote as a dependency with a range** — the package-manager model, applied at
 runtime. A consumer declares `fynapp-x1@^2.0.0` in source. A host supplies a resolver —
 `setRegistryResolver((name, range) => …)`, a public kernel method callable at any point
-(`kernel-core.ts:165`) — which answers *which build satisfies that range*. Nothing is ever
-registered by name.
+(`kernel-core.ts:165`) — which answers *which build satisfies that range*. No consumer registers a
+name→URL remote mapping.
 
 The inversion is the point: **a resolver can implement a name→URL table, but a table cannot
 implement semver resolution.** So this is not "FynMesh lacks `registerRemotes`" — the runtime
@@ -532,8 +563,8 @@ version resolution, two versions of one share key, versioned containers, swappin
 rebuilding consumers — are all downstream of this single choice. None of them are reachable from a
 model where a remote is a name someone pointed at a URL.
 
-**The result, at the call site: there is nothing to register.** You ask for a FynApp by name and the
-kernel works out the rest —
+**The result, at the call site: there is no remote table to register.** You ask for a FynApp by name
+and the kernel works out the rest —
 
 ```ts
 await kernel.loadFynAppsByName([{ name: "fynapp-1" }], { concurrency: 4 });
@@ -543,7 +574,7 @@ From that one call (`kernel-core.ts:234-242`) the kernel resolves the manifest, 
 `requires` + `import-exposed` + `shared-providers` to build the dependency graph, resolves every
 shared module against the declared ranges of the code actually importing it, orders the result
 topologically, and loads it in batches. No remote list, no host config enumerating what exists, no
-registration step — **load a FynApp normally and the plumbing is figured out for you.** MF's
+remote-registration step — **load a FynApp normally and the plumbing is figured out for you.** MF's
 equivalent starting point is a table someone has to populate and keep correct.
 
 **Implementation notes** — sharp edges in what ships today, not costs of the model:
@@ -1055,8 +1086,9 @@ the reason the project exists, and the reason a loader registry was chosen over 
 2. **Two versions of one share key inside one container.** Structurally impossible in MF.
 3. **Versioned containers + semver container selection.** Two builds publishing the same container
    name at different versions into one page. MF container names are unique globals.
-4. **Runtime, semver-keyed remote resolution — and therefore no registration step at all.** Load a
-   FynApp by name and the kernel derives the rest: graph, shares, order. Swap which build satisfies
+4. **Runtime, semver-keyed remote resolution — and therefore no consumer-owned remote-registration
+   step.** Load a FynApp by name and the kernel derives the rest: graph, shares, order. Swap which
+   build satisfies
    `fynapp-x1@^2.0.0` without rebuilding any consumer. MF's `registerRemotes` is a name-keyed table
    someone must populate and keep correct. This is the foundational difference (§6), not a feature
    comparison.
