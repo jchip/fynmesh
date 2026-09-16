@@ -126,7 +126,7 @@ This opt-in command copies the bundled `fynapp-modify` and
 
 ```bash
 fyn run build
-fyn run jest-test
+fyn test
 ```
 
 ## License
