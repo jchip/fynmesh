@@ -3,9 +3,13 @@
   "name": "fynapp-x1",
   "version": "1.0.0",
   "resolutions": {
+    "**/cssnano/**/postcss-selector-parser": "6.1.3",
+    "**/postcss-modules/**/postcss-selector-parser": "7.1.3",
     "browserslist": "4.29.0",
+    "colord": "2.9.4",
     "lodash-es": "4.18.1",
-    "svgo": "2.8.4"
+    "svgo": "2.8.4",
+    "yaml": "1.10.3"
   },
   "engines": {
     "node": ">=24.0.0"

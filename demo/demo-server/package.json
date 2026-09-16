@@ -63,6 +63,10 @@
     "vite": "^7.3.6",
     "vitest": "^5.0.1"
   },
+  "resolutions": {
+    "**/tsx/**/esbuild": "0.28.2",
+    "**/vite/**/esbuild": "0.28.2"
+  },
   "prettier": {
     "printWidth": 100
   }

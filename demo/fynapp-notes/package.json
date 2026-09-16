@@ -5,10 +5,14 @@
   "resolutions": {
     "**/@rollup/plugin-commonjs/**/picomatch": "4.0.7",
     "**/@rollup/plugin-node-resolve/**/picomatch": "4.0.7",
+    "**/cssnano/**/postcss-selector-parser": "6.1.3",
+    "**/postcss-modules/**/postcss-selector-parser": "7.1.3",
     "**/rollup-plugin-esbuild/**/picomatch": "4.0.7",
     "browserslist": "4.29.0",
+    "colord": "2.9.4",
     "lodash-es": "4.18.1",
-    "svgo": "2.8.4"
+    "svgo": "2.8.4",
+    "yaml": "1.10.3"
   },
   "engines": {
     "node": ">=24.0.0"

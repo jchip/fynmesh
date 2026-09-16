@@ -1617,12 +1617,12 @@ deepmerge:
   $: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==
   _: 'https://registry.npmjs.org/deepmerge/-/deepmerge-4.3.1.tgz'
 diff:
- _latest: 8.0.1
+ _latest: 9.0.0
  _:
-  ^4.0.1: 4.0.2
- 4.0.2:
-  $: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
-  _: 'https://registry.npmjs.org/diff/-/diff-4.0.2.tgz'
+  4.0.4: 4.0.4
+ 4.0.4:
+  $: sha512-X07nttJQkwkfKfvTPG/KSnE2OMdcUCao6+eXF3wmnIQRn2aPAHH3VxDbDOdegkd6JbPsXqShpvEOHfAT+nCNwQ==
+  _: 'https://registry.npmjs.org/diff/-/diff-4.0.4.tgz'
 entities:
  _latest: 8.0.0
  _:

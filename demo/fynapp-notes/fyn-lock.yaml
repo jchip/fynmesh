@@ -1151,12 +1151,12 @@ color-name:
   $: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
   _: 'https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz'
 colord:
- _latest: 2.9.3
+ _latest: 2.10.0
  _:
-  ^2.9.1: 2.9.3
- 2.9.3:
-  $: sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw==
-  _: 'https://registry.npmjs.org/colord/-/colord-2.9.3.tgz'
+  2.9.4: 2.9.4
+ 2.9.4:
+  $: sha512-z0nTt5300AIviCn9FTEL4G2DzPkfEDfghx6Do0ZfM3u0rOINBtfw2H8lD4VXyZF/o8HTzzyiCztaG2X/+IMeZA==
+  _: 'https://registry.npmjs.org/colord/-/colord-2.9.4.tgz'
 commander:
  _latest: 14.0.2
  _:
@@ -2324,19 +2324,19 @@ postcss-reduce-transforms:
   peerDependencies:
    postcss: ^8.2.15
 postcss-selector-parser:
- _latest: 7.1.1
+ _latest: 7.1.6
  _:
-  '^6.0.4,^6.0.5,^6.0.9': 6.1.2
-  ^7.0.0: 7.1.1
- 7.1.1:
-  $: sha512-orRsuYpJVw8LdAwqqLykBj9ecS5/cRHlI5+nvTo8LcCKmzDmqVORXtOIYEEQuL9D4BxtA1lm5isAqzQZCoQ6Eg==
-  _: 'https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-7.1.1.tgz'
+  6.1.3: 6.1.3
+  7.1.3: 7.1.3
+ 7.1.3:
+  $: sha512-ajnd7iZnqjJDkyHNfznl/ZVO0lWqvBmQXfKKENx9/p/bEiF/L3eHwdydNUg9RXZx6xfZWOCmXmBa5oeB+YrAPQ==
+  _: 'https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-7.1.3.tgz'
   dependencies:
    cssesc: ^3.0.0
    util-deprecate: ^1.0.2
- 6.1.2:
-  $: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==
-  _: 'https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.2.tgz'
+ 6.1.3:
+  $: sha512-cDoO18VWCIWRsSaws3C23b0HXRxlUknttfdNcbXnf3IGHAPRNLlXPHc6dYiatOkxW0W4uZh524Plaaw5a7WEtQ==
+  _: 'https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.3.tgz'
   dependencies:
    cssesc: ^3.0.0
    util-deprecate: ^1.0.2
@@ -2822,12 +2822,12 @@ xaa:
   $: sha512-43qra97miJW39IXU9aN9A1s5RVCA2stlE3O5WhLI2DG9ImKV2ugCBHEzFrqL96bzAkknHlaGlOcsX6f/F3nMDA==
   _: 'https://registry.npmjs.org/xaa/-/xaa-3.0.0.tgz'
 yaml:
- _latest: 2.8.2
+ _latest: 2.9.1
  _:
-  ^1.10.2: 1.10.2
- 1.10.2:
-  $: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==
-  _: 'https://registry.npmjs.org/yaml/-/yaml-1.10.2.tgz'
+  1.10.3: 1.10.3
+ 1.10.3:
+  $: sha512-vIYeF1u3CjlhAFekPPAk2h/Kv4T3mAkMox5OymRiJQB0spDP10LHvt+K7G9Ny6NuuMAb25/6n1qyUjAcGNf/AA==
+  _: 'https://registry.npmjs.org/yaml/-/yaml-1.10.3.tgz'
 yocto-queue:
  _latest: 1.2.2
  _:
