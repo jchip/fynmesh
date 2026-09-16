@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 /**
  * FynBus pub/sub edge cases (FYM-139)
  *
@@ -440,7 +442,12 @@ describe("FynBus pub/sub edge cases", () => {
       const removeSpy = vi.spyOn(ac.signal, "removeEventListener");
 
       const unsub = appB.on("hook-cleanup", vi.fn(), { signal: ac.signal });
-      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      // Node's EventTarget also attaches an abort hook; count FynBus's hook only.
+      const added = addSpy.mock.calls
+        .filter(
+          (c) => c[0] === "abort" && typeof c[1] === "function" && c[1].name === "onAbort",
+        )
+        .map((c) => c[1]);
       expect(added).toHaveLength(1);
 
       unsub();
@@ -459,7 +466,11 @@ describe("FynBus pub/sub edge cases", () => {
         unsub();
       }
 
-      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      const added = addSpy.mock.calls
+        .filter(
+          (c) => c[0] === "abort" && typeof c[1] === "function" && c[1].name === "onAbort",
+        )
+        .map((c) => c[1]);
       const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
       expect(added).toHaveLength(100);
       for (const hook of added) {
@@ -481,7 +492,11 @@ describe("FynBus pub/sub edge cases", () => {
       appB.on("kept", vi.fn(), { signal: ac.signal });
       root.disposeApp("app-b", "1.0.0"); // dispose unsubscribes the rest
 
-      const added = addSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
+      const added = addSpy.mock.calls
+        .filter(
+          (c) => c[0] === "abort" && typeof c[1] === "function" && c[1].name === "onAbort",
+        )
+        .map((c) => c[1]);
       const removed = removeSpy.mock.calls.filter((c) => c[0] === "abort").map((c) => c[1]);
       expect(added).toHaveLength(2);
       for (const hook of added) {

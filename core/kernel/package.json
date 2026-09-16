@@ -64,7 +64,7 @@
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
     "@types/node": "^24.0.10",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.25.12",
     "jsdom": "^25.0.1",
     "prettier": "^3.6.2",
@@ -73,7 +73,8 @@
     "tsx": "~4.20.6",
     "typedoc": "^0.28.7",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.7"
+    "vite": "^7.3.6",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
     "federation-js": "^1.0.0"
