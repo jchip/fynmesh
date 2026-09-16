@@ -2,6 +2,11 @@
   "private": true,
   "name": "fynapp-3-marko",
   "version": "1.0.0",
+  "resolutions": {
+    "browserslist": "4.29.0",
+    "lodash-es": "4.18.1",
+    "svgo": "2.8.4"
+  },
   "engines": {
     "node": ">=24.0.0"
   },
@@ -18,19 +23,19 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@marko/compiler": "^5.33.0",
+    "@marko/compiler": "^5.42.5",
     "@marko/rollup": "^4.0.3",
     "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-virtual": "^3.0.2",
     "@types/node": "^20.8.9",
     "create-fynapp": "^1.1.5",
     "esbuild": "^0.25.12",
-    "marko": "^5.37.31",
-    "rollup": "^4.40.2",
+    "marko": "^6.3.51",
+    "rollup": "^4.63.3",
     "rollup-plugin-dts": "^6.2.1",
     "rollup-plugin-esbuild": "^6.2.1",
     "rollup-plugin-federation": "^1.0.0",

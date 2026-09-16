@@ -58,7 +58,7 @@
     "spectre.css": "^0.5.9",
     "ts-node": "^10.9.1",
     "tsx": "^4.20.3",
-    "typedoc": "^0.25.2",
+    "typedoc": "^0.28.20",
     "typescript": "^5.2.2",
     "vite": "^7.3.6",
     "vitest": "^5.0.1"

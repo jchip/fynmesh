@@ -18,14 +18,14 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^20.8.9",
     "esbuild": "^0.25.12",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "rollup": "^4.9.1",
+    "rollup": "^4.63.3",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-esbuild": "^6.2.1",
     "typescript": "^5.2.2"

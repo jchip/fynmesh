@@ -72,7 +72,7 @@ describe("release gate configuration", () => {
   });
 
   it("uses a TypeDoc release compatible with the resolved TypeScript", () => {
-    expect(pkg.devDependencies.typedoc).toBe("^0.28.7");
+    expect(pkg.devDependencies.typedoc).toBe("^0.28.20");
   });
 
   // The CLI binds to @fynjs/cli-args through untyped exec callbacks, so an API

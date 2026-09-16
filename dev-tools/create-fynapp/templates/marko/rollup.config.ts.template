@@ -1,5 +1,6 @@
 import markoPlugin from "@marko/rollup";
 import commonjs from "@rollup/plugin-commonjs";
+import postcss from "rollup-plugin-postcss";
 import { newRollupPlugin } from "rollup-wrap-plugin";
 import { createFynAppRollupConfig } from "create-fynapp";
 
@@ -16,7 +17,7 @@ export default createFynAppRollupConfig({
     "./main": "./src/main.ts",
   },
   shared: {
-    marko: { singleton: true, semver: "^5.37.31" },
+    marko: { singleton: true, semver: "^6.3.51" },
   },
   // resolve .marko without the extension, e.g. `import App from "./App"`.
   resolve: {
@@ -26,6 +27,8 @@ export default createFynAppRollupConfig({
   extraPlugins: [
     // Marko's browser-side template compiler.
     newRollupPlugin(markoPlugin.browser)(),
+    // Marko 6 extracts component <style> blocks as virtual CSS modules.
+    newRollupPlugin(postcss)({ inject: true, extract: false }),
     // Marko's runtime still ships CommonJS, so it has to be converted.
     newRollupPlugin(commonjs)({
       transformMixedEsModules: true,

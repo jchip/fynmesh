@@ -21,18 +21,21 @@
   ],
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-replace": "^6.0.2",
-    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-terser": "^1.0.0",
     "ag-grid-community": "^35.3.1",
     "ag-grid-react": "^35.3.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "rollup": "^4.40.2"
+    "rollup": "^4.63.3"
   },
   "dependencies": {
     "esm-ag-grid": "^35.3.1",
     "esm-react": "^19.1.0"
+  },
+  "resolutions": {
+    "picomatch": "4.0.7"
   }
 }

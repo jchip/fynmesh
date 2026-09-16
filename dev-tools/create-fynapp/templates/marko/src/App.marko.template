@@ -1,11 +1,4 @@
-class {
-  onCreate() {
-    this.state = { count: 0 };
-  }
-  increment() {
-    this.state.count++;
-  }
-}
+<let/count=0/>
 
 <div class="fynapp-container">
   <h2 class="fynapp-title">${input.appName} - Marko</h2>
@@ -14,13 +7,13 @@ class {
     <p>Welcome to your new FynApp!</p>
 
     <div class="counter-section">
-      <p>Count: <strong>${state.count}</strong></p>
-      <button class="fynapp-button" type="button" on-click("increment")>
+      <p>Count: <strong>${count}</strong></p>
+      <button class="fynapp-button" type="button" onClick() { count++; }>
         Increment
       </button>
     </div>
 
-    <if(input.runtime)>
+    <if=input.runtime>
       <div class="runtime-info">
         <p>
           <small>

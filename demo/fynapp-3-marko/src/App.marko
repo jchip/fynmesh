@@ -1,63 +1,31 @@
-static {
-  const markoVersion = require('marko/package.json').version;
+static const markoVersion = require("marko/package.json").version;
 
-  function increment(state) {
-    state.count++;
-  }
-
-  function toggleTheme(state) {
-    state.darkMode = !state.darkMode;
-  }
-}
-
-class {
-  onCreate() {
-    this.state = {
-      count: 0,
-      darkMode: false,
-      activeTab: "dashboard",
-      markoVersion: markoVersion,
-      cards: [
-        { title: "Analytics", value: "85%", trend: "up", desc: "User engagement" },
-        { title: "Revenue", value: "$12,850", trend: "up", desc: "Monthly revenue" },
-        { title: "Tickets", value: "23", trend: "down", desc: "Open support tickets" },
-        { title: "Users", value: "1,293", trend: "up", desc: "Active users" }
-      ],
-      chartData: [30, 40, 45, 50, 49, 60, 70, 91, 125, 150],
-      projects: [
-        { id: 1, name: "Website Redesign", status: "In Progress", completion: 65, priority: "High" },
-        { id: 2, name: "Mobile App Development", status: "On Hold", completion: 30, priority: "Medium" },
-        { id: 3, name: "API Integration", status: "Completed", completion: 100, priority: "High" },
-        { id: 4, name: "Database Migration", status: "Planning", completion: 10, priority: "Low" },
-        { id: 5, name: "Security Audit", status: "In Progress", completion: 45, priority: "Critical" }
-      ],
-      settings: [
-        { name: "Notifications", enabled: true, description: "Receive email notifications" },
-        { name: "Two-Factor Auth", enabled: false, description: "Add an extra layer of security" },
-        { name: "API Access", enabled: true, description: "Allow third-party API access" },
-        { name: "Dark Mode", enabled: false, description: "Use dark theme by default" }
-      ]
-    };
-  }
-
-  increment() {
-    this.state.count++;
-  }
-
-  toggleTheme() {
-    this.state.darkMode = !this.state.darkMode;
-  }
-
-  setActiveTab(tab) {
-    this.state.activeTab = tab;
-  }
-
-  toggleSetting(index) {
-    const settings = [...this.state.settings];
-    settings[index].enabled = !settings[index].enabled;
-    this.state.settings = settings;
-  }
-}
+<let/state={
+  count: 0,
+  darkMode: false,
+  activeTab: "dashboard",
+  markoVersion,
+  cards: [
+    { title: "Analytics", value: "85%", trend: "up", desc: "User engagement" },
+    { title: "Revenue", value: "$12,850", trend: "up", desc: "Monthly revenue" },
+    { title: "Tickets", value: "23", trend: "down", desc: "Open support tickets" },
+    { title: "Users", value: "1,293", trend: "up", desc: "Active users" }
+  ],
+  chartData: [30, 40, 45, 50, 49, 60, 70, 91, 125, 150],
+  projects: [
+    { id: 1, name: "Website Redesign", status: "In Progress", completion: 65, priority: "High" },
+    { id: 2, name: "Mobile App Development", status: "On Hold", completion: 30, priority: "Medium" },
+    { id: 3, name: "API Integration", status: "Completed", completion: 100, priority: "High" },
+    { id: 4, name: "Database Migration", status: "Planning", completion: 10, priority: "Low" },
+    { id: 5, name: "Security Audit", status: "In Progress", completion: 45, priority: "Critical" }
+  ],
+  settings: [
+    { name: "Notifications", enabled: true, description: "Receive email notifications" },
+    { name: "Two-Factor Auth", enabled: false, description: "Add an extra layer of security" },
+    { name: "API Access", enabled: true, description: "Allow third-party API access" },
+    { name: "Dark Mode", enabled: false, description: "Use dark theme by default" }
+  ]
+}/>
 
 <div style=(state.darkMode ?
   "font-family: sans-serif; padding: 20px; background-color: #1a202c; color: #f7fafc; border-radius: 8px; width: 100%; height: 100%; min-height: 100%; margin: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); box-sizing: border-box; display: flex; flex-direction: column;" :
@@ -73,7 +41,7 @@ class {
     </div>
     <div>
       <button
-        on-click("toggleTheme")
+        onClick() { state = { ...state, darkMode: !state.darkMode }; }
         style=(state.darkMode ?
           "background-color: #4a5568; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer" :
           "background-color: #e2e8f0; color: #2d3748; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer")
@@ -86,7 +54,7 @@ class {
   <!-- Tab Navigation -->
   <div style="margin-bottom: 24px; border-bottom: 1px solid rgba(160, 174, 192, 0.3); display: flex; flex-shrink: 0;">
     <div
-      on-click("setActiveTab", "dashboard")
+      onClick() { state = { ...state, activeTab: "dashboard" }; }
       style=(state.activeTab === "dashboard" ?
         (state.darkMode ?
           "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
@@ -98,7 +66,7 @@ class {
       Dashboard
     </div>
     <div
-      on-click("setActiveTab", "projects")
+      onClick() { state = { ...state, activeTab: "projects" }; }
       style=(state.activeTab === "projects" ?
         (state.darkMode ?
           "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
@@ -110,7 +78,7 @@ class {
       Projects
     </div>
     <div
-      on-click("setActiveTab", "settings")
+      onClick() { state = { ...state, activeTab: "settings" }; }
       style=(state.activeTab === "settings" ?
         (state.darkMode ?
           "padding: 12px 16px; cursor: pointer; border-bottom: 2px solid #90cdf4; color: #90cdf4;" :
@@ -182,7 +150,7 @@ class {
       <p>You clicked the button <strong>${state.count}</strong> times</p>
 
       <button
-        on-click("increment")
+        onClick() { state = { ...state, count: state.count + 1 }; }
         style=(state.darkMode ?
           "background-color: #4299e1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px" :
           "background-color: #3182ce; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px")
@@ -271,7 +239,14 @@ class {
           </div>
           <div>
             <button
-              on-click("toggleSetting", index)
+              onClick() {
+                state = {
+                  ...state,
+                  settings: state.settings.map((item, itemIndex) =>
+                    itemIndex === index ? { ...item, enabled: !item.enabled } : item
+                  )
+                };
+              }
               style=(setting.enabled ?
                 (state.darkMode ?
                   "background-color: #4299e1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;" :

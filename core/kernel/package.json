@@ -60,24 +60,27 @@
   },
   "devDependencies": {
     "@fynjs/run": "^1.0.0",
-    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^15.0.0",
-    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-terser": "^1.0.0",
     "@types/node": "^24.0.10",
     "@vitest/coverage-v8": "^5.0.1",
     "esbuild": "^0.25.12",
-    "jsdom": "^25.0.1",
+    "jsdom": "^30.0.1",
     "prettier": "^3.6.2",
     "rollup": "^4.44.2",
     "rollup-plugin-esbuild": "^6.2.1",
     "tsx": "~4.20.6",
-    "typedoc": "^0.28.7",
+    "typedoc": "^0.28.20",
     "typescript": "^5.8.3",
     "vite": "^7.3.6",
     "vitest": "^5.0.1"
   },
   "dependencies": {
     "federation-js": "^1.0.0"
+  },
+  "resolutions": {
+    "brace-expansion": "5.0.12"
   },
   "prettier": {
     "printWidth": 100

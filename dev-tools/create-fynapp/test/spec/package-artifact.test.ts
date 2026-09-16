@@ -97,13 +97,70 @@ describe("published package artifact", () => {
     expect(react18.devDependencies["@types/react"]).toBe("^18.3.0");
 
     const vue = readTemplatePkg("vue");
-    expect(vue.devDependencies.vue).toBe("^3.3.4");
+    expect(vue.devDependencies.vue).toBe("^3.5.42");
 
-    expect(readTemplatePkg("preact").dependencies.preact).toBe("^10.18.1");
-    expect(readTemplatePkg("solid").dependencies["solid-js"]).toBe("^1.8.15");
+    expect(readTemplatePkg("preact").dependencies.preact).toBe("^10.29.8");
+    expect(readTemplatePkg("solid").dependencies["solid-js"]).toBe("^1.9.15");
     expect(readTemplatePkg("svelte").dependencies.svelte).toBe("^4.2.0");
-    expect(readTemplatePkg("marko").dependencies.marko).toBe("^5.37.31");
+    expect(readTemplatePkg("marko").dependencies.marko).toBe("^6.3.51");
     expect(readTemplatePkg("vanilla").dependencies).toEqual({});
+  });
+
+  it("uses the current Rollup toolchain releases in generated package manifests", () => {
+    const readTemplatePkg = (framework: string) =>
+      JSON.parse(
+        fs.readFileSync(
+          path.join(packageDir, "templates", framework, "package.json.template"),
+          "utf-8"
+        )
+      );
+
+    for (const framework of [genericTemplateName, ...templatedFrameworks]) {
+      const pkg = readTemplatePkg(framework);
+      expect(pkg.devDependencies.rollup).toBe("^4.63.3");
+      expect(pkg.devDependencies["@rollup/plugin-node-resolve"]).toBe("^16.0.3");
+      expect(pkg.devDependencies["rollup-plugin-federation"]).toBe("^1.1.2");
+    }
+
+    for (const framework of ["react", "react18", "marko"]) {
+      expect(readTemplatePkg(framework).devDependencies["@rollup/plugin-commonjs"]).toBe("^29.0.3");
+    }
+
+    for (const framework of [
+      "react",
+      "react18",
+      "preact",
+      "vue",
+      "solid",
+      "svelte",
+      "marko",
+      "vanilla"
+    ]) {
+      expect(readTemplatePkg(framework).devDependencies.postcss).toBe("^8.5.28");
+    }
+
+    const solid = readTemplatePkg("solid");
+    expect(solid.devDependencies["@babel/core"]).toBe("^7.29.7");
+    expect(solid.devDependencies["@babel/preset-env"]).toBe("^7.29.7");
+    expect(solid.devDependencies["@rollup/plugin-babel"]).toBe("^7.1.0");
+
+    expect(readTemplatePkg("marko").devDependencies["@marko/compiler"]).toBe("^5.42.5");
+    expect(readTemplatePkg("marko").devDependencies["@types/node"]).toBe("^22.20.3");
+    expect(readTemplatePkg("marko").engines.node).toBe(">=22.0.0");
+  });
+
+  it("uses Marko 6 state and event syntax", () => {
+    const app = fs.readFileSync(
+      path.join(packageDir, "templates", "marko", "src", "App.marko.template"),
+      "utf-8"
+    );
+
+    expect(app).toContain("<let/count=0/>");
+    expect(app).toContain("onClick() { count++; }");
+    expect(app).toContain("<if=input.runtime>");
+    expect(app).not.toContain("class {");
+    expect(app).not.toContain("on-click");
+    expect(app).not.toContain("<if(");
   });
 
   it("does not link packaged guidance to excluded examples", () => {

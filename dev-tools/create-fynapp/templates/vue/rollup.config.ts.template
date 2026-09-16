@@ -17,7 +17,7 @@ export default createFynAppRollupConfig({
     "./main": "./src/main.ts",
   },
   shared: {
-    vue: { singleton: true, semver: "^3.3.4" },
+    vue: { singleton: true, semver: "^3.5.42" },
   },
   // resolve .vue without the extension, e.g. `import App from "./App"`.
   resolve: { extensions: [".mjs", ".js", ".json", ".node", ".ts", ".vue"] },

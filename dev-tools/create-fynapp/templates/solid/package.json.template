@@ -13,22 +13,22 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "solid-js": "^1.8.15"
+    "solid-js": "^1.9.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.9",
-    "@babel/preset-env": "^7.22.9",
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
     "@fynmesh/kernel": "{{kernelVersion}}",
-    "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-babel": "^7.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^20.8.9",
-    "babel-preset-solid": "^1.8.11",
+    "babel-preset-solid": "^1.9.15",
     "create-fynapp": "{{createFynappVersion}}",
     "esbuild": "^0.25.12",
-    "postcss": "^8.5.3",
-    "rollup": "^4.9.1",
+    "postcss": "^8.5.28",
+    "rollup": "^4.63.3",
     "rollup-plugin-esbuild": "^6.2.1",
-    "rollup-plugin-federation": "^1.0.0",
+    "rollup-plugin-federation": "^1.1.2",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-wrap-plugin": "^1.0.0",
     "typescript": "^5.2.2"

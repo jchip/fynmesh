@@ -41,7 +41,7 @@ export default [
          * Deliberately unprovided. Nothing in the demo provides `marko`, and
          * nothing should: this is the negative case for share-not-provided
          * detection, and the shell's federation inspector reporting
-         * `share-not-provided: marko@5.37.31` on every load is the demo
+         * `share-not-provided: marko@6.3.51` on every load is the demo
          * working. The app still renders, from its own bundled copy.
          *
          * DO NOT "fix" this by deleting the block or by adding a marko provider
@@ -58,7 +58,7 @@ export default [
         shared: {
           marko: {
             singleton: true,
-            semver: "^5.37.31",
+            semver: "^6.3.51",
           },
         },
       }),

@@ -3,7 +3,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import replace from "@rollup/plugin-replace";
 import esbuild from "rollup-plugin-esbuild";
 import alias from "@rollup/plugin-alias";
-import { terser } from "rollup-plugin-terser";
+import terser from "@rollup/plugin-terser";
 import serve from "rollup-plugin-serve";
 import livereload from "rollup-plugin-livereload";
 import fs from "fs";

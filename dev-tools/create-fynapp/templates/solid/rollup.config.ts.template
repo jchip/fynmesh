@@ -16,7 +16,7 @@ export default createFynAppRollupConfig({
     "./main": "./src/main.ts",
   },
   shared: {
-    "solid-js": { singleton: true, semver: "^1.8.15" },
+    "solid-js": { singleton: true, semver: "^1.9.15" },
   },
   // resolve .jsx without the extension, e.g. `import App from "./App"`.
   resolve: {

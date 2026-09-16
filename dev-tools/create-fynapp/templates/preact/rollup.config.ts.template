@@ -15,7 +15,7 @@ export default createFynAppRollupConfig({
     "./main": "./src/main.ts",
   },
   shared: {
-    preact: { singleton: true, semver: "^10.18.1" },
+    preact: { singleton: true, semver: "^10.29.8" },
   },
   // resolve .tsx without the extension, e.g. `import App from "./App"`.
   resolve: {
