@@ -106,8 +106,11 @@ function KeyBlock({ scope, node }: { scope: string; node: ShareKeyNode }): JSX.E
         </span>
         <span style={{ flex: 1 }} />
         {worst ? (
-          <Chip tone={worst.severity === "error" ? "err" : "warn"} title={worst.detail}>
-            {worst.severity === "error" ? "⚠" : "!"} {worst.title}
+          <Chip
+            tone={worst.severity === "error" ? "err" : worst.severity === "warn" ? "warn" : undefined}
+            title={worst.detail}
+          >
+            {worst.severity === "error" ? "⚠" : worst.severity === "warn" ? "!" : "i"} {worst.title}
           </Chip>
         ) : null}
       </div>
