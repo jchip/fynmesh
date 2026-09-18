@@ -1,4 +1,4 @@
-# Module Federation 2.0 — verified internals
+# Module Federation 2.0 — source-inspected internals
 
 Companion to [`MF2-VS-FEDERATION-JS.md`](./MF2-VS-FEDERATION-JS.md). That document *scores*
 capabilities; this one records *mechanism*, traced from source, so a claim there can be checked,
@@ -8,6 +8,12 @@ corrected, or costed before we consider building an equivalent.
 checked out locally at `~/dev/module-federation-core`. Every path below is relative to that repo
 unless it starts with `notes/`. Line numbers are from that commit.
 
+**Review refreshed 2026-09-17 (America/Los_Angeles).** The pinned implementation remains the
+basis of this trace. Upstream HEAD `d6bb5a6` was two commits ahead, with no changes to the relevant
+federation implementation; runtime registry `latest` remained 2.9.0. This refresh corrects the
+interpretation of fallback paths, benchmark attribution, and implications for FynMesh. Existing
+fixtures were inspected, not executed; no fresh bundle-size measurement was performed.
+
 **Rule for this file:** claims are traced to code or to in-repo docs, and quotes are verbatim. Where
 marketing and source disagree, the source wins and the disagreement gets written down.
 
@@ -15,7 +21,7 @@ marketing and source disagree, the source wins and the disagreement gets written
 
 | § | Topic | Traced |
 | --- | --- | --- |
-| [1](#1-shared-dependency-tree-shaking) | Shared dependency tree-shaking | 2026-09-13 |
+| [1](#1-shared-dependency-tree-shaking) | Shared dependency tree-shaking | 2026-09-13; reviewed 2026-09-17 |
 
 ---
 
@@ -30,9 +36,10 @@ A build that opts in emits **two** copies of each shared package: the copy insid
 **pruned** to the exports that build actually referenced, and a separately compiled standalone
 container holds the **full** package. At runtime a plugin swaps the getters so `get` points at the
 full container and `treeShaking.get` points at the pruned copy, then a decision function picks which
-one to hand the consumer. Every failure path — unproven side effects, an opaque `import()`, a missing
-snapshot, a coverage miss — resolves to the full copy. The pruning is an *optimistic* fast path with
-a full-fat fallback permanently in reach, not a build-time guarantee.
+one to hand the consumer. Build-time gates can prevent pruning, and several runtime selection
+paths choose the full copy. **This is not universal recovery from a failed load:** the selected
+getter can reject and `loadShare` can rethrow without trying the full artifact (§1.10). Availability
+of a full copy and automatic recovery through it are different properties.
 
 ### 1.2 Configuration surface
 
@@ -206,8 +213,9 @@ Hard incompatibility with `eager` (`:44-48`) — an `error()`, not a warning:
 
 ### 1.8 The two modes
 
-**`runtime-infer`** — no infrastructure. Each build declares what it uses; a subset check decides
-whether an already-loaded pruned copy covers this consumer, else the full bundle.
+**`runtime-infer`** — no deployment service required. The intended policy uses export coverage
+to decide whether a pruned copy can serve a consumer. The inspected webpack pipeline does not
+apply that check on every selection path; see §1.11 before treating this as a safety guarantee.
 `apps/website-new/docs/en/guide/advanced/shared-tree-shaking.mdx:59-69`:
 
 > **Best for**: local development and quick validation, teams without a deployment or CI service,
@@ -221,8 +229,11 @@ the *other* side's config, in both directions
 `// add consumer used exports`). For independently deployed teams that is a standing coupling.
 
 **`server-calc`** — `mdx:71-73` calls it "the **strongly recommended best practice**". A centralized
-service produces a globally optimal pruned artifact; the snapshot points at it; the runtime loads it.
-This is the mode the 75% figure belongs to in practice, because it is the only one with a global view.
+service produces a pruned artifact from the export union supplied by the deployment pipeline;
+the snapshot points at it and the runtime loads it. Coverage is only as complete as the consumer
+metadata that pipeline includes. The v2-stable blog reports 1404.2 KB → 344 KB for an Ant Design
+example, but does **not** attribute that measurement exclusively to this mode or establish it as
+a general multi-app result (`apps/website-new/docs/en/blog/v2-stable-version.mdx:25-33`).
 
 ### 1.9 The server, and what it does *not* do
 
@@ -261,13 +272,13 @@ prose-only at `apps/website-new/docs/en/_components/create-shared-tree-shaking-d
 > `treeShakingStatus`: mark as available.
 
 So the full-value configuration is: **a deploy-time build service + a cross-app usage aggregator + a
-snapshot-mutation step in CI.** It pays off only for an organization that already owns its deployment
-platform — the same bet as MF's manifest protocol. A human-driven alternative exists in
+snapshot-mutation step in CI.** This requires deployment integration; its economic payoff depends
+on the actual workload and operating costs, which were not measured here. A human-driven alternative exists in
 `packages/treeshake-frontend` (a React dashboard where you type share name/version/usedExports).
 
-### 1.10 Safety fallbacks
+### 1.10 Pruning gates, selection fallbacks, and failure limits
 
-Eight of them, which is the honest tell about how much is being trusted to static analysis:
+These eight branches have different roles; they are not eight guarantees of recovery:
 
 1. Not `sideEffectFree` → no pruning at build (`SharedUsedExportsOptimizerPlugin.ts:211-214`)
 2. Opaque `import()` → share key dropped entirely (`:109-117`)
@@ -275,18 +286,25 @@ Eight of them, which is the honest tell about how much is being trusted to stati
 4. `NO_USE` → full (`share.ts:128-130`)
 5. Coverage miss, where data exists → next candidate (`share.ts:436-451`)
 6. No shaken candidate on any version → `useTreesShaking = false`, re-run (`share.ts:259-273,331-345`)
-7. `loadShare` false → `treeShakingGetter?.() || getter()` (`consumes.ts:105`)
+7. `loadShare` resolves false → `treeShakingGetter?.() || getter()` (`consumes.ts:105`),
+   preferring the shaken getter; a rejected Promise does not trigger the right side of `||`
 8. `sharedFallback` absent → `getSharedFallbackGetter` returns the factory unchanged
    (`getSharedFallbackGetter.ts:12-19`); present-but-version-missing → throws (`:23-27`)
 
-Stated as policy at `shared-tree-shaking.mdx:93`:
+The documentation states a broader policy at `shared-tree-shaking.mdx:93`:
 
 > If the runtime detects issues (Snapshot not delivered, network errors, version mismatch, etc.), it
 > defaults to loading the full shared dependency bundle to keep the application stable.
 
+**The inspected paths do not establish that broad guarantee.** The secondary-entry getter in
+`webpack-bundler-runtime/src/init.ts:101-122` has no catch restoring the full getter.
+`runtime-core/src/shared/index.ts:444-452` emits `errorLoadShare` and rethrows the error.
+`consumes.ts:91-112` distinguishes a false result from a rejected load. Network/getter failure
+therefore needs separate handling; it is not covered merely because a full artifact was emitted.
+
 ### 1.11 Known soft spots
 
-Three findings that cut against the headline, all verified:
+Three findings from the pinned source:
 
 **(a) `runtime-infer`'s subset check is mostly inert.** `ShareRuntimeModule.ts:107` emits only
 `{mode}` into `initOptions.shared` — never the *candidate's* `usedExports`. With no candidate data,
@@ -368,36 +386,35 @@ SERVER (server-calc, external — YOU build the aggregator)
 
 ### 1.14 What this means for FynMesh
 
-Recorded as analysis, not a plan. No ticket exists for any of this.
+Recorded as analysis, not an implementation plan.
 
-- **The §13 framing holds and strengthens.** MF attacks bytes, FynMesh attacks requests
-  (`federation-combine`). MF's byte win is real, but reaching it requires deploy-time infrastructure
-  we do not have, and the cheap mode (`runtime-infer`) both under-delivers (§1.11a) and carries a
-  documented singleton hazard (§1.11c). `federation-combine` needs no runtime negotiation and
-  degrades to one extra request.
-- **The prerequisite we lack is not the algorithm, it's the identity.** MF can swap a pruned copy for
-  a full one because `Shared.treeShaking` is a *second slot on the same version entry* and every
-  failure path falls back to the first. Our registry files a module under its URL with the specifier
-  as a redirect — the **"One File, One Address"** invariant (`federation-js.ts:57-127`). Two shapes of
-  the same module at the same version is precisely what that invariant exists to forbid. Any port
-  would have to answer that first, not second.
-- **Per-importer resolution is a better input than MF has.** `rvm` already carries the importer
-  directory per chunk, so the set of importers of a share key is known at build time in a way MF has
-  to reconstruct from `dependencyReferencedExports`. If the used-export set were collected per
-  importer directory alongside `rvm`, the union is computable *within one build* rather than needing
-  a cross-app CI aggregator — the thing MF pushed onto its users at
-  `create-shared-tree-shaking-deploy-server.mdx:5-32`.
-- **The side-effect gate is the real ceiling.** It applies identically to any implementation:
-  no `"sideEffects": false`, no pruning. That caps the addressable surface to well-behaved ESM
-  libraries regardless of substrate.
+- **The optimizations target different costs.** MF's shared pruning reduces exported dependency
+  code; `federation-combine` reduces requests while preserving module records. Actual savings and
+  failure behavior must be measured for the relevant workload, rather than inferred from one
+  upstream Ant Design example.
+- **Variant selection and identity need a design, but URL identity does not prohibit variants.**
+  FynMesh's "One File, One Address" rule prevents duplicate records for the same module URL
+  (`federation-js.ts:1353-1368`). Pruned and full artifacts at distinct URLs could have distinct
+  identities. Missing capabilities include export-coverage metadata, safe selection, and rules
+  for side effects and singleton state across variants.
+- **Local importer metadata cannot replace cross-app knowledge.** `rvm` could help attribute
+  export usage per importer/chunk, but MF already computes local used-export sets. Neither
+  system's single-build analysis reveals all independently deployed consumers' needs. A complete
+  cross-app union still requires coordination, or a runtime policy that safely handles incomplete
+  knowledge. Importer paths alone also do not encode which exports are used.
+- **Side-effect safety remains necessary.** The inspected MF implementation requires
+  `factoryMeta.sideEffectFree === true`, which package metadata or bundler analysis can establish.
+  This is an implementation gate, not proof that every possible tree-shaker requires an explicit
+  package-wide `"sideEffects": false` declaration.
 
 ---
 
-## Corrections this forced in `MF2-VS-FEDERATION-JS.md`
+## Corrections carried into the comparison
 
-| Line | Was | Now |
+| Topic | Earlier claim | Refreshed conclusion |
 | --- | --- | --- |
-| `:203` | "✅ Rspack-first" | webpack has the full TS implementation in `packages/enhanced`; Rspack delegates to a native plugin and does **not** auto-apply it |
-| `:440` | attributed 1404→344 to `server-calc` | the figure is from the v2-stable blog describing the feature generally (`v2-stable-version.mdx:33`); `server-calc` is what makes it *reachable* multi-app |
-| `:886` | "only bundler with shared tree-shaking" | Rspack is *recommended* (native, canary-pinned); webpack is supported and is the reference implementation |
-| `:852`, `:1048` | unqualified wins | qualified with the opt-in cost and the `runtime-infer` caveats |
+| Bundler coverage | Rspack-only implication | webpack has the reference TS implementation; Rspack delegates to a native plugin |
+| Benchmark | 1404→344 belongs to `server-calc` | Upstream example; exclusive mode attribution is not established |
+| Failure handling | Every failure uses the full copy | Conditional selection fallback; getters can reject without full-copy retry |
+| FynMesh identity | URL identity forbids pruned/full variants | Separate artifact URLs are possible; safe variant semantics remain unimplemented |
+| Cross-app knowledge | `rvm` eliminates aggregation | Local importer metadata does not reveal other deployments' export requirements |

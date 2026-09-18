@@ -1,17 +1,33 @@
 # Module Federation 2.0 vs FynMesh `federation-js`
 
 A feature-by-feature comparison of **Module Federation 2.0** and **FynMesh's SystemJS-based
-federation stack**, written from both codebases rather than from marketing pages.
+federation stack**, based on source inspection, with upstream documentation used for integration guidance.
+
+**Review refreshed 2026-09-17 (America/Los_Angeles).** FynMesh source: `e561638`;
+nested `rollup-federation` source: `8964d49`. MF source remains pinned to `c38c4c0e4`.
+The public upstream HEAD inspected during this review was `d6bb5a6`, two commits ahead;
+its diff changes website/playground code and development dependencies, not the federation
+implementations discussed here. Registry `latest` remained **2.9.0** for the MF runtime;
+the separate Vite plugin advanced to **1.22.0**. Other integration versions below are the
+previous inventory, not a fresh release audit.
+
+The refresh corrects several claims contradicted by the original pinned source: MF supports
+importer-context ranges and multiple provided versions in one build; its runtime core can be
+externalized; and FynMesh has loader hooks and URL integrity support. Source and existing test
+fixtures were inspected; no new performance benchmark or upstream test-suite run was performed.
+Historical size figures below are retained as measurements from the earlier setup only.
+A subsequent focused build/run with published MF 2.9.0 and webpack 5.105.0 checked the disputed
+same-container sharing and external-runtime claims; results are recorded in §5.3 below.
 
 | | Module Federation 2.0 | FynMesh |
 | --- | --- | --- |
 | Versions compared | `@module-federation/*` **2.9.0** (`module-federation/core` @ `c38c4c0e4`, 2026-09-07) | `federation-js@1.1.3`, `rollup-plugin-federation@1.1.2`, `@fynmesh/kernel@1.1.3`, `create-fynapp@1.1.5` |
-| Origin | ByteDance Web Infra + Zack Jackson; began as a webpack bundler feature, extracted into a standalone runtime for MF 2.0 (announced 2024-04-26) | `jchip`, `github.com/jchip/rollup-federation`; developed privately for ~2 years before its public repo, predating any adoptable MF runtime library |
+| Origin | ByteDance Web Infra + Zack Jackson; began as a webpack bundler feature, later extracted into a standalone runtime | `jchip`, `github.com/jchip/rollup-federation`; author reports ~2 years of private development before its public repo |
 | Runtime substrate | Bundler runtime (`__webpack_require__.federation`) + extracted `@module-federation/runtime` SDK | Forked SystemJS 6.15.1 (`@fynmesh/systemjs`) with a mutable module registry |
-| Distribution | 43 packages on npm, ~43M downloads/mo (`@module-federation/runtime`) | **Published** since 2026-08-12: `federation-js`, `@fynmesh/kernel`, `rollup-plugin-federation`, `create-fynapp`, all at the versions above; ~500–900 downloads/mo each |
+| Distribution | Published runtime, build adapters, and tooling packages | Published federation runtime, kernel, Rollup plugin, and scaffolder; local versions above |
 | License | MIT | Apache 2.0 |
 
-Off-cycle MF versions worth knowing: `@module-federation/vite` **1.21.6**, `node` **2.7.50**,
+Off-cycle MF versions worth knowing: `@module-federation/vite` **1.22.0**, `node` **2.7.50**,
 `nextjs-mf` **8.8.74** (deprecated), `observability-plugin` **2.6.0**, `esbuild` **0.0.114**
 (experimental), `nuxt` **0.1.0**.
 
@@ -23,44 +39,23 @@ or costed before we consider building an equivalent. Currently covers shared tre
 
 ## The one-paragraph answer
 
-**FynMesh and MF attack the same problem from opposite substrates: MF from the bundler's module
-runtime, FynMesh from a mutable loader registry.** FynMesh is not a re-implementation of MF, and
-reading it as one inverts the history — see [Why `federation-js` exists](#why-federation-js-exists)
-below. The capabilities that distinguish it — per-importer semver resolution, self-sufficient
-containers that federate when co-loaded without declaring each other as remotes, two versions of one
-share key inside one container, versioned containers selected by range, a runtime resolver for apps
-not yet loaded — are not by-products of the registry choice; they are what the registry was chosen
-to deliver. The costs are equally direct, and all trace to *not* being a first-party bundler
-feature: ESM output, SSR, federated types, a runtime plugin API, multi-bundler reach. MF 2.0,
-meanwhile, has spent its 2.x cycle turning federation into a *platform*: a published manifest
-protocol, an extracted
-bundler-free runtime, a 40-hook plugin system, generated cross-app types, a Chrome extension, and
-shared tree-shaking. On raw federation semantics FynMesh is ahead in the places that matter for
-genuinely independent deployment; on everything surrounding federation, MF is several years ahead.
+**FynMesh puts federation in a mutable SystemJS registry; MF integrates a standalone federation
+runtime with bundler-generated containers.** Both support multiple shared versions and
+importer-dependent requirements. FynMesh's more specific distinctions are emitted per-chunk
+importer-range metadata, a first-class name/range container-selection contract, direct registry
+inspection, and a kernel that supplies lifecycle, middleware, messaging, and dependency-ordered
+bootstrap. MF has broader bundler/output support, federated types, SSR integrations, and a richer
+federation-policy plugin API. The earlier claim that FynMesh alone can express per-importer or
+multi-version sharing does not hold. Neither does an unavoidable 26 KB-per-app MF runtime cost:
+MF can externalize its runtime core, although per-build adapters remain.
 
 ## Why `federation-js` exists
 
-The comparison below is between two mature things, which makes it easy to read FynMesh as a late
-alternative to an established standard. It was not built that way.
-
-`federation-js` was designed and developed privately for roughly two years before its public
-repository existed, so the public commit history marks when it surfaced, not when it began. At
-inception, "Module Federation" was not a library anyone could adopt: it was a webpack feature,
-emitted tightly coupled into the `.js` bundles webpack produced. There was no extracted runtime, no
-bundler-free SDK, no manifest protocol — adopting MF meant adopting webpack's output format
-wholesale. The bundler-independent MF that this document compares against arrived considerably
-later, and is itself the result of MF moving in the direction of being a runtime rather than an
-emission format.
-
-So the unique capabilities in §17 are not incidental wins discovered after the fact — they are the
-motivation. A loader-level registry was chosen precisely because per-importer resolution and
-multiple concurrent versions of a share key are not reachable from inside a bundler runtime that
-resolves one `requiredVersion` per key per container. Had that been achievable with what existed,
-there would have been no reason to write `federation-js`.
-
-**Read the rest of this document with that asymmetry in mind.** Where MF leads, it is usually
-because a large team invested in surface area around a solved core. Where FynMesh leads, it is
-usually the thing it was built to do.
+The project's historical account is that it was developed privately for roughly two years before
+its public repository, motivated by loader-level federation without adopting webpack output.
+That motivation explains the architecture; private chronology is author-provided context, not
+something this source review establishes. It also does not establish limitations of today's MF.
+The useful comparison is the behavior and integration contract each stack now ships.
 
 ---
 
@@ -94,8 +89,9 @@ Every chunk is `System.register` output. The fork of SystemJS adds a **record-ex
 `globalThis.Federation` and hooks exactly two SystemJS prototype methods — `resolve`
 (share resolution, `federation-js.ts:292-313`) and `instantiate` (combined-bundle pulling, `:330-362`).
 
-Because the registry is mutable and inspectable *after* load, resolution decisions can be made per
-import site rather than per build. That is the whole trade.
+The registry exposes loaded state and binds resolution to importing chunks. MF also makes runtime
+choices for individual consume modules; FynMesh's distinction is the registry and metadata contract,
+not exclusive possession of decisions finer than a whole build.
 
 **Federation is therefore a property of module resolution, not a relationship configured between
 containers.** A normal container is expected to be self-sufficient: it can run with the modules it
@@ -105,74 +101,43 @@ none has to pre-declare the others as remotes. A consume-only share (`import: fa
 exception: because that container omitted its own implementation, the application, kernel, or other
 composition layer must ensure a satisfying producer is loaded.
 
-### Runtime delivery: embedded per artifact vs loaded once
+### Runtime delivery: defaults, externalization, and measured scope
 
-The two substrates deliver their runtime differently, and the difference shows up as bytes on the
-wire.
+**MF embeds runtime code by default.** `FederationRuntimePlugin` imports
+`@module-federation/webpack-bundler-runtime/bundler` into each build's module graph.
+The guard on `__webpack_require__.federation` is per bundler runtime, not proof of a single
+page-wide MF instance. `createInstance()` explicitly creates runtime instances, and the global
+instance registry can hold several (`packages/runtime/src/index.ts:28-44`).
 
-**MF has no runtime to load first — it compiles the runtime into every build.** The generated entry
-module opens with a static import (`FederationRuntimePlugin.ts:202`):
+**MF also supports a shared external runtime core.**
+`experiments.externalRuntime` reads `@module-federation/runtime-core` from
+`_FEDERATION_RUNTIME_CORE`; `provideExternalRuntime` supplies it from a pure consumer with no
+`exposes` in the inspected webpack/Rspack path
+(`packages/enhanced/src/lib/container/ModuleFederationPlugin.ts:182-198`). This removes repeated
+core payload, not every remote's bundler adapter. These options existed in the original pinned
+commit; they are not a new correction made upstream.
+See the [official experiments reference](https://module-federation.io/configure/experiments.html).
 
-```js
-import federation from '@module-federation/webpack-bundler-runtime/bundler';
-```
+**FynMesh requires SystemJS + `federation-js` before app entries run.** These scripts establish a
+shared loader registry explicitly. Each app still ships its own registration/binding code, so
+constant loader delivery is not constant total federation overhead.
 
-resolved through ordinary node_modules resolution (`:100-105`), so the runtime enters webpack's
-module graph like any dependency. `EmbedFederationRuntimePlugin` — "Plugin that embeds Module
-Federation runtime code into chunks" (`:26`) — then attaches it to every chunk where
-`chunk.hasRuntime()` (`:43-46`). A host and each independently-built remote therefore each ship
-their own copy. Because copies arrive in unpredictable order, the emitted code reconciles them at a
-global (`FederationRuntimePlugin.ts:186-201`): the first to execute populates it, later ones merge
-and skip re-init. **Only one instance runs — but all N copies are downloaded, parsed, and executed
-to reach that guard.**
+The earlier measurements used esbuild minification and gzip level 9:
 
-**FynMesh loads its runtime exactly once, and requires it explicitly.** SystemJS + `federation-js`
-must be present before anything else, because they *are* the loader — every FynApp is
-`System.register` output against an already-present registry.
-
-This is a deliberate stance, not a tax to apologise for. **Federation is a capability an application
-opts into and initializes, at a defined point, once** — not ambient behaviour that arrives welded
-into whatever bundle happens to load first. MF's self-contained artifacts are what force the
-reconciliation above: because no one initializes federation deliberately, every copy must assume it
-might be the first, and the winner is decided by execution order. FynMesh has no such guard because
-there is nothing to reconcile — the capability was established before any app ran. The O(1) payload
-below is a consequence of that choice, not its justification.
-
-Measured from built artifacts, both sides minified with esbuild `--minify`, gzip at level 9:
-
-| artifact | raw | gzip |
+| artifact | raw bytes | gzip bytes |
 | --- | ---: | ---: |
-| **MF** embedded runtime (`webpack-bundler-runtime` + `runtime-core` + `sdk`, bundled) | 84,396 | **26,006** |
-| **FynMesh** `system.min.js` | 10,145 | 3,779 |
-| **FynMesh** `federation-js.min.js` | 12,189 | 4,926 |
-| **FynMesh federation layer — total** | **22,334** | **8,705** |
-| *(app layer, not federation — see below)* `fynmesh-browser-kernel.min.js` | 26,470 | 9,731 |
-| *calibration:* `react-esm-19.production.js` | 18,592 | 4,658 |
+| MF bundled runtime, without externalization | 84,396 | 26,006 |
+| FynMesh `system.min.js` | 10,145 | 3,779 |
+| FynMesh `federation-js.min.js` | 12,189 | 4,926 |
+| FynMesh federation layer total | 22,334 | 8,705 |
+| FynMesh browser kernel, additional application layer | 26,470 | 9,731 |
 
-The constant favours FynMesh — 8.7 KB gz against 26 KB gz, roughly 3× — but the scaling is the
-real difference:
-
-| page with N independently-built apps | MF | FynMesh |
-| --- | --- | --- |
-| N = 1 | 26 KB gz | 8.7 KB gz |
-| N = 6 | ~156 KB gz | 8.7 KB gz |
-| N = 20 | ~520 KB gz | 8.7 KB gz |
-
-**MF pays per artifact; FynMesh pays once.** FynMesh is ahead at N = 1 and the gap widens linearly.
-
-**What is being compared:** SystemJS + `federation-js` is the federation layer, and that is the only
-fair counterpart to MF's runtime. The **kernel is not part of it** — it is the micro-frontend
-*application* layer (lifecycle, middleware, FynBus, the dependency graph), for which MF has no
-counterpart at all. Counting it anyway still lands under one MF copy: 18.4 KB gz vs 26 KB.
-
-Three caveats, so the MF figure is not overstated: it was bundled with esbuild rather than webpack,
-whose tree-shaking against one app's actual feature use could trim further;
-`@module-federation/sdk/dist/node.js` (4,464 raw) landed in the browser bundle even under
-`--conditions=browser`, worth perhaps 1–2 KB gz of unfairness; and discounting generously to ~20 KB
-gz changes none of the scaling, which is structural rather than a matter of the constant.
-
-**Consequence to keep in mind while reading:** MF's design questions are "what does the bundler emit,
-and how do runtimes negotiate?" FynMesh's are "what does the loader know, and when?"
+These are **historical artifact measurements, not an apples-to-apples page benchmark**. The MF
+bundle included a Node SDK path, did not exercise actual webpack feature elimination, and did
+not use external runtime options. Multiplying 26 KB by app count estimates that particular
+embedded setup only. A useful new benchmark would compare default and externalized MF builds
+against FynMesh, counting adapters, entries, caching, requests, and equivalent functionality.
+No universal 3× saving or structural O(1)-versus-O(N) conclusion follows from this table.
 
 ---
 
@@ -184,15 +149,15 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 
 | Capability | MF 2.0 | FynMesh | Notes |
 | --- | --- | --- | --- |
-| Runtime delivery | embedded into **every** build (~26 KB gz per artifact), initialization settled by execution order | initialized **once**, explicitly, before any app runs (~8.7 KB gz, flat) | Federation as a deliberate capability vs ambient bundle content; O(1) vs O(N) (§1) |
+| Runtime delivery | Embedded by default; runtime core can be externalized | Shared loader scripts plus per-app bindings | Historical measurements are configuration-specific (§1) |
 | Expose modules from a build | ✅ `exposes` | ✅ `exposes` | Equivalent |
 | Consume remote modules | ✅ `remotes` + `loadRemote` | ✅ import attributes + `_importExpose` | Different binding model (§6) |
 | Container protocol | `{ get, init }` | `{ init, get, container, __FYNAPP_MANIFEST__ }` | FynMesh also exposes a live container object |
 | Bidirectional host/remote | ✅ | ✅ | |
 | Build-time `remotes` declaration | ✅ | ❌ **by design** | FynMesh resolves remotes at runtime (§6) |
-| Runtime remote resolution | ✅ `registerRemotes(..., {force})` — a name→URL **table** | ✅ `setRegistryResolver((name, range) => …)` — a resolution **policy** | Not a gap: a resolver subsumes a table. No consumer-authored remote table is needed (§6) |
-| Semver-range remote selection | ❌ | ✅ `_mfGetContainer(name, "^2.0.0")` | Unique to FynMesh |
-| Same container name at two versions in one page | ❌ names are unique globals | ✅ `$C[name][version]` | Unique to FynMesh |
+| Runtime remote resolution | ✅ name-based registration plus request/resolve/load hooks | ✅ kernel `setRegistryResolver((name, range) => …)` | Built-in range contract versus generic extension hooks (§6) |
+| Built-in semver-range container selection | ❌ requires custom policy | ✅ `mf-expose` import attribute `semver` | FynMesh selects first satisfying registered container; deployment resolver must honor ranges |
+| Versioned remote coexistence | ✅ distinct registrations/entries or instances; no built-in range lookup | ✅ `$C[name][version]` | Logical name/range addressing is FynMesh’s distinction |
 | Per-chunk binding metadata | ❌ | ✅ `_mfBind({n,f,c,s,e,v,b}, [importerDirs])` | Every non-entry chunk is bound |
 
 ### Shared dependencies
@@ -210,10 +175,10 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | `layer` | ✅ | ❌ | |
 | Subpath sharing (`react-dom/`) | ✅ trailing-slash prefix match | ❌ must declare each key | FynMesh trap documented at `rollup-plugin-federation/README.md:73-75` |
 | `shareStrategy` (version-first / loaded-first) | ✅ | ❌ hard-coded | FynMesh is effectively loaded-first (§5) |
-| Selection rule | **highest satisfying**, loaded copy sticky | **first registered satisfying** (load order) | Real semantic difference |
+| Selection rule | Strategy-selected candidate; fallback scan can be insertion-ordered | Loaded satisfying candidate first, then insertion order | Both can depend on registration/loading history (§5) |
 | Multi-version coexistence across containers | ✅ | ✅ | |
-| **Two versions of one share key inside one container** | ❌ structurally impossible | ✅ | **Unique to FynMesh** |
-| **Per-importer declared ranges (`rvm`)** | ❌ one `requiredVersion` per key | ✅ all applicable ranges must hold | **Unique to FynMesh** |
+| **Multiple provided versions of one share key in one build** | ✅ version arrays and fixtures | ✅ emitted share entries | Supported by both (§5.3) |
+| **Importer-dependent requirements** | ✅ inferred per consume context unless explicitly overridden | ✅ per-chunk `rvm` range intersection, subject to singleton policy | Different granularity and metadata (§5.3) |
 | Shared tree-shaking | ✅ opt-in per share; ~75% reported on antd | ❌ | webpack is the reference implementation, Rspack the recommended one (§13) |
 
 ### Runtime & extensibility
@@ -221,14 +186,14 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | Capability | MF 2.0 | FynMesh | Notes |
 | --- | --- | --- | --- |
 | Bundler-free runtime SDK | ✅ `createInstance()` | 🟡 global singleton, not importable (`src/index.ts:1-9` exports only `Container` + types) | |
-| Runtime plugin hooks | ✅ **~40 hooks** across 4 PluginSystems | ❌ **none** | Biggest extensibility gap |
+| Runtime plugin hooks | ✅ federation lifecycle/policy hooks | 🟡 typed SystemJS loader wrappers; no comparable federation-policy API | Distinguish loader hooks from policy plugins (§7) |
 | Global plugins | ✅ `registerGlobalPlugins` (deduped by name) | ❌ | |
 | Build plugin hooks | ✅ webpack/Rspack plugin API | ✅ 4 own hooks (`enrichManifest`, `emitMeta`, `emitFederationMeta`, `renderDynamicImport`) | |
-| User-extensible import protocol | ❌ | ✅ `renderDynamicImport` + build-time guard (`index.mts:785-795`) | Unique to FynMesh |
+| Custom loading/import protocols | ✅ runtime `loadEntry` and bundler extension APIs | ✅ `renderDynamicImport` + build-time guard; loader hooks | Different extension layers |
 | Application middleware layer | ❌ nothing comparable | ✅ (§7) | **Unique to FynMesh** |
-| App lifecycle contract | ❌ modules only | ✅ `FynUnit` init/execute/shutdown/suspend/resume | **Unique to FynMesh** |
+| App lifecycle contract | Bridges provide render/destroy; no FynUnit equivalent | ✅ `FynUnit` initialize/execute/shutdown/suspend/resume | Additional kernel layer |
 | Inter-app messaging | ❌ | ✅ FynBus pub/sub + request/response + channels | **Unique to FynMesh** |
-| Cross-app dependency graph + topological load | ❌ on-demand only | ✅ (`manifest-resolver.ts:194-266`) | **Unique to FynMesh** |
+| App dependency graph + topological bootstrap | No equivalent app-bootstrap contract | ✅ (`manifest-resolver.ts:194-266`) | Entry discovery may execute code before bootstrap ordering |
 | Config system | ✅ extensive | ❌ `KernelConfig` is entirely dead code | |
 
 ### Tooling, types, delivery
@@ -237,18 +202,18 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | --- | --- | --- | --- |
 | Published manifest schema | ✅ `mf-manifest.json` + `mf-stats.json`, typed in `packages/sdk` | 🟡 4 JSON artifacts, **unversioned** | §4 |
 | Manifest embedded in entry (zero extra request) | ❌ | ✅ `__FYNAPP_MANIFEST__` | Unique to FynMesh |
-| Federated TypeScript types | ✅ `dts-plugin`, `@mf-types.zip`, live WS reload | ❌ every cross-app import is `any` | Widest DX gap |
+| Federated TypeScript types | ✅ `dts-plugin`, `@mf-types.zip`, live WS reload | ❌ no generated remote contracts; wildcard defaults to `any` | Manual type declarations remain possible |
 | Chrome extension | ✅ shipped, store id `aeoilchhomapofiopejjlecddfldpeom` | ❌ **deliberately cancelled** (FYM-31 `wont_do`) | |
-| In-page inspector | ❌ | ✅ 16,462 LOC, 8 views, 24 diagnostics | **Unique to FynMesh** |
+| In-page inspector | Chrome extension is the shipped interface | ✅ 8 views, named diagnostics | Direct registry inspection is a FynMesh strength |
 | Observability / telemetry | ✅ `observability-plugin`, exportable trace reports | 🟡 `KernelTelemetry` built but **inert by default** | |
 | SSR | ✅ Modern.js (stream), `@module-federation/node`, Rsbuild | ❌ does not exist; `NodeKernel` bypasses federation | **Widest single gap** |
 | Preloading | ✅ `preloadRemote` w/ filters, deps, asset categories | 🟡 depth-bounded only; **priority system unimplemented** | §13 |
 | Data prefetch | ✅ `*.data.ts` + `instance.prefetch()` | ❌ | |
 | Retry / failover | ✅ `retry-plugin` (domains, backoff, cache-bust) | ❌ | |
-| Error taxonomy | ✅ `RUNTIME-*`/`BUILD-*`/`TYPE-*` codes | ✅ 19 kernel codes; ⚠️ all diagnostics dropped in prod (`drop_console: true`) | |
+| Error taxonomy | ✅ `RUNTIME-*`/`BUILD-*`/`TYPE-*` codes | ✅ 19 kernel codes; console output stripped in prod; state/events remain | |
 | Bundlers | webpack, Rspack, Rsbuild, Rslib, Vite, Rollup/Rolldown, Metro, esbuild(exp) | **Rollup only**, SystemJS output only | |
 | Framework bridges | ✅ React 16–19, Vue 3 | ❌ (but demo covers React/Vue/Marko/Preact/Solid/Svelte) | |
-| SRI / CSP / sandboxing | ❌ none (explicitly) | ❌ none | Tie — see §15 |
+| SRI / CSP / sandboxing | 🟡 script/link hooks for policy; no app sandbox | 🟡 loader integrity map + script hooks; no app sandbox | Host policy still required (§15) |
 
 ---
 
@@ -279,7 +244,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 Two consequences of the SystemJS choice:
 
 1. **You always ship the loader.** `system.js` + `federation-js.dev.js` must be paired
-   (`federation-js/README.md:40-41`). MF's remotes need no shim.
+   (`federation-js/README.md:40-41`). MF remotes use their bundler/runtime machinery rather than this SystemJS loader.
 2. **You get a mutable registry in return.** This is what makes §5's resolution model, the inspector,
    and `federation-combine` possible.
 
@@ -288,11 +253,11 @@ There is also a build-timing hazard on the FynMesh side worth flagging: entry ge
 (`utils/timing.mts:21-72,81-100`), plus two hard `sleep(50)` calls (`index.mts:446,449`).
 Webpack/Rspack MF has no equivalent timing dependency.
 
-**One invariant FynMesh enforces that MF does not:** *"One File, One Address."* A module that
+**FynMesh explicitly enforces "One File, One Address" for URL/specifier registration.** A module that
 registered from its own file is filed under its URL with the specifier as a redirect, so both
 spellings join a single record (`federation-js.ts:57-127`, `addIdUrlMap:1343-1444`,
 `tests/one-file-one-address.test.ts`). This closes a duplicate-instance route that a code-split entry
-otherwise walks into every time.
+can otherwise encounter. This does not establish that MF lacks its own module-caching invariants.
 
 ---
 
@@ -337,16 +302,18 @@ See [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md) for the full reference.
 | `federation.bundles.json` | Combined-bundle map, readable without executing anything |
 | `__collected_shares.json` | Debug dump; nothing reads it |
 
-**The embedded copy is the genuinely better idea here.** The kernel has to load the entry anyway to
-get the container, so tier 1 of its four-tier resolution chain (`manifest-resolver.ts:152-191`) costs
-**zero additional requests** — versus one extra round trip per app in MF, multiplied across the
-dependency graph. MF has no equivalent; its manifest is always a separate fetch.
+**The embedded copy saves a separate metadata request when the entry must load anyway.**
+Tier 1 imports and executes the entry to read `__FYNAPP_MANIFEST__`
+(`manifest-resolver.ts:163-170`). That is a useful delivery tradeoff, but it means graph discovery
+can execute entries before dependency-ordered bootstrap. MF's separate manifest enables
+metadata-only planning, and pre-supplied snapshots can avoid its manifest fetch. Neither always
+has a one-request advantage across all loading strategies.
 
 **Where FynMesh is behind:**
 
 - **No versioned schema.** MF's is typed in a published SDK package and evolves under semver.
-  FynMesh's is implicit — the emitted JSON carries no schema version, so a consumer has no way to
-  tell which shape it is holding. (`FynAppManifest.exposes` in `core/kernel/src/types.ts:329-337`
+  FynMesh also publishes TypeScript types, but its emitted JSON has no explicit format version.
+  Neither the MF SDK package version nor a package version in a manifest is itself a schema discriminator. (`FynAppManifest.exposes` in `core/kernel/src/types.ts:329-337`
   used to be declared wrong relative to what the build emits; that is now fixed and documented
   in-source, but nothing *versions* the shape.)
 - **One consumer with no fallback.** `module-loader.ts:254-265` reads `__FYNAPP_MANIFEST__` straight
@@ -365,8 +332,8 @@ dependency graph. MF has no equivalent; its manifest is always a separate fetch.
 
 ## 5. Shared dependencies — the deepest divergence
 
-This is the section that most justifies FynMesh's existence, and also where it has the sharpest
-rough edges.
+Both stacks support context-sensitive consumption and multi-version provision. Their metadata,
+selection policies, and override behavior differ.
 
 ### 5.1 MF 2.0's algorithm
 
@@ -378,8 +345,8 @@ From `packages/runtime-core/src/utils/share.ts:355-477`:
    - **`loaded-first`** (`:284`) — loaded/loading copies win first; `versionLt` breaks ties.
 3. `defaultResolver` (`:393`):
    - **singleton**: take the winner. If `requiredVersion` is a string and unsatisfied →
-     `error()` when `strictVersion`, else `warn()`. **Returns the winner either way** — non-strict
-     never falls back.
+     `error()` when `strictVersion`, else `warn()`. Strict mismatch throws; non-strict returns
+     the winner rather than falling back.
    - **non-singleton**: winner if it satisfies; else scan *all* registered versions for the first
      that does; else `undefined` → the consumer loads its own copy.
 4. Fire the `resolveShare` waterfall. **Overriding `args.resolver` is the only way to change the
@@ -401,57 +368,91 @@ From `federation-js.ts:645-1022`:
 3. **Collect declared ranges — `matchRvm`** (`:1082-1147`). `rvm` maps *importer directory* → the
    range **that importer's own `package.json` declared**. A chunk bundles several importers, so
    **several ranges can apply to one import**.
-4. **`satisfiesAll`** (`:1158-1165`) — a version is usable only if it satisfies **every** applicable range.
+4. **`satisfiesAll`** (`:1158-1165`) — ordinary candidate matching requires **every** applicable range.
 5. **`semverMatch`** (`:1175-1212`) — a `loadedOnly` pass first, then a pass allowing unloaded;
-   **insertion order decides within each pass**.
+   **insertion order decides within each pass**. Singleton policy can subsequently override the match.
 6. **Singleton override** (`:944-961`).
 7. **`pickShareSource`** (`:1239-1249`) — **first source wins, and the choice is memoised**.
 
-### 5.3 The two things FynMesh can express that MF cannot
+### 5.3 What both support, and where the contracts differ
 
-**(a) Per-importer version resolution.** MF resolves a share against *one* `requiredVersion` per
-share key per container — the range the host build declared. FynMesh resolves against **the actual
-declared constraints of the code doing the importing**, including transitive `node_modules`
-importers, and requires all of them to hold simultaneously.
+**(a) Importer-dependent requirements exist in both.** MF's `ConsumeSharedPlugin` starts from
+each `resolveData.context` to infer the importing package's requirement when `requiredVersion`
+is omitted (`:225-283,488-514`). Each consume passes its own `shareInfo` to `loadShare`.
+The `consume-multiple-versions` fixture (`index.js:162-176`) expects a root consumer to use 1.x
+and nested consumers to use 2.x in the same build.
 
-The `share-a-*` fixtures isolate this precisely. `share-a-nest` and `share-a-nest-2` have
-**byte-identical `index.mjs`**; the only variable is the declared range in `package.json:24`. The
-resolved version is therefore decided *purely* by the importer's declared range, not by anything in
-the importing code.
+FynMesh emits importer-directory ranges in `rvm` and associates them with output chunks.
+`matchRvm` collects the relevant ranges and `satisfiesAll` intersects them. This is a distinct,
+inspectable contract, but not independent resolution of every source import once several
+importers occupy one chunk. Non-semver protocols/tags are skipped, and a loaded singleton may
+override a satisfying choice with a warning (`federation-js.ts:927-960,1104-1136`).
 
-**(b) Two versions of one share key inside one container.**
-`sample-react-federation/dist/plugin-entry.js:52-61`:
+**(b) Multiple versions of one share key in one build exist in both.** MF's
+`ShareRuntimeModule.ts:78-112` emits arrays per shared key; runtime options accept `ShareArgs[]`.
+The `provide-module` fixture (`index.js:31-39`) asserts versions 1.1.9, 1.2.3, and 1.3.0 under
+one key/scope. FynMesh emits multiple entries through one `_S` call
+(`rollup-plugin-federation/src/code-generation/container-code.mts:137-145`). The configuration
+and discovery ergonomics differ; neither representation makes this structurally impossible.
+
+**(c) FynMesh has a built-in logical-name/range container contract.** The `fynapp-x1-v1` and
+`fynapp-x1-v2` demos publish the same logical name at different versions. Consumers select via
+`import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^2.0.0" } })`.
+The registered-container lookup chooses the first satisfying version, not necessarily the highest.
+MF registrations are name-keyed per runtime instance; independently versioned code can coexist
+through distinct registration names/entries or instances. `entryGlobalName` is separate from
+the registration name, and ESM remotes do not require window globals. MF lacks the same built-in
+semver-range lookup, but coexistence itself is not unique to FynMesh.
+
+**Focused same-container experiment (2026-09-17).** To distinguish provider registration from
+actual consumption, a self-contained webpack container exposed `./probe`. Its root package
+declared `shared-lib: ^1.0.0`; a nested package declared `shared-lib: ^2.0.0`. Their installed
+versions were 1.2.0 and 2.3.0. One ordinary configuration supplied both:
 
 ```js
-_container._S('share-a', {"requiredVersion":"2"}, [
-  // importee: node_modules/share-a/index.mjs      from: src, node_modules/share-a-nest-2
-  [[_f('./index-79236d5b.js'), "2.0.0"], ["src", "2"], ["%nm/share-a-nest-2", "^2.0.0"]],
-  // importee: node_modules/.f/_/share-a/1.0.0.../index.mjs  from: node_modules/share-a-nest
-  [[_f('./index-a197e853.js'), "1.0.0"], ["%nm/share-a-nest", "^1.0.0"]]
-]);
+new ModuleFederationPlugin({
+  name: 'inferred',
+  exposes: { './probe': './probe.js' },
+  shared: { 'shared-lib': { singleton: false } },
+  // Harness used async-node + commonjs-module output; types/manifest/dev disabled.
+});
 ```
 
-One container, one share key, two versions in two chunks, with per-importer-directory ranges. Webpack
-MF resolves one version per share key per scope per build; it cannot express this shape.
+After `container.init({})`, the test called `container.get('./probe')` and executed its factory.
+There was no second remote, injected provider, alias, or separately configured share scope.
 
-**(c) Versioned containers.** `fynapp-x1-v1` and `fynapp-x1-v2` both declare `name: "fynapp-x1"` at
-versions 1.0.0 / 2.0.0, bound to React 18 and React 19, loaded into the same page simultaneously.
-Consumers select at the import site:
-`import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^2.0.0" } })`. MF container names are
-unique keys on `window`.
+| Case | Registered versions | Root / nested result |
+| --- | --- | --- |
+| Inferred ranges, non-singleton | 1.2.0 and 2.3.0 | **1.2.0 / 2.3.0** |
+| Explicit `requiredVersion: '^1.0.0'` | Both | **1.2.0 / 1.2.0** — inference overridden |
+| `singleton: true` | Both | **2.3.0 / 2.3.0** plus mismatch warning |
+| `singleton: true, strictVersion: true` | Both | Range mismatch error |
+| Inferred ranges + `externalRuntime: true` | Both | **1.2.0 / 2.3.0**, with runtime core supplied globally |
+
+The externalized build's stats contained the `_FEDERATION_RUNTIME_CORE` external and no bundled
+`runtime-core/dist` modules. Adapters remained; this does not mean a runtime-free remote.
+The harness supplied the global directly; it did not exercise the `provideExternalRuntime` plugin.
+The harness and results are in `.temp/mf2-doublecheck/probe.cjs` and `probe.log` (gitignored).
+This is a webpack/Node-container experiment, not a browser, Rspack, Vite, or performance test.
+
+**The limitation is policy/configuration, not a one-version-per-container rule.** Explicit
+`requiredVersion` replaces inference; explicit `version` overrides provider-version inference;
+singleton policy prevents independent version choice within the same share scope. Packages
+must also be declared shared. Distinct container releases sharing one registration name remain
+a separate issue from different shared dependency versions inside a container.
 
 ### 5.4 Where FynMesh is behind on sharing
 
 | Gap | Detail |
 | --- | --- |
-| **Selection is load-order-first, not highest-satisfying** | `semverMatch` is first-match-wins over insertion order (`:1183-1198`), i.e. container declaration order = FynApp load order. Selecting the highest was considered and **explicitly rejected** (`notes/combined-module-bundles.md:789-799`). This is a real source of load-order sensitivity that MF does not have. |
+| **Selection is load-order-first, not highest-satisfying** | `semverMatch` is first-match-wins over insertion order (`:1183-1198`), i.e. container declaration order = FynApp load order. Selecting the highest was considered and **explicitly rejected** (`notes/combined-module-bundles.md:789-799`). MF offers different strategies but also has loaded-copy stickiness and insertion-ordered fallback scans; it is not load-order independent. |
 | **`eager` unimplemented** | Accepted, emitted, read by nothing. Stated verbatim at `federation-js/src/types.ts:97-108`. |
 | **No `strictVersion`** | Singleton mismatches always warn, never fail. |
 | **No `shareStrategy`** | Behaviour is hard-coded loaded-first-within-a-satisfying-set. |
 | **Per-share `shareScope` silently dropped** | The runtime honours `options.shareScope` (`container.ts:99`) but `PICK_SHARE_KEYS` omits it, so it is never emitted. |
 | **Subpath exports are not shared** | Declaring `share-a` does not share `share-a/lib` — that must be its own key. MF solves this with trailing-slash prefix matching (`'react-dom/'`). |
-| **Transitive deps must be listed manually** | *"A dependency consumed only transitively still has to appear in `shared` with its semver range… a mismatch shows up at runtime as a duplicate-instance error rather than a build failure"* (`rollup-plugin-federation/README.md:73-75`). Webpack MF auto-infers from `package.json`. |
-| **No shared tree-shaking** | MF prunes a shared package to the exports a build actually references, keeping a full copy as fallback — antd 1404 KB → 344 KB reported. Opt-in per share, gated on `"sideEffects": false`, and the mode that delivers that number (`server-calc`) needs deploy-time infrastructure. Mechanism in §13 / [`MF2-DETAILS.md`](./MF2-DETAILS.md#1-shared-dependency-tree-shaking). |
+| **Transitive shared ranges need configuration** | FynMesh documents that a transitively consumed dependency must appear in `shared` with its range (`rollup-plugin-federation/README.md:73-75`). MF also needs the package declared shared, but can infer its range from the consuming package's `package.json`; it does not automatically share every transitive dependency. |
+| **No shared tree-shaking** | MF prunes eligible shared modules, keeping a full artifact available — antd 1404 KB → 344 KB reported. Opt-in per share, gated on side-effect-free module metadata/analysis; `server-calc` needs deploy-time infrastructure. The reported example does not establish an exclusive mode attribution. Mechanism in §13 / [`MF2-DETAILS.md`](./MF2-DETAILS.md#1-shared-dependency-tree-shaking). |
 | **Scope cannot be torn down** | A container's share scope has no teardown path. |
 
 > **Note on a stale in-repo claim:** `rollup-federation/README.md:61-69` lists `singleton` as "Not
@@ -485,7 +486,7 @@ registerRemotes([{ name: 'sub2', entry: 'http://localhost:2002/mf-manifest.json'
 registerRemotes([...], { force: true });  // overwrites loaded remotes AND deletes their module cache
 ```
 
-Public path is handled by `getPublicPath` — a **stringified** function evaluated via `new Function`
+Dynamic public path can be handled by `getPublicPath` — a **stringified** function evaluated via `new Function`
 (so it is a CSP `unsafe-eval` dependency), and **only effective when `exposes` is set**. The MF1
 `'promise new Promise(...)'` remote pattern is gone from all MF2 docs.
 
@@ -537,45 +538,29 @@ name, and the version is whatever that URL happens to serve.
 **On top of this, FynMesh builds a dependency graph.** The kernel reads manifests, derives edges from
 `requires` + `import-exposed` + `shared-providers`, detects cycles, and loads in **topological
 batches with bounded concurrency** (`manifest-resolver.ts:194-266`;
-`kernel.loadFynAppsByName(reqs, { concurrency: 4 })`). MF loads remotes on demand with no notion of
-inter-remote ordering.
+`kernel.loadFynAppsByName(reqs, { concurrency: 4 })`). MF does not ship this application-bootstrap orchestration contract. Its manifests and preload
+logic do track remote dependencies, which is a separate concern.
 
-### This is a philosophical difference, not a feature gap
+### Built-in dependency resolution versus an extensible remote registry
 
-The two models disagree about what a remote *is*, and that disagreement is the reason `federation-js`
-was written.
+FynMesh makes `(name, range) → deployment` a first-class kernel interface. The host supplies a
+resolver and consumers name dependencies without embedding deployment URLs. MF's default remote
+registry is name-based, but its `beforeRequest`, `afterResolve`, and `loadEntry` hooks can implement
+request rewriting, custom discovery, or deployment selection. A registry plus policy code can
+implement semver selection; the absence of a dedicated range argument is not an impossibility
+proof. Both can change deployment URLs without rebuilding consumers.
+See [MF's runtime plugin recipes](https://module-federation.io/guide/runtime/runtime-plugins).
 
-**MF treats a remote as a name bound to a URL.** `registerRemotes([{ name, entry }])` pushes an entry
-into a lookup table; whatever that URL serves is the version you get. Resolution is an act of
-*wiring*, performed by whoever holds the table.
-
-**FynMesh treats a remote as a dependency with a range** — the package-manager model, applied at
-runtime. A consumer declares `fynapp-x1@^2.0.0` in source. A host supplies a resolver —
-`setRegistryResolver((name, range) => …)`, a public kernel method callable at any point
-(`kernel-core.ts:165`) — which answers *which build satisfies that range*. No consumer registers a
-name→URL remote mapping.
-
-The inversion is the point: **a resolver can implement a name→URL table, but a table cannot
-implement semver resolution.** So this is not "FynMesh lacks `registerRemotes`" — the runtime
-capability is present and strictly more general. What FynMesh omits is the imperative wiring model,
-deliberately. Declaration plus resolution *is* the thesis, and the capabilities in §17 — per-importer
-version resolution, two versions of one share key, versioned containers, swapping a build without
-rebuilding consumers — are all downstream of this single choice. None of them are reachable from a
-model where a remote is a name someone pointed at a URL.
-
-**The result, at the call site: there is no remote table to register.** You ask for a FynApp by name
-and the kernel works out the rest —
+FynMesh's built-in composition call remains useful:
 
 ```ts
 await kernel.loadFynAppsByName([{ name: "fynapp-1" }], { concurrency: 4 });
 ```
 
-From that one call (`kernel-core.ts:234-242`) the kernel resolves the manifest, walks
-`requires` + `import-exposed` + `shared-providers` to build the dependency graph, resolves every
-shared module against the declared ranges of the code actually importing it, orders the result
-topologically, and loads it in batches. No remote list, no host config enumerating what exists, no
-remote-registration step — **load a FynApp normally and the plumbing is figured out for you.** MF's
-equivalent starting point is a table someone has to populate and keep correct.
+The kernel discovers manifests and dependencies, then bootstraps apps in topological batches.
+Embedded-manifest discovery already imports entries, and its DFS awaits dependency discovery
+serially (`manifest-resolver.ts:201-259`). Bounded concurrency describes the later load/bootstrap
+phase, not all network requests or all module execution.
 
 **Implementation notes** — sharp edges in what ships today, not costs of the model:
 
@@ -596,7 +581,7 @@ the other is strong.
 
 ### MF 2.0 — ~40 runtime hooks
 
-Four separate `PluginSystem` instances. Verified from source:
+Source-defined hook groups (their count and grouping are version-dependent):
 
 | Group | Hooks |
 | --- | --- |
@@ -612,14 +597,17 @@ Four separate `PluginSystem` instances. Verified from source:
 through it. Official plugins: `retry-plugin`, `observability-plugin`, `node/runtimePlugin`,
 `inject-external-runtime-core-plugin`, `lazyLoadComponentPlugin`.
 
-### FynMesh — no runtime hooks, but an application middleware layer
+### FynMesh — loader hooks plus an application middleware layer
 
-`federation-js` has **no plugin or hook system whatsoever** — verified, `grep` for
-`hook|plugin|addEventListener|dispatchEvent|emit(` over `src/` returns only prose comments. This is a
-clear, unambiguous gap.
+`federation-js` lacks a comparable named federation-policy plugin API, but the stack has
+**typed SystemJS hooks**, including `resolve`, `instantiate`, and `createScript`
+(`systemjs/src/types.ts:281`; `systemjs/docs/hooks.md`). Combined-bundle loading also delegates
+to `createScript` (`federation-js.ts:1800-1820`). Loader wrappers can implement instrumentation
+and script policy without changing core. What is missing is MF's standardized share/remote
+lifecycle context, plugin composition, and ready-made policy ecosystem.
 
-What FynMesh has instead operates one layer up: **middleware**, a cross-app dependency-injection +
-lifecycle system in the kernel. MF has nothing comparable.
+FynMesh additionally supplies **middleware**, a cross-app dependency-injection and lifecycle
+system in the kernel. MF's federation runtime does not supply this same application contract.
 
 **Provider side** — export anything prefixed `__middleware__` from an expose keyed `./middleware*`:
 
@@ -674,8 +662,8 @@ are easy to miss — **only auto-apply middleware can override** (`findExecution
 auto-apply lists only, so anything pulled in by `useMiddleware()` never can), and the winner is
 **first by registration order**, not by any priority.
 
-This is the precise thing MF's plugin system cannot do. MF's ~40 hooks all intercept the **loader**;
-none of them can intercept the *consumer's execution*.
+This is an application-level execution contract. MF does expose factory-execution and bridge-render
+hooks, but those are not FynUnit initialize/execute overrides or its middleware dependency model.
 
 **Middleware version resolution** (`types.ts:304-315`): a range picks the highest registered
 satisfying version; an unsatisfiable range **warns and falls back to `default`** rather than failing.
@@ -732,7 +720,7 @@ routing… Shell app owns all routing concerns"* (`design/DESIGN-REVIEW-2025-11-
 is not one occurrence of `route`/`router`/`navigat` in `core/kernel/src/`. MF has no router either.
 This is a wash — but FynMesh's "framework" positioning invites the question more loudly.
 
-**One structural asymmetry in integration model worth noting:** `@fynmesh/kernel` **ships no kernel**.
+**One structural asymmetry in integration model worth noting:** `@fynmesh/kernel` **does not export a kernel constructor from its main module entry**.
 `src/index.ts:1-9` exports 8 modules — types and utilities. `FynMeshKernelCore`, `BrowserKernel`,
 `createBrowserKernel` are *not* exported. The implementation is a prebuilt IIFE that self-installs on
 `globalThis.fynMeshKernel`. So a consumer **imports types and gets the runtime from a script tag** —
@@ -757,9 +745,9 @@ materially different from MF, where the bundler plugin bundles the runtime into 
 - Caveats: types are **not** downloaded when `NODE_ENV==='production'` unless `typesOnBuild: true`;
   webpack users must add `'**/@mf-types/**'` to `watchOptions.ignored` or compilation loops forever.
 
-**FynMesh: none.** `grep -rn "dts" rollup-plugin-federation/src README.md` → **0 hits**. No type
-generation, no remote type download, no type manifest. Cross-app imports are typed by
-`declare module "fynapp-*"`, which makes **every cross-app import `any`**. It is not on the roadmap.
+**FynMesh has no shipped remote type generation/distribution.** The scaffolder supplies
+`declare module "fynapp-*"`, defaulting matching imports to `any`. Applications can supply precise
+ambient declarations or shared contracts manually; the missing feature is automated federation of types.
 
 For a framework whose selling point is independently deployed teams sharing code, this is the widest
 day-to-day developer-experience gap in the comparison.
@@ -771,10 +759,10 @@ day-to-day developer-experience gap in the comparison.
 | | MF 2.0 | FynMesh |
 | --- | --- | --- |
 | Form factor | **Chrome extension** (store id `aeoilchhomapofiopejjlecddfldpeom`), adds a "Module Federation" DevTools tab | **In-page overlay**, `Ctrl+Shift+M`, Preact + signals in a Shadow DOM |
-| Size / status | `@module-federation/devtools@2.9.0` | 16,462 LOC, `federation-inspector@0.1.0`, `private: true` |
+| Size / status | `@module-federation/devtools@2.9.0` | `federation-inspector@0.1.0`, `private: true` |
 | Requires app cooperation | **Yes — `mf-manifest.json` is a hard requirement** | **No** — reads the loader's record-exposure API |
 | Panels | Proxy · Module Info · Dependency Graph · Shared · Loading Trace | Modules · Graph (ELK) · Containers · Shares · Issues · Middleware · FynApps · Raw |
-| Killer feature | **Proxy** — redirect a producer to `localhost:3000/mf-manifest.json`, keeping HMR, per-tab isolated | **Issues** — 24 named diagnostics |
+| Killer feature | **Proxy** — redirect a producer to `localhost:3000/mf-manifest.json`, keeping HMR, per-tab isolated | **Issues** — named source-backed diagnostics |
 | Diagnostics depth | Whether `singleton`/`strictVersion` took effect; tree-shaking status tags (`Tree Shaking Loaded` / `Loading` / `Loaded` = fell back to full) | `singleton-multiple-copies`, `range-unsatisfied`, `duplicate-address`, `dependency-cycle`, `orphan-modules`, `fynmesh-provider-mismatch`, `middleware-auto-apply-undelivered`, … |
 | Trace export | ✅ JSON with `config`, `scopes`, `reports`, `diagnosis`, `summary.outcome` | ❌ |
 | Agent-facing CLI | ✅ **Divebell** — `divebell mf status\|module-info\|remote trace\|shared status\|module-perf` | ❌ |
@@ -782,11 +770,11 @@ day-to-day developer-experience gap in the comparison.
 | Debug globals | `__FEDERATION__`, `__SHARE__`, `__INSTANCES__`, `__PRELOADED_MAP__`; `FEDERATION_DEBUG=true` | `Federation.__I()`, `kernel.__I()` — both mangle-proof and `structuredClone`-safe |
 
 **FynMesh's genuine differentiator here** is `Federation.__I()`: per (chunk, share key) it returns
-the importer-declared ranges, **the ranges resolution actually applied**, and every registered
-version this runtime's semver accepts (`federation-js.ts:2271-2323`). That is *share-resolution
-reasoning*, not just topology — MF's DevTools shows you what happened, not the constraint set that
-produced it. The inspector is also **framework-free, page-droppable, and needs no cooperation from
-the app**, which MF's manifest requirement rules out.
+the importer-declared ranges, **the ranges current chunk metadata supplies to resolution**, and
+currently registered satisfying versions (`federation-js.ts:2271-2323`). This explains current
+constraints; it is not a recorded history of the winning selection or singleton override.
+The inspector is also **independent of the inspected app’s framework, page-droppable, and reads loader state
+without app-specific instrumentation**, which MF's manifest requirement rules out.
 
 **But MF ships an extension and FynMesh does not.** FynMesh's Chrome extension is
 **deliberately cancelled** (FYM-31, `wont_do`) — `adapters/remote.ts` ships both ends of a
@@ -867,10 +855,12 @@ Three-layer strategy: network (retry plugin) → loading (`errorLoadRemote`) →
 - `federation-js`: two named share errors; conflicts and singleton mismatches **warn**, never fail.
 - Kernel: **19 error codes**, a `KernelError` hierarchy, per-app isolation (`loadFynApp` returns
   `null` rather than throwing through), and a dev error overlay.
-- **No retry, no domain rotation, no fallback remote mechanism, no `errorLoadRemote` equivalent** —
-  there are no runtime hooks to hang one on (§7).
-- ⚠️ **All diagnostics vanish in production** — `drop_console: true` in the terser config. A missing
-  provider degrades to a **silently blank region** rather than a catchable error.
+- **No shipped automatic retry/backoff/domain-failover plugin or `errorLoadRemote` equivalent.**
+  Loader hooks are available (§7); failed combined-bundle promises are evicted so later calls can retry.
+- **Console diagnostics are stripped in production** by `drop_console: true`, but bootstrap failure
+  state/events and inspector snapshots survive (`kernel-core.ts:527-540,722`). Some early load
+  failures return `null`; default telemetry does not automatically export these failures. Distinguish
+  missing console warnings from the loss of every observable error channel.
 
 ---
 
@@ -878,7 +868,7 @@ Three-layer strategy: network (retry plugin) → loading (`errorLoadRemote`) →
 
 | | MF 2.0 | FynMesh |
 | --- | --- | --- |
-| Preload API | `preloadRemote([{nameOrAlias, exposes?, resourceCategory?, depsRemote?, filter?, recordPreloadedAssets?}])` | `kernel.tryPreload(url, depth)`, `warmPreload(requests)` |
+| Preload API | `preloadRemote([{nameOrAlias, exposes?, resourceCategory?, depsRemote?, filter?, recordPreloadedAssets?}])` | `kernel.tryPreload(url, depth)`; internal graph warm-preload |
 | Preload granularity | Per-expose, per-resource-category, with a `filter(assetUrl)` | **Depth-bounded only** |
 | Priority | `rel=modulepreload fetchpriority=high` for ESM remotes; `<script fetchpriority="high">` | ❌ **`PreloadPriority`/`priorityByDepth` are written once as defaults and never read.** No `fetchpriority` is ever set. |
 | Preload result reporting | Promise rejects with `error.results[]` carrying per-URL `status: success\|error\|timeout\|cached` | ❌ |
@@ -886,21 +876,19 @@ Three-layer strategy: network (retry plugin) → loading (`errorLoadRemote`) →
 | Data prefetch | 🟡 `<Component>.data.ts` exporting `fetchData` → injected as `mfData`; `instance.prefetch({id, dataFetchParams})` | ❌ |
 | Shared tree-shaking | ✅ `runtime-infer` / `server-calc`; antd 1404 KB → 344 KB reported, opt-in per share | ❌ |
 | Runtime size knobs | ✅ `experiments.optimization.{disableRemote (−27.7%), disableShared (−31.6%), disableSnapshot}` off a 73,154 B baseline | ❌ |
-| Chunk combination | ❌ | ✅ **`federation-combine`** |
+| Chunk combination | Bundler chunking; no inspected equivalent post-build CLI | ✅ **`federation-combine`** |
 
-**`federation-combine` is FynMesh's unique performance asset.** A post-build CLI folds many small
+**`federation-combine` is a FynMesh-specific delivery tool.** A post-build CLI folds many small
 federated chunks into combined files **without changing any module's identity** — each still
 registers under its own fileName. `Federation._B()` / `declareBundles(map, distBase)` let a host
 declare the map *before any entry runs*, so a preload hint names the file that will **really** be
-fetched rather than a member the runtime will never request. A stale map degrades to one extra
-request, not a broken page.
+fetched rather than a member the runtime will never request. If a loaded bundle lacks the requested
+member and the individual file remains deployed, the loader falls back to that file. A failed
+bundle fetch still rejects; later calls may retry (`federation-js.ts:341-361,1778-1787`).
 
-This matters because it attacks the problem MF's preloading cannot: federation's natural output is
-*many small chunks*, and per-chunk HTTP cost is the dominant waterfall term
-(see [`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md)).
-
-MF's counterpart advantage is that it attacks **bytes** (tree-shaking shared deps) while FynMesh
-attacks **requests**. They are complementary, and neither has the other's.
+Combining can reduce overhead in workloads dominated by many small chunks; the local
+[shell measurements](./SHELL_LOAD_PERF.md) illustrate that case. It complements shared-export
+pruning. This review did not benchmark equivalent MF chunk-grouping and preload configurations.
 
 ### How MF's shared tree-shaking actually works
 
@@ -911,11 +899,12 @@ A build that opts in (`shared: { antd: { treeShaking: { mode } } }` — **off by
 emits **two** copies of the package. The copy inside its own bundle is **pruned** to the exports it
 referenced; a separately compiled standalone container holds the **full** package. At runtime a plugin
 swaps the getters — `get` → full container, `treeShaking.get` → pruned copy — and a decision function
-picks one per consumer. Every failure path resolves to the full copy; there are eight such paths.
+picks one per consumer. Several selection paths choose the full copy, but failed getters/network
+loads are not universally retried through it; `loadShare` can rethrow (§1.10 of the companion).
 
 Three things bound the win:
 
-1. **`"sideEffects": false` is a hard gate.** If webpack can't prove the real module side-effect free,
+1. **The inspected plugin requires `factoryMeta.sideEffectFree === true`.** If webpack can't prove the real module side-effect free,
    the referenced-export set is cleared and nothing is pruned — silently. An `import()` webpack
    resolves opaquely drops the share key entirely.
 2. **The cheap mode under-delivers.** `runtime-infer` is supposed to reuse a loaded pruned copy when
@@ -925,18 +914,18 @@ Three things bound the win:
    a full antd on one page, *"style conflicts, non-shared state, or even crashes."* Raising the hit
    rate means hand-writing the other app's exports into your config — which the official demo does, in
    both directions.
-3. **The expensive mode needs a platform.** `server-calc` is where the 75% lives. It requires a build
+3. **The server mode needs deployment integration.** The upstream 75% example is not attributed
+   exclusively to `server-calc`. That mode requires a build
    service (`@module-federation/treeshake-server`: tmp project → `pnpm i` → Rspack build → CDN upload),
    **a CI step you write yourself** that unions `usedExports` across every app's `mf-stats.json`, and a
    third step that writes `secondarySharedTreeShakingEntry` + `treeShakingStatus` into the snapshot.
    The server takes a pre-computed union; it does not aggregate.
 
-So the comparison is not "MF shakes shared deps, FynMesh doesn't." It is that MF built a
-**deployment-platform-shaped** answer to shared bytes — same bet as its manifest protocol (§4) — and
-the cheap on-ramp is materially weaker than the number suggests. The structural prerequisite FynMesh
-would have to answer first is identity, not algorithm: MF can hold a pruned and a full shape of the
-same version because they are two slots on one share entry, which is exactly what *"One File, One
-Address"* (§3) exists to forbid.
+MF ships shared-export pruning; FynMesh does not. The two-artifact implementation and server
+coordination are concrete costs, while the reported byte saving is an upstream example, not a
+guarantee for another application. FynMesh would need export-coverage metadata, variant selection,
+and singleton/side-effect rules. Its URL identity invariant does not prohibit separate pruned
+and full artifacts at distinct URLs; it prevents duplicate records for the same module URL.
 
 > **Caveat on MF's data prefetch:** this area was rearchitected, not merely extended.
 > `@module-federation/data-prefetch` — the `prefetchInterface` / `*.prefetch.ts` convention — was
@@ -956,8 +945,8 @@ Address"* (§3) exists to forbid.
 | webpack 5 | `@module-federation/enhanced/webpack` | 2.9.0 | ✅ reference — including the full TS implementation of shared tree-shaking, auto-applied whenever `shared` exists |
 | **Rspack** | `@module-federation/enhanced/rspack` | 2.9.0 | ✅ **recommended** — native (Rust) shared tree-shaking, though the path pins an `@rspack-canary` build and `ModuleFederationPlugin` does not auto-apply it |
 | Rsbuild / Rslib | `@module-federation/rsbuild-plugin` | 2.9.0 | ✅ |
-| **Vite 5–8** | `@module-federation/vite` | **1.21.6** | ✅ mature — but a **separate repo and release line**, not in `module-federation/core`; build target `chrome89`+ |
-| Rollup / Rolldown | via `@module-federation/vite` | 1.21.6 | ✅ / 🟡 — **no standalone rollup plugin exists** |
+| **Vite 5–8** | `@module-federation/vite` | **1.22.0** | ✅ mature — but a **separate repo and release line**, not in `module-federation/core`; build target `chrome89`+ |
+| Rollup / Rolldown | via `@module-federation/vite` | 1.22.0 | ✅ / 🟡 — **no standalone rollup plugin exists** |
 | esbuild | `@module-federation/esbuild` | 0.0.114 | ❌ prototype — zero peerDependencies, no website docs |
 | Metro / React Native | `@module-federation/metro` | 2.9.0 | 🟡 *"still experimental"*; version-locked (`metro ^0.82.1`, RN ≥0.79, React ≥19) and **drops 16 of the 28 plugin options**. No RN example exists in the examples repo. |
 | Modern.js v3 | `@module-federation/modern-js-v3` | 2.9.0 | ✅ richest integration |
@@ -990,7 +979,7 @@ Browser posture:
 
 - **Modern browsers only** — ES2020, no ES5/IE11 (`systemjs/README.md:181-186`). `Promise`, `fetch`,
   `Symbol`, `URL` and constructable stylesheets assumed native.
-- **No import maps.** The fork *deleted* DOM auto-discovery (SJS-13) — `processScripts`, both script
+- **No DOM import-map auto-discovery.** The fork *deleted* DOM auto-discovery (SJS-13) — `processScripts`, both script
   types, the `DOMContentLoaded` rescan. Maps can only be installed programmatically via
   `addImportMap(json, mapBase)`. Precedence is explicit: `System.registrations` is consulted
   **before** the import map, because *"a caller that explicitly handed the loader a module means it."*
@@ -1000,49 +989,26 @@ Browser posture:
 
 ## 15. Security and isolation
 
-**Neither project has a security story. This is a genuine tie, and both are weak.**
+**Neither inspected stack provides a sandbox for untrusted remote application code.** Both expose
+mechanisms for host-controlled loading policy; they should not be scored as having no security
+extension points.
 
-**MF 2.0:** zero hits for `integrity`, `subresource`, `nonce`, or `content-security-policy` across
-the published docs. The local repo has `arch-doc/security-architecture.md` (501 lines, with sections
-on CSP, trust boundaries, SRI, remote-entry validation, sandboxing) — but **do not read that as
-evidence of shipped capability.** `arch-doc/` is AI-generated internal design documentation: only 7
-of its 27 files cite a real source path, one commit in its history is literally titled *"correct
-factual inaccuracies in architecture docs"*, and `bundler-integration-vite-rollup.md` describes eight
-APIs that do not exist. Nothing in it is published on the docs site or implemented in `packages/`.
+| Concern | MF 2.0 | FynMesh |
+| --- | --- | --- |
+| Script integrity / attributes | `createScript` / `createLink` hooks can attach integrity, nonce, and crossorigin | SystemJS copies `importMap.integrity[url]` to scripts; typed `createScript` hooks can add attributes |
+| Integrity policy distribution | Host/integration responsibility | Host must supply URL hashes via programmatic import maps; no automatic artifact hash distribution established |
+| Loading policy | Federation request/fetch/entry hooks | Loader wrappers; combined bundles use `createScript` too |
+| App sandbox | None established | None established |
+| Strict CSP consideration | Optional `getPublicPath` uses `new Function`; static paths avoid this particular eval requirement | `createScript` can add nonce attributes; loader docs discuss script-loading CSP considerations |
 
-What you actually get is the `createScript` / `createLink` hooks, which return the real DOM element:
+FynMesh evidence: `systemjs/src/features/script-load.ts:32-44`,
+`systemjs/src/features/import-maps.ts:39`, `systemjs/docs/hooks.md:134`, and
+`federation-js/src/federation-js.ts:1800-1820`. Integrity keys must match the actual requested
+asset URL, including a combined-bundle URL when combination is used.
 
-```ts
-createScript({ url }) {
-  const script = document.createElement('script');
-  script.src = url;
-  script.setAttribute('crossorigin', 'anonymous');
-  return { script, timeout: 30000 };
-}
-```
-
-So SRI is *possible* but entirely DIY (see module-federation/core discussion #2240).
-
-**Isolation is explicitly declined**, and the reasoning is worth reading because it applies verbatim
-to FynMesh (`/guide/basic/css-isolate.md`):
-
-> *"CSS isolation can conflict significantly with shared dependencies. Shared dependencies aim to
-> reuse common dependencies as much as possible, which can lead to some shared dependencies escaping
-> the sandbox, making isolation uncontrollable."*
-
-MF's only mitigation is **inspection before trust** — the Side Effect Scanner CLI, which statically
-reports a remote's global-variable writes, event listeners, and CSS selector scope.
-
-**FynMesh:** no SRI, no CSP guidance, no sandboxing, and — unlike MF — **no hook to add them at**,
-because there is no runtime plugin system. Security is epic FYM-8 (FYM-46..48), unbuilt.
-
-FynMesh does have one structural advantage that could become a security asset: the inspector's
-issue analysis already answers "what actually loaded, from where, at which version, satisfying which
-constraints" without app cooperation. That is the raw material for a supply-chain check MF would need
-a plugin to gather.
-
-**One MF-specific security note:** `getPublicPath` is `new Function`-evaluated, making it a CSP
-`unsafe-eval` dependency.
+MF's side-effect scanner and FynMesh's inspector help inspect behavior and provenance; neither
+turns arbitrary remote code into a trusted or isolated execution environment. Do not infer shipped
+security features from `arch-doc/` design prose alone; use implementation paths and tests.
 
 ---
 
@@ -1052,8 +1018,8 @@ FynMesh is installable. What it does not have is an ecosystem, and that gap is n
 
 | | MF 2.0 | FynMesh |
 | --- | --- | --- |
-| npm | **43 packages published**, lockstep-versioned at 2.9.0 | **4 packages published** since 2026-08-12, last updated 2026-09-08: `federation-js@1.1.3`, `@fynmesh/kernel@1.1.3`, `rollup-plugin-federation@1.1.2`, `create-fynapp@1.1.5` |
-| Download volume | `@module-federation/runtime` ~42.9M/mo, `enhanced` ~15.4M/mo | ~500–900/mo per package — consistent with CI and mirrors, not adoption |
+| Packages | MF runtime `latest` checked at 2.9.0; integrations have separate release lines | Published packages; local versions listed at the top |
+| Download volume | Previous monthly figures not remeasured | Previous monthly figures not remeasured; downloads alone cannot distinguish CI from adoption |
 | Backing | ByteDance Web Infra + Zack Jackson (original MF author) | Single maintainer |
 | Docs | Full site, `llms.txt`, every page served as raw `.md` | In-repo notes, with **~18 catalogued contradictions** — 5 in the kernel README alone |
 | Adoption | Rspack, Modern.js, Rsbuild, Rspress, Storybook, Zephyr Cloud | Demo only |
@@ -1062,116 +1028,84 @@ FynMesh is installable. What it does not have is an ecosystem, and that gap is n
 
 **Also structurally weaker in FynMesh, from its own review docs:**
 
-- **No config system at all** — `KernelConfig` is entirely dead code.
+- The declared **`KernelConfig` is not wired into kernel construction**; narrower settings such
+  as preload options and telemetry configuration exist.
 - Bootstrap lock is **global page-wide**.
 - Middleware defer has **no timeout**.
 - `FynAppRegistry.remove` has a latent bug; the app registry has no semver matching and silently
   overwrites on name collision.
-- Open defects G7/G8 (double execution)/G10/G11; kernel risks #2/#4/#6/#8 from
-  `KERNEL_PRINCIPAL_REVIEW.md` still open.
+- Historical defect lists are not current bug inventories: the URL-normalization work supersedes
+  G8, and G11 records an intentional selection tradeoff. Other old findings need current repros
+  before being called open defects.
 - Security, observability-by-default, and platform middleware epics unbuilt.
 
 ---
 
-## 17. Scorecard
+## 17. Refreshed assessment
 
-### Where FynMesh is genuinely ahead
+### FynMesh strengths supported by the code
 
-Ordered by how hard each would be to replicate in MF. Items 1–4 are not scorecard wins — they are
-the reason the project exists, and the reason a loader registry was chosen over a bundler runtime.
+1. **Built-in name/range container addressing**, with a kernel registry-resolver interface.
+   The production resolver must implement range selection; the browser default does not.
+2. **Inspectable per-chunk importer metadata** and explicit range intersection, subject to
+   singleton overrides. MF also has importer-context requirements.
+3. **Mutable loader records and diagnostics**: canonical URL identity, `Federation.__I()`, and
+   the in-page inspector expose resolution details without app-specific instrumentation.
+4. **An application composition layer**: FynUnit lifecycle, middleware overrides, FynBus, and
+   dependency-ordered bootstrap. This is additional kernel functionality, not a federation primitive.
+5. **Embedded metadata and post-build chunk combination**, useful where entry execution during
+   discovery is acceptable and request reduction matters.
+6. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
+   but the historical byte comparison does not establish an unavoidable advantage over externalized MF.
 
-1. **Per-importer version resolution (`rvm`).** Resolution against the *actual declared constraints of
-   the importing code*, including transitive `node_modules` importers, with all applicable ranges
-   required to hold. MF resolves against one `requiredVersion` per key per container.
-2. **Two versions of one share key inside one container.** Structurally impossible in MF.
-3. **Versioned containers + semver container selection.** Two builds publishing the same container
-   name at different versions into one page. MF container names are unique globals.
-4. **Runtime, semver-keyed remote resolution — and therefore no consumer-owned remote-registration
-   step.** Load a FynApp by name and the kernel derives the rest: graph, shares, order. Swap which
-   build satisfies
-   `fynapp-x1@^2.0.0` without rebuilding any consumer. MF's `registerRemotes` is a name-keyed table
-   someone must populate and keep correct. This is the foundational difference (§6), not a feature
-   comparison.
-5. **Cross-app dependency graph with topological batching.** MF has no notion of inter-remote ordering.
-6. **The middleware system.** A cross-app DI + lifecycle layer with execution override. MF has no
-   application-level extension layer at all.
-7. **A lifecycle contract** (`FynUnit`) with kernel-side state, per-app error boundaries, and events.
-8. **FynBus** — pub/sub + RPC with late-handler waiting.
-9. **Embedded manifest** — full contract at zero extra requests.
-10. **`federation-combine`** — request-count optimization with identity preservation and pre-execution
-    bundle declaration.
-11. **Runtime cost that does not scale with app count.** The loader is fetched once (~8.7 KB gz);
-    MF embeds ~26 KB gz into every independently-built artifact. Structural, not tunable — MF's
-    runtime is a module in each build's graph (§1).
-12. **`Federation.__I()`** — share-resolution *reasoning*, not just topology.
-13. **Zero-cooperation inspector**, enabled by the loader's record-exposure API.
-14. **`renderDynamicImport` as a user-extensible import protocol**, with a build-time guard.
-15. **The "One File, One Address" invariant**, enforced and diagnosed.
+### MF strengths supported by the code
 
-### Where MF 2.0 is genuinely ahead
+1. **SSR integrations and federated TypeScript types**, both absent from the inspected FynMesh stack.
+2. **A richer federation-policy plugin API**, with share/remote lifecycle context and shipped retry,
+   fallback, and observability integrations. FynMesh's lower-level loader hooks are useful but narrower.
+3. **Broader bundler/output support**, published manifest tooling, and deployment integrations.
+4. **Sharing configuration**: strict mismatch behavior, eager loading, per-share scopes, layers,
+   prefix/subpath support, and selectable strategies.
+5. **Shared tree-shaking**, with significant mode-specific costs and caveats documented in the companion.
+6. **Preload controls, DevTools, framework bridges, and component data loading**. Data-prefetch
+   support is narrower than a generic cross-framework API (§13).
+7. **A substantially broader integration ecosystem.** Exact download counts are not needed to
+   establish the visible difference in supported tools; production adoption cannot be measured from
+   this repository alone.
 
-1. **SSR.** Real, multi-target, manifest-integrated. FynMesh has none and is several steps away.
-2. **Federated TypeScript types.** Complete, with live dev reload. FynMesh has nothing.
-3. **The runtime plugin system.** ~40 hooks. FynMesh has zero — and this is what blocks retry,
-   fallbacks, SRI, and third-party observability from ever being addable without core changes.
-4. **Bundler reach.** webpack + Rspack + Vite + Rsbuild + Metro, with documented cross-bundler
-   interop. FynMesh is rollup + SystemJS only.
-5. **A versioned, published manifest schema** designed as a deployment-platform protocol.
-6. **Shared tree-shaking.** ~75% reported on antd — the one axis that attacks *bytes inside shared
-   dependencies*, which `federation-combine` does not touch. Caveated: opt-in, `sideEffects`-gated,
-   and the mode that delivers that number needs a deploy-time build service plus a CI aggregator (§13).
-7. **Sharing ergonomics** — `shareKey`/`request`, subpath prefix matching, auto-inferred versions,
-   per-share scopes, layers, working `eager`, `strictVersion`, `shareStrategy`.
-8. **Resilience** — `retry-plugin`, four-lifecycle `errorLoadRemote`, an error-code taxonomy.
-9. **Preload sophistication** — per-expose, filtered, prioritized, with per-URL result reporting.
-10. **A shipped Chrome extension**, plus an agent-facing CLI (Divebell).
-11. **Data prefetch** as an isomorphic, first-class concern.
-12. **Framework bridges** with router isolation.
-13. **Ecosystem and adoption.** The decisive one — not distribution, which FynMesh now has, but
-    the four orders of magnitude of usage, integrations, and third-party investment behind it.
+### Claims removed by this review
 
-### Where they're even
+- Per-importer requirements and multiple shared versions in one build are **not unique to FynMesh**.
+- MF remote code is **not restricted to one window-global name/version per page**.
+- MF runtime duplication is **not an immutable architectural requirement**.
+- FynMesh has **loader hooks and URL integrity support**; production state/events also survive.
+- Embedded metadata is **not always superior** to metadata-only planning.
+- Shared tree-shaking is **not proven universally safe on failure**, and URL identity does not
+  make a FynMesh implementation impossible.
 
-- **Security and isolation.** Neither has SRI, CSP guidance, or sandboxing. MF at least has a hook to
-  add SRI at; FynMesh does not.
-- **Routing.** Both deliberately exclude it.
-- **Framework agnosticism at the loader level.** Both work with anything; MF adds bridges for two
-  frameworks, FynMesh proves six in demos.
+## 18. Implications for FynMesh work
+
+The refresh changes the rationale for follow-up work. These are recommendations, not an approved
+implementation plan or performance ranking.
+
+| Area | Evidence-based next step |
+| --- | --- |
+| Resolution correctness | Document and test load-order, chunk-range intersection, singleton override, and bare-name registry behavior before changing defaults. MF also has history-sensitive selection. |
+| Runtime policy | Build on existing `System.hook` capabilities; add federation-specific context only where loader wrappers cannot express the required policy cleanly. |
+| Production diagnostics | Preserve useful warnings in a configurable sink and wire telemetry where needed; do not rebuild existing state/events/inspector channels. |
+| Manifest contract | Check embedded-export coverage, add explicit format evolution rules, and decide when metadata-only discovery is needed. |
+| Preload | Implement the declared priority behavior and measure request scheduling against the real graph-discovery path. |
+| Types and SSR | Treat these as separate product investments with concrete target integrations; they remain substantial capability gaps. |
+| Shared tree-shaking | Explore export coverage, variant identity, and singleton semantics first. Importer metadata helps attribution but cannot reveal independently deployed apps' export needs. |
+| Performance | Compare real default/externalized MF builds with FynMesh under the same application workload before claiming a scaling advantage. |
+
+The existing decision against a Chrome extension can stand independently of these corrections.
+Additional bundler adapters would need to preserve the registry contract; source inspection does
+not establish that all adapters necessarily surrender FynMesh's distinguishing behavior.
 
 ---
 
-## 18. If FynMesh wanted to close the gaps
-
-Ranked by leverage-to-effort, based on what the code already supports.
-
-| # | Gap | Why it's next | Rough shape |
-| --- | --- | --- | --- |
-| 1 | **A runtime hook system in `federation-js`** | It is the **unblocker for five other gaps** — retry, fallbacks, SRI, third-party telemetry, and custom remote types all need somewhere to attach. Today none of them are addable without editing core. | Mirror MF's grouping: `beforeResolve`/`afterResolve`/`onLoad`/`errorLoad` + `createScript`. `System.hook` is already typed in the fork. |
-| 2 | **Highest-satisfying share selection, or make it configurable** | Load-order sensitivity is the most likely source of "works on my page" bugs, and the one place FynMesh's semantics are *worse* than MF's rather than merely different. | A `shareStrategy`-equivalent switch over `semverMatch`; the rejection rationale in `combined-module-bundles.md:789-799` is about defaults, not about impossibility |
-| 3 | **Fix the no-fallback manifest read** | A silent, unchecked failure mode that kills middleware registration. Two known fixes. | Either assert the embedded export in `cfa check`, or give `module-loader.ts:265` the four-tier chain `manifest-resolver` already has |
-| 4 | **Keep diagnostics in production** | `drop_console: true` means the 19 error codes and the whole inspector issue set are invisible exactly where they matter. | Route through a level-gated sink rather than `console.*` |
-| 5 | **Turn telemetry on** | Already built (~25 capture points); no entry point passes a `TelemetryConfig`. Pure wiring. | `browser.ts:5`, `browser-dev.ts:8`, `node.ts:6` |
-| 6 | **Implement preload priority** | The types, the defaults and the depth map already exist and are simply never read. | Set `fetchpriority` from `priorityByDepth` in `browser-kernel.ts` |
-| 7 | **Version the manifest schema** | Cheap now, expensive later — and now that packages are published, schema changes are other people's breakage. | Add a `schemaVersion` to the manifest artifacts |
-| 8 | **Subpath sharing** | A real footgun today (transitive deps fail at runtime, not build time). | Trailing-slash prefix matching, as MF does |
-| 9 | **DTS generation** | Widest DX gap, but genuinely large, and `dts-plugin` is a reasonable reference. | Rollup equivalent of `@mf-types.zip` |
-| 10 | **SSR** | Widest capability gap, but three documented structural blockers stand first. | Unpark the Node target; give `system-node` a terminal `instantiate`; decouple `ManifestResolver` from browser globals |
-
-Two things **not** worth chasing: a Chrome extension (already decided `wont_do`, and the in-page
-inspector is arguably better for this architecture), and multi-bundler support (the SystemJS registry
-*is* the product — a webpack adapter would give up every differentiator in §17).
-
-**Shared tree-shaking is off this list for a different reason** — not low value, but a blocked
-prerequisite. MF holds a pruned and a full shape of the same version as two slots on one share entry;
-*"One File, One Address"* (§3) exists to forbid exactly that, so the question to answer first is
-identity, not algorithm. Worth noting for whenever it is asked: `rvm` already carries the importer
-directory per chunk, so a per-importer used-export set is computable *within one build* — which would
-skip the cross-app CI aggregator MF pushes onto its users
-([`MF2-DETAILS.md` §1.14](./MF2-DETAILS.md#114-what-this-means-for-fynmesh)).
-
----
-
-## Appendix: sources and how to re-verify
+## Appendix: sources and how to reproduce the inspection
 
 **Module Federation 2.0** — `/Users/joel.chen/dev/module-federation-core` @ `c38c4c0e4` (2026-09-07),
 packages at 2.9.0; examples at `/Users/joel.chen/dev/module-federation-examples`. Docs at
@@ -1200,16 +1134,16 @@ inaccuracies (see §15). The `packages/` source is authoritative.
 
 - `rollup-federation/federation-js/src/federation-js.ts:645-1022` — `resolve()`
 - `rollup-federation/federation-js/tests/federation-js.test.ts:630-720` — singleton semantics, executable
-- `rollup-federation/sample-react-federation/dist/plugin-entry.js:52-61` — two versions, one key, one container
+- `rollup-federation/rollup-plugin-federation/src/code-generation/container-code.mts:137-145` — multiple emitted versions
 - `core/kernel/src/types.ts` — the kernel interface
 - `core/kernel/src/modules/middleware-executor.ts:372-433` — the four phases
 - `dev-tools/create-fynapp/agent/CONTRACT.md` — the canonical FynApp authoring contract
 
-**Three traps when verifying the FynMesh side:**
+**Three traps when inspecting the FynMesh side:**
 
 1. **`grep` skips `federation-js.ts`.** It contains a byte that trips grep's binary heuristic. Use
    `grep -a`, or you will conclude `singleton` is unimplemented.
-2. **All `demo/*/dist/` are gitignored and stale.** Source is authoritative; rebuild with
+2. **`demo/*/dist/` artifacts are gitignored and may be stale.** Source is authoritative; rebuild with
    `fyn bootstrap` before reading build output.
 3. **Several notes contradict the code.** The inspector's status is claimed three different ways
    across two files; `rollup-federation/README.md` calls `singleton` unimplemented;
