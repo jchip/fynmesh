@@ -42,15 +42,16 @@ or costed before we consider building an equivalent. Currently covers shared tre
 
 ## The one-paragraph answer
 
-**FynMesh puts federation in a mutable SystemJS registry; MF integrates a standalone federation
-runtime with bundler-generated containers.** Both support multiple shared versions and
-importer-dependent requirements. FynMesh's more specific distinctions are emitted per-chunk
-importer-range metadata, a first-class name/range container-selection contract, direct registry
-inspection, and a kernel that supplies lifecycle, middleware, messaging, and dependency-ordered
-bootstrap. MF has broader bundler/output support, federated types, SSR integrations, and a richer
-federation-policy plugin API. The earlier claim that FynMesh alone can express per-importer or
-multi-version sharing does not hold. Neither does an unavoidable 26 KB-per-app MF runtime cost:
-MF can externalize its runtime core, although per-build adapters remain.
+**FynMesh makes a common scoped federation the environment that containers join; MF connects
+runtime instances through explicit sharing relationships.** Both support multiple shared versions
+and importer-dependent requirements. FynMesh's strongest core distinctions are common-scope
+participation through normal load/init, logical-name/semver-range container addressing, and emitted
+importer-range metadata. MF's strongest core distinctions are finer sharing controls: per-share
+scopes and layers, separate import requests and share keys, prefix sharing, and selectable provider
+strategies. These arguments stand independently of types, plugins, SSR, or application middleware;
+[§17](#17-refreshed-assessment) compares the core contracts before the broader stacks. The earlier
+claims that FynMesh alone supports per-importer or multi-version sharing, or that MF must always
+ship another full runtime core per app, do not hold.
 
 ## Why `federation-js` exists
 
@@ -1079,37 +1080,61 @@ FynMesh is installable. What it does not have is an ecosystem, and that gap is n
 
 ## 17. Refreshed assessment
 
-### FynMesh strengths supported by the code
+### Core federation: the argument for each
 
-1. **Ambient share-scope membership.** One global scope keyed by name, joined by the ordinary act
-   of loading and initializing a container, with no scope object handed between parties (§1).
-   MF's maps are per runtime instance and are connected by an initialization handshake. This is a
-   default-contract difference, not a limit on what MF can be made to do.
-2. **Built-in name/range container addressing**, with a kernel registry-resolver interface.
-   The production resolver must implement range selection; the browser default does not.
-3. **Inspectable per-chunk importer metadata** and explicit range intersection, subject to
-   singleton overrides. MF also has importer-context requirements.
-4. **Mutable loader records and diagnostics**: canonical URL identity, `Federation.__I()`, and
-   the in-page inspector expose resolution details without app-specific instrumentation.
-5. **An application composition layer**: FynUnit lifecycle, middleware overrides, FynBus, and
-   dependency-ordered bootstrap. This is additional kernel functionality, not a federation primitive.
-6. **Embedded metadata and post-build chunk combination**, useful where entry execution during
+This comparison concerns module discovery, sharing, version resolution, identity, and execution.
+Types, plugin ecosystems, inspectors, SSR integrations, and application middleware do not decide
+this part of the assessment. A distinctive strength means a built-in contract or capability the
+other currently lacks, not something the other could never reproduce with additional orchestration.
+Where both provide a capability, the table describes the different contracts rather than calling
+either one unique.
+
+| Core concern | Argument for FynMesh | Argument for MF |
+| --- | --- | --- |
+| **Joining a federation** | **Common-scope participation through normal load/init.** Containers contribute providers and resolve against the established named scope without declaring or registering their peers. This suits independently assembled applications. | **Explicit connections between instance-specific scope maps.** Independently initialized applications do not share merely because their scope names match. The composing application controls which participants exchange dependencies. |
+| **Addressing container versions** | **Logical name + semver range is native.** Several container releases can occupy one namespace, and imports select a compatible registered release without inventing a separate name per version. | No equivalent built-in range-addressed container contract. Named registrations give the composer explicit deployment selection; custom resolution is needed for the FynMesh-style range contract. |
+| **Dependency requirement granularity** | **Importer-range sets remain runtime metadata.** The resolver can intersect applicable importer constraints associated with a chunk, and the registry retains those constraints. | **Requirements belong to individual compiled consume modules.** Different consuming modules retain their own requirements without relying on an output chunk's importer-range intersection. Both support importer-dependent requirements; neither granularity is inherently superior. |
+| **Sharing boundaries** | A common named scope supplies a straightforward boundary for all participating containers. Different scope names separate sharing groups. | **Per-share scopes, multiple scopes, and layers** provide finer configuration of which dependencies participate in which sharing relationships. FynMesh's build path currently omits per-share scope configuration. |
+| **Import names and shared identities** | Shared resolution integrates with the loader's canonical URL/specifier records, so resolved providers participate in the same module identity system as other imports. | **Separate `request` and `shareKey`, plus prefix/subpath sharing**, distinguish the import intercepted by the build from the identity negotiated at runtime. FynMesh lacks that configuration surface. |
+| **Provider selection and loading** | One consistent built-in selection policy keeps ordinary participation simple. This is a default behavior, not an additional capability MF lacks. | **Selectable version-first / loaded-first strategies and implemented eager sharing** provide controls absent from FynMesh's current hard-coded selection and unimplemented `eager` option. |
+
+The source basis is §1's scope-map and initialization trace, §5's consume-module and `rvm`
+resolution paths, §5.4's sharing options, and §6's container-resolution contract. The same-container
+experiment in §5.3 establishes a shared capability; it does not distinguish either side.
+
+**The strongest FynMesh argument is independent participation.** The application chooses what to
+load; containers join the common scope and can reuse compatible providers without knowing their
+peers. Native versioned-container addressing extends that model to independently evolving releases.
+Selecting a registered container is built in; locating an absent release needs a composition-layer
+loader, such as the kernel's deployment resolver, whose policy must honor the requested range.
+
+**The strongest MF argument is control over sharing semantics.** The composer connects the intended
+participants and can configure dependency identities, sharing boundaries, and selection strategies
+more precisely. Runtime `registerRemotes` / `loadRemote` mean these connections need not be declared
+at build time. FynMesh's default participation contract remains different from making those
+connections dynamically.
+
+### Additional FynMesh stack strengths
+
+1. **Registry inspection and diagnostics**: `Federation.__I()` and the in-page inspector expose
+   current module and constraint information without app-specific instrumentation.
+2. **An application composition layer**: FynUnit lifecycle, middleware overrides, FynBus, and
+   dependency-ordered bootstrap. This is kernel functionality beyond the federation layer.
+3. **Embedded metadata and post-build chunk combination**, useful where entry execution during
    discovery is acceptable and request reduction matters.
-7. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
-   but the historical byte comparison does not establish an unavoidable advantage over externalized MF.
+4. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
+   but historical byte measurements do not establish an unavoidable advantage over externalized MF.
 
-### MF strengths supported by the code
+### Additional MF stack strengths
 
 1. **SSR integrations and federated TypeScript types**, both absent from the inspected FynMesh stack.
 2. **A richer federation-policy plugin API**, with share/remote lifecycle context and shipped retry,
    fallback, and observability integrations. FynMesh's lower-level loader hooks are useful but narrower.
 3. **Broader bundler/output support**, published manifest tooling, and deployment integrations.
-4. **Sharing configuration**: strict mismatch behavior, eager loading, per-share scopes, layers,
-   prefix/subpath support, and selectable strategies.
-5. **Shared tree-shaking**, with significant mode-specific costs and caveats documented in the companion.
-6. **Preload controls, DevTools, framework bridges, and component data loading**. Data-prefetch
+4. **Shared tree-shaking**, with significant mode-specific costs and caveats documented in the companion.
+5. **Preload controls, DevTools, framework bridges, and component data loading**. Data-prefetch
    support is narrower than a generic cross-framework API (§13).
-7. **A substantially broader integration ecosystem.** Exact download counts are not needed to
+6. **A substantially broader integration ecosystem.** Exact download counts are not needed to
    establish the visible difference in supported tools; production adoption cannot be measured from
    this repository alone.
 
