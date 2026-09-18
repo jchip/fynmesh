@@ -1,5 +1,83 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { computed } from "@preact/signals";
+import type { ViewName } from "../src/core/model.js";
 import { sanitise } from "../src/ui/state.js";
+
+describe("tab filters", () => {
+  let state: typeof import("../src/ui/state.js");
+
+  beforeEach(async () => {
+    vi.resetModules();
+    state = await import("../src/ui/state.js");
+  });
+
+  it("remembers an independent filter for every tab", () => {
+    const tabs: ViewName[] = [
+      "modules", "fynapps", "middleware", "containers", "shares", "graph", "issues", "raw",
+    ];
+    for (const tab of tabs) {
+      state.view.value = tab;
+      expect(state.query.value).toBe("");
+      state.query.value = `filter for ${tab}`;
+    }
+    for (const tab of tabs) {
+      state.view.value = tab;
+      expect(state.query.value).toBe(`filter for ${tab}`);
+    }
+  });
+
+  it("keeps the Issues filter when a diagnostic opens Shares", () => {
+    state.view.value = "issues";
+    state.query.value = "esm-react";
+    state.focusOn("shares", "share:esm-react");
+    expect(state.view.value).toBe("shares");
+    expect(state.query.value).toBe("share:esm-react");
+    state.view.value = "issues";
+    expect(state.query.value).toBe("esm-react");
+    state.view.value = "shares";
+    state.query.value = "";
+    state.view.value = "issues";
+    expect(state.query.value).toBe("esm-react");
+  });
+
+  it("uses the destination's remembered filter when navigation supplies none", () => {
+    state.view.value = "shares";
+    state.query.value = "react";
+    state.view.value = "modules";
+    state.query.value = "stage:errored";
+    state.focusOn("shares");
+    expect(state.query.value).toBe("react");
+  });
+
+  it("restores navigation history without replacing other tabs' filters", () => {
+    state.view.value = "issues";
+    state.query.value = "react";
+    state.focusOn("shares", "share:esm-react");
+    state.goBack();
+    expect(state.view.value).toBe("issues");
+    expect(state.query.value).toBe("react");
+    state.goForward();
+    expect(state.view.value).toBe("shares");
+    expect(state.query.value).toBe("share:esm-react");
+    state.focusOn("shares", "share:esm-react-dom");
+    state.goBack();
+    expect(state.query.value).toBe("share:esm-react");
+    state.view.value = "issues";
+    expect(state.query.value).toBe("react");
+  });
+
+  it("reacts to tab switches and edits to the current filter", () => {
+    const currentFilter = computed(() => state.query.value);
+    state.query.value = "stage:errored";
+    expect(currentFilter.value).toBe("stage:errored");
+    state.view.value = "issues";
+    expect(currentFilter.value).toBe("");
+    state.query.value = "react";
+    expect(currentFilter.value).toBe("react");
+    state.view.value = "modules";
+    expect(currentFilter.value).toBe("stage:errored");
+  });
+});
 
 /*
  * localStorage is shared with every other script on the origin and outlives

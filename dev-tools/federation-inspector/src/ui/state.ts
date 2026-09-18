@@ -7,9 +7,8 @@
  * query and the view at once. Signals make that a plain assignment instead of
  * a callback chain through five components.
  *
- * `query` is the single source of filter truth -- facet chips, deep links and
- * what a person types all go through the same string, so the filter state is
- * always copy-pasteable and always reproducible.
+ * `query` reads and writes the active tab's filter -- facet chips, deep links
+ * and typing share that string, while other tabs keep their own filters.
  */
 
 import { signal, computed, type Signal } from "@preact/signals";
@@ -119,7 +118,15 @@ const saved = load();
 
 export const open = signal(false);
 export const view = signal<ViewName>("modules");
-export const query = signal("");
+const queries = signal<Partial<Record<ViewName, string>>>({});
+export const query = {
+  get value(): string {
+    return queries.value[view.value] ?? "";
+  },
+  set value(value: string) {
+    queries.value = { ...queries.value, [view.value]: value };
+  },
+};
 export const selected = signal<string | undefined>(undefined);
 export const expanded = signal<Set<string>>(new Set());
 export const dock = signal<Dock>(saved.dock ?? "dock-right");
