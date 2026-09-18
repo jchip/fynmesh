@@ -137,6 +137,14 @@ it is impossible. What the source does establish is that FynMesh gets co-loaded 
 handshake, and MF ordinarily makes each connection explicit. Do not read this as "MF requires
 build-time remotes" — §6 covers that separately.
 
+**The trade runs both ways.** MF's default buys isolation: `createInstance` stamps each instance
+`id: ${name}@${version}` and gives it its own map (`packages/runtime/src/index.ts:28-38`), so two
+independent runtimes on one page cannot collide by accident. FynMesh's default buys reach, and its
+isolation unit is the scope *name* — a container is served only by its own scope, "a boundary, not
+a hint" (`federation-js.ts:468-472`, FYM-172) — so isolating two co-loaded containers means
+deliberately giving them different scope names. Each stack can express the other's arrangement;
+what differs is which one you get for free.
+
 ### Runtime delivery: defaults, externalization, and measured scope
 
 **MF embeds runtime code by default.** `FederationRuntimePlugin` imports
@@ -1096,7 +1104,7 @@ either one unique.
 | **Dependency requirement granularity** | **Importer-range sets remain runtime metadata.** The resolver can intersect applicable importer constraints associated with a chunk, and the registry retains those constraints. | **Requirements belong to individual compiled consume modules.** Different consuming modules retain their own requirements without relying on an output chunk's importer-range intersection. Both support importer-dependent requirements; neither granularity is inherently superior. |
 | **Sharing boundaries** | A common named scope supplies a straightforward boundary for all participating containers. Different scope names separate sharing groups. | **Per-share scopes, multiple scopes, and layers** provide finer configuration of which dependencies participate in which sharing relationships. FynMesh's build path currently omits per-share scope configuration. |
 | **Import names and shared identities** | Shared resolution integrates with the loader's canonical URL/specifier records, so resolved providers participate in the same module identity system as other imports. | **Separate `request` and `shareKey`, plus prefix/subpath sharing**, distinguish the import intercepted by the build from the identity negotiated at runtime. FynMesh lacks that configuration surface. |
-| **Provider selection and loading** | One consistent built-in selection policy keeps ordinary participation simple. This is a default behavior, not an additional capability MF lacks. | **Selectable version-first / loaded-first strategies and implemented eager sharing** provide controls absent from FynMesh's current hard-coded selection and unimplemented `eager` option. |
+| **Provider selection and loading** | One consistent built-in selection policy keeps ordinary participation simple. This is a default behavior, not an additional capability MF lacks. | **Selectable version-first / loaded-first strategies and implemented eager sharing** provide controls absent from FynMesh's current hard-coded selection and unimplemented `eager` option. The default `version-first` also eagerly initializes every registered remote during `initializeSharing()` and is marked for removal in source (`runtime-core/src/shared/index.ts:576,581-585`). |
 
 The source basis is §1's scope-map and initialization trace, §5's consume-module and `rvm`
 resolution paths, §5.4's sharing options, and §6's container-resolution contract. The same-container
@@ -1124,13 +1132,20 @@ connections dynamically.
    discovery is acceptable and request reduction matters.
 4. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
    but historical byte measurements do not establish an unavoidable advantage over externalized MF.
+5. **Framework-agnostic loading with no bridge layer.** The demo runs React 18/19, Vue, Marko,
+   Preact, Solid, and Svelte on one loader (§14), against MF's first-party bridges for React 16–19
+   and Vue 3 with a per-React-major import path and two documented hard throws.
 
 ### Additional MF stack strengths
 
 1. **SSR integrations and federated TypeScript types**, both absent from the inspected FynMesh stack.
+   Coverage is uneven by target: SSR is flagship on Modern.js but absent on Next.js App Router and
+   Nuxt (§11), and type distribution carries production and watch-config caveats (§9).
 2. **A richer federation-policy plugin API**, with share/remote lifecycle context and shipped retry,
    fallback, and observability integrations. FynMesh's lower-level loader hooks are useful but narrower.
 3. **Broader bundler/output support**, published manifest tooling, and deployment integrations.
+   Reach is uneven — esbuild is a prototype, Metro is experimental and drops 16 of the 28 plugin
+   options, `nextjs-mf` is deprecated, and Angular is third-party only (§14).
 4. **Shared tree-shaking**, with significant mode-specific costs and caveats documented in the companion.
 5. **Preload controls, DevTools, framework bridges, and component data loading**. Data-prefetch
    support is narrower than a generic cross-framework API (§13).
