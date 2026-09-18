@@ -18,6 +18,9 @@ fixtures were inspected; no new performance benchmark or upstream test-suite run
 Historical size figures below are retained as measurements from the earlier setup only.
 A subsequent focused build/run with published MF 2.9.0 and webpack 5.105.0 checked the disputed
 same-container sharing and external-runtime claims; results are recorded in §5.3 below.
+A follow-up scope-membership review then added an architectural difference the first pass
+underweighted — FynMesh's named-scope membership against MF's instance-scoped maps joined by
+initialization — traced in §1.
 
 | | Module Federation 2.0 | FynMesh |
 | --- | --- | --- |
@@ -101,6 +104,38 @@ none has to pre-declare the others as remotes. A consume-only share (`import: fa
 exception: because that container omitted its own implementation, the application, kernel, or other
 composition layer must ensure a satisfying producer is loaded.
 
+### Share-scope membership: ambient by name vs joined by handshake
+
+This is the mechanism behind the paragraph above, and it is the sharpest architectural difference
+in the comparison.
+
+**FynMesh keys one global share scope by scope *name*.** `_mfInitScope(scope)` returns
+`$SS[scope]`, creating it once (`federation-js.ts:2206-2217`), and `_S` appends each provided
+version's source into `$SS[scope][key][version].sources` alongside whatever earlier containers
+put there (`:2166-2199`). A generated entry's `init` calls `Container._mfInit()` with **no** share
+scope argument, so it joins the existing named scope rather than supplying one
+(`container.ts:175-181`); the kernel likewise calls `fynAppEntry.init()` with no argument
+(`module-loader.ts:216`). Loading and initializing a container *is* the act of joining — there is
+no second step, and no container passes a scope to another.
+
+**MF keys its share scope map by runtime *instance*.** `SharedHandler` constructs a fresh
+`shareScopeMap = {}` per host (`runtime-core/src/shared/index.ts:138`) and publishes it on the
+global under the instance's `id || name`, **not** under the scope name (`:821-827`). Resolution
+reads the map it was handed — `getRegisteredShare(localShareScopeMap, …)` iterates the scopes
+*within that map* (`utils/share.ts:355-390`) — so two independently created instances both using
+the scope string `default` are not thereby sharing. They connect through initialization: `Module.init`
+builds options from `host.shareScopeMap` and calls `remoteEntryExports.init(shareScope, …)`
+(`module/index.ts:194-234`), and the container assigns the supplied object to that scope name
+(`initShareScopeMap`, `shared/index.ts:740-754`; `webpack-bundler-runtime/src/initContainerEntry.ts:29-85`).
+
+The difference is the **default membership and discovery contract**, not what is reachable. MF
+ships runtime `registerRemotes` / `loadRemote` (`remote/index.ts:511-518`;
+`packages/runtime/src/index.ts:58-65,96-101`) and its container-init API can connect independently
+loaded containers, so an ambient policy is implementable there; the source does not establish that
+it is impossible. What the source does establish is that FynMesh gets co-loaded federation with no
+handshake, and MF ordinarily makes each connection explicit. Do not read this as "MF requires
+build-time remotes" — §6 covers that separately.
+
 ### Runtime delivery: defaults, externalization, and measured scope
 
 **MF embeds runtime code by default.** `FederationRuntimePlugin` imports
@@ -153,6 +188,7 @@ Legend: ✅ shipped · 🟡 partial / caveated · ❌ absent · n/a not applicab
 | Expose modules from a build | ✅ `exposes` | ✅ `exposes` | Equivalent |
 | Consume remote modules | ✅ `remotes` + `loadRemote` | ✅ import attributes + `_importExpose` | Different binding model (§6) |
 | Container protocol | `{ get, init }` | `{ init, get, container, __FYNAPP_MANIFEST__ }` | FynMesh also exposes a live container object |
+| Share-scope membership | Scope maps are **per runtime instance**, published under instance id; a host joins a container by passing its scope object into `init` | **One global map keyed by scope name**; loading and initializing a container joins it, no argument passed | Ambient membership vs explicit handshake (§1) |
 | Bidirectional host/remote | ✅ | ✅ | |
 | Build-time `remotes` declaration | ✅ | ❌ **by design** | FynMesh resolves remotes at runtime (§6) |
 | Runtime remote resolution | ✅ name-based registration plus request/resolve/load hooks | ✅ kernel `setRegistryResolver((name, range) => …)` | Built-in range contract versus generic extension hooks (§6) |
@@ -579,7 +615,7 @@ phase, not all network requests or all module execution.
 The two projects solved *different* extensibility problems, and each has essentially nothing where
 the other is strong.
 
-### MF 2.0 — ~40 runtime hooks
+### MF 2.0 — runtime hooks
 
 Source-defined hook groups (their count and grouping are version-dependent):
 
@@ -942,8 +978,8 @@ and full artifacts at distinct URLs; it prevents duplicate records for the same 
 
 | Target | Package | Version | State |
 | --- | --- | --- | --- |
-| webpack 5 | `@module-federation/enhanced/webpack` | 2.9.0 | ✅ reference — including the full TS implementation of shared tree-shaking, auto-applied whenever `shared` exists |
-| **Rspack** | `@module-federation/enhanced/rspack` | 2.9.0 | ✅ **recommended** — native (Rust) shared tree-shaking, though the path pins an `@rspack-canary` build and `ModuleFederationPlugin` does not auto-apply it |
+| webpack 5 | `@module-federation/enhanced/webpack` | 2.9.0 | ✅ reference — the full TS implementation of shared tree-shaking. `TreeShakingSharedPlugin` is *installed* whenever `shared` exists (`ModuleFederationPlugin.ts:277-279`), but it no-ops unless a share sets `treeShaking` with `import !== false` (`tree-shaking/TreeShakingSharedPlugin.ts:41-45`) — pruning stays opt-in per share |
+| **Rspack** | `@module-federation/enhanced/rspack` | 2.9.0 | ✅ **recommended** — native (Rust) shared tree-shaking, though the path pins an `@rspack-canary` build and `ModuleFederationPlugin` does not install it for you |
 | Rsbuild / Rslib | `@module-federation/rsbuild-plugin` | 2.9.0 | ✅ |
 | **Vite 5–8** | `@module-federation/vite` | **1.22.0** | ✅ mature — but a **separate repo and release line**, not in `module-federation/core`; build target `chrome89`+ |
 | Rollup / Rolldown | via `@module-federation/vite` | 1.22.0 | ✅ / 🟡 — **no standalone rollup plugin exists** |
@@ -1045,17 +1081,21 @@ FynMesh is installable. What it does not have is an ecosystem, and that gap is n
 
 ### FynMesh strengths supported by the code
 
-1. **Built-in name/range container addressing**, with a kernel registry-resolver interface.
+1. **Ambient share-scope membership.** One global scope keyed by name, joined by the ordinary act
+   of loading and initializing a container, with no scope object handed between parties (§1).
+   MF's maps are per runtime instance and are connected by an initialization handshake. This is a
+   default-contract difference, not a limit on what MF can be made to do.
+2. **Built-in name/range container addressing**, with a kernel registry-resolver interface.
    The production resolver must implement range selection; the browser default does not.
-2. **Inspectable per-chunk importer metadata** and explicit range intersection, subject to
+3. **Inspectable per-chunk importer metadata** and explicit range intersection, subject to
    singleton overrides. MF also has importer-context requirements.
-3. **Mutable loader records and diagnostics**: canonical URL identity, `Federation.__I()`, and
+4. **Mutable loader records and diagnostics**: canonical URL identity, `Federation.__I()`, and
    the in-page inspector expose resolution details without app-specific instrumentation.
-4. **An application composition layer**: FynUnit lifecycle, middleware overrides, FynBus, and
+5. **An application composition layer**: FynUnit lifecycle, middleware overrides, FynBus, and
    dependency-ordered bootstrap. This is additional kernel functionality, not a federation primitive.
-5. **Embedded metadata and post-build chunk combination**, useful where entry execution during
+6. **Embedded metadata and post-build chunk combination**, useful where entry execution during
    discovery is acceptable and request reduction matters.
-6. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
+7. **One explicitly loaded federation substrate by default.** Its deployment model is simple,
    but the historical byte comparison does not establish an unavoidable advantage over externalized MF.
 
 ### MF strengths supported by the code
