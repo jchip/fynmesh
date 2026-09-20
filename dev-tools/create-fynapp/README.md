@@ -5,6 +5,8 @@
 - `create-fynapp` creates a React FynApp in the current directory.
 - `cfa` builds and checks an existing FynApp or installs the bundled coding-agent skills.
 
+**FynMesh:** [Website](https://www.fynmesh.win) · [Demo](https://www.fynmesh.win/demo) · [Shell demo](https://www.fynmesh.win/shell)
+
 ## Installation
 
 Install the released commands globally with fyn:
