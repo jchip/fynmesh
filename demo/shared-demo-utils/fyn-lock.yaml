@@ -15,9 +15,9 @@ $pkg:
   dependencies:
    federation-js: ^1.0.0
 federation-js:
- _latest: 1.1.3-fynlocal_h
+ _latest: 1.1.4-fynlocal_h
  _:
-  ../../rollup-federation/federation-js: 1.1.3-fynlocal_h
- 1.1.3-fynlocal_h:
+  ../../rollup-federation/federation-js: 1.1.4-fynlocal_h
+ 1.1.4-fynlocal_h:
   $: local
   _: ../../rollup-federation/federation-js

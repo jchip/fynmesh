@@ -36,10 +36,10 @@
     "url": ""
   },
   "dependencies": {
-    "@fynjs/run": "^1.1.3",
+    "@fynjs/run": "^1.1.5",
     "@types/node": "^24.10.1",
-    "fyn": "^3.1.4",
-    "fynpo": "^3.1.4",
+    "fyn": "^3.1.6",
+    "fynpo": "^3.1.6",
     "prettier": "^3.6.2",
     "tsx": "^4.23.13"
   },

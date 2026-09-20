@@ -3,10 +3,10 @@ $fyn:
  flattenTop: true
 $pkg:
  dep:
-  '@fynjs/run': ^1.1.3
+  '@fynjs/run': ^1.1.5
   '@types/node': ^24.10.1
-  fyn: ^3.1.4
-  fynpo: ^3.1.4
+  fyn: ^3.1.6
+  fynpo: ^3.1.6
   prettier: ^3.6.2
   tsx: ^4.23.13
 '@babel/code-frame':
@@ -314,31 +314,31 @@ $pkg:
   cpu:
    - x64
 '@fynjs/cli-args':
- _latest: 1.1.2
+ _latest: 1.1.4
  _:
-  ^1.1.2: 1.1.2
- 1.1.2:
-  $: sha512-Qxt5crGrCporVnzlbPwRw8eZIhnCQlfa3wRpZxZEqVtgWnDAl9skD88BmW3pgVdZN9vnI01xy6F+xpBFDAs0mw==
-  _: 'https://registry.npmjs.org/@fynjs/cli-args/-/cli-args-1.1.2.tgz'
+  ^1.1.4: 1.1.4
+ 1.1.4:
+  $: sha512-flqwcItGe69Lp0we9XypiWs6JAAzfMBnJedYeLl2xbCdGqpRpRbVNko/IFEpqvxIFV3kup2shM8l7kJu1/aNSw==
+  _: 'https://registry.npmjs.org/@fynjs/cli-args/-/cli-args-1.1.4.tgz'
 '@fynjs/run':
- _latest: 1.1.3
+ _latest: 1.1.5
  _:
-  ^1.1.3: 1.1.3
- 1.1.3:
+  ^1.1.5: 1.1.5
+ 1.1.5:
   top: 1
-  $: sha512-9xBo8ZhS7GeRE8FPIOuhZ4FyozOG3rratvfmlOdsP5ITNKU2D0CBJ/clqCsRvMXOmlBP4Q9kDIlF2pxa1reRnQ==
-  _: 'https://registry.npmjs.org/@fynjs/run/-/run-1.1.3.tgz'
+  $: sha512-aLgUafOWcOw4nX4bWPVOGpSIaiZPr5H4PSYmJlpzMvcxxBqQTPqcaC++713lNlE36luhlJXUXTjfsuBhiV7voA==
+  _: 'https://registry.npmjs.org/@fynjs/run/-/run-1.1.5.tgz'
   dependencies:
    chalk: ^6.0.0
-   chalker: ^2.1.2
+   chalker: ^2.1.4
    insync: ^2.1.1
    jaro-winkler: ^0.2.8
-   '@fynjs/cli-args': ^1.1.2
+   '@fynjs/cli-args': ^1.1.4
    optional-require: ^2.1.0
    read-package-up: ^12.0.0
-   string-array: ^2.1.2
-   unwrap-npm-cmd: ^2.1.2
-   xsh: ^1.1.3
+   string-array: ^2.1.4
+   unwrap-npm-cmd: ^2.1.4
+   xsh: ^1.1.5
 '@nodelib/fs.scandir':
  _latest: 4.0.1
  _:
@@ -400,15 +400,15 @@ chalk:
   $: sha512-2uNTXIuTTxk7ciZgAU1BQcgnchcG0xXnrs6jzkQfj9SsRa9M2s5zE8WT96hS6KmG4MzWHSrvH43DF1m4XRkrFg==
   _: 'https://registry.npmjs.org/chalk/-/chalk-6.0.0.tgz'
 chalker:
- _latest: 2.1.2
+ _latest: 2.1.4
  _:
-  ^2.1.2: 2.1.2
- 2.1.2:
-  $: sha512-YGO2fs4Panb+dMAJIPfC722Q5U4+AH0DgYsbcaIQrupvgQHyGkuwsmVRay0QoH0ihjBUYSbyMNBpKif3syZffg==
-  _: 'https://registry.npmjs.org/chalker/-/chalker-2.1.2.tgz'
+  ^2.1.4: 2.1.4
+ 2.1.4:
+  $: sha512-yPHkNTL7/q2Ngngs4Xjo6IvsUEePd7B+0ic60mvpFgS4W7yYMKgG46yQdbFlaNr6K4H/pO1pzsNWi+5u5dcXmA==
+  _: 'https://registry.npmjs.org/chalker/-/chalker-2.1.4.tgz'
   dependencies:
    color-convert: ^3.1.3
-   optional-import: ^1.1.2
+   optional-import: ^1.1.4
   peerDependencies:
    ansi-colors: '>=4'
    chalk: '>=4'
@@ -539,23 +539,23 @@ fsevents:
   os:
    - darwin
 fyn:
- _latest: 3.1.4
+ _latest: 3.1.6
  _:
-  ^3.1.4: 3.1.4
- 3.1.4:
+  ^3.1.6: 3.1.6
+ 3.1.6:
   top: 1
-  $: sha512-jRgR1qzQ7IEd4Ce6NjuZs12phD4wFo7AMQii7H4CeUnU3kgN13PKQFXv5brAejPfQtr1DFXZXdenNiGhvkMgxg==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-3.1.4.tgz'
+  $: sha512-nlyfGHBbROwWj9MX/Gj85Rpb1U3zgcq9KTalE8DIJ5kGE9z1CyzLBrQ49iw6cj1it0nVVXRHwr0JLTqkHNoa5g==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-3.1.6.tgz'
 fynpo:
- _latest: 3.1.4
+ _latest: 3.1.6
  _:
-  ^3.1.4: 3.1.4
- 3.1.4:
+  ^3.1.6: 3.1.6
+ 3.1.6:
   top: 1
-  $: sha512-ac8ZlhoLt7Mm1CFphZLhY35b/sX8IrxWeH7vDbsyjmcmfP56GcOxTlpPvnHZa95NR2VfEQ4CYJ17CS06Usf1bg==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-3.1.4.tgz'
+  $: sha512-oaQ4QtQqKwNTtRaNA/CwznwEeema/UPtNw3SJ+t0Pv//LUzqX8pjpM1KlARdmR90ZBz8PAyM2UushCCGrjKlUA==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-3.1.6.tgz'
   dependencies:
-   fyn: ^3.1.4
+   fyn: ^3.1.6
    import-fresh: ^4.0.0
    resolve-from: ^5.0.0
    resolve-global: ^2.0.0
@@ -751,12 +751,12 @@ onetime:
   dependencies:
    mimic-fn: ^2.1.0
 optional-import:
- _latest: 1.1.2
+ _latest: 1.1.4
  _:
-  ^1.1.2: 1.1.2
- 1.1.2:
-  $: sha512-qUcocoh3UNzErQfyMqJ7fCcMQKe6ecSbFsj2wU/I4LFVZQvHANcK5HbFPV8riWNYtipShqcLR4TPrZ/7GHmWRg==
-  _: 'https://registry.npmjs.org/optional-import/-/optional-import-1.1.2.tgz'
+  ^1.1.4: 1.1.4
+ 1.1.4:
+  $: sha512-9j3Du5FPyUe254K9eBzh7paZkywMzHoPxKP3O8h8EWfigAHtRSJcoivWuchrl+CDWJWKZus4uqZEQ0Vk1YW1QQ==
+  _: 'https://registry.npmjs.org/optional-import/-/optional-import-1.1.4.tgz'
 optional-require:
  _latest: 2.1.0
  _:
@@ -951,12 +951,12 @@ spdx-license-ids:
   $: sha512-Bvg/8F5XephndSK3JffaRqdT+gyhfqIPwDHpX80tJrF8QQRYMo8sNMeaZ2Dp5+jhwKnUmIOyFFQfHRkjJm5nXg==
   _: 'https://registry.npmjs.org/spdx-license-ids/-/spdx-license-ids-3.0.21.tgz'
 string-array:
- _latest: 2.1.2
+ _latest: 2.1.4
  _:
-  ^2.1.2: 2.1.2
- 2.1.2:
-  $: sha512-+5ct7fDRy36leb51kXxsYzv/InYhLultV/HXMCfnO574iy4y85FnIBlK4jyZRp6gMAOU/neazHpNE4yb4MJ6Zg==
-  _: 'https://registry.npmjs.org/string-array/-/string-array-2.1.2.tgz'
+  ^2.1.4: 2.1.4
+ 2.1.4:
+  $: sha512-E4ll9CDK/S/u1MImaZAa//22i/oOxc0VX0LZyBpN0DAiS3wTi4ysru7s+yVtekI1HvPKPmfTgfqf+zpQLDZsdg==
+  _: 'https://registry.npmjs.org/string-array/-/string-array-2.1.4.tgz'
 strip-final-newline:
  _latest: 4.0.0
  _:
@@ -1020,12 +1020,12 @@ unicorn-magic:
   $: sha512-wH590V9VNgYH9g3lH9wWjTrUoKsjLF6sGLjhR4sH1LWpLmCOH0Zf7PukhDA8BiS7KHe4oPNkcTHqYkj7SOGUOw==
   _: 'https://registry.npmjs.org/unicorn-magic/-/unicorn-magic-0.4.0.tgz'
 unwrap-npm-cmd:
- _latest: 2.1.2
+ _latest: 2.1.4
  _:
-  ^2.1.2: 2.1.2
- 2.1.2:
-  $: sha512-TiwrK4+fPhD7T7o16a7BJepYsA20Hn5EGWGByRHLc9Qs2XOenNBqYq1B2lRgDihF+i2OAv8yA1clx2k+9of8eA==
-  _: 'https://registry.npmjs.org/unwrap-npm-cmd/-/unwrap-npm-cmd-2.1.2.tgz'
+  ^2.1.4: 2.1.4
+ 2.1.4:
+  $: sha512-74Qhe+7ndk3P6UnwrnYIeG2gpzFpv3GCCgZK3UulDPRhHoBUcJhXSmvU3XWWVmbYg7NHER8Z8O5qWlILqYJS3g==
+  _: 'https://registry.npmjs.org/unwrap-npm-cmd/-/unwrap-npm-cmd-2.1.4.tgz'
   dependencies:
    which: ^6.0.1
 validate-npm-package-license:
@@ -1054,11 +1054,11 @@ which:
   dependencies:
    isexe: ^2.0.0
 xsh:
- _latest: 1.1.3
+ _latest: 1.1.5
  _:
-  ^1.1.3: 1.1.3
- 1.1.3:
-  $: sha512-y5YD7+jbpurUxWI9FabdkVgqIAngl4xWau0y8p8qBTf1YcbAAKwxN4lNZmrhsi4bJ2FCRytjDYpJcU6naQLUvw==
-  _: 'https://registry.npmjs.org/xsh/-/xsh-1.1.3.tgz'
+  ^1.1.5: 1.1.5
+ 1.1.5:
+  $: sha512-q2hHfybqXexbRDpMAkvTDjzl5M/LNSmXl5KvMgSm0cvYvYtc5Gt3PwdDdZRMSFrdCbw15Xodu589CrIMXCIqtg==
+  _: 'https://registry.npmjs.org/xsh/-/xsh-1.1.5.tgz'
   dependencies:
    shelljs: ^0.10.0
