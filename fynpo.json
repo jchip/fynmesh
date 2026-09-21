@@ -7,7 +7,7 @@
     "core/*",
     "demo/*",
     "dev-tools/*",
-    "dev-tools/*/examples/*",
+    "dev-tools/create-fynapp/examples/*",
     "misc/*",
     "demo-rollup-externals/*",
     "rollup-federation/*"
