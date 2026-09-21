@@ -3,15 +3,21 @@
     "## Packages",
     "## Commits"
   ],
-  "packages": [
-    "core/*",
-    "demo/*",
-    "dev-tools/*",
-    "dev-tools/create-fynapp/examples/*",
-    "misc/*",
-    "demo-rollup-externals/*",
-    "rollup-federation/*"
-  ],
+  "packages": {
+    "autoSearch": true,
+    "include": [
+      "dev-tools/create-fynapp/examples/*"
+    ],
+    "publishInclude": [
+      "path:core/*",
+      "path:demo/*",
+      "path:dev-tools/*",
+      "path:dev-tools/create-fynapp/examples/*",
+      "path:misc/*",
+      "path:demo-rollup-externals/*",
+      "path:rollup-federation/*"
+    ]
+  },
   "versionLocks": [
     [
       "@fynmesh/kernel",
