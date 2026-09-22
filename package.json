@@ -38,8 +38,8 @@
   "dependencies": {
     "@fynjs/run": "^1.1.5",
     "@types/node": "^24.10.1",
-    "fyn": "^3.1.6",
-    "fynpo": "^3.1.6",
+    "fyn": "^3.1.8",
+    "fynpo": "^3.1.8",
     "prettier": "^3.6.2",
     "tsx": "^4.23.13"
   },

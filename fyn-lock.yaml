@@ -5,8 +5,8 @@ $pkg:
  dep:
   '@fynjs/run': ^1.1.5
   '@types/node': ^24.10.1
-  fyn: ^3.1.6
-  fynpo: ^3.1.6
+  fyn: ^3.1.8
+  fynpo: ^3.1.8
   prettier: ^3.6.2
   tsx: ^4.23.13
 '@babel/code-frame':
@@ -539,23 +539,23 @@ fsevents:
   os:
    - darwin
 fyn:
- _latest: 3.1.6
+ _latest: 3.1.8
  _:
-  ^3.1.6: 3.1.6
- 3.1.6:
+  ^3.1.8: 3.1.8
+ 3.1.8:
   top: 1
-  $: sha512-nlyfGHBbROwWj9MX/Gj85Rpb1U3zgcq9KTalE8DIJ5kGE9z1CyzLBrQ49iw6cj1it0nVVXRHwr0JLTqkHNoa5g==
-  _: 'https://registry.npmjs.org/fyn/-/fyn-3.1.6.tgz'
+  $: sha512-k+qU9S/otcSpva4owrfMY1/B1l6T5P96yF5qaSSDumGi+qp8QE/rGsRaDWbhR0M/vCBdnerVPVi+58c33nUhkA==
+  _: 'https://registry.npmjs.org/fyn/-/fyn-3.1.8.tgz'
 fynpo:
- _latest: 3.1.6
+ _latest: 3.1.8
  _:
-  ^3.1.6: 3.1.6
- 3.1.6:
+  ^3.1.8: 3.1.8
+ 3.1.8:
   top: 1
-  $: sha512-oaQ4QtQqKwNTtRaNA/CwznwEeema/UPtNw3SJ+t0Pv//LUzqX8pjpM1KlARdmR90ZBz8PAyM2UushCCGrjKlUA==
-  _: 'https://registry.npmjs.org/fynpo/-/fynpo-3.1.6.tgz'
+  $: sha512-qaspM6Xb1te1RLTdQvh7ALpxL8+dUYyHqfdNhYhpq5R0tteu85ikzZLbOQztPalkGoddL2X0hNGgqMYLuYa/2w==
+  _: 'https://registry.npmjs.org/fynpo/-/fynpo-3.1.8.tgz'
   dependencies:
-   fyn: ^3.1.6
+   fyn: ^3.1.8
    import-fresh: ^4.0.0
    resolve-from: ^5.0.0
    resolve-global: ^2.0.0
