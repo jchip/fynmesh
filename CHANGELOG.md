@@ -1,3 +1,300 @@
+# 9/22/2026
+
+## Packages
+
+-   `@fynmesh/kernel@1.1.5` `(1.1.4 => 1.1.5)`
+-   `create-fynapp@1.1.7` `(1.1.6 => 1.1.7)`
+-   `rollup-wrap-plugin@1.0.3` `(1.0.2 => 1.0.3)`
+
+## Commits
+
+-   `packages/kernel`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   FYM-423: add demo links to package READMEs [commit](/commit/e5705f126eaa61745c6f126091be072b2fb43661)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   Update Vitest to 5.0.1 [commit](/commit/870f74996c07243292dc6b20b503e2f8a5610a74)
+    -   chore: raise kernel vitest floor to ^3.2.7 to clear GHSA-5xrq-8626-4rwp [commit](/commit/e8e278d8cb556ac9bce90b853d0c01e714f69e9b)
+    -   docs: link the live demo site and packages from README, point npm homepage at the site [commit](/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8)
+
+-   `packages/bundle-esm-share`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/create-fynapp`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   FYM-423: add demo links to package READMEs [commit](/commit/e5705f126eaa61745c6f126091be072b2fb43661)
+    -   docs: update create-fynapp test command [commit](/commit/d640f4fd26b38d0a738b56af4cc6593852bade1f)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   Update Vitest to 5.0.1 [commit](/commit/870f74996c07243292dc6b20b503e2f8a5610a74)
+    -   docs: link the live demo site and packages from README, point npm homepage at the site [commit](/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8)
+
+-   `packages/demo-server`
+
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   Update Vitest to 5.0.1 [commit](/commit/870f74996c07243292dc6b20b503e2f8a5610a74)
+    -   fix: extend base from the shell page and give both builds one per-page SEO definition [commit](/commit/6acfc7ec99d063d10ac5e47dcadb3b2026a23299)
+    -   fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run [commit](/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd)
+    -   seo: per-page canonical and social tags, generated sitemap, real OG image [commit](/commit/76a425d1b270df321d91ec87cf07510a827e610e)
+    -   demo: add second Google verification token and copy all of them [commit](/commit/ca850d6278a85ac8c912b6f7ded9ad95b970c521)
+
+-   `packages/esm-ag-grid`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API [commit](/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d)
+
+-   `packages/esm-ag-grid-react`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API [commit](/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d)
+
+-   `packages/esm-react-dom-18`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   chore: clear stale optFailed markers from lockfiles [commit](/commit/471772694b6544c78c4bb1ba39e80c345b15ee97)
+
+-   `packages/middleware-consumer`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   FYM-407: include create-fynapp examples in fynpo graph as private packages [commit](/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7)
+
+-   `packages/middleware-provider`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   FYM-407: include create-fynapp examples in fynpo graph as private packages [commit](/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7)
+
+-   `packages/react-minimal`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   FYM-407: include create-fynapp examples in fynpo graph as private packages [commit](/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7)
+
+-   `packages/vanilla`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   FYM-407: include create-fynapp examples in fynpo graph as private packages [commit](/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7)
+
+-   `packages/federation-inspector`
+
+    -   Fix informational diagnostic styling in inspector Shares view [commit](/commit/e5616383067bc4fce13508797c2adbcbdaf4c4e7)
+    -   Fix federation inspector filters to remember each tab [commit](/commit/38e5086ca2ce85a3b168447f139568933e3a44b9)
+    -   Update Vitest to 5.0.1 [commit](/commit/870f74996c07243292dc6b20b503e2f8a5610a74)
+
+-   `packages/fynapp-1`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   chore: clear stale optFailed markers from lockfiles [commit](/commit/471772694b6544c78c4bb1ba39e80c345b15ee97)
+
+-   `packages/fynapp-1-b`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-2-react18`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-3-marko`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-4-vue`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-5-preact`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-6-react`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-7-solid`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-8-svelte`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-ag-grid`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run [commit](/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd)
+    -   chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API [commit](/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d)
+
+-   `packages/fynapp-ag-grid-lib`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+    -   chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API [commit](/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d)
+
+-   `packages/fynapp-bundled`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-design-tokens`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-mw-mismatch`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-notes`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-react-18`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-react-middleware`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-shell-mw`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-sidebar`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-test-shared`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/fynapp-x1-v1`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   fix: clear remaining audit vulnerabilities [commit](/commit/c4a7f388f867e759db4aff4efeaee32a690dd773)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/regular-react-app`
+
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `packages/rollup-wrap-plugin`
+
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   FYM-423: add demo links to package READMEs [commit](/commit/e5705f126eaa61745c6f126091be072b2fb43661)
+
+-   `packages/shared-demo-utils`
+
+    -   update deps [commit](/commit/fee10b54d4617c91230417c7e0197032c7942c62)
+    -   [Publish] [commit](/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3)
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+
+-   `packages/test-nested-deps`
+
+    -   update lockfiles [commit](/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294)
+    -   Fix high and critical dependency vulnerabilities [commit](/commit/5551f17849f3413b01d8b5f991b0d767f2c68258)
+
+-   `notes`
+
+    -   FYM-419: balance scope-isolation, strategy and reach claims in comparison [commit](/commit/cfb6997627332bd5bd96676687beab2fb65afa24)
+    -   docs: compare core federation strengths of FynMesh and MF [commit](/commit/874b866d8d97af5303c4795222a1978d34fe2dc7)
+    -   FYM-419: add share-scope membership section, fix tree-shaking wording [commit](/commit/58ee63a760ed5899ea8ef63f1bbbe62fee626b20)
+    -   FYM-413: refresh federation comparison with source and container tests [commit](/commit/b881d12aa0d464c4826ff6cb1d7b3809e70c9598)
+    -   docs: clarify federation-js module-boundary model [commit](/commit/72e4d365d9b482e3b53209da82c1bbb31bddb3ad)
+    -   docs: trace MF2 shared tree-shaking from source, correct the comparison doc [commit](/commit/403281ae3c05d9dd450aca4b50a5ee134c99591c)
+    -   docs: re-sync federation-inspector design with what actually shipped [commit](/commit/78c417dab04f9d48fcb611785f7870a673c3af0d)
+    -   docs: refresh roadmap against the source and record known gaps [commit](/commit/129823d6328aee6f86db692128641c849d0c63b3)
+    -   docs: explicit federation initialization is a design stance, not a tax [commit](/commit/fdd4ab39a399ceda181ad13786e5982bbb1ca0b6)
+    -   docs: measure runtime delivery cost, embedded per artifact vs loaded once [commit](/commit/30fe01d388f41757f6be6f34d3fb0e6578b9f4a0)
+    -   docs: declarative resolution is fynmeshs thesis, not a missing registerRemotes [commit](/commit/44c37d338206a1c69accdfa1f25dbf4e68ae821c)
+    -   docs: add Module Federation comparison and refresh build-artifact notes [commit](/commit/42bfdcf1a63edcb7e5846e272ac8fec43e97ca05)
+
+-   `scripts`
+
+    -   fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run [commit](/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd)
+    -   FYM-412: fix the dead combine-group ref and fail the build when a group does not form [commit](/commit/94502702bc048fdf1e16f94d4c42bb2b252f91bb)
+
+-   `MISC`
+
+    -   update fyn and fynpo [commit](/commit/77b494dfac551bc261d94f51f331bbe4f91ec936)
+    -   fix: run demo-server xrun tasks with its local runner and approve esbuild 0.27 [commit](/commit/427327471a5ceb46f749fb00a6dfa0ae8d7eadd1)
+    -   FYM-427: rely on auto-search with explicit example includes [commit](/commit/30b5a4209fe3d68aea68ef9dd32f48b9b58cadbb)
+    -   FYM-425: include create-fynapp examples in fynpo discovery [commit](/commit/ab3a9371e0d7353e4574df1143dbd4bd4ee34486)
+    -   Update changelog [commit](/commit/99d3ac6c098a79918c175e89cbbd205827c5ed96)
+
 # 9/20/2026
 
 ## Packages
