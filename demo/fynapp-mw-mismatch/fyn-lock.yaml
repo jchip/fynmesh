@@ -341,10 +341,10 @@ $pkg:
   $: sha512-K4IU7YF16fql0Gm4u8LNm43fv+KM27Co0ZWx0IJfqiD0i9GOhJd+EeS7zpn+LnQsFGTUpMv72GSuxxI6RVJu0g==
   _: 'https://registry.npmjs.org/@fynjs/cli-args/-/cli-args-1.0.1.tgz'
 '@fynmesh/kernel':
- _latest: 1.1.4-fynlocal_h
+ _latest: 1.1.5-fynlocal_h
  _:
-  ../../core/kernel: 1.1.4-fynlocal_h
- 1.1.4-fynlocal_h:
+  ../../core/kernel: 1.1.5-fynlocal_h
+ 1.1.5-fynlocal_h:
   top: 1
   $: local
   _: ../../core/kernel
@@ -1089,10 +1089,10 @@ convert-source-map:
   $: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==
   _: 'https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz'
 create-fynapp:
- _latest: 1.1.6-fynlocal_h
+ _latest: 1.1.7-fynlocal_h
  _:
-  ../../dev-tools/create-fynapp: 1.1.6-fynlocal_h
- 1.1.6-fynlocal_h:
+  ../../dev-tools/create-fynapp: 1.1.7-fynlocal_h
+ 1.1.7-fynlocal_h:
   top: 1
   $: local
   _: ../../dev-tools/create-fynapp
@@ -1112,7 +1112,7 @@ create-fynapp:
    rollup-plugin-esbuild: ^6.2.1
    rollup-plugin-federation: ^1.1.2
    rollup-plugin-no-emit: ^1.3.0
-   rollup-wrap-plugin: ^1.0.2
+   rollup-wrap-plugin: ^1.0.3
 debug:
  _latest: 4.4.3
  _:
@@ -1271,9 +1271,9 @@ fynapp-design-tokens:
   $: local
   _: ../fynapp-design-tokens
   dependencies:
-   '@fynmesh/kernel': ^1.1.4
-   create-fynapp: ^1.1.6
-   rollup-wrap-plugin: ^1.0.2
+   '@fynmesh/kernel': ^1.1.5
+   create-fynapp: ^1.1.7
+   rollup-wrap-plugin: ^1.0.3
 get-tsconfig:
  _latest: 4.14.3
  _:
@@ -1655,10 +1655,10 @@ rollup-plugin-no-emit:
   peerDependencies:
    rollup: '^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0'
 rollup-wrap-plugin:
- _latest: 1.0.2-fynlocal_h
+ _latest: 1.0.3-fynlocal_h
  _:
-  '../../dev-tools/rollup-wrap-plugin,../rollup-wrap-plugin': 1.0.2-fynlocal_h
- 1.0.2-fynlocal_h:
+  '../../dev-tools/rollup-wrap-plugin,../rollup-wrap-plugin': 1.0.3-fynlocal_h
+ 1.0.3-fynlocal_h:
   top: 1
   $: local
   _: ../../dev-tools/rollup-wrap-plugin

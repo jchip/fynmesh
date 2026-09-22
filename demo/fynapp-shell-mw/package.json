@@ -27,9 +27,9 @@
     "layout"
   ],
   "dependencies": {
-    "@fynmesh/kernel": "^1.1.4",
-    "create-fynapp": "^1.1.6",
-    "rollup-wrap-plugin": "^1.0.2"
+    "@fynmesh/kernel": "^1.1.5",
+    "create-fynapp": "^1.1.7",
+    "rollup-wrap-plugin": "^1.0.3"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.3",

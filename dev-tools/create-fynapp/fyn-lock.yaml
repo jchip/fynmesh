@@ -595,10 +595,10 @@ $pkg:
   $: sha512-K4IU7YF16fql0Gm4u8LNm43fv+KM27Co0ZWx0IJfqiD0i9GOhJd+EeS7zpn+LnQsFGTUpMv72GSuxxI6RVJu0g==
   _: 'https://registry.npmjs.org/@fynjs/cli-args/-/cli-args-1.0.1.tgz'
 '@fynmesh/kernel':
- _latest: 1.1.4-fynlocal_h
+ _latest: 1.1.5-fynlocal_h
  _:
-  ../../core/kernel: 1.1.4-fynlocal_h
- 1.1.4-fynlocal_h:
+  ../../core/kernel: 1.1.5-fynlocal_h
+ 1.1.5-fynlocal_h:
   top: 1
   $: local
   _: ../../core/kernel
@@ -2294,10 +2294,10 @@ rollup-plugin-no-emit:
   peerDependencies:
    rollup: '^1.20.0 || ^2.0.0 || ^3.0.0 || ^4.0.0'
 rollup-wrap-plugin:
- _latest: 1.0.2-fynlocal_h
+ _latest: 1.0.3-fynlocal_h
  _:
-  ../rollup-wrap-plugin: 1.0.2-fynlocal_h
- 1.0.2-fynlocal_h:
+  ../rollup-wrap-plugin: 1.0.3-fynlocal_h
+ 1.0.3-fynlocal_h:
   top: 1
   $: local
   _: ../rollup-wrap-plugin
