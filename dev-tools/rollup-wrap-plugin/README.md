@@ -2,7 +2,7 @@
 
 Wrap a Rollup plugin constructor so the config it was created with stays readable afterwards.
 
-**FynMesh:** [Website](https://www.fynmesh.win) · [Demo](https://www.fynmesh.win/demo) · [Shell demo](https://www.fynmesh.win/shell)
+**FynMesh:** [Website](https://www.fynmesh.fyi) · [Demo](https://www.fynmesh.fyi/demo) · [Shell demo](https://www.fynmesh.fyi/shell)
 
 Rollup plugins normally swallow their arguments: once `somePlugin({ ... })` returns, the object
 you passed in is gone. This wrapper keeps that configuration attached to the plugin instance

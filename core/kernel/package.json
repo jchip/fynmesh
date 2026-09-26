@@ -14,7 +14,7 @@
     "./package.json": "./package.json"
   },
   "description": "FynMesh Kernel",
-  "homepage": "https://www.fynmesh.win",
+  "homepage": "https://www.fynmesh.fyi",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=24.0.0"

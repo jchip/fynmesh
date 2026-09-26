@@ -2,16 +2,16 @@
 
 FynMesh is a large enterprise scale web application framework that provides advanced module federation and micro-frontend capabilities using Rollup to enable seamless sharing of code between independently deployed applications.
 
-**🌐 [Live demo — www.fynmesh.win](https://www.fynmesh.win)**
+**🌐 [Live demo — www.fynmesh.fyi](https://www.fynmesh.fyi)**
 
 See six frameworks running side by side on one page, loaded independently and sharing
 dependencies at runtime:
 
 | | |
 | --- | --- |
-| [**Home**](https://www.fynmesh.win) | What FynMesh is and why the loader model differs |
-| [**All FynApps demo**](https://www.fynmesh.win/demo) | React, Vue, Preact, Solid, Svelte and Marko apps on one page |
-| [**Shell demo**](https://www.fynmesh.win/shell) | A layout composed entirely from independently deployed FynApps via middleware |
+| [**Home**](https://www.fynmesh.fyi) | What FynMesh is and why the loader model differs |
+| [**All FynApps demo**](https://www.fynmesh.fyi/demo) | React, Vue, Preact, Solid, Svelte and Marko apps on one page |
+| [**Shell demo**](https://www.fynmesh.fyi/shell) | A layout composed entirely from independently deployed FynApps via middleware |
 
 ## Packages
 
@@ -177,7 +177,7 @@ The typical workflow for developing with FynMesh includes:
 
 ## Documentation
 
-- [Live demo site](https://www.fynmesh.win) — the framework running, with source links
+- [Live demo site](https://www.fynmesh.fyi) — the framework running, with source links
 - [Build artifacts reference](./notes/BUILD-ARTIFACTS.md) — the JSON files a fynapp build
   emits, who produces each one, and who reads it
 - [Module Federation 2.0 vs FynMesh](./notes/MF2-VS-FEDERATION-JS.md) — a source-grounded

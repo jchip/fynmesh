@@ -19,7 +19,7 @@
  */
 
 /** Origin the deployed site is served from; the base of every canonical url. */
-export const SITE_ORIGIN = "https://www.fynmesh.win";
+export const SITE_ORIGIN = "https://www.fynmesh.fyi";
 
 /**
  * The SEO half of a page's render context.

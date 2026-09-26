@@ -2,7 +2,7 @@
 
 The FynMesh kernel is a generic lifecycle engine for micro-frontend orchestration. It manages FynApp loading, middleware coordination, and bootstrap dependencies while remaining agnostic to specific frameworks or rendering strategies.
 
-**FynMesh:** [Website](https://www.fynmesh.win) · [Demo](https://www.fynmesh.win/demo) · [Shell demo](https://www.fynmesh.win/shell)
+**FynMesh:** [Website](https://www.fynmesh.fyi) · [Demo](https://www.fynmesh.fyi/demo) · [Shell demo](https://www.fynmesh.fyi/shell)
 
 ## Overview
 

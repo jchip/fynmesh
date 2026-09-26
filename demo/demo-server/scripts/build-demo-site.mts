@@ -429,7 +429,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         }
 
         // Note: no CNAME file — Cloudflare Pages configures the custom domain
-        // (www.fynmesh.win) in its dashboard, so a CNAME file is not used.
+        // (www.fynmesh.fyi) in its dashboard, so a CNAME file is not used.
 
         // Copy Google verification files. Search Console wants each token served
         // from the site root under its own filename, and a property can carry

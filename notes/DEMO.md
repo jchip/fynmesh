@@ -4,9 +4,9 @@
 
 | URL                                | Description           |
 | ---------------------------------- | --------------------- |
-| https://www.fynmesh.win/           | Landing page          |
-| https://www.fynmesh.win/demo.html  | All FynApps demo      |
-| https://www.fynmesh.win/shell.html | Shell middleware demo |
+| https://www.fynmesh.fyi/           | Landing page          |
+| https://www.fynmesh.fyi/demo.html  | All FynApps demo      |
+| https://www.fynmesh.fyi/shell.html | Shell middleware demo |
 
 Alternative: https://jchip.github.io/fynmesh/
 
