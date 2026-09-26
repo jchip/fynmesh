@@ -61,6 +61,17 @@ export const PAGE_SEO = {
             "frontends together on one page, sharing dependencies through Module Federation " +
             "with independent deployment.",
     },
+    features: {
+        canonicalPath: "features",
+        ogTitle: "FynMesh Features - Same App, Many Versions",
+        ogDescription:
+            "A quick visual tour of FynMesh and federation-js: many versions of the same app " +
+            "on one page, semver-range sharing, any framework, ordered boot and middleware.",
+        metaDescription:
+            "FynMesh features: run many versions of the same micro frontend side by side, " +
+            "share dependencies by semver range, and mix React, Vue, Preact, Solid, Svelte " +
+            "and Marko on one small loader.",
+    },
     shell: {
         canonicalPath: "shell",
         ogTitle: "FynMesh Shell Demo - Middleware-Driven Layout",

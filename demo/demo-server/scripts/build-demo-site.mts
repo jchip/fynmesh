@@ -283,6 +283,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(demoOutputPath, demoHtml);
         log("📄 Generated: " + demoOutputPath);
 
+        // Build the features page (features.html)
+        const featuresHtml = env.render("pages/features.html", {
+            isProduction,
+            pathPrefix,
+            ...pageSeo("features"),
+        });
+        const featuresOutputPath = path.join(outputDir, "features.html");
+        writeFileSync(featuresOutputPath, featuresHtml);
+        log("📄 Generated: " + featuresOutputPath);
+
         // Build the shell page (shell.html).
         // The preload hints collapse the shell's startup request waterfall; see
         // scripts/shell-preload.mts and notes/SHELL_LOAD_PERF.md.
@@ -358,6 +368,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // that stops shipping drops out instead of becoming a 404 in the sitemap.
         const sitemapPages = [
             { file: "index.html", loc: "/", priority: "1.0" },
+            { file: "features.html", loc: "/features", priority: "0.8" },
             { file: "demo.html", loc: "/demo", priority: "0.8" },
             { file: "shell.html", loc: "/shell", priority: "0.8" },
         ];

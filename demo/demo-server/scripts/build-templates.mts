@@ -113,6 +113,16 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         writeFileSync(demoOutputPath, demoHtml);
         log(`📄 Generated: ${demoOutputPath}`);
 
+        // Build the features page (features.html)
+        const featuresHtml = env.render("pages/features.html", {
+            isProduction,
+            pathPrefix,
+            ...pageSeo("features"),
+        });
+        const featuresOutputPath = path.join(outputDir, "features.html");
+        writeFileSync(featuresOutputPath, featuresHtml);
+        log(`📄 Generated: ${featuresOutputPath}`);
+
         // Build the shell page (shell.html).
         // Hints are read off the FynApps' dist dirs, so they are only present if
         // those have been built — a template-only build just gets fewer hints.
