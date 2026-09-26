@@ -444,10 +444,12 @@ and discovery ergonomics differ; neither representation makes this structurally 
 `fynapp-x1-v2` demos publish the same logical name at different versions. Consumers select via
 `import('fynapp-x1/main', { with: { type: "mf-expose", semver: "^2.0.0" } })`.
 The registered-container lookup chooses the first satisfying version, not necessarily the highest.
-MF registrations are name-keyed per runtime instance; independently versioned code can coexist
-through distinct registration names/entries or instances. `entryGlobalName` is separate from
-the registration name, and ESM remotes do not require window globals. MF lacks the same built-in
-semver-range lookup, but coexistence itself is not unique to FynMesh.
+MF registrations are name-keyed per runtime instance. Within one instance, `registerRemote` rejects a
+second remote with the same name, and `force` evicts the loaded one (`runtime-core/src/remote/index.ts:691`).
+The loaded-module cache is keyed by name too (`remote/index.ts:530,738`). Coexistence still works
+across instances, because each build normally owns one. `entryGlobalName` is separate from the
+registration name, and ESM remotes do not require window globals. So two versions of one app can
+run on one page, but MF has no range lookup to choose between them. §6 covers who does that work.
 
 **Focused same-container experiment (2026-09-17).** To distinguish provider registration from
 actual consumption, a self-contained webpack container exposed `./probe`. Its root package
@@ -578,7 +580,8 @@ composition layer that can locate and load something absent; ordinary co-residen
 not depend on them.
 
 MF2 does have runtime `registerRemotes`, but nothing **semver-range-keyed** — its resolution is by
-name, and the version is whatever that URL happens to serve.
+name, and the version is whatever that URL happens to serve. See
+[Multiple versions of one app](#multiple-versions-of-one-app-who-does-the-work) for what that costs.
 
 **On top of this, FynMesh builds a dependency graph.** The kernel reads manifests, derives edges from
 `requires` + `import-exposed` + `shared-providers`, detects cycles, and loads in **topological
@@ -616,6 +619,35 @@ phase, not all network requests or all module execution.
   (`fynapp-registry.ts:22,30-32`). Versioned keys coexist without issue; the bare-name alias is
   last-write-wins. The sharp edge is in the alias, not an inability to hold two versions
   (`notes/KERNEL_PRINCIPAL_REVIEW.md` #6 flags the dual-key ambiguity).
+
+### Multiple versions of one app: who does the work
+
+A common case: app A was built against `x1` 1.x. App B was built later against `x1` 2.x. Both run
+on one page.
+
+**On FynMesh this is automatic for consumers.** Each consumer writes its range in the import. The
+host's resolver maps `(name, range)` to a deployment, and the registry picks a loaded version that
+satisfies each range. Publishing x1 2.4, or 3.0 beside 2.x, changes no consumer. The one-time cost
+is on the host, which must supply a real resolver. The shipped browser default ignores `range`
+(see the implementation notes above).
+
+**On MF2 someone maintains the version mapping.** MF2 has no contract where a consumer declares a
+range and the runtime picks a deployment. Each lever it offers puts version identity somewhere a
+person keeps up to date:
+
+| MF2 lever | What it gives | What it costs |
+| --- | --- | --- |
+| Per-build instances | A maps `x1` to a v1 URL and B maps `x1` to a v2 URL, each in its own instance. A build's instance id is `name:version` from `package.json` (`enhanced/src/lib/container/ModuleFederationPlugin.ts:109`; `runtime/src/utils.ts:13-35`) | Each consumer holds a URL, not a range. A new x1 minor means updating every consumer's URL, or keeping a per-major URL that the x1 team repoints. Same-name builds without a version share one instance (`runtime/src/utils.ts:24-30`) |
+| `alias` | A consumer imports `x1/main` while the remote is registered as `x1_v2` | A consumer-side rename. An alias must be unique within its instance (`remote/index.ts:646-661`) |
+| Remote by `version` + snapshot | `{ name: "x1", version: "2.3.0" }` resolved through a deploy-platform snapshot | Exact version, not a range. One `matchedVersion` per name per consumer (`sdk/src/generateSnapshotFromManifest.ts:93-120`). Needs a deployment platform |
+| x1 as a non-singleton shared package | Consumers declare `requiredVersion` ranges, and the share scope keeps both majors | x1 becomes a library, not a container. Independent deployment needs `import: false` plus a provider container per major, and those providers need distinct names. The host must load them before consumers ask |
+| Runtime plugin (`beforeRequest`, `afterResolve`, `loadEntry`) | A custom `(name, range)` resolver | You build and own it. This is the FynMesh contract, reimplemented |
+| `shareKey`, `shareScope`, layers | Control which shared packages join which sharing group | Nothing here. They apply to shared packages, not remotes |
+
+**One instance for everyone is the hard case.** A host that loads every app through one runtime
+instance cannot hold both majors as `x1`. A runtime-only shell does this. So does a FynMesh kernel
+on MF2. There, someone must rename or alias per major. There is also no runtime range check, so a
+wrong URL loads the wrong major silently.
 
 ---
 
@@ -1100,7 +1132,7 @@ either one unique.
 | Core concern | Argument for FynMesh | Argument for MF |
 | --- | --- | --- |
 | **Joining a federation** | **Common-scope participation through normal load/init.** Containers contribute providers and resolve against the established named scope without declaring or registering their peers. This suits independently assembled applications. | **Explicit connections between instance-specific scope maps.** Independently initialized applications do not share merely because their scope names match. The composing application controls which participants exchange dependencies. |
-| **Addressing container versions** | **Logical name + semver range is native.** Several container releases can occupy one namespace, and imports select a compatible registered release without inventing a separate name per version. | No equivalent built-in range-addressed container contract. Named registrations give the composer explicit deployment selection; custom resolution is needed for the FynMesh-style range contract. |
+| **Addressing container versions** | **Logical name + semver range is native.** Several container releases can occupy one namespace, and imports select a compatible registered release without inventing a separate name per version. | No built-in range-addressed container contract. Named registrations give the composer explicit deployment selection. One instance holds one remote per name, so versions live in per-consumer URLs, names, aliases or snapshots that someone maintains (§6). Custom resolution is needed for the FynMesh-style range contract. |
 | **Dependency requirement granularity** | **Importer-range sets remain runtime metadata.** The resolver can intersect applicable importer constraints associated with a chunk, and the registry retains those constraints. | **Requirements belong to individual compiled consume modules.** Different consuming modules retain their own requirements without relying on an output chunk's importer-range intersection. Both support importer-dependent requirements; neither granularity is inherently superior. |
 | **Sharing boundaries** | A common named scope supplies a straightforward boundary for all participating containers. Different scope names separate sharing groups. | **Per-share scopes, multiple scopes, and layers** provide finer configuration of which dependencies participate in which sharing relationships. FynMesh's build path currently omits per-share scope configuration. |
 | **Import names and shared identities** | Shared resolution integrates with the loader's canonical URL/specifier records, so resolved providers participate in the same module identity system as other imports. | **Separate `request` and `shareKey`, plus prefix/subpath sharing**, distinguish the import intercepted by the build from the identity negotiated at runtime. FynMesh lacks that configuration surface. |
@@ -1115,6 +1147,7 @@ load; containers join the common scope and can reuse compatible providers withou
 peers. Native versioned-container addressing extends that model to independently evolving releases.
 Selecting a registered container is built in; locating an absent release needs a composition-layer
 loader, such as the kernel's deployment resolver, whose policy must honor the requested range.
+On MF the same case needs someone to maintain per-consumer URLs, names or aliases (§6).
 
 **The strongest MF argument is control over sharing semantics.** The composer connects the intended
 participants and can configure dependency identities, sharing boundaries, and selection strategies

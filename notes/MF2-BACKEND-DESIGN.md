@@ -110,18 +110,39 @@ loaded module cache is keyed by name too (`remote/index.ts:530,738`). So `fynapp
 `fynapp-x1@2.0.0` cannot both register as `fynapp-x1`. The entry cache is not the issue. Its key is
 name plus entry URL (`utils/load.ts:330`).
 
-**Decision.** Each MF2 build gets a **version-unique container name**. The logical name stays in the
-FynApp manifest.
+The limit applies per runtime instance. In a normal MF build, each consumer owns its instance, so
+consumer A can map `x1` to a v1 URL while consumer B maps it to a v2 URL. The FynMesh kernel is one
+host that loads every FynApp, so it hits the limit directly. MF2 also has no range contract. Its
+workarounds all put version identity in a URL, name, alias or snapshot that someone maintains (see
+[`MF2-VS-FEDERATION-JS.md` §6](./MF2-VS-FEDERATION-JS.md#multiple-versions-of-one-app-who-does-the-work)).
+The MF2 backend closes that gap: app builders keep one logical name and declare ranges, and only
+the kernel sees versioned names.
+
+**Build requirement.** Every MF2 FynApp build must carry its real version. MF2 finds a build's
+runtime instance by build id, or by name plus version (`runtime/src/utils.ts:13-35`). Webpack builds
+set that id to `name:version` from `package.json` (`enhanced/src/lib/container/ModuleFederationPlugin.ts:109`).
+Two same-name builds with no version would resolve to one shared instance (`runtime/src/utils.ts:24-30`).
+Phase 1 checks what the Vite plugin does here.
+
+**Decision.** The kernel registers each FynApp under a **version-unique registration name**. The
+logical name stays in the FynApp manifest. Two ways to get there, and phase 1 picks one:
+
+- **Registration name only (preferred).** The build keeps its plain `name`. The kernel registers it
+  as `fynapp_x1__2_0_0`. This works if two same-name ESM builds with different versions stay apart
+  in their own runtimes. `entryGlobalName` is separate from the registration name, and ESM remotes
+  need no window global.
+- **Build name too (fallback).** The build stamps the versioned name into its MF2 `name`. This is
+  the safe choice if the first option collides.
 
 | | Value for `fynapp-x1` 2.0.0 |
 | --- | --- |
 | Logical name (kernel, manifest, imports) | `fynapp-x1` |
-| MF2 container name (build `name`, `registerRemotes`) | `fynapp_x1__2_0_0` (candidate) |
+| MF2 registration name (`registerRemotes`, and build `name` in the fallback) | `fynapp_x1__2_0_0` (candidate) |
 
 The candidate encoding turns every character outside `[A-Za-z0-9_]` into `_`. Then it joins name
 and version with `__`. Phase 1 finds out which characters MF2 accepts.
 
-The build writes the container name into the manifest:
+The build writes the registration name into the manifest:
 
 ```json
 {
@@ -262,18 +283,21 @@ demo-mf2/
 
 ## 7. Open questions (answered in phase 1)
 
-1. Which characters can an MF2 container `name` use? The answer fixes the encoding in §2.
-2. Can a host with no build load a Vite ESM `remoteEntry.js`? The runtime accepts `esm` and
+1. Which characters can an MF2 registration name use? The answer fixes the encoding in §2.
+2. Do two ESM builds both named `fynapp-x1`, with different versions, stay apart when registered
+   under versioned names? The answer picks between the two options in §2.
+3. Does the Vite plugin derive a build id or version per build, as webpack does? §2 requires it.
+4. Can a host with no build load a Vite ESM `remoteEntry.js`? The runtime accepts `esm` and
    `module` types (`utils/load.ts:48`). The Vite side is unconfirmed.
-3. Which strategy gives one React 18 across React-18 apps in any load order? The same strategy must
+5. Which strategy gives one React 18 across React-18 apps in any load order? The same strategy must
    still give a React-19 app its React 19.
-4. Can a `@module-federation/vite` build set `shareScope: "fynmesh"`? Does its `init` accept a scope
+6. Can a `@module-federation/vite` build set `shareScope: "fynmesh"`? Does its `init` accept a scope
    map from outside?
-5. How big is the kernel bundle with the MF2 runtime inside? How much runtime does each Vite remote
+7. How big is the kernel bundle with the MF2 runtime inside? How much runtime does each Vite remote
    carry?
 
 The Vite plugin lives in a separate repo with no local checkout yet. Phase 1 installs it and answers
-2, 4 and 5 by running it.
+2, 3, 4, 6 and 7 by running it.
 
 ---
 
@@ -285,17 +309,19 @@ Each phase ends with a pass check. A phase only starts after the one before it p
 
 Work in `demo-mf2/spike/`. It gets thrown away once phase 4 lands.
 
-- Build `fynapp-x1` 1.0.0 and 2.0.0 with plain `@module-federation/vite`, using encoded names.
+- Build `fynapp-x1` 1.0.0 and 2.0.0 with plain `@module-federation/vite`. Both keep the plain
+  build name `fynapp-x1`.
 - Build one plain React-18 remote that shares `react` as a singleton.
 - Write a static `index.html` that bundles `@module-federation/runtime`, creates one host, registers
-  all three, and loads `./main` from each.
+  all three under versioned names, and loads `./main` from each.
+- If v1 and v2 collide, rebuild them with versioned build names and retry.
 - Try both share strategies.
 
 **Pass:**
 - v1 and v2 load on one page. Each reports its own version.
 - One copy of React 18 loads.
 - `host.loadRemote` resolves every expose.
-- Questions 1–5 in §7 have written answers.
+- Questions 1–7 in §7 have written answers.
 
 **Fail:** two versions can't coexist even with unique names. Then stop and revise §2.
 
