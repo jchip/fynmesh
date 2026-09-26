@@ -21,12 +21,14 @@ async function execute(runtime) {
     // First clear the target div
     targetDiv.innerHTML = "";
 
-    // Create a new instance and mount it
-    const component = App.renderSync({
-      appName: runtime.fynApp.name,
-    });
-
-    component.appendTo(targetDiv);
+    // Render and attach the template. Marko 6 replaced renderSync()/appendTo()
+    // with mount(input, reference), which appends inside the target by default.
+    App.mount(
+      {
+        appName: runtime.fynApp.name,
+      },
+      targetDiv,
+    );
 
     console.log(`${runtime.fynApp.name} bootstrapped successfully`);
 
