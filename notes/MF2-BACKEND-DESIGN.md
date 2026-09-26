@@ -26,7 +26,9 @@ MF source references below are to `module-federation-core` @ `c38c4c0e4` (packag
 - Any compatibility layer between the two builds.
 - Node kernel on MF2. `node-kernel.ts` stays as it is.
 - Vite dev server and HMR. v1 serves built `dist/` output, like `demo/` does today.
-- Porting `federation-combine`, the `Federation.__I()` inspector, or the SystemJS loader variants.
+- The federation inspector (`Federation.__I()` and the in-page inspector UI). It was built
+  specifically for federation-js internals, so it has no MF2 counterpart to port.
+- Porting `federation-combine` or the SystemJS loader variants.
 - Porting every `demo/` app. `demo-mf2/` starts with a minimal set.
 
 ---
