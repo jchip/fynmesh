@@ -44,7 +44,8 @@
 
     /* Hero */
     .fx-hero { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%); color: #fff; padding-block: 28px 64px; }
-    .fx-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
+    /* padding-right keeps the links clear of the fixed GitHub corner icon */
+    .fx-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; padding-right: 64px; min-height: 48px; }
     .fx-hero .fx-home { color: #fff; font-weight: 700; text-decoration: none; letter-spacing: .02em; }
     .fx-toplinks { display: flex; gap: 20px; flex-wrap: wrap; }
     .fx-hero .fx-toplinks a { color: #cbd5e1; text-decoration: none; font-size: 15px; }
@@ -112,6 +113,14 @@
     .fx-extras { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; color: var(--fx-muted); font-size: 14px; }
     .fx-extras b { color: var(--fx-ink); }
 
+    /* Also built in */
+    .fx-also { border-top: 1px solid var(--fx-line); padding-block: 48px; display: grid; gap: 20px; scroll-margin-top: 24px; }
+    .fx-also h2 { margin: 0; font-size: 26px; font-weight: 700; }
+    .fx-also-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .fx-also-item { background: var(--fx-panel); border: 1px solid var(--fx-line); border-radius: 12px; padding: 16px; }
+    .fx-also-item h3 { margin: 0 0 6px; font-family: var(--fx-mono); font-size: 14px; font-weight: 600; color: var(--fx-acc); }
+    .fx-also-item p { margin: 0; font-size: 14px; color: var(--fx-muted); }
+
     /* Start + footer */
     .fx-start { border-top: 1px solid var(--fx-line); padding-block: 48px; display: grid; gap: 16px; }
     .fx-start h2 { margin: 0; font-size: 26px; font-weight: 700; }
@@ -126,6 +135,7 @@
 {% endblock %}
 
 {% block content %}
+{% include "components/github-corner.html" %}
 <div class="fx">
 
 <section class="fx-hero">
@@ -136,12 +146,11 @@
                 <a href="{{pathPrefix}}features.html" aria-current="page">Features</a>
                 <a href="{{pathPrefix}}demo.html">Demo</a>
                 <a href="{{pathPrefix}}shell.html">Shell</a>
-                <a href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
         </nav>
-        <p class="fx-eyebrow">FynMesh + federation-js</p>
-        <h1>Ship every version. Let each app pick.</h1>
-        <p class="fx-lede">FynMesh puts independently built apps on one page. Two majors of the same app run side by side under one name. Each consumer gets the version its range asks for.</p>
+        <p class="fx-eyebrow">Features</p>
+        <h1>FynMesh + federation-js at a glance</h1>
+        <p class="fx-lede">FynMesh runs independently built apps together on one page. Here is what the framework and its federation layer do for them, one picture per feature.</p>
         <div class="fx-cta">
             <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo.html">Open the live demo</a>
             <a class="fx-btn fx-btn-ghost" href="{{pathPrefix}}shell.html">See the shell demo</a>
@@ -152,22 +161,25 @@
 <div class="fx-inner">
 
 <nav class="fx-index" aria-label="Features">
-    <a class="fx-chip fx-chip-top" href="#versions">Same app, many versions</a>
-    <a class="fx-chip" href="#join">Join by loading</a>
-    <a class="fx-chip" href="#shared">Shared deps by range</a>
-    <a class="fx-chip" href="#frameworks">Any framework</a>
-    <a class="fx-chip" href="#boot">Boots in order</a>
-    <a class="fx-chip" href="#middleware">Middleware</a>
-    <a class="fx-chip" href="#inspect">See inside</a>
-    <a class="fx-chip" href="#small">Small loader</a>
+    <a class="fx-chip fx-chip-top" href="#versions">Same app, multiple versions</a>
+    <a class="fx-chip" href="#join">Join by Loading</a>
+    <a class="fx-chip" href="#shared">Semver Sharing</a>
+    <a class="fx-chip" href="#frameworks">Framework Agnostic</a>
+    <a class="fx-chip" href="#boot">Dependency-Ordered Boot</a>
+    <a class="fx-chip" href="#lifecycle">FynUnit Lifecycle</a>
+    <a class="fx-chip" href="#middleware">FynMesh Middleware</a>
+    <a class="fx-chip" href="#fynbus">FynBus</a>
+    <a class="fx-chip" href="#inspect">Federation Inspector</a>
+    <a class="fx-chip" href="#small">Featherweight Loader</a>
+    <a class="fx-chip" href="#also">Also built in</a>
 </nav>
 
 <div class="fx-plates">
 
     <section class="fx-plate" id="versions">
         <div>
-            <span class="fx-tag">Built for this</span>
-            <h2>Same app, many versions</h2>
+            <span class="fx-tag">Same app, multiple versions</span>
+            <h2>Ship every version. Let each app pick.</h2>
             <p>Publish fynapp-x1 2.0 next to 1.0. Apps built against 1.x keep getting 1.x. Nobody renames anything or edits a URL.</p>
         </div>
         <figure>
@@ -213,7 +225,7 @@
 
     <section class="fx-plate" id="join">
         <div>
-            <h2>Join by loading</h2>
+            <h2>Join by Loading</h2>
             <p>Load an app and it joins the page's shared scope. No app lists its peers. Apps that land together share code automatically.</p>
         </div>
         <figure>
@@ -263,7 +275,7 @@
 
     <section class="fx-plate" id="shared">
         <div>
-            <h2>Shared deps by range</h2>
+            <h2>Semver Sharing</h2>
             <p>React 18 and React 19 apps run on the same page. Apps whose ranges agree share one copy. A new major gets its own.</p>
         </div>
         <figure>
@@ -304,7 +316,7 @@
 
     <section class="fx-plate" id="frameworks">
         <div>
-            <h2>Any framework</h2>
+            <h2>Framework Agnostic</h2>
             <p>Six frameworks on one loader. There are no bridges or adapters. Each app is a plain federated container.</p>
         </div>
         <figure>
@@ -346,7 +358,7 @@
 
     <section class="fx-plate" id="boot">
         <div>
-            <h2>Boots in order</h2>
+            <h2>Dependency-Ordered Boot</h2>
             <p>Ask for one app by name. The kernel reads manifests, builds the dependency graph, and boots providers before consumers.</p>
         </div>
         <figure>
@@ -383,10 +395,50 @@
         </figure>
     </section>
 
+    <section class="fx-plate" id="lifecycle">
+        <div>
+            <h2>FynUnit Lifecycle</h2>
+            <p>Each app's FynUnit can initialize, execute, suspend, resume and shut down. The kernel tracks which state every app is in.</p>
+        </div>
+        <figure>
+            <div class="fx-fig">
+                <svg viewBox="0 0 760 220" role="img" aria-label="A FynApp starts in bootstrapping. execute moves it to mounted, or a throw moves it to failed. A mounted app can suspend and resume, and shutdown moves a mounted or suspended app to shutdown.">
+                    <defs>
+                        <marker id="l-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0 0 L10 5 L0 10 z"/></marker>
+                        <marker id="l-arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-acc" d="M0 0 L10 5 L0 10 z"/></marker>
+                    </defs>
+                    <rect class="box" x="20" y="40" width="150" height="48" rx="24"/>
+                    <text class="t" x="95" y="69" text-anchor="middle">bootstrapping</text>
+                    <rect class="box-acc" x="300" y="40" width="140" height="48" rx="24"/>
+                    <text class="t" x="370" y="69" text-anchor="middle">mounted</text>
+                    <rect class="box" x="570" y="40" width="170" height="48" rx="24"/>
+                    <text class="t" x="655" y="69" text-anchor="middle">suspended</text>
+                    <rect class="box" x="20" y="150" width="150" height="48" rx="24"/>
+                    <text class="t" x="95" y="179" text-anchor="middle">failed</text>
+                    <rect class="box" x="300" y="150" width="140" height="48" rx="24"/>
+                    <text class="t" x="370" y="179" text-anchor="middle">shutdown</text>
+
+                    <path class="ln-acc" d="M170 64 L294 64" marker-end="url(#l-arr-a)"/>
+                    <text class="la" x="232" y="54" text-anchor="middle">execute</text>
+                    <path class="ln" d="M440 56 L564 56" marker-end="url(#l-arr)"/>
+                    <text class="s m" x="502" y="46" text-anchor="middle">suspend</text>
+                    <path class="ln" d="M570 74 L446 74" marker-end="url(#l-arr)"/>
+                    <text class="s m" x="508" y="100" text-anchor="middle">resume</text>
+                    <path class="ln" d="M95 88 L95 144" marker-end="url(#l-arr)"/>
+                    <text class="s m" x="103" y="122">throws</text>
+                    <path class="ln" d="M370 88 L370 144" marker-end="url(#l-arr)"/>
+                    <text class="s m" x="378" y="122">shutdown</text>
+                    <path class="ln" d="M655 88 C655 174 520 174 446 174" marker-end="url(#l-arr)"/>
+                </svg>
+            </div>
+            <figcaption>State is keyed by <code>name@version</code>, so two versions of one app keep separate lifecycles.</figcaption>
+        </figure>
+    </section>
+
     <section class="fx-plate" id="middleware">
         <div>
-            <h2>Middleware across apps</h2>
-            <p>One app provides a capability. Others declare <code>useMiddleware</code> and get its API. Theming, layout and shared state work this way.</p>
+            <h2>FynMesh Middleware</h2>
+            <p>One app provides a capability. Others declare <code>useMiddleware</code> and get its API. The demo's design tokens, shell layout and shared counter all work this way.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -416,13 +468,54 @@
                     <text class="s" x="492" y="124">same API</text>
                 </svg>
             </div>
-            <figcaption>A React 18 app and a React 19 app share one counter. Apps can also message each other over FynBus.</figcaption>
+            <figcaption>A React 18 app and a React 19 app share one counter.</figcaption>
+        </figure>
+    </section>
+
+    <section class="fx-plate" id="fynbus">
+        <div>
+            <h2>FynBus</h2>
+            <p>Apps send messages and ask each other questions. The platform stamps who sent each message. It also drops an app's subscriptions when that app shuts down.</p>
+        </div>
+        <figure>
+            <div class="fx-fig">
+                <svg viewBox="0 0 760 240" role="img" aria-label="fynapp-2-react18 emits demo-chat messages that fynapp-1 receives, and requests get-status, which fynapp-1 handles and answers with a reply. Both go through FynBus, which stamps the sender.">
+                    <defs>
+                        <marker id="f-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-acc" d="M0 0 L10 5 L0 10 z"/></marker>
+                        <marker id="f-arr-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0 0 L10 5 L0 10 z"/></marker>
+                    </defs>
+                    <rect class="box" x="20" y="30" width="200" height="190" rx="12"/>
+                    <text class="t" x="36" y="56">fynapp-2-react18</text>
+                    <text class="s" x="36" y="74">React 18</text>
+                    <text class="la" x="36" y="112">emit demo-chat</text>
+                    <text class="la" x="36" y="154">request get-status</text>
+                    <text class="s m" x="36" y="188">gets the reply</text>
+
+                    <rect class="box-acc" x="300" y="30" width="160" height="190" rx="12"/>
+                    <text class="la" x="380" y="56" text-anchor="middle" font-size="14">FynBus</text>
+                    <text class="s" x="380" y="206" text-anchor="middle">sender stamped</text>
+
+                    <rect class="box" x="540" y="30" width="200" height="190" rx="12"/>
+                    <text class="t" x="556" y="56">fynapp-1</text>
+                    <text class="s" x="556" y="74">React 19</text>
+                    <text class="la" x="556" y="112">on demo-chat</text>
+                    <text class="la" x="556" y="154">handle get-status</text>
+
+                    <path class="ln-acc" d="M200 108 L534 108" marker-end="url(#f-arr)"/>
+                    <text class="s" x="380" y="100" text-anchor="middle">message</text>
+                    <path class="ln-acc" d="M200 150 L534 150" marker-end="url(#f-arr)"/>
+                    <text class="s" x="380" y="142" text-anchor="middle">request</text>
+                    <path class="ln" d="M540 184 L206 184" stroke-dasharray="5 4" marker-end="url(#f-arr-m)"/>
+                    <text class="s" x="380" y="176" text-anchor="middle">reply</text>
+                </svg>
+            </div>
+            <figcaption>Both apps chat and answer requests in the <a href="{{pathPrefix}}demo.html">live demo</a>. Apps don't hear their own messages unless they ask to.</figcaption>
         </figure>
     </section>
 
     <section class="fx-plate" id="inspect">
         <div>
-            <h2>See inside</h2>
+            <h2>Federation Inspector</h2>
             <p>One call shows what the page holds. You see every shared module, its version, and who provides it. The demo has an in-page inspector too.</p>
         </div>
         <figure>
@@ -444,7 +537,7 @@
 
     <section class="fx-plate" id="small">
         <div>
-            <h2>Small loader</h2>
+            <h2>Featherweight Loader</h2>
             <p>The federation layer is under 9 KB gzip. The page loads it once, and every app uses it.</p>
         </div>
         <figure>
@@ -476,13 +569,35 @@
             </div>
             <figcaption>Minified with esbuild, gzip level 9.</figcaption>
             <ul class="fx-extras">
-                <li><b>Fewer requests.</b> federation-combine merges an app's chunks into one bundle.</li>
-                <li><b>Metadata rides along.</b> Each app's manifest is embedded in its entry file, so one request brings both.</li>
+                <li><b>federation-combine.</b> Merges an app's chunks into one bundle, so the page makes fewer requests.</li>
+                <li><b>Embedded manifest.</b> Each app's manifest rides inside its entry file, so one request brings both.</li>
             </ul>
         </figure>
     </section>
 
 </div>
+
+<section class="fx-also" id="also">
+    <h2>Also built in</h2>
+    <div class="fx-also-grid">
+        <div class="fx-also-item">
+            <h3>MiddlewareStateRegistry</h3>
+            <p>Scoped, reactive shared state for middleware. An app that loads late still sees the current value.</p>
+        </div>
+        <div class="fx-also-item">
+            <h3>KernelTelemetry</h3>
+            <p>Load and lifecycle events in a bounded ring buffer. Send them anywhere with a pluggable transport.</p>
+        </div>
+        <div class="fx-also-item">
+            <h3>Dev error overlay</h3>
+            <p>Development builds show a FynApp's bootstrap failure right on the page.</p>
+        </div>
+        <div class="fx-also-item">
+            <h3>create-fynapp and cfa</h3>
+            <p>Scaffold a new FynApp, then build and check it from the command line.</p>
+        </div>
+    </div>
+</section>
 
 <section class="fx-start">
     <h2>Start a FynApp</h2>

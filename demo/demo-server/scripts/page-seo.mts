@@ -63,12 +63,12 @@ export const PAGE_SEO = {
     },
     features: {
         canonicalPath: "features",
-        ogTitle: "FynMesh Features - Same App, Many Versions",
+        ogTitle: "FynMesh + federation-js at a Glance",
         ogDescription:
-            "A quick visual tour of FynMesh and federation-js: many versions of the same app " +
+            "A quick visual tour of FynMesh and federation-js: multiple versions of the same app " +
             "on one page, semver-range sharing, any framework, ordered boot and middleware.",
         metaDescription:
-            "FynMesh features: run many versions of the same micro frontend side by side, " +
+            "FynMesh features: run multiple versions of the same micro frontend side by side, " +
             "share dependencies by semver range, and mix React, Vue, Preact, Solid, Svelte " +
             "and Marko on one small loader.",
     },
