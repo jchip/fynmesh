@@ -1,3 +1,4 @@
+import { mount } from "svelte";
 import App from "./App.svelte";
 
 export async function main(runtime) {
@@ -21,8 +22,9 @@ export async function main(runtime) {
     // Clear any existing content
     targetDiv.innerHTML = "";
 
-    // Create and mount the Svelte component
-    const app = new App({
+    // Create and mount the Svelte component. Svelte 5 components are functions,
+    // not classes, so `new App(...)` no longer works; mount() is the entry point.
+    const app = mount(App, {
       target: targetDiv,
       props: {
         appName: runtime.fynApp.name,

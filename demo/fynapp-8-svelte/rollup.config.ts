@@ -43,7 +43,7 @@ export default [
         shared: {
           svelte: {
             singleton: true,
-            semver: "^4.0.0",
+            semver: "^5.0.0",
           },
         },
       }),
