@@ -1,10 +1,9 @@
 <script>
   import './styles.css';
+  // Svelte version from the installed package, not a hardcoded string
+  import { version as svelteVersion } from 'svelte/package.json';
 
   export let appName = "fynapp-8-svelte";
-
-  // Svelte version from package
-  const svelteVersion = '4.2.20';
 
   let count = 0;
   let darkMode = false;
