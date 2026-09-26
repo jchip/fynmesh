@@ -1,0 +1,49 @@
+{
+  "name": "fynapp-5-preact",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.js",
+      "chunks": [
+        "main-B2BLS6u4.js"
+      ]
+    }
+  },
+  "shared": {
+    "preact": {
+      "moduleIds": [
+        "node_modules/preact/dist/preact.module.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_preact-DOjmmWq5.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^10.29.8"
+      },
+      "importers": [
+        {
+          "from": "src/main.js",
+          "path": "node_modules/preact/dist/preact.module.js"
+        },
+        {
+          "from": "src/App.jsx",
+          "path": "node_modules/preact/dist/preact.module.js"
+        },
+        {
+          "from": "node_modules/preact/hooks/dist/hooks.module.js",
+          "path": "node_modules/preact/dist/preact.module.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "10.29.8",
+          "path": "node_modules/preact/dist/preact.module.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-09-26T18:48:31.380Z",
+  "version": "1.0.0"
+}

@@ -1,0 +1,36 @@
+{
+  "name": "fynapp-6-react",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  },
+  "import-exposed": {
+    "fynapp-react-middleware": {
+      "main/basic-counter": {
+        "sites": [
+          "src/main.ts"
+        ],
+        "type": "middleware",
+        "exposeModule": "main",
+        "middlewareName": "basic-counter"
+      }
+    }
+  },
+  "shared-providers": {
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}
