@@ -37,10 +37,11 @@ Reading the code, these hints save close to nothing:
 - **The one real overlap** is `warmPreload`. It hints every requested app's entry
   before the walk starts, so it helps when several apps are requested together.
 
-The Perf Lab measured this. In `/shell?perf=combined`, the suite's 4 entries arrive
-in strict sequence, about 85 ms apart at 80 ms per response, even with the runtime
-hints. Page-level hints for every entry cut time to ready from ~1125 ms to ~600 ms.
-See [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md#findings).
+The Perf Lab measured this on the live site. In `/shell?perf=combined`, the
+suite's 4 entries load back to back even with the runtime hints on. Each one
+starts as the previous one finishes, for a chain of 244–296 ms. Page-level hints
+for every entry start all 4 within 1 ms, and the median time to ready falls from
+872 ms to 367 ms. See [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md#findings).
 `route-based-preloading.md` describes these hints as running "in parallel with
 graph building". The code does not do that.
 

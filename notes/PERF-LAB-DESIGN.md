@@ -87,26 +87,75 @@ The hints must be injected by script. Cloudflare Pages turns static `<link rel="
 
 ### Live site
 
-`https://www.fynmesh.fyi/shell?perf=<mode>` over HTTP/2 through Cloudflare. Headless Chromium via `agent-browser`, a fresh browser session for every run, so every run is cold. Six rounds, each running raw, combined and hints in turn, so drift hits every mode alike.
+`https://www.fynmesh.fyi/shell?perf=<mode>` over HTTP/2 through Cloudflare, measured 2026-09-26 from one client on the US west coast. Headless Chromium via `agent-browser`, with a fresh browser session for every run, so every run is cold.
 
-| Round | raw ready | combined ready | hints ready |
-|---|---|---|---|
-| 1 | 898 ms | 1434 ms | 454 ms |
-| 2 | 814 ms | 787 ms | 362 ms |
-| 3 | 1448 ms | 780 ms | 315 ms |
-| 4 | 2880 ms | 1114 ms | 371 ms |
-| 5 | 1428 ms | 956 ms | 1393 ms |
-| 6 | 1236 ms | 770 ms | 334 ms |
-| **median** | **1332 ms** | **872 ms** | **367 ms** |
-| vs raw | | −35% | −72% |
+#### Main set: 6 rounds
 
-- Requests: 16 raw, 9 combined, 9 hints. Compressed transfer: 43 KB raw, 39 KB combined. Combining also compresses better.
-- The HTML arrived at a median of ~245 ms in every mode, so the gap is the suite's own loading.
-- Runs vary more than locally. Round 4 raw and round 5 hints were slow before the suite started. Medians over 6 rounds absorb that.
-- **Warm reload** of each mode was ready in ~160 ms, with all startup files from cache (`transferSize` 0). Hashed chunks, including `dist-raw`, are served `public, max-age=31536000, immutable`. Entries get Cloudflare's default `max-age=14400, must-revalidate`.
+Each round runs raw, combined and hints in turn, so drift hits every mode alike. All times are from navigation start. "Suite time" is ready minus HTML done. It takes out the HTML's own network time, which varied between runs.
+
+| Round | Mode | HTML done | First suite fetch | Ready at | Suite time |
+|---|---|---|---|---|---|
+| 1 | raw | 245 | 327 | 898 | 653 |
+| 1 | combined | 247 | 420 | 1434 | 1187 |
+| 1 | hints | 310 | 365 | 454 | 144 |
+| 2 | raw | 208 | 315 | 814 | 606 |
+| 2 | combined | 244 | 320 | 787 | 543 |
+| 2 | hints | 243 | 283 | 362 | 119 |
+| 3 | raw | 362 | 444 | 1448 | 1086 |
+| 3 | combined | 223 | 302 | 780 | 557 |
+| 3 | hints | 189 | 247 | 315 | 126 |
+| 4 | raw | 734 | 1245 | 2880 | 2146 |
+| 4 | combined | 262 | 456 | 1114 | 852 |
+| 4 | hints | 247 | 296 | 371 | 124 |
+| 5 | raw | 249 | 418 | 1428 | 1179 |
+| 5 | combined | 328 | 411 | 956 | 628 |
+| 5 | hints | 271 | 344 | 1393 | 1122 |
+| 6 | raw | 451 | 578 | 1236 | 785 |
+| 6 | combined | 235 | 319 | 770 | 535 |
+| 6 | hints | 197 | 243 | 334 | 137 |
+
+Medians, in ms:
+
+| Mode | Requests | Transfer | HTML done | Ready at | vs raw | Suite time | vs raw |
+|---|---|---|---|---|---|---|---|
+| raw | 16 | 43 KB | 306 | 1332 | | 936 | |
+| combined | 9 | 39 KB | 246 | 872 | −35% | 593 | −37% |
+| combined + hints | 9 | 39 KB | 245 | 367 | −72% | 132 | −86% |
+
+- Transfer is compressed bytes. Combining also compresses better, 39 KB vs 43 KB.
+- Single runs vary a lot. Round 4 raw was slow from the HTML on. Round 5 hints was slow after the suite started. Medians over 6 rounds absorb both, and the two ways of measuring agree.
+
+#### The serial entry walk, live
+
+When each suite entry file started and finished, in ms from navigation start. There were 3 more cold runs per mode.
+
+| Mode | Run | dashboard | charts | lib | reports | Chain |
+|---|---|---|---|---|---|---|
+| combined | 1 | 439–496 | 497–563 | 564–623 | 624–683 | 244 |
+| combined | 2 | 405–453 | 454–501 | 502–638 | 640–701 | 296 |
+| combined | 3 | 329–370 | 370–501 | 502–550 | 551–603 | 274 |
+| hints | 1 | 375–409 | 375–415 | 375–415 | 375–415 | 40 |
+| hints | 2 | 1316–1864 | 1317–1841 | 1317–1862 | 1317–1864 | 548 |
+| hints | 3 | 655–697 | 655–696 | 655–696 | 655–727 | 72 |
+
+Without hints, each entry starts the moment the previous one finishes. With hints, all 4 start within 1 ms. Hints run 2 was a slow network across the board, and even there the 4 entries overlapped.
+
+#### First set and warm reloads
+
+An earlier set of 3 cold runs per mode, before the main set. The first run of each mode was slow while connections and edge caches warmed.
+
+| Mode | Run 1 | Run 2 | Run 3 | Warm reload |
+|---|---|---|---|---|
+| raw | 1958 | 1200 | 1110 | 166 |
+| combined | 1478 | 782 | 741 | 175 |
+| hints | 491 | 1353 | 654 | 157 |
+
+- **Warm reload** was ready in ~160 ms in every mode, with all 16 or 9 startup files from cache (`transferSize` 0). Hashed chunks, including `dist-raw`, are served `public, max-age=31536000, immutable`. Entries get Cloudflare's default `max-age=14400, must-revalidate`, so within 4 hours they also come from cache.
 - The suite never appears in the `/shell` Early Hints `Link:` header, so the script-injected hints stay mode-specific.
 
-Live, the gap is wider than it is locally. Combine alone is worth 35% because every saved request costs a real round trip. Hints are worth more again, because the serial entry walk is the longest chain.
+#### What the live data says
+
+The gap is wider live than locally. Combine alone saves 35–37%, because every saved request costs a real round trip. Hints save most of the rest, because the serial entry walk is the longest chain, about 275 ms for 4 entries. With hints, the suite is ready about 130 ms after the HTML arrives.
 
 ### Local, with a fixed delay
 
@@ -139,7 +188,7 @@ Summary of the local runs:
 
 ## Findings
 
-1. **The kernel walks a by-name graph one entry at a time.** Each manifest is read out of its entry file (`manifest-resolver.ts`, tier 1: `__FYNAPP_MANIFEST__`). So the kernel can't know an app's dependencies until that app's entry has loaded. The kernel's own runtime hint for a dependency goes out just before it's imported, so it saves nothing. In combined mode the 4 entries arrive in strict sequence, about 85 ms apart. Page-level hints for every entry collapse that chain. This is the measured case for "hint every dependency's entry at once" in [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md).
+1. **The kernel walks a by-name graph one entry at a time.** Each manifest is read out of its entry file (`manifest-resolver.ts`, tier 1: `__FYNAPP_MANIFEST__`). So the kernel can't know an app's dependencies until that app's entry has loaded. The kernel's own runtime hint for a dependency goes out just before it's imported, so it saves nothing. On the live site in combined mode, the 4 entries load back to back, each starting as the previous one finishes, for a chain of 244–296 ms. Page-level hints for every entry start all 4 within 1 ms and cut the chain to 40–72 ms. This is the measured case for "hint every dependency's entry at once" in [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md).
 2. **`fynapp.manifest.json` is not on the load path.** Because of finding 1, the kernel never fetches it when the entry embeds the manifest. A hint for it would only download a file nothing reads.
 3. **Cloudflare Pages sends static preload tags as Early Hints.** It copies them into a `Link:` response header, so Chrome starts those fetches from the header. DevTools lists these requests with initiator "Other" and no initiator data. The 5 `fetchpriority="low"` tags on `/shell` are left out of the header. Any preload a page wants only sometimes has to be injected by script.
 4. **Combine and hints stack.** Combine cuts request count, and hints cut the serial depth. Hints on the raw build would still pay for 16 requests. Combine without hints still pays for the serial walk.

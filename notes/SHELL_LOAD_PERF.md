@@ -222,13 +222,15 @@ your call before anyone implements it.**
 `/shell?perf=raw|combined|hints` loads an analytics suite whose chunks have the
 shapes combine and hints act on. Cold, median of 6 rounds on the live site:
 
-| Mode | Suite startup requests | Ready at | vs raw |
-|---|---|---|---|
-| raw | 16 | 1332 ms | |
-| combined | 9 | 872 ms | −35% |
-| combined + hints | 9 | 367 ms | −72% |
+| Mode | Suite startup requests | Ready at | vs raw | Ready after HTML | vs raw |
+|---|---|---|---|---|---|
+| raw | 16 | 1332 ms | | 936 ms | |
+| combined | 9 | 872 ms | −35% | 593 ms | −37% |
+| combined + hints | 9 | 367 ms | −72% | 132 ms | −86% |
 
-A warm reload is ready in ~160 ms in every mode, all from cache.
+A warm reload is ready in ~160 ms in every mode, all from cache. Without hints,
+the kernel loads the suite's 4 entries back to back, a 244–296 ms chain. Hints
+start all 4 at once.
 
 Details and method: [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md#results).
 
