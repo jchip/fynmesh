@@ -134,6 +134,40 @@
   then the bootstrap that uses all three.
 #}
 {% block scripts_head %}
+    <!--
+      Perf Lab mode, from ?perf=raw|combined|hints. See notes/PERF-LAB-DESIGN.md.
+
+      First in the head so hints-mode fetches start as early as the static tags
+      below. The suite's hints are injected by script, never written as tags:
+      Cloudflare turns static preload tags into Early Hints for every request,
+      which would warm the suite in all three modes and erase the comparison.
+
+      The larger Resource Timing buffer keeps the shell's own requests from
+      pushing the suite's entries out of the default 250, which the panel reads.
+    -->
+    <script>
+        (function () {
+            var mode = new URLSearchParams(location.search).get("perf");
+            if (mode !== "raw" && mode !== "combined" && mode !== "hints") return;
+            performance.setResourceTimingBufferSize(1000);
+            var dist = mode === "raw" ? "dist-raw" : "dist";
+            window.__fynmeshPerfLab = {
+                mode: mode,
+                dist: dist,
+                dashboardUrl: "{{pathPrefix}}fynapp-analytics/" + dist
+            };
+            if (mode !== "hints") return;
+            {{ ((perfLab and perfLab.hints) or []) | dump | safe }}.forEach(function (hint) {
+                var link = document.createElement("link");
+                link.rel = "preload";
+                link.as = "script";
+                link.href = hint.href;
+                if (hint.priority) link.fetchPriority = hint.priority;
+                document.head.appendChild(link);
+            });
+        })();
+    </script>
+
     {% if preloadModules %}
     <!--
       Startup FynApp chunks, preloaded in parallel.
@@ -201,6 +235,15 @@
     </script>
     {% endif %}
 
+    {% if perfLab.bundleMaps | length %}
+    <!-- The suite's maps, declared early in hints mode only, like the shell's own above. -->
+    <script>
+        if (window.__fynmeshPerfLab && __fynmeshPerfLab.mode === "hints" && Federation.declareBundles) {
+            {% for map in perfLab.bundleMaps %}Federation.declareBundles({{ map.bundles | dump | safe }}, "{{ map.base }}");
+            {% endfor %}}
+    </script>
+    {% endif %}
+
     <script>
         (async () => {
             console.log("🏠 Starting FynMesh Shell Demo");
@@ -245,6 +288,24 @@
                     setTimeout(run, 200);
                 }
             };
+
+            /*
+              The Perf Lab suite loads by name (loadFynAppsByName), so the kernel
+              resolves every package in its graph through this resolver. One rule
+              sends the whole suite to dist-raw/ or dist/ for the mode. The
+              suite's graph also names the React 19 provider, whose package name
+              is not its directory. Installed only in lab mode: plain /shell loads
+              everything by url and never asks.
+            */
+            const perfLab = window.__fynmeshPerfLab;
+            if (perfLab) {
+                fynMeshKernel.setRegistryResolver(async (name) => {
+                    const dir = name === "fynapp-react-lib" ? "fynapp-react-19" : name;
+                    const dist = name.startsWith("fynapp-analytics") ? perfLab.dist : "dist";
+                    const distBase = `{{pathPrefix}}${dir}/${dist}/`;
+                    return { name, version: "0.0.0", url: `${distBase}fynapp.manifest.json`, distBase };
+                });
+            }
 
                         try {
                 // Preload React dependencies first so they're available for dynamic FynApps

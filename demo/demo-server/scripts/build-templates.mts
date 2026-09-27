@@ -2,7 +2,7 @@ import nunjucks from "nunjucks";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectShellPreloadModules, collectShellBundleMaps } from "./shell-preload.mts";
+import { collectShellPreloadModules, collectShellBundleMaps, collectPerfLab } from "./shell-preload.mts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
 import { pageSeo } from "./page-seo.mts";
 
@@ -140,12 +140,19 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             msg => log(`⚠️  bundle map: ${msg}`)
         );
         log(`📦 Shell bundle maps: ${bundleMaps.length}`);
+        const perfLab = collectPerfLab(
+            path.join(__dirname, "../.."),
+            pathPrefix,
+            msg => log(`⚠️  perf lab: ${msg}`)
+        );
+        log(`🧪 Perf Lab hints: ${perfLab.hints.length}`);
         const shellHtml = env.render("pages/shell.html", {
             title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
             preloadModules,
             bundleMaps,
+            perfLab,
             ...pageSeo("shell"),
         });
         const shellOutputPath = path.join(outputDir, "shell.html");

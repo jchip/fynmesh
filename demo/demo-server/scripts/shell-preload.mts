@@ -71,6 +71,31 @@ const SHELL_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
     { dir: "fynapp-sidebar", chunks: "all" },
 ];
 
+/**
+ * The Perf Lab suite's startup set, for `/shell?perf=hints` only.
+ *
+ * Unlike the list above these are never written as static tags. The shell's
+ * head script injects them in `hints` mode alone. Cloudflare turns every static
+ * preload tag into an Early Hint for every request, so static tags would warm
+ * the suite in `raw` and `combined` too and erase the comparison. Hints always
+ * point at `dist/`, since `hints` mode runs the combined build.
+ *
+ * The suite loads by name, and the kernel walks its graph one entry at a time:
+ * each manifest is read out of an entry, so the next entry isn't known until
+ * the last one ran. Hinting every entry up front is what flattens that chain.
+ *
+ * Keep in sync with the suite's own loading: `fynapp-analytics` imports
+ * `grid` and `renderer` from the charts app at startup, `export` on click, and
+ * the reports app's chunks at idle.
+ */
+const ANALYTICS_STARTUP_FYNAPPS: ShellStartupFynApp[] = [
+    { dir: "fynapp-analytics", chunks: "all" },
+    { dir: "fynapp-analytics-lib", chunks: "all" },
+    { dir: "fynapp-analytics-charts", chunks: ["grid", "renderer"] },
+    // Entry only: the graph loads the container at startup, its chunks at idle.
+    { dir: "fynapp-analytics-reports", chunks: "none" },
+];
+
 /** combined fileName -> the fileNames it carries, as the build emitted it */
 type BundleMap = Record<string, string[]>;
 
@@ -218,17 +243,19 @@ function liveChunks(
  * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
  * @param pathPrefix deployment path prefix, e.g. `/`
  * @param warn      called with a human-readable message per skipped item
+ * @param apps      the startup set to hint
  * @returns hints in load order, entry-first per FynApp
  */
 function collectShellPreloadModules(
     demoRoot: string,
     pathPrefix: string,
-    warn: (message: string) => void = () => {}
+    warn: (message: string) => void = () => {},
+    apps: ShellStartupFynApp[] = SHELL_STARTUP_FYNAPPS
 ): ShellPreloadHint[] {
     const urls: ShellPreloadHint[] = [];
     const prefix = pathPrefix.endsWith("/") ? pathPrefix : `${pathPrefix}/`;
 
-    for (const app of SHELL_STARTUP_FYNAPPS) {
+    for (const app of apps) {
         const distDir = path.join(demoRoot, app.dir, "dist");
         if (!existsSync(distDir)) {
             warn(`skipping ${app.dir}: no dist/ (build it first)`);
@@ -304,17 +331,19 @@ function collectShellPreloadModules(
  * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
  * @param pathPrefix deployment path prefix, e.g. `/`
  * @param warn      called with a human-readable message per unreadable app
+ * @param apps      the startup set to declare maps for
  * @returns dist base url and its map, for each startup FynApp that has one
  */
 function collectShellBundleMaps(
     demoRoot: string,
     pathPrefix: string,
-    warn: (message: string) => void = () => {}
+    warn: (message: string) => void = () => {},
+    apps: ShellStartupFynApp[] = SHELL_STARTUP_FYNAPPS
 ): Array<{ base: string; bundles: BundleMap }> {
     const prefix = pathPrefix.endsWith("/") ? pathPrefix : `${pathPrefix}/`;
     const maps: Array<{ base: string; bundles: BundleMap }> = [];
 
-    for (const app of SHELL_STARTUP_FYNAPPS) {
+    for (const app of apps) {
         const distDir = path.join(demoRoot, app.dir, "dist");
         // A missing dist is already reported by the preload pass; stay quiet here.
         if (!existsSync(distDir)) continue;
@@ -328,12 +357,34 @@ function collectShellBundleMaps(
     return maps;
 }
 
+/**
+ * Everything `shell.html` needs for `?perf=hints`: the suite's hints and its
+ * bundle maps. Empty when the suite has not been built, and the page then has
+ * nothing to inject.
+ *
+ * @param demoRoot  directory containing the FynApp packages (the `demo/` dir)
+ * @param pathPrefix deployment path prefix, e.g. `/`
+ * @param warn      called with a human-readable message per skipped item
+ */
+function collectPerfLab(
+    demoRoot: string,
+    pathPrefix: string,
+    warn: (message: string) => void = () => {}
+): { hints: ShellPreloadHint[]; bundleMaps: Array<{ base: string; bundles: BundleMap }> } {
+    return {
+        hints: collectShellPreloadModules(demoRoot, pathPrefix, warn, ANALYTICS_STARTUP_FYNAPPS),
+        bundleMaps: collectShellBundleMaps(demoRoot, pathPrefix, warn, ANALYTICS_STARTUP_FYNAPPS),
+    };
+}
+
 export {
+    collectPerfLab,
     collectShellPreloadModules,
     collectShellBundleMaps,
     readBundles,
     carriersOf,
     SHELL_STARTUP_FYNAPPS,
+    ANALYTICS_STARTUP_FYNAPPS,
     HASHED_CHUNK_RE,
 };
 export type { ShellPreloadHint, ShellStartupFynApp, BundleMap };

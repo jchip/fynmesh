@@ -13,6 +13,7 @@ import * as path from "node:path";
 import {
     collectShellPreloadModules,
     collectShellBundleMaps,
+    collectPerfLab,
 } from "../scripts/shell-preload.mts";
 
 let demoRoot: string;
@@ -293,5 +294,53 @@ describe("collectShellBundleMaps", () => {
         const hinted = hrefs().filter((href) => !href.endsWith("fynapp-entry.js"));
 
         expect(hinted).toEqual(carriers);
+    });
+});
+
+describe("collectPerfLab", () => {
+    const labApp = (appDir: string, files: string[], bundles?: Record<string, string[]>) =>
+        fynapp(files, bundles, "federation.bundles.json", appDir);
+
+    it("hints the entry, then the carrier in place of its members", () => {
+        labApp(
+            "fynapp-analytics",
+            ["main-AAAAAAAA.js", "header-BBBBBBBB.js", "combo-CCCCCCCC.js"],
+            { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "header-BBBBBBBB.js"] }
+        );
+
+        expect(collectPerfLab(demoRoot, "/").hints.map((hint) => hint.href)).toEqual([
+            "/fynapp-analytics/dist/fynapp-entry.js",
+            "/fynapp-analytics/dist/combo-CCCCCCCC.js",
+        ]);
+    });
+
+    it("hints only the charts chunks the dashboard imports at startup", () => {
+        labApp("fynapp-analytics-charts", [
+            "grid-AAAAAAAA.js",
+            "renderer-BBBBBBBB.js",
+            "export-CCCCCCCC.js",
+        ]);
+
+        expect(collectPerfLab(demoRoot, "/").hints.map((hint) => hint.href)).toEqual([
+            "/fynapp-analytics-charts/dist/fynapp-entry.js",
+            "/fynapp-analytics-charts/dist/grid-AAAAAAAA.js",
+            "/fynapp-analytics-charts/dist/renderer-BBBBBBBB.js",
+        ]);
+    });
+
+    it("declares the suite's bundle maps, and never the shell's own", () => {
+        labApp("fynapp-analytics", ["a-AAAAAAAA.js", "combo-CCCCCCCC.js"], {
+            "combo-CCCCCCCC.js": ["a-AAAAAAAA.js"],
+        });
+
+        expect(collectPerfLab(demoRoot, "/").bundleMaps).toEqual([
+            { base: "/fynapp-analytics/dist/", bundles: { "combo-CCCCCCCC.js": ["a-AAAAAAAA.js"] } },
+        ]);
+    });
+
+    it("leaves the shell's static hints free of the suite", () => {
+        labApp("fynapp-analytics", ["main-AAAAAAAA.js"]);
+
+        expect(hrefs("fynapp-analytics")).toEqual([]);
     });
 });

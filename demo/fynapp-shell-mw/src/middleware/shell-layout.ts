@@ -180,6 +180,12 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
      * what made FYM-397 unrecoverable -- once cleared, nothing could load it.
      */
     { id: "fynapp-sidebar", name: "Sidebar Nav (React 19)", url: "/fynapp-sidebar/dist", framework: "React 19" },
+    /*
+     * A query string, not a dist url: picking the lab reloads the shell in lab
+     * mode, so its numbers always come from a clean page load. See
+     * loadIntoRegion and notes/PERF-LAB-DESIGN.md.
+     */
+    { id: "fynapp-analytics", name: "Analytics (Perf Lab)", url: "?perf=combined", framework: "React 19" },
   ];
 
   async setup(context: FynAppMiddlewareCallContext): Promise<{ status: string }> {
@@ -504,6 +510,25 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
 
     // Auto-load the sidebar FynApp into the sidebar region
     this.autoLoadSidebar();
+
+    void this.loadPerfLab();
+  }
+
+  /**
+   * In lab mode (`?perf=`), put the Perf Lab dashboard into the main region.
+   *
+   * The page sets `__fynmeshPerfLab` and a registry resolver that picks dist/
+   * or dist-raw/ for the mode. Loading by name lets the kernel walk the suite's
+   * whole graph through that resolver, so every suite app follows the mode.
+   */
+  private async loadPerfLab(): Promise<void> {
+    const lab = (globalThis as any).__fynmeshPerfLab;
+    if (!lab) return;
+    try {
+      await this.loadIntoRegion(lab.dashboardUrl, 'main', 'fynapp-analytics');
+    } catch (err) {
+      console.error("❌ Failed to load the Perf Lab:", (err as Error).message);
+    }
   }
 
   /**
@@ -887,7 +912,17 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     this.pendingRegionLoad.delete(key);
   }
 
-  private async loadIntoRegion(fynappUrl: string, region: RegionName): Promise<FynApp | null> {
+  /**
+   * @param byName load the app's dependency graph by this package name first.
+   *   Then the url load below finds the app already loaded and only places it.
+   */
+  private async loadIntoRegion(fynappUrl: string, region: RegionName, byName?: string): Promise<FynApp | null> {
+    // An app-list entry whose url is a query string reloads the shell with it.
+    if (fynappUrl.startsWith("?")) {
+      location.search = fynappUrl;
+      return null;
+    }
+
     if (!this.kernel) {
       console.error("❌ Kernel not available for dynamic loading");
       return null;
@@ -902,7 +937,7 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
     // Extract FynApp ID from URL for pending tracking. Resolved before the load
     // starts so a background load bootstrapping mid-flight can be told apart
     // from this one.
-    const fynAppIdMatch = fynappUrl.match(/\/([^\/]+)\/dist\/?$/);
+    const fynAppIdMatch = fynappUrl.match(/\/([^\/]+)\/dist(?:-raw)?\/?$/);
     const fynAppId = fynAppIdMatch ? fynAppIdMatch[1] : fynappUrl;
 
     this.activeRegionLoadIds.set(fynAppId, (this.activeRegionLoadIds.get(fynAppId) ?? 0) + 1);
@@ -923,6 +958,9 @@ export class ShellLayoutMiddleware implements FynAppMiddleware {
       console.log(`🔄 Calling kernel.loadFynApp for ${fynappUrl}...`);
       let fynApp: FynApp | null = null;
       try {
+        if (byName) {
+          await this.kernel.loadFynAppsByName([{ name: byName }]);
+        }
         fynApp = await this.kernel.loadFynApp(fynappUrl);
         console.log(`🔄 kernel.loadFynApp returned:`, fynApp ? fynApp.name : 'null');
       } catch (loadError) {
