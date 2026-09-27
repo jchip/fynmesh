@@ -21,9 +21,14 @@ describe("generateCacheHeaders", () => {
     const warnings: string[] = [];
     const warn = (m: string) => void warnings.push(m);
 
-    /** Write a chunk into `<pkg>/dist/`. */
-    const chunk = (pkg: string, name: string, body = "export const a = 1;\n") => {
-        const dist = path.join(outputDir, pkg, "dist");
+    /** Write a chunk into `<pkg>/<distName>/` (default `dist`). */
+    const chunk = (
+        pkg: string,
+        name: string,
+        body = "export const a = 1;\n",
+        distName = "dist"
+    ) => {
+        const dist = path.join(outputDir, pkg, distName);
         mkdirSync(dist, { recursive: true });
         writeFileSync(path.join(dist, name), body);
     };
@@ -94,5 +99,44 @@ describe("generateCacheHeaders", () => {
 
     it("returns null for an output dir that does not exist", () => {
         expect(generateCacheHeaders(path.join(outputDir, "nope"), warn)).toBeNull();
+    });
+
+    /**
+     * Perf Lab suite apps ship a `dist-raw` pre-combine snapshot alongside
+     * `dist` (see notes/PERF-LAB-DESIGN.md), so a warm reload in `raw` mode
+     * needs its own hashed chunks cached immutably too.
+     */
+    it("marks a sealed hashed chunk under dist-raw immutable, as its own rule", () => {
+        chunk("fynapp-analytics", "main-0SABD0a0.js", undefined, "dist-raw");
+
+        const headers = generateCacheHeaders(outputDir, warn);
+
+        expect(headers).toContain("/:pkg/dist-raw/main-*");
+        expect(headers).not.toContain("/:pkg/dist/main-*");
+        expect(warnings).toEqual([]);
+    });
+
+    it("refuses to freeze a dist-raw chunk carrying a comment appended after its hash", () => {
+        chunk("fynapp-analytics", "main-0SABD0a0.js", withMapComment("main-0SABD0a0.js"), "dist-raw");
+
+        const headers = generateCacheHeaders(outputDir, warn);
+
+        expect(headers).toBeNull();
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain("fynapp-analytics/dist-raw/main-0SABD0a0.js");
+        expect(warnings[0]).toContain("not marked immutable");
+    });
+
+    it("keeps dist and dist-raw rules independent for the same stem", () => {
+        // dist has the combined build's member (sealed); dist-raw carries the
+        // same stem unsealed -- each folder's rule stands on its own bytes.
+        chunk("fynapp-analytics", "main-0SABD0a0.js");
+        chunk("fynapp-analytics", "main-0SABD0a0.js", withMapComment("main-0SABD0a0.js"), "dist-raw");
+
+        const headers = generateCacheHeaders(outputDir, warn);
+
+        expect(headers).toContain("/:pkg/dist/main-*");
+        expect(headers).not.toContain("/:pkg/dist-raw/main-*");
+        expect(warnings.join("\n")).toContain("fynapp-analytics/dist-raw/main-0SABD0a0.js");
     });
 });

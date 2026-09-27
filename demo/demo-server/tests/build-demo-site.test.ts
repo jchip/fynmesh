@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { findMissingLocalRefs, findMissingChunkRefs, prepareOutputDir } from "../scripts/build-demo-site.mts";
+import {
+    findMissingLocalRefs,
+    findMissingChunkRefs,
+    prepareOutputDir,
+    copyPackageDists,
+    type DemoPackage,
+} from "../scripts/build-demo-site.mts";
 
 /**
  * findMissingLocalRefs is the guard from FYM-199. A page that references an
@@ -177,14 +183,15 @@ describe("prepareOutputDir", () => {
 describe("findMissingChunkRefs", () => {
     let outputDir: string;
 
-    /** Write an app's dist: its federation.json plus whatever files exist. */
+    /** Write an app's dist (or dist-raw): its federation.json plus whatever files exist. */
     const writeApp = (
         app: string,
         manifest: Record<string, unknown>,
         files: string[] = [],
-        bundlesJson?: Record<string, string[]> | string
+        bundlesJson?: Record<string, string[]> | string,
+        distName = "dist"
     ) => {
-        const dist = path.join(outputDir, app, "dist");
+        const dist = path.join(outputDir, app, distName);
         mkdirSync(dist, { recursive: true });
         writeFileSync(path.join(dist, "federation.json"), JSON.stringify(manifest));
         for (const f of files) writeFileSync(path.join(dist, f), "");
@@ -305,5 +312,120 @@ describe("findMissingChunkRefs", () => {
 
     it("finds nothing when no app has been copied", () => {
         expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+
+    /**
+     * A Perf Lab suite app also ships `dist-raw`, its pre-combine snapshot (see
+     * notes/PERF-LAB-DESIGN.md). It has its own federation.json and no bundle
+     * map, so the same missing-chunk check applies to it directly.
+     */
+    it("reports an exposed chunk missing from dist-raw", () => {
+        writeApp(
+            "fynapp-analytics",
+            exposing("main-DWprtUVa.js"),
+            ["fynapp-entry.js"],
+            undefined,
+            "dist-raw"
+        );
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([
+            "fynapp-analytics/dist-raw/federation.json -> main-DWprtUVa.js (exposes ./main)",
+        ]);
+    });
+
+    it("passes when dist and dist-raw each carry what they declare", () => {
+        writeApp("fynapp-analytics", exposing("main-DWprtUVa.js"), [
+            "fynapp-entry.js",
+            "main-DWprtUVa.js",
+        ]);
+        writeApp(
+            "fynapp-analytics",
+            exposing("main-DWprtUVa.js"),
+            ["fynapp-entry.js", "main-DWprtUVa.js"],
+            undefined,
+            "dist-raw"
+        );
+
+        expect(findMissingChunkRefs(outputDir)).toEqual([]);
+    });
+});
+
+/**
+ * copyPackageDists is the Perf Lab wiring: a suite app's build snapshots its
+ * output as `dist-raw` before combining (see notes/PERF-LAB-DESIGN.md), and
+ * that snapshot has to ship the same way `dist` does. Data-driven off each
+ * package's own `extraDists` rather than a hardcoded name, so an ordinary
+ * FynApp with none copies nothing extra.
+ */
+describe("copyPackageDists", () => {
+    let root: string;
+    let outputDir: string;
+    const logged: string[] = [];
+    const log = (m: string) => void logged.push(m);
+    const keepAll = () => true;
+
+    /** Write a file under `<root>/<pkg>/<sub>/<name>`. */
+    const write = (pkg: string, sub: string, name: string, contents = "") => {
+        const full = path.join(root, pkg, sub, name);
+        mkdirSync(path.dirname(full), { recursive: true });
+        writeFileSync(full, contents);
+    };
+
+    beforeEach(() => {
+        root = mkdtempSync(path.join(tmpdir(), "fynmesh-pkgdist-"));
+        outputDir = path.join(root, "site");
+        logged.length = 0;
+    });
+
+    afterEach(() => {
+        rmSync(root, { recursive: true, force: true });
+    });
+
+    it("copies a plain package's dist and nothing else", () => {
+        write("fynapp-1", "dist", "fynapp-entry.js");
+        const pkg: DemoPackage = { name: "fynapp-1", basePath: root };
+
+        copyPackageDists(pkg, outputDir, keepAll, log);
+
+        expect(existsSync(path.join(outputDir, "fynapp-1", "dist", "fynapp-entry.js"))).toBe(true);
+        expect(existsSync(path.join(outputDir, "fynapp-1", "dist-raw"))).toBe(false);
+    });
+
+    it("also copies a declared extraDists directory, filtered the same way", () => {
+        write("fynapp-analytics", "dist", "fynapp-entry.js");
+        write("fynapp-analytics", "dist-raw", "fynapp-entry.js");
+        write("fynapp-analytics", "dist-raw", "notes.d.ts");
+        const pkg: DemoPackage = {
+            name: "fynapp-analytics",
+            basePath: root,
+            extraDists: ["dist-raw"],
+        };
+        const dropDts = (f: string) => !f.endsWith(".d.ts");
+
+        copyPackageDists(pkg, outputDir, dropDts, log);
+
+        expect(existsSync(path.join(outputDir, "fynapp-analytics", "dist", "fynapp-entry.js"))).toBe(true);
+        expect(existsSync(path.join(outputDir, "fynapp-analytics", "dist-raw", "fynapp-entry.js"))).toBe(true);
+        expect(existsSync(path.join(outputDir, "fynapp-analytics", "dist-raw", "notes.d.ts"))).toBe(false);
+        expect(logged.join("\n")).toContain("fynapp-analytics/dist-raw/");
+    });
+
+    it("skips a declared extraDists directory that does not exist, like a missing dist", () => {
+        write("fynapp-analytics", "dist", "fynapp-entry.js");
+        const pkg: DemoPackage = {
+            name: "fynapp-analytics",
+            basePath: root,
+            extraDists: ["dist-raw"],
+        };
+
+        expect(() => copyPackageDists(pkg, outputDir, keepAll, log)).not.toThrow();
+        expect(existsSync(path.join(outputDir, "fynapp-analytics", "dist-raw"))).toBe(false);
+    });
+
+    it("skips gracefully when the package has not been built at all", () => {
+        const pkg: DemoPackage = { name: "fynapp-never-built", basePath: root, extraDists: ["dist-raw"] };
+
+        expect(() => copyPackageDists(pkg, outputDir, keepAll, log)).not.toThrow();
+        expect(existsSync(path.join(outputDir, "fynapp-never-built"))).toBe(false);
     });
 });

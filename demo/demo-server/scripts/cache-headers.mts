@@ -47,6 +47,72 @@ function isSealed(file: string): boolean {
 }
 
 /**
+ * Every content-hashed chunk stem found under every package's `<folderName>`,
+ * safe to mark immutable.
+ *
+ * Shared between `dist` and `dist-raw` (a Perf Lab suite app's pre-combine
+ * snapshot, see notes/PERF-LAB-DESIGN.md): both hold plain rollup output with
+ * the same hashed-chunk shape, so the same sealed/unsealed test applies to
+ * either one, just rooted at a different folder name under each package.
+ *
+ * @param outputDir the built site root
+ * @param folderName "dist" or "dist-raw"
+ * @param warn called with a human-readable message per anomaly
+ * @returns sealed chunk stems found under every package's `<folderName>`
+ */
+function collectSealedStems(
+    outputDir: string,
+    folderName: string,
+    warn: (message: string) => void
+): Set<string> {
+    const stems = new Set<string>();
+    /** stem -> the first chunk found carrying content rollup did not hash */
+    const unsealed = new Map<string, string>();
+
+    for (const pkg of readdirSync(outputDir)) {
+        const distDir = path.join(outputDir, pkg, folderName);
+        if (!existsSync(distDir) || !statSync(distDir).isDirectory()) continue;
+
+        for (const entry of readdirSync(distDir, { withFileTypes: true })) {
+            if (entry.isDirectory()) {
+                // A nested hashed chunk would not match `/:pkg/<folderName>/<stem>-*`.
+                // It keeps the default (safe), but flag it so the pattern can be
+                // revisited if the build layout ever changes.
+                const nested = readdirSync(path.join(distDir, entry.name));
+                if (nested.some(f => HASHED_CHUNK_RE.test(f))) {
+                    warn(`hashed chunks under ${pkg}/${folderName}/${entry.name}/ are not covered by the immutable rules`);
+                }
+                continue;
+            }
+            const stem = entry.name.match(HASHED_CHUNK_RE)?.[1];
+            if (!stem) continue;
+
+            /*
+             * One rule covers a stem across every package, so a single chunk
+             * with appended content disqualifies the whole stem -- there is no
+             * way to exempt one file from `/:pkg/<folderName>/<stem>-*`.
+             */
+            if (isSealed(path.join(distDir, entry.name))) {
+                stems.add(stem);
+            } else if (!unsealed.has(stem)) {
+                unsealed.set(stem, `${pkg}/${folderName}/${entry.name}`);
+            }
+        }
+    }
+
+    for (const [stem, file] of unsealed) {
+        stems.delete(stem);
+        warn(
+            `${file} carries a sourceMappingURL comment appended after its content hash, ` +
+            `so "${stem}-*" is not marked immutable — the url could serve stale bytes ` +
+            `for a year if the comment is ever removed (FYM-394)`
+        );
+    }
+
+    return stems;
+}
+
+/**
  * Generate the body of a Cloudflare Pages `_headers` file that marks
  * content-hashed chunks as immutable.
  *
@@ -77,6 +143,13 @@ function isSealed(file: string): boolean {
  * deploys. A frozen bundle map is the worst of them — it would name carrier
  * files a later deploy no longer has.
  *
+ * The same rule shape is emitted again for `/:pkg/dist-raw/<stem>-*`, a Perf
+ * Lab suite app's pre-combine snapshot (see notes/PERF-LAB-DESIGN.md) — a warm
+ * reload of `raw` mode needs its hashed chunks cached the same way `dist`'s
+ * are. `:pkg` is a Pages placeholder that matches any package directory name,
+ * so one rule per stem already covers every package; `dist-raw` just needs its
+ * own set of rules alongside `dist`'s, counted against the same rule limit.
+ *
  * An unrecognised stem simply falls through to the default. That fails safe
  * (slower, never stale), and since this is regenerated from the real build
  * output on every deploy it stays in sync on its own.
@@ -91,55 +164,15 @@ function generateCacheHeaders(
 ): string | null {
     if (!existsSync(outputDir)) return null;
 
-    const stems = new Set<string>();
-    /** stem -> the first chunk found carrying content rollup did not hash */
-    const unsealed = new Map<string, string>();
+    const stems = collectSealedStems(outputDir, "dist", warn);
+    const rawStems = collectSealedStems(outputDir, "dist-raw", warn);
 
-    for (const pkg of readdirSync(outputDir)) {
-        const distDir = path.join(outputDir, pkg, "dist");
-        if (!existsSync(distDir) || !statSync(distDir).isDirectory()) continue;
+    if (stems.size === 0 && rawStems.size === 0) return null;
 
-        for (const entry of readdirSync(distDir, { withFileTypes: true })) {
-            if (entry.isDirectory()) {
-                // A nested hashed chunk would not match `/:pkg/dist/<stem>-*`.
-                // It keeps the default (safe), but flag it so the pattern can be
-                // revisited if the build layout ever changes.
-                const nested = readdirSync(path.join(distDir, entry.name));
-                if (nested.some(f => HASHED_CHUNK_RE.test(f))) {
-                    warn(`hashed chunks under ${pkg}/dist/${entry.name}/ are not covered by the immutable rules`);
-                }
-                continue;
-            }
-            const stem = entry.name.match(HASHED_CHUNK_RE)?.[1];
-            if (!stem) continue;
-
-            /*
-             * One rule covers a stem across every package, so a single chunk
-             * with appended content disqualifies the whole stem -- there is no
-             * way to exempt one file from `/:pkg/dist/<stem>-*`.
-             */
-            if (isSealed(path.join(distDir, entry.name))) {
-                stems.add(stem);
-            } else if (!unsealed.has(stem)) {
-                unsealed.set(stem, `${pkg}/dist/${entry.name}`);
-            }
-        }
-    }
-
-    for (const [stem, file] of unsealed) {
-        stems.delete(stem);
+    const totalStems = stems.size + rawStems.size;
+    if (totalStems > PAGES_HEADER_RULE_LIMIT) {
         warn(
-            `${file} carries a sourceMappingURL comment appended after its content hash, ` +
-            `so "${stem}-*" is not marked immutable — the url could serve stale bytes ` +
-            `for a year if the comment is ever removed (FYM-394)`
-        );
-    }
-
-    if (stems.size === 0) return null;
-
-    if (stems.size > PAGES_HEADER_RULE_LIMIT) {
-        warn(
-            `${stems.size} chunk stems exceeds the Cloudflare Pages limit of ` +
+            `${totalStems} chunk stems exceeds the Cloudflare Pages limit of ` +
             `${PAGES_HEADER_RULE_LIMIT} header rules — some chunks will not be cached immutably`
         );
     }
@@ -158,11 +191,19 @@ function generateCacheHeaders(
         "# A stem is listed only if every chunk carrying it is exactly the bytes its",
         "# hash covers. Rollup appends the sourceMappingURL comment AFTER hashing, so",
         "# a chunk carrying one keeps revalidating: its url is not really immutable.",
+        "#",
+        "# dist-raw rules are a Perf Lab suite app's pre-combine snapshot; see",
+        "# notes/PERF-LAB-DESIGN.md.",
         "",
     ];
 
-    for (const stem of [...stems].sort().slice(0, PAGES_HEADER_RULE_LIMIT)) {
-        lines.push(`/:pkg/dist/${stem}-*`, `  Cache-Control: ${IMMUTABLE}`, "");
+    const rules = [
+        ...[...stems].sort().map(stem => `/:pkg/dist/${stem}-*`),
+        ...[...rawStems].sort().map(stem => `/:pkg/dist-raw/${stem}-*`),
+    ].slice(0, PAGES_HEADER_RULE_LIMIT);
+
+    for (const rule of rules) {
+        lines.push(rule, `  Cache-Control: ${IMMUTABLE}`, "");
     }
 
     return lines.join("\n");

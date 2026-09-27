@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
     collectShellPreloadModules,
     collectShellBundleMaps,
+    collectPerfLab,
     readBundles,
     carriersOf,
 } from "./shell-preload.mts";
@@ -17,6 +18,25 @@ import { SITE_ORIGIN, pageSeo } from "./page-seo.mts";
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * A dist directory to copy into the site, keyed by the package it comes from.
+ */
+interface DemoPackage {
+    /** package directory name (also its URL path segment) */
+    name: string;
+    /** directory containing the package */
+    basePath: string;
+    /**
+     * Extra pre-built directories to copy verbatim alongside `dist`, the same
+     * way and with the same filter. A Perf Lab suite app's build snapshots its
+     * output before combining into `dist-raw` (see notes/PERF-LAB-DESIGN.md),
+     * and that snapshot ships too so `raw` mode has something to serve. Data-
+     * driven per package rather than a hardcoded name, so an ordinary FynApp
+     * with no `extraDists` copies nothing extra.
+     */
+    extraDists?: string[];
+}
 
 /**
  * Options for building the demo site
@@ -121,6 +141,12 @@ function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
  * through the same {@link readBundles} the preload pass uses, so this cannot
  * disagree with what the shell page preloads.
  *
+ * Checks a package's `dist-raw` the same way, when it has one. A Perf Lab
+ * suite app's `dist-raw` is a pre-combine snapshot with its own
+ * `federation.json` and no bundle map (see notes/PERF-LAB-DESIGN.md), so
+ * `readBundles` naturally finds nothing to carry and every declared chunk must
+ * resolve on its own -- the same check, just pointed at a second directory.
+ *
  * @param outputDir - the built site
  * @returns list of `app/dist/federation.json -> missing chunk` descriptions
  */
@@ -130,48 +156,86 @@ function findMissingChunkRefs(outputDir: string): string[] {
     for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
         if (!entry.isDirectory()) continue;
 
-        const distDir = path.join(outputDir, entry.name, "dist");
-        const manifestPath = path.join(distDir, "federation.json");
-        if (!existsSync(manifestPath)) continue;
+        for (const distName of ["dist", "dist-raw"]) {
+            const distDir = path.join(outputDir, entry.name, distName);
+            const manifestPath = path.join(distDir, "federation.json");
+            if (!existsSync(manifestPath)) continue;
 
-        const where = `${entry.name}/dist/federation.json`;
-        let manifest: any;
-        try {
-            manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-        } catch (err) {
-            missing.push(`${where} -> unreadable (${(err as Error).message})`);
-            continue;
+            const where = `${entry.name}/${distName}/federation.json`;
+            let manifest: any;
+            try {
+                manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+            } catch (err) {
+                missing.push(`${where} -> unreadable (${(err as Error).message})`);
+                continue;
+            }
+
+            const bundles = readBundles(distDir, entry.name, msg => missing.push(`${where} -> ${msg}`));
+            const carrierOf = carriersOf(bundles);
+            const present = (file: string) => existsSync(path.join(distDir, file));
+            const resolves = (file: string) => {
+                if (present(file)) return true;
+                const carrier = carrierOf.get(file);
+                return carrier !== undefined && present(carrier);
+            };
+
+            const check = (what: string, file: unknown) => {
+                if (typeof file !== "string" || !file) return;
+                if (!resolves(file)) missing.push(`${where} -> ${file} (${what})`);
+            };
+
+            // The container entry is what the kernel imports; everything else hangs
+            // off it, so its absence is the loudest possible version of this bug.
+            check("container entry", manifest.filename);
+
+            for (const [name, exposed] of Object.entries<any>(manifest.exposes ?? {})) {
+                for (const chunk of exposed?.chunks ?? []) check(`exposes ${name}`, chunk);
+            }
+            for (const [name, shared] of Object.entries<any>(manifest.shared ?? {})) {
+                for (const chunk of shared?.chunks ?? []) check(`shared ${name}`, chunk);
+            }
+            // A carrier that is itself missing takes every member down with it.
+            for (const carrier of Object.keys(bundles)) check("combined bundle", carrier);
         }
-
-        const bundles = readBundles(distDir, entry.name, msg => missing.push(`${where} -> ${msg}`));
-        const carrierOf = carriersOf(bundles);
-        const present = (file: string) => existsSync(path.join(distDir, file));
-        const resolves = (file: string) => {
-            if (present(file)) return true;
-            const carrier = carrierOf.get(file);
-            return carrier !== undefined && present(carrier);
-        };
-
-        const check = (what: string, file: unknown) => {
-            if (typeof file !== "string" || !file) return;
-            if (!resolves(file)) missing.push(`${where} -> ${file} (${what})`);
-        };
-
-        // The container entry is what the kernel imports; everything else hangs
-        // off it, so its absence is the loudest possible version of this bug.
-        check("container entry", manifest.filename);
-
-        for (const [name, exposed] of Object.entries<any>(manifest.exposes ?? {})) {
-            for (const chunk of exposed?.chunks ?? []) check(`exposes ${name}`, chunk);
-        }
-        for (const [name, shared] of Object.entries<any>(manifest.shared ?? {})) {
-            for (const chunk of shared?.chunks ?? []) check(`shared ${name}`, chunk);
-        }
-        // A carrier that is itself missing takes every member down with it.
-        for (const carrier of Object.keys(bundles)) check("combined bundle", carrier);
     }
 
     return missing;
+}
+
+/**
+ * Copy one package's `dist` (and any declared `extraDists`) into the site,
+ * same filter, same skip-if-missing behavior as the plain `dist` copy always
+ * had -- a package with nothing at `extraDists` copies nothing extra.
+ *
+ * @param pkg the package entry
+ * @param outputDir the site root packages are copied into
+ * @param fileFilter which files within each dist to keep
+ * @param log verbose logger
+ */
+function copyPackageDists(
+    pkg: DemoPackage,
+    outputDir: string,
+    fileFilter: (fileName: string) => boolean,
+    log: (m: string) => void
+): void {
+    const srcDist = path.join(pkg.basePath, pkg.name, "dist");
+    const dest = path.join(outputDir, pkg.name, "dist");
+    if (existsSync(srcDist)) {
+        copyDirFiltered(srcDist, dest, fileFilter);
+        log(`📁 Copied: ${pkg.name}/dist/`);
+    }
+
+    for (const extra of pkg.extraDists ?? []) {
+        const srcExtra = path.join(pkg.basePath, pkg.name, extra);
+        const destExtra = path.join(outputDir, pkg.name, extra);
+        if (existsSync(srcExtra)) {
+            copyDirFiltered(srcExtra, destExtra, fileFilter);
+            log(`📁 Copied: ${pkg.name}/${extra}/`);
+        } else if (existsSync(srcDist)) {
+            // Built, but not the way the site expects: the page will 404 on it.
+            log(`⚠️  ${pkg.name} has dist/ but no ${extra}/ — its build must produce both`);
+        }
+    }
 }
 
 /**
@@ -310,12 +374,20 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         );
         log(`📦 Shell bundle maps: ${bundleMaps.length}`);
 
+        const perfLab = collectPerfLab(
+            path.join(__dirname, "../.."),
+            pathPrefix,
+            msg => log(`⚠️  perf lab: ${msg}`)
+        );
+        log(`🧪 Perf Lab hints: ${perfLab.hints.length}`);
+
         const shellHtml = env.render("pages/shell.html", {
             title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
             preloadModules,
             bundleMaps,
+            perfLab,
             ...pageSeo("shell"),
         });
         const shellOutputPath = path.join(outputDir, "shell.html");
@@ -443,7 +515,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         }
 
         // Copy dist directories from various packages
-        const packages = [
+        const packages: DemoPackage[] = [
             // node_modules packages (federation-js is not here: it ships from
             // the loader variant, paired with the system.js copied above)
             { name: "spectre.css", basePath: path.join(__dirname, "../node_modules") },
@@ -470,7 +542,13 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-react-middleware", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-design-tokens", basePath: path.join(__dirname, "../..") },
             { name: "fynapp-shell-mw", basePath: path.join(__dirname, "../..") },
-            { name: "fynapp-sidebar", basePath: path.join(__dirname, "../..") }
+            { name: "fynapp-sidebar", basePath: path.join(__dirname, "../..") },
+            // Perf Lab analytics suite: each also ships a dist-raw pre-combine
+            // snapshot, for `raw` mode -- see notes/PERF-LAB-DESIGN.md.
+            { name: "fynapp-analytics", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
+            { name: "fynapp-analytics-charts", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
+            { name: "fynapp-analytics-reports", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
+            { name: "fynapp-analytics-lib", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] }
         ];
 
         // Define file filter based on production mode
@@ -499,14 +577,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             return true;
         };
 
-        packages.forEach(pkg => {
-            const srcDist = path.join(pkg.basePath, pkg.name, "dist");
-            const dest = path.join(outputDir, pkg.name, "dist");
-            if (existsSync(srcDist)) {
-                copyDirFiltered(srcDist, dest, fileFilter);
-                log(`📁 Copied: ${pkg.name}/dist/`);
-            }
-        });
+        packages.forEach(pkg => copyPackageDists(pkg, outputDir, fileFilter, log));
 
         // federation-js, the other half of the loader pair. In the `standard`
         // variant both halves live in one directory, so skip the system.js
@@ -562,4 +633,5 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 }
 
 // ES module exports
-export { buildDemoSite, findMissingLocalRefs, findMissingChunkRefs, prepareOutputDir };
+export { buildDemoSite, findMissingLocalRefs, findMissingChunkRefs, prepareOutputDir, copyPackageDists };
+export type { DemoPackage };

@@ -155,4 +155,23 @@ startDevProxy([
     { path: "/fynapp-mw-mismatch" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-mw-mismatch") },
   ],
+  // Perf Lab analytics suite. Each maps to the package root, like
+  // fynapp-bundled above, so both `dist` and its `dist-raw` pre-combine
+  // snapshot (see notes/PERF-LAB-DESIGN.md) are served with no extra rule.
+  [
+    { path: "/fynapp-analytics" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-analytics") },
+  ],
+  [
+    { path: "/fynapp-analytics-charts" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-analytics-charts") },
+  ],
+  [
+    { path: "/fynapp-analytics-reports" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-analytics-reports") },
+  ],
+  [
+    { path: "/fynapp-analytics-lib" },
+    { protocol: "file", path: Path.join(__dirname, "../../fynapp-analytics-lib") },
+  ],
 ]);
