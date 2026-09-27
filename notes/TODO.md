@@ -101,18 +101,22 @@ The runtime preload is automatic but small. The big win (−69% cold start in
 live only in the demo (`demo/demo-server/scripts/shell-preload.mts`), with a
 hand-written chunk list per app. A FynMesh user gets none of it for free.
 
-- [ ] **Generate startup preload hints from build output.** Read `federation.json` and
-      `federation.bundles.json` and emit `<link rel="preload" as="script">` tags. The app
-      has to say which chunks are startup and which are lazy, because globbing every chunk
-      would pull the ~1 MB AG Grid chunk into cold start. Ship it as tooling, not demo code.
-- [ ] **Preload past the entry file.** The runtime only hints `fynapp-entry.js`
-      (`manifest-resolver.ts:76`). The chunks behind each entry still load as a chain.
-- [ ] **Preload on the direct path too.** Hints fire only through
-      `loadFynAppsByName()`. `loadFynApp(url)` skips them, and the demo shell uses that path.
-- [ ] **Walk manifests in parallel.** `buildGraph` awaits each dependency in turn
-      (`manifest-resolver.ts:233`). Hints go out one at a time as each manifest arrives.
-- [ ] **Implement preload priority.** `priorityByDepth` and the types exist but
-      `fetchpriority` is never set from them.
+Design: [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md). Reading the code, today's
+runtime hints save close to nothing: a dependency's hint lands right before its import,
+and siblings are hinted one subtree at a time.
+
+- [ ] **Plugin: emit `expose-chunks` in the manifest.** Each expose's static import
+      closure, from the `bundle` in `generateBundle`. Lazy chunks stay out on their own,
+      so no hand-written startup lists. Test over a real build.
+- [ ] **Kernel: hint from the manifest.** Hint every dependency's entry at once, and the
+      `expose-chunks` of `./config`, `./main` and any `import-exposed` expose. Do the same
+      on the `loadFynApp(url)` path. Keep execution serial so share picks stay deterministic.
+- [ ] **Kernel: preload priority.** Set `fetchpriority` from `priorityByDepth`, or delete
+      the option.
+- [ ] **Plugin: `preloadTags()` helper.** Build-time HTML hints from `fynapp.manifest.json`
+      and `federation.bundles.json`. Move `shell-preload.mts` onto it.
+- [ ] **Measure, then add the plate.** Shell cold start with no hints, runtime only, HTML
+      only, and both. Record in `SHELL_LOAD_PERF.md`.
 
 #### Combined bundles: remaining work
 
