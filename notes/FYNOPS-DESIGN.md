@@ -40,7 +40,7 @@ fynops.html (host page: boots kernel, sets registry resolver)
 
 | FynApp | Route | Scenario | Heavy lib (approx. minified) | Framework |
 |---|---|---|---|---|
-| `ops-shipments` | `/shipments` | 10k-row grid with grouping, pivot and Excel export | ag-grid enterprise (shared, 1.2MB), SheetJS ~900KB | React 19 |
+| `ops-shipments` | `/shipments` | 10k-row grid with grouping, pivot and Excel export | ag-grid enterprise (shared, 1.2MB), including its Excel export | React 19 |
 | `ops-map` | `/map` | Live fleet positions, routes, geofences | maplibre-gl, 1.6MB (0.43MB gz) with worker | React 19 |
 | `ops-analytics` | `/analytics` | On-time rate, lane cost, trends | echarts (shared) | React 19 |
 | `ops-docs` | `/docs` | Bills of lading and invoices in a PDF viewer | pdfjs-dist + pdf-lib, 2.1MB (0.68MB gz) with worker | React 19 |
@@ -98,13 +98,11 @@ The kernel boot snippet that `shell.html` and `fynops.html` both need should mov
 
 | Topic | Kind | Producer | Consumers |
 |---|---|---|---|
-| `ops:shipment.selected` | emit | shipments, map, schedule | map, docs, warehouse, notes |
 | `ops:vehicle.positions` | emit, 1Hz | fynops-data simulator | map, analytics |
 | `ops:shipment.get` | request | any | fynops-data handles it |
 | `ops:rules.changed` | emit | rules | shipments (repricing), analytics |
-| `ops:route.open` | emit | any | shell (navigates or opens drawer) |
 
-The bus has no replay, so a feature that mounts late calls `ops:shipment.get` for the current selection. The shell keeps "current selection" in middleware shared state and answers it.
+Selection and navigation are not bus topics. The bus has no replay, so a feature that mounts late would miss them. The shell owns both. It exposes `selection` as shared state, plus `navigate` and `openDrawer`, through its middleware API. See [`FYNOPS-PHASE1-PLAN.md`](./FYNOPS-PHASE1-PLAN.md).
 
 ### Database
 
