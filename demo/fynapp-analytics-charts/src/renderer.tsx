@@ -856,7 +856,7 @@ export function GroupedBarChart({
   const { tooltip, showTooltip, hideTooltip } = useTooltip();
   const { hidden, toggle, isHidden } = useSeriesVisibility();
   const exportPng = useChartPngExport(title.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
-  const margin = DEFAULT_MARGIN;
+  const longest = categories.reduce((a, c) => Math.max(a, c.length), 0);
   const visibleSeries = series.filter((s) => !isHidden(s.id));
   const shown = visibleSeries.length > 0 ? visibleSeries : series;
 
@@ -875,6 +875,13 @@ export function GroupedBarChart({
       }
     >
       {({ width, height }) => {
+        // Same rule as AxisBottom: rotate labels that don't fit their band, and
+        // grow the bottom margin to hold the longest one at -35°.
+        const bandW = (width - DEFAULT_MARGIN.left - DEFAULT_MARGIN.right) / Math.max(1, categories.length);
+        const rotate = longest * 5.5 > bandW;
+        const margin = rotate
+          ? { ...DEFAULT_MARGIN, bottom: 20 + Math.ceil(longest * 5.5 * Math.sin((35 * Math.PI) / 180)) }
+          : DEFAULT_MARGIN;
         const innerW = Math.max(0, width - margin.left - margin.right);
         const innerH = Math.max(0, height - margin.top - margin.bottom);
         const maxV = Math.max(...shown.flatMap((s) => s.values), 1);
@@ -892,12 +899,16 @@ export function GroupedBarChart({
           <svg width={width} height={height} onMouseLeave={hideTooltip}>
             <GridlinesY ticks={yTicks} scale={y} x0={margin.left} x1={width - margin.right} />
             <AxisLeft ticks={yTicks} scale={y} x={margin.left} format={formatY} />
-            <g fontSize={10} fill="var(--fynmesh-color-dark, #374151)" textAnchor="middle">
-              {categories.map((category) => (
-                <text key={category} x={outer(category) + outer.bandwidth / 2} y={margin.top + innerH + 16}>
-                  {category}
-                </text>
-              ))}
+            <g fontSize={10} fill="var(--fynmesh-color-dark, #374151)" textAnchor={rotate ? "end" : "middle"}>
+              {categories.map((category) => {
+                const x = outer(category) + outer.bandwidth / 2;
+                const y = margin.top + innerH + 16;
+                return (
+                  <text key={category} x={x} y={y} transform={rotate ? `rotate(-35 ${x} ${y})` : undefined}>
+                    {category}
+                  </text>
+                );
+              })}
             </g>
             {categories.map((category) =>
               shown.map((s) => {
