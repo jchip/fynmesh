@@ -125,9 +125,23 @@ The 100k-row grid uses ag-grid enterprise's server-side row model. Grouping, sor
 
 **Schema and seed versions.** A `meta` table stores the schema version and the seed version. If either differs from the code, the worker drops the database and seeds again. The shell has a "reset data" button that does the same.
 
+### Seed data
+
+The generator is a pure TS module in `fynops-data` with a seeded PRNG. A Node script and the browser worker both import it, so the same seed gives the same data everywhere.
+
+**Prime script.** `apps/fynops/fynops-data/scripts/prime-db.mts` runs the generator into a real SQLite file with Node's built-in `node:sqlite`. It writes `fynops-seed.<hash>.sqlite.gz`. The file is pre-compressed because GitHub Pages won't gzip a binary. The content hash in the name keeps a stale copy from being served out of the CDN or browser cache. Flags:
+
+- `--seed <n>`
+- `--scale small|medium|large`, about 10k, 100k and 1M shipments
+- `--scenario storm-midwest|port-congestion|carrier-outage`. Each one layers events on the base data, such as late shipments, reroutes and incident reports, so a demo tells a story.
+
+**Only at publish.** The seed file is never committed and is not part of `fyn bootstrap`. `build-demo-site.mts` runs the prime script and writes the file into the site output (`.temp/docs`). From there it ships to the `gh-pages` branch with the rest of the site. A small `fynops-seed.json` next to it names the hashed file and lists the scenarios.
+
+**Worker startup.** The worker reads `fynops-seed.json`, fetches the seed file, and decompresses it with `DecompressionStream`. Then it imports the file into OPFS with the `opfs-sahpool` `importDb`. If there is no seed file, as in local `fyn start`, the worker generates the data in the browser instead. "Reset data" re-imports the file, or regenerates it when there is no file.
+
 ### Data simulator
 
-On first run, the simulator seeds the database with about 100k shipments, 2k vehicles, 40 warehouses, lanes, carriers and documents. Seeding happens in the worker in batched transactions. After that, a timer moves vehicles, writes their positions, and emits them on the bus. PDFs for `ops-docs` are generated on the fly by a small generator, so no binary files ship.
+The base dataset is about 100k shipments, 2k vehicles, 40 warehouses, lanes, carriers and documents. It comes from the seed file on the published site, or from in-browser generation locally. In-browser seeding runs in the worker in batched transactions. Once the data is loaded, a timer moves vehicles, writes their positions, and emits them on the bus. PDFs for `ops-docs` are generated on the fly by a small generator, so no binary files ship.
 
 The simulator uses a seeded PRNG plus a tiny name and place list. `@faker-js/faker` stays optional. Pulling in only its `en` locale is fine if the data needs more variety.
 
@@ -163,7 +177,7 @@ These are the parts most likely to break under SystemJS federation. Phase 0 test
 | Monaco size and loading | Its ESM build is large and uses dynamic imports for languages | Measure the chunk count and first-load cost with only one custom language |
 | Basemap tiles | The static site has no tile server | Use a public third-party tile source, such as OpenFreeMap or the MapLibre demo tiles |
 | ag-grid enterprise on shared community | `ag-grid-enterprise` imports `ag-grid-community` directly. Those imports must resolve to the shared `esm-ag-grid`, or a second community copy loads and module registration breaks. | Build `fynops-grid-lib`. Confirm grouping works and that only one community copy is in the Network panel. |
-| SQLite wasm and worker from a FynApp | The wasm file and the worker script must load from `fynops-data`'s dist. OPFS must work under the demo origin. | Build `fynops-data` with the worker. Seed 100k rows, reload, and confirm the data is still there. Record the seed time. |
+| SQLite wasm and worker from a FynApp | The wasm file and the worker script must load from `fynops-data`'s dist. OPFS must work under the demo origin. | Build `fynops-data` with the worker. Seed 100k rows, reload, and confirm the data is still there. Record the in-browser seed time. Then run `prime-db.mts`, import its file, and record the download size and import time. |
 | Svelte and Vue next to React | Each needs its own framework runtime | Reuse the `fynapp-8-svelte` and `fynapp-4-vue` setups |
 
 If workers can't load cleanly from a FynApp, that is a kernel or federation gap worth fixing. It is not a reason to drop the feature.
@@ -180,7 +194,7 @@ Done when:
 
 - All three libs render in `fynops.html` and each worker runs.
 - 100k seeded rows are still there after a reload.
-- The measured sizes and the seed time are in this doc.
+- The measured sizes, the in-browser seed time, and the seed file's size and import time are in this doc.
 
 ### Phase 1: shell and first three features
 
@@ -234,4 +248,5 @@ Done when the report runs from the live site and its numbers are recorded in thi
 - **ag-grid:** enterprise, unlicensed with the watermark. Remove it if AG Grid objects.
 - **Map tiles:** a third-party tile source is fine on the public demo
 - **Database:** SQLite wasm on OPFS (`opfs-sahpool`) in a worker, owned by `fynops-data`
+- **Seed file:** built only when the demo site is published, never committed. Local dev generates data in the browser.
 - **Non-React features:** `ops-warehouse` in Svelte and `ops-flows` in Vue
