@@ -91,6 +91,11 @@ cooperation from the page. What shipped there instead, as views under
       publishes `federation.bundles.json` so a host can preload the carrier, not the member
 - [x] Immutable cache headers for content-hashed chunks (`_headers`), with the
       non-hashed artifacts deliberately excluded
+- [x] Perf Lab: an analytics suite in `/shell?perf=raw|combined|hints` with a live
+      metrics panel. Measured −54% time to ready with combine + hints. See
+      [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)
+- [ ] Perf Lab follow-ups: verify dev mode and warm reload, deploy and measure the
+      live site, link it from the features page
 - [ ] Performance event emission
 - [ ] Bundle analysis tooling
 
@@ -101,9 +106,10 @@ The runtime preload is automatic but small. The big win (−69% cold start in
 live only in the demo (`demo/demo-server/scripts/shell-preload.mts`), with a
 hand-written chunk list per app. A FynMesh user gets none of it for free.
 
-Design: [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md). Reading the code, today's
-runtime hints save close to nothing: a dependency's hint lands right before its import,
-and siblings are hinted one subtree at a time.
+Design: [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md). Today's runtime hints save
+close to nothing: a dependency's hint lands right before its import, and siblings are
+hinted one subtree at a time. The Perf Lab measured it: the suite's entries load in
+strict sequence with runtime hints alone.
 
 - [ ] **Plugin: emit `expose-chunks` in the manifest.** Each expose's static import
       closure, from the `bundle` in `generateBundle`. Lazy chunks stay out on their own,
@@ -120,12 +126,13 @@ and siblings are hinted one subtree at a time.
 
 #### Combined bundles: remaining work
 
-- [ ] **Let apps opt in from their own build.** Combining runs only in this repo's
-      `build-prod` (`scripts/xrun-tasks.ts`) and in `fynapp-bundled`. create-fynapp
-      scaffolds never run it, and the rollup plugin has no option for it.
+- [ ] **Let apps opt in from their own build.** An app can run `federation-combine` in
+      its own build script, and `combine-demo` then leaves it alone. `fynapp-bundled`
+      and the Perf Lab apps do this. create-fynapp scaffolds never run it, and the
+      rollup plugin has no option for it.
 - [ ] **Use startup groups as the preload source.** An explicit `startup` group is
       one file the host can preload. That pairs with the hint generator above.
-      Today the only group is hand-listed for `fynapp-react-19`.
+      Today the groups are hand-listed for `fynapp-react-19` and `fynapp-analytics-charts`.
 - [ ] **Revisit the default policy.** A 2 KB raw threshold groups little outside apps
       with many small exposes (`fynapp-1`, `fynapp-1-b`). `measure: "brotli"` exists but
       is not the default.

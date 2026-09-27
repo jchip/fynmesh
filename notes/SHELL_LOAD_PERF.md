@@ -216,3 +216,26 @@ selected. Deferring them to on-demand would cut cold-start bytes ~28% (≈53 KB)
 This changes loading behavior, and the eager preload may well be deliberate —
 demoing side-by-side React 18/19 is a headline feature of this project. **Needs
 your call before anyone implements it.**
+
+## Perf Lab: the same fixes on a suite built to show them
+
+`/shell?perf=raw|combined|hints` loads an analytics suite whose chunks have the
+shapes combine and hints act on. Cold, 80 ms per response, local HTTP/1.1:
+
+| Mode | Suite startup requests | Ready at |
+|---|---|---|
+| raw | 16 | ~1310 ms |
+| combined | 9 | ~1125 ms |
+| combined + hints | 9 | ~600 ms |
+
+Details and method: [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md#results).
+
+## Early Hints on the live site
+
+Cloudflare Pages copies the shell's static `<link rel="preload">` tags into a
+`Link:` response header and sends them as Early Hints. Chrome starts those
+fetches from the header, so DevTools lists them with initiator "Other" and no
+initiator data. They are the preload hints, not a bug. The 5 tags marked
+`fetchpriority="low"` are left out of the header and show a normal "Parser"
+initiator. A preload a page wants only some of the time must be injected by
+script, or Cloudflare will send it on every request.
