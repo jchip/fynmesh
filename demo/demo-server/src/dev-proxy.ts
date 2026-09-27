@@ -180,4 +180,17 @@ startDevProxy([
     { path: "/fynops-shell" },
     { protocol: "file", path: Path.join(__dirname, "../../../apps/fynops/fynops-shell") },
   ],
+  ...[
+    "fynops-data",
+    "fynops-grid-lib",
+    // Phase 0 spikes, loaded with fynops.html?load=<name>
+    "spike-monaco",
+    "spike-pdf",
+    "spike-maplibre",
+    "spike-grid",
+    "spike-data",
+  ].map((name): Parameters<typeof startDevProxy>[0][number] => [
+    { path: `/${name}` },
+    { protocol: "file", path: Path.join(__dirname, "../../../apps/fynops", name) },
+  ]),
 ]);

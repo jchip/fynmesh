@@ -33,6 +33,11 @@
             try {
                 await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-19/dist");
                 await fynMeshKernel.loadFynApp("{{pathPrefix}}fynops-shell/dist");
+                // Phase 0 spikes: ?load=a,b,c loads each /<name>/dist in order.
+                const load = new URLSearchParams(location.search).get("load");
+                for (const name of load ? load.split(",") : []) {
+                    await fynMeshKernel.loadFynApp(`{{pathPrefix}}${name}/dist`);
+                }
             } catch (error) {
                 console.error("❌ Failed to load FynOps:", error);
                 document.getElementById("fynops-root").textContent =
