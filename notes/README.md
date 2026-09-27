@@ -29,6 +29,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`TODO.md`](./TODO.md)                                     | The roadmap: completed-vs-pending checklist and known gaps      |
 | [`PRELOAD-AUTO-DESIGN.md`](./PRELOAD-AUTO-DESIGN.md)       | Proposal: automatic preloading from the build's import graph    |
 | [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)               | Perf Lab: analytics suite in `/shell?perf=` with raw/combined/hints modes, a live metrics panel, measured results and findings |
+| [`FYNOPS-DESIGN.md`](./FYNOPS-DESIGN.md)                   | Proposed: FynOps, a 10MB+ logistics console built from many FynApps, with a phased plan |
 | [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Pointer → canonical FynApp docs in `dev-tools/create-fynapp/agent/` |
 | [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md)               | The JSON a FynApp build emits: purpose, producers, consumers, what breaks |
 | [`MF2-VS-FEDERATION-JS.md`](./MF2-VS-FEDERATION-JS.md)     | Module Federation 2.0 (2.9.0) vs FynMesh's SystemJS federation: full capability comparison + gap analysis |
