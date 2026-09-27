@@ -220,13 +220,15 @@ your call before anyone implements it.**
 ## Perf Lab: the same fixes on a suite built to show them
 
 `/shell?perf=raw|combined|hints` loads an analytics suite whose chunks have the
-shapes combine and hints act on. Cold, 80 ms per response, local HTTP/1.1:
+shapes combine and hints act on. Cold, median of 6 rounds on the live site:
 
-| Mode | Suite startup requests | Ready at |
-|---|---|---|
-| raw | 16 | ~1310 ms |
-| combined | 9 | ~1125 ms |
-| combined + hints | 9 | ~600 ms |
+| Mode | Suite startup requests | Ready at | vs raw |
+|---|---|---|---|
+| raw | 16 | 1332 ms | |
+| combined | 9 | 872 ms | −35% |
+| combined + hints | 9 | 367 ms | −72% |
+
+A warm reload is ready in ~160 ms in every mode, all from cache.
 
 Details and method: [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md#results).
 

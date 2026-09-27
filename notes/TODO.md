@@ -92,10 +92,9 @@ cooperation from the page. What shipped there instead, as views under
 - [x] Immutable cache headers for content-hashed chunks (`_headers`), with the
       non-hashed artifacts deliberately excluded
 - [x] Perf Lab: an analytics suite in `/shell?perf=raw|combined|hints` with a live
-      metrics panel. Measured −54% time to ready with combine + hints. See
-      [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)
-- [ ] Perf Lab follow-ups: verify dev mode and warm reload, deploy and measure the
-      live site, link it from the features page
+      metrics panel. Deployed; on the live site combine + hints cut time to ready by
+      72%. See [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)
+- [ ] Perf Lab follow-ups: verify dev mode, link it from the features page
 - [ ] Performance event emission
 - [ ] Bundle analysis tooling
 

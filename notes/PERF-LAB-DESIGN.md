@@ -1,6 +1,6 @@
 # Perf Lab: an analytics suite in the shell that shows bundle optimizations
 
-**Status**: implemented and measured 2026-09-26. Not yet deployed to the live site.
+**Status**: implemented, deployed and measured on the live site 2026-09-26.
 
 ## What it is
 
@@ -85,7 +85,30 @@ The hints must be injected by script. Cloudflare Pages turns static `<link rel="
 
 ## Results
 
-### Data
+### Live site
+
+`https://www.fynmesh.fyi/shell?perf=<mode>` over HTTP/2 through Cloudflare. Headless Chromium via `agent-browser`, a fresh browser session for every run, so every run is cold. Six rounds, each running raw, combined and hints in turn, so drift hits every mode alike.
+
+| Round | raw ready | combined ready | hints ready |
+|---|---|---|---|
+| 1 | 898 ms | 1434 ms | 454 ms |
+| 2 | 814 ms | 787 ms | 362 ms |
+| 3 | 1448 ms | 780 ms | 315 ms |
+| 4 | 2880 ms | 1114 ms | 371 ms |
+| 5 | 1428 ms | 956 ms | 1393 ms |
+| 6 | 1236 ms | 770 ms | 334 ms |
+| **median** | **1332 ms** | **872 ms** | **367 ms** |
+| vs raw | | −35% | −72% |
+
+- Requests: 16 raw, 9 combined, 9 hints. Compressed transfer: 43 KB raw, 39 KB combined. Combining also compresses better.
+- The HTML arrived at a median of ~245 ms in every mode, so the gap is the suite's own loading.
+- Runs vary more than locally. Round 4 raw and round 5 hints were slow before the suite started. Medians over 6 rounds absorb that.
+- **Warm reload** of each mode was ready in ~160 ms, with all startup files from cache (`transferSize` 0). Hashed chunks, including `dist-raw`, are served `public, max-age=31536000, immutable`. Entries get Cloudflare's default `max-age=14400, must-revalidate`.
+- The suite never appears in the `/shell` Early Hints `Link:` header, so the script-injected hints stay mode-specific.
+
+Live, the gap is wider than it is locally. Combine alone is worth 35% because every saved request costs a real round trip. Hints are worth more again, because the serial entry walk is the longest chain.
+
+### Local, with a fixed delay
 
 Production site build (`fyn build-demo`) served by `serve-site-delayed.mts` with 80 ms per response. Headless Chromium via `agent-browser`, cold for every run. Suite requests only; the shell's own requests are excluded.
 
@@ -103,7 +126,7 @@ Production site build (`fyn build-demo`) served by `serve-site-delayed.mts` with
 
 The one file after ready is the report table, loaded at idle. A click on Export fetched only `export-*.js`. Plain `/shell` fetched no suite files.
 
-### Summary
+Summary of the local runs:
 
 | Mode | Startup requests | Ready at (mean) | vs raw |
 |---|---|---|---|
@@ -138,7 +161,7 @@ To reproduce:
       kb: Math.round(st.reduce((n, e) => n + e.transferSize, 0) / 1024) });
    ```
 
-The server is HTTP/1.1, so the browser opens at most 6 connections to it. The live site's HTTP/2 has no such cap, so hints should do at least as well there.
+The server is HTTP/1.1, so the browser opens at most 6 connections to it. For live numbers, open the live url in a fresh browser session per run and read the same values.
 
 ## Code map
 
@@ -158,8 +181,6 @@ The server is HTTP/1.1, so the browser opens at most 6 connections to it. The li
 ## Not yet verified
 
 - Dev mode (`fyn start`). Only the production site build was tested.
-- Warm reload. The measurement server sends `no-store`, so the immutable `_headers` rules were not exercised.
-- The live site. The suite has not been deployed.
 
 ## Open questions
 
