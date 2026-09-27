@@ -15,7 +15,7 @@ The domain is a **logistics operations console**. One domain beats a loose featu
 
 ## Constraints
 
-- **Static site.** The demo deploys to GitHub Pages, so there is no backend. All data comes from an in-browser simulator.
+- **Static site.** The demo deploys to GitHub Pages, so there is no server. The "backend" is SQLite running in the browser, seeded by a simulator.
 - **Seeded data.** Same seed, same dataset. That keeps Perf Lab runs comparable, like `analytics-core` does today.
 - **Real libraries only.** Size comes from libraries a real ops team would use. No padding.
 
@@ -27,7 +27,7 @@ fynops.html (host page: boots kernel, sets registry resolver)
        ├─ providers (loaded first, shared)
        │    fynops-react-lib    esm-react 19 (reuse fynapp-react-19)
        │    fynops-ui           UI kit + design tokens
-       │    fynops-data         data client, zod schemas, seeded simulator
+       │    fynops-data         data client, zod schemas, SQLite worker, seeded simulator
        │    fynapp-ag-grid-lib  esm-ag-grid (reuse existing)
        │    fynops-grid-lib     esm-ag-grid-enterprise (on top of esm-ag-grid)
        │    fynops-charts-lib   esm-echarts
@@ -60,7 +60,7 @@ The sizes are estimates. Phase 0 measures the real numbers.
 |---|---|---|
 | `fynapp-react-19` / `fynapp-react-18` | `esm-react`, `esm-react-dom` | Reuse as-is. Both load, so `ops-schedule` gets 18. |
 | `fynops-ui` | `fynops-ui` (buttons, panels, tables, tokens) | One look across every feature team |
-| `fynops-data` | `fynops-data` (client, schemas, simulator) | One source of data. Features never fake their own. |
+| `fynops-data` | `fynops-data` (client, schemas, SQLite worker, simulator) | One source of data. Features never fake their own. |
 | `fynapp-ag-grid-lib` | `esm-ag-grid`, `esm-ag-grid-react` | Reuse as-is |
 | `fynops-grid-lib` | `esm-ag-grid-enterprise` | Layers enterprise on top of the shared community grid. It consumes `esm-ag-grid` with `import: false`, so only one community copy exists. |
 | `fynops-charts-lib` | `esm-echarts` | Used by `ops-analytics` and the sparkline column in `ops-shipments`. It shows a ~1MB lib loading once for two consumers. |
@@ -106,9 +106,28 @@ The kernel boot snippet that `shell.html` and `fynops.html` both need should mov
 
 The bus has no replay, so a feature that mounts late calls `ops:shipment.get` for the current selection. The shell keeps "current selection" in middleware shared state and answers it.
 
+### Database
+
+`fynops-data` owns an in-browser SQLite database. It acts as the app's backend.
+
+- **Engine:** `@sqlite.org/sqlite-wasm`, the official build. It is about 1MB of wasm plus JS.
+- **Storage:** OPFS with the `opfs-sahpool` VFS. Data survives reloads and can grow to hundreds of MB. This VFS needs no COOP/COEP headers, which GitHub Pages can't set. The plain `opfs` VFS needs them, so it is out.
+- **Worker:** SQLite runs in a dedicated Web Worker that `fynops-data` starts. No SQL runs on the main thread.
+- **Client API:** features call an async client from the shared `fynops-data` module. It has typed methods like `shipments.page(query)` and `rules.save(rule)`. A raw `query(sql, params)` exists for analytics.
+- **Latency knob:** the client can add 50 to 300ms of fake delay, so loading states behave like a real network.
+- **Fallback:** if OPFS is unavailable, as in some private browsing modes, the worker opens an in-memory database. The app still works but loses persistence.
+
+Features that write: `ops-rules` saves rules, `ops-schedule` saves bookings, and `ops-notes` saves incident reports. All of it survives a reload.
+
+The 100k-row grid uses ag-grid enterprise's server-side row model. Grouping, sorting and filtering become SQL queries in the worker. This is how the grid is used against a real backend.
+
+**One tab at a time.** `opfs-sahpool` allows a single connection. The worker takes a Web Lock on startup. A second tab waits and shows "open in another tab". A SharedWorker could let tabs share one connection later, but it is out of scope for now.
+
+**Schema and seed versions.** A `meta` table stores the schema version and the seed version. If either differs from the code, the worker drops the database and seeds again. The shell has a "reset data" button that does the same.
+
 ### Data simulator
 
-`fynops-data` builds a seeded dataset: about 100k shipments, 2k vehicles, 40 warehouses, lanes, carriers and documents. A timer moves vehicles and emits positions on the bus. PDFs for `ops-docs` are generated on the fly by a small generator, so no binary files ship.
+On first run, the simulator seeds the database with about 100k shipments, 2k vehicles, 40 warehouses, lanes, carriers and documents. Seeding happens in the worker in batched transactions. After that, a timer moves vehicles, writes their positions, and emits them on the bus. PDFs for `ops-docs` are generated on the fly by a small generator, so no binary files ship.
 
 The simulator uses a seeded PRNG plus a tiny name and place list. `@faker-js/faker` stays optional. Pulling in only its `en` locale is fine if the data needs more variety.
 
@@ -144,6 +163,7 @@ These are the parts most likely to break under SystemJS federation. Phase 0 test
 | Monaco size and loading | Its ESM build is large and uses dynamic imports for languages | Measure the chunk count and first-load cost with only one custom language |
 | Basemap tiles | The static site has no tile server | Use a public third-party tile source, such as OpenFreeMap or the MapLibre demo tiles |
 | ag-grid enterprise on shared community | `ag-grid-enterprise` imports `ag-grid-community` directly. Those imports must resolve to the shared `esm-ag-grid`, or a second community copy loads and module registration breaks. | Build `fynops-grid-lib`. Confirm grouping works and that only one community copy is in the Network panel. |
+| SQLite wasm and worker from a FynApp | The wasm file and the worker script must load from `fynops-data`'s dist. OPFS must work under the demo origin. | Build `fynops-data` with the worker. Seed 100k rows, reload, and confirm the data is still there. Record the seed time. |
 | Svelte and Vue next to React | Each needs its own framework runtime | Reuse the `fynapp-8-svelte` and `fynapp-4-vue` setups |
 
 If workers can't load cleanly from a FynApp, that is a kernel or federation gap worth fixing. It is not a reason to drop the feature.
@@ -153,9 +173,14 @@ If workers can't load cleanly from a FynApp, that is a kernel or federation gap 
 ### Phase 0: spikes
 
 1. Build throwaway FynApps for monaco, pdf.js and maplibre. Each loads its worker and CSS.
-2. Record the real minified and gzip size of each lib.
+2. Build the SQLite worker in `fynops-data`. Seed it and query it from a throwaway FynApp.
+3. Record the real minified and gzip size of each lib.
 
-Done when all three render in `fynops.html` and each worker runs. The measured sizes go into this doc.
+Done when:
+
+- All three libs render in `fynops.html` and each worker runs.
+- 100k seeded rows are still there after a reload.
+- The measured sizes and the seed time are in this doc.
 
 ### Phase 1: shell and first three features
 
@@ -208,4 +233,5 @@ Done when the report runs from the live site and its numbers are recorded in thi
 - **Folder:** top-level `apps/fynops/`
 - **ag-grid:** enterprise, unlicensed with the watermark. Remove it if AG Grid objects.
 - **Map tiles:** a third-party tile source is fine on the public demo
+- **Database:** SQLite wasm on OPFS (`opfs-sahpool`) in a worker, owned by `fynops-data`
 - **Non-React features:** `ops-warehouse` in Svelte and `ops-flows` in Vue
