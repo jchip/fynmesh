@@ -2,7 +2,7 @@ import nunjucks from "nunjucks";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectShellPreloadModules, collectShellBundleMaps, collectPerfLab } from "./shell-preload.mts";
+import { collectShellPreloadModules, collectShellBundleMaps, collectPerfLab, collectFynOps } from "./shell-preload.mts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
 import { pageSeo } from "./page-seo.mts";
 
@@ -160,9 +160,16 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         log(`📄 Generated: ${shellOutputPath}`);
 
         // FynOps host page -- see notes/FYNOPS-DESIGN.md.
+        const fynops = collectFynOps(
+            path.join(__dirname, "../../.."),
+            pathPrefix,
+            msg => log(`⚠️  fynops: ${msg}`)
+        );
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
+            preloadModules: fynops.hints,
+            bundleMaps: fynops.bundleMaps,
             ...pageSeo("fynops"),
         });
         const fynopsOutputPath = path.join(outputDir, "fynops.html");

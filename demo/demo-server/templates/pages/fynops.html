@@ -19,7 +19,24 @@
 {% block body_class %}{% endblock %}
 
 {% block scripts_head %}
+    {#
+      React 19 and the shell, preloaded off the HTML parse. Same reasoning as the
+      startup hints in shell.html: `preload as="script"` with no crossorigin, and
+      combined files named instead of their members. Built by collectFynOps in
+      scripts/shell-preload.mts. Features load by name later and are not hinted.
+    #}
+    {% for hint in preloadModules %}<link rel="preload" as="script" href="{{ hint.href }}"{% if hint.priority %} fetchpriority="{{ hint.priority }}"{% endif %}>
+    {% endfor %}
+
     {% include "components/kernel-scripts.html" %}
+
+    {% if bundleMaps | length %}
+    <script>
+        if (Federation.declareBundles) {
+            {% for map in bundleMaps %}Federation.declareBundles({{ map.bundles | dump | safe }}, "{{ map.base }}");
+            {% endfor %}}
+    </script>
+    {% endif %}
 {% endblock %}
 
 {% block content %}

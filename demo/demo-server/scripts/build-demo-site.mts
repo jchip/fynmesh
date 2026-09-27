@@ -7,6 +7,7 @@ import {
     collectShellPreloadModules,
     collectShellBundleMaps,
     collectPerfLab,
+    collectFynOps,
     readBundles,
     carriersOf,
 } from "./shell-preload.mts";
@@ -395,9 +396,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         log("📄 Generated: " + shellOutputPath);
 
         // FynOps host page -- see notes/FYNOPS-DESIGN.md.
+        const fynops = collectFynOps(
+            path.join(__dirname, "../../.."),
+            pathPrefix,
+            msg => log(`⚠️  fynops: ${msg}`)
+        );
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
+            preloadModules: fynops.hints,
+            bundleMaps: fynops.bundleMaps,
             ...pageSeo("fynops"),
         });
         writeFileSync(path.join(outputDir, "fynops.html"), fynopsHtml);
@@ -561,7 +569,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             // FynOps lives in apps/fynops but ships flat, as /<name>/dist like every
             // other FynApp, so the chunk guard and the `/:pkg/dist/*` cache rules
             // cover it unchanged.
-            { name: "fynops-shell", basePath: path.join(__dirname, "../../../apps/fynops") }
+            ...[
+                "fynops-shell",
+                "fynops-ui",
+                "fynops-data",
+                "fynops-charts-lib",
+                "fynops-grid-lib",
+                "ops-shipments",
+                "ops-map",
+                "ops-analytics",
+            ].map(name => ({ name, basePath: path.join(__dirname, "../../../apps/fynops") }))
         ];
 
         // Define file filter based on production mode

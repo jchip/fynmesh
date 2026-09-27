@@ -16,8 +16,13 @@ const REVALIDATE = "public, max-age=0, must-revalidate";
 /** The package folders that hold federation output. */
 const DIST_FOLDERS = ["dist", "dist-raw"];
 
-/** Files the browser loads by a fixed url: the loader runtime, entries, metadata. */
-const MUTABLE_FILE = /\.(js|json)$/;
+/**
+ * Files the browser loads by a fixed url: the loader runtime, entries, metadata,
+ * and wasm. `wasm` because sqlite-wasm looks its binary up by a fixed name
+ * (fynops-data's `sqlite3.wasm`); left out, Pages' default browser TTL could pair
+ * a new worker with a stale binary for hours.
+ */
+const MUTABLE_FILE = /\.(js|json|wasm)$/;
 
 /**
  * Every unhashed `.js`/`.json` file the site serves, as `_headers` url patterns.

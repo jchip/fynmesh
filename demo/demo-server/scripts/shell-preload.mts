@@ -377,7 +377,38 @@ function collectPerfLab(
     };
 }
 
+/**
+ * What `fynops.html` fetches before the shell can paint: React 19 and the
+ * shell. Everything else loads by name on demand, so it is not hinted. The two
+ * live in different trees (`demo/` and `apps/fynops/`), and `dir` is both the
+ * directory under its root and the url segment, so each root is its own list.
+ */
+const FYNOPS_STARTUP: Array<{ root: string; apps: ShellStartupFynApp[] }> = [
+    { root: "demo", apps: [{ dir: "fynapp-react-19", chunks: "all" }] },
+    { root: "apps/fynops", apps: [{ dir: "fynops-shell", chunks: "all" }] },
+];
+
+/**
+ * Hints and bundle maps for `fynops.html`, the same pair `shell.html` gets.
+ *
+ * @param repoRoot  the monorepo root
+ * @param pathPrefix deployment path prefix, e.g. `/`
+ * @param warn      called with a human-readable message per skipped item
+ */
+function collectFynOps(
+    repoRoot: string,
+    pathPrefix: string,
+    warn: (message: string) => void = () => {}
+): { hints: ShellPreloadHint[]; bundleMaps: Array<{ base: string; bundles: BundleMap }> } {
+    const roots = FYNOPS_STARTUP.map(({ root, apps }) => ({ dir: path.join(repoRoot, root), apps }));
+    return {
+        hints: roots.flatMap(({ dir, apps }) => collectShellPreloadModules(dir, pathPrefix, warn, apps)),
+        bundleMaps: roots.flatMap(({ dir, apps }) => collectShellBundleMaps(dir, pathPrefix, warn, apps)),
+    };
+}
+
 export {
+    collectFynOps,
     collectPerfLab,
     collectShellPreloadModules,
     collectShellBundleMaps,
