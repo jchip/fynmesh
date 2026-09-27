@@ -1,0 +1,26 @@
+{
+  "name": "analytics-core",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "description": "Shared analytics dashboard library: formatters, stats, seeded dataset and locale tables. Bundled by fynapp-analytics-lib as a federation shared module.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rm -rf dist src/generated && node scripts/generate.mts && tsc -p tsconfig.json",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "@types/node": "^20.8.9"
+  }
+}
