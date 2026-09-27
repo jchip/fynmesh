@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "name": "fynops-ui-kit",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "description": "FynOps UI kit: Button, Panel, Toolbar, StatTile, Badge and Table components, plus CSS-variable design tokens. Bundled by the fynops-ui FynApp as a federation shared module.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5"
+  }
+}

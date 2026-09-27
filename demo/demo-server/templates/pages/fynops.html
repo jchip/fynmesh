@@ -31,8 +31,24 @@
     <script>
         (async () => {
             try {
-                await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-19/dist");
-                await fynMeshKernel.loadFynApp("{{pathPrefix}}fynops-shell/dist");
+                /*
+                  Every FynApp resolves by name to /<name>/dist/. The one
+                  exception is the React provider: its package name is
+                  fynapp-react-lib for both versions, so the major in the
+                  consumer's range picks the directory.
+                */
+                fynMeshKernel.setRegistryResolver(async (name, range) => {
+                    const dir = name === "fynapp-react-lib"
+                        ? (/^[~^]?18(\.|$)/.test(range || "") ? "fynapp-react-18" : "fynapp-react-19")
+                        : name;
+                    const distBase = `{{pathPrefix}}${dir}/dist/`;
+                    return { name, version: "0.0.0", url: `${distBase}fynapp.manifest.json`, distBase };
+                });
+
+                // Only the shell is named here. The kernel reads its manifest and
+                // loads React first; the shell then loads each feature by name.
+                await fynMeshKernel.loadFynAppsByName([{ name: "fynops-shell" }]);
+
                 // Phase 0 spikes: ?load=a,b,c loads each /<name>/dist in order.
                 const load = new URLSearchParams(location.search).get("load");
                 for (const name of load ? load.split(",") : []) {

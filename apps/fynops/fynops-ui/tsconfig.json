@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "jsx": "react",
+    "resolveJsonModule": true,
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "esm-react": ["./node_modules/@types/react"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "files": ["node_modules/create-fynapp/federation.d.ts"]
+}

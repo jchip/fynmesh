@@ -43,7 +43,7 @@ export default [
       ...setupFederationPlugins({
         name: "fynops-data",
         shareScope: fynmeshShareScope,
-        exposes: {},
+        exposes: { "./main": "./src/main.ts" },
         shared: {
           "fynops-data-core": { singleton: true, semver: "^1.0.0" },
         },

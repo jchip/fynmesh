@@ -13,5 +13,5 @@
     "outDir": "dist"
   },
   "files": ["node_modules/create-fynapp/federation.d.ts"],
-  "include": ["src/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "scripts/**/*", "test/**/*"]
 }

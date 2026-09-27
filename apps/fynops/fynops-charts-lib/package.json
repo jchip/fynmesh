@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "name": "fynops-charts-lib",
+  "version": "6.1.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "description": "FynApp that provides echarts for sharing",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf dist && rollup -c",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@types/node": "^24.0.10",
+    "create-fynapp": "^1.1.7",
+    "echarts": "^6.1.0",
+    "esbuild": "^0.25.12",
+    "esm-echarts": "^6.1.0",
+    "rollup": "^4.63.3",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "rollup-plugin-federation": "^1.0.0",
+    "rollup-wrap-plugin": "^1.0.3",
+    "typescript": "^5.2.2"
+  }
+}

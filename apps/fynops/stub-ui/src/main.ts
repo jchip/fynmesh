@@ -2,32 +2,26 @@ import type { FynUnit, FynUnitRuntime } from "@fynmesh/kernel";
 import React from "react";
 import ReactDOMClient from "react-dom/client";
 import App from "./App";
-import { injectStyles } from "./styles";
 
 /**
- * FynOps shell: layout, hash routes, detail drawer and sign-in.
- *
- * The `fynops-shell` middleware (./middleware/fynops-shell) is what features
- * talk to. This unit only renders the layout into the host page's #fynops-root.
+ * stub-ui: Phase 1 task A2 check. Renders a gallery of every fynops-ui-kit
+ * component in both themes, with a theme toggle. Deleted in Wave C along
+ * with the other Phase 1 stubs.
  */
-class FynOpsShell implements FynUnit {
+class StubUi implements FynUnit {
   private root?: ReturnType<typeof ReactDOMClient.createRoot>;
 
   initialize(_runtime: FynUnitRuntime) {
     return { status: "ready" as const, mode: "standalone" as const };
   }
 
-  async execute(_runtime: FynUnitRuntime) {
-    injectStyles();
-    let target = document.getElementById("fynops-root");
-    if (!target) {
-      target = document.createElement("div");
-      target.id = "fynops-root";
-      document.body.appendChild(target);
-    }
+  async execute(runtime: FynUnitRuntime) {
+    const target = document.createElement("div");
+    target.id = "stub-ui-root";
+    document.body.appendChild(target);
 
     this.root = ReactDOMClient.createRoot(target);
-    this.root.render(React.createElement(App));
+    this.root.render(React.createElement(App, { runtime }));
 
     return {
       type: "self-managed" as const,
@@ -43,4 +37,4 @@ class FynOpsShell implements FynUnit {
   }
 }
 
-export const main = new FynOpsShell();
+export const main = new StubUi();
