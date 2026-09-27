@@ -29,6 +29,7 @@ fynops.html (host page: boots kernel, sets registry resolver)
        │    fynops-ui           UI kit + design tokens
        │    fynops-data         data client, zod schemas, seeded simulator
        │    fynapp-ag-grid-lib  esm-ag-grid (reuse existing)
+       │    fynops-grid-lib     esm-ag-grid-enterprise (on top of esm-ag-grid)
        │    fynops-charts-lib   esm-echarts
        └─ features (lazy, one per route)
             ops-shipments  ops-map  ops-analytics  ops-docs  ops-rules
@@ -39,7 +40,7 @@ fynops.html (host page: boots kernel, sets registry resolver)
 
 | FynApp | Route | Scenario | Heavy lib (approx. minified) | Framework |
 |---|---|---|---|---|
-| `ops-shipments` | `/shipments` | 100k-row grid, grouping, Excel export | ag-grid (shared), SheetJS ~900KB | React 19 |
+| `ops-shipments` | `/shipments` | 100k-row grid with grouping, pivot and Excel export | ag-grid enterprise (shared), SheetJS ~900KB | React 19 |
 | `ops-map` | `/map` | Live fleet positions, routes, geofences | maplibre-gl ~800KB | React 19 |
 | `ops-analytics` | `/analytics` | On-time rate, lane cost, trends | echarts (shared) | React 19 |
 | `ops-docs` | `/docs` | Bills of lading and invoices in a PDF viewer | pdfjs-dist ~1MB + worker | React 19 |
@@ -47,9 +48,11 @@ fynops.html (host page: boots kernel, sets registry resolver)
 | `ops-schedule` | `/schedule` | Dock and driver scheduling | fullcalendar ~250KB | **React 18** (the "legacy team") |
 | `ops-notes` | `/incidents` | Incident reports with rich text | tiptap/prosemirror ~400KB | React 19 |
 | `ops-warehouse` | `/warehouse` | 3D slot view of a warehouse | three.js ~650KB | **Svelte** |
-| `ops-flows` | `/flows` | Shipment lifecycle and exception flow diagrams | mermaid ~2MB | React 19 |
+| `ops-flows` | `/flows` | Shipment lifecycle and exception flow diagrams | mermaid ~2MB | **Vue** |
 
 The sizes are estimates. Phase 0 measures the real numbers.
+
+`ops-shipments` uses ag-grid enterprise without a license key. It runs with a watermark and console warnings. If AG Grid objects, we drop back to community, which loses grouping, pivot and built-in Excel export.
 
 ### Shared module providers
 
@@ -59,6 +62,7 @@ The sizes are estimates. Phase 0 measures the real numbers.
 | `fynops-ui` | `fynops-ui` (buttons, panels, tables, tokens) | One look across every feature team |
 | `fynops-data` | `fynops-data` (client, schemas, simulator) | One source of data. Features never fake their own. |
 | `fynapp-ag-grid-lib` | `esm-ag-grid`, `esm-ag-grid-react` | Reuse as-is |
+| `fynops-grid-lib` | `esm-ag-grid-enterprise` | Layers enterprise on top of the shared community grid. It consumes `esm-ag-grid` with `import: false`, so only one community copy exists. |
 | `fynops-charts-lib` | `esm-echarts` | Used by `ops-analytics` and the sparkline column in `ops-shipments`. It shows a ~1MB lib loading once for two consumers. |
 
 `fynops-charts-lib` follows the `fynapp-ag-grid-lib` pattern. It declares `shared: { "esm-echarts": { singleton: true, semver } }`, and consumers set `import: false`.
@@ -110,22 +114,22 @@ The simulator uses a seeded PRNG plus a tiny name and place list. `@faker-js/fak
 
 ## Repo layout
 
-Put everything under `demo/fynops/` so it doesn't crowd `demo/`:
+FynOps is a real app, not a demo snippet, so it lives at the top level in `apps/fynops/`:
 
 ```
-demo/fynops/fynops-shell
-demo/fynops/fynops-ui
-demo/fynops/fynops-data
-demo/fynops/fynops-charts-lib
-demo/fynops/ops-shipments
+apps/fynops/fynops-shell
+apps/fynops/fynops-ui
+apps/fynops/fynops-data
+apps/fynops/fynops-charts-lib
+apps/fynops/ops-shipments
 ...
 ```
 
-`fynpo.json` already uses `autoSearch`, so nested packages are found. Scaffold each one with `create-fynapp --name <app> --framework react --dir demo/fynops/<app>`.
+`fynpo.json` uses `autoSearch`, which should find packages under `apps/`. Phase 0 confirms that `fyn bootstrap` builds them. Scaffold each one with `create-fynapp --name <app> --framework <react|svelte|vue> --dir apps/fynops/<app>`.
 
 Each app has to be registered by hand in three places:
 
-- `demo/demo-server/src/dev-proxy.ts` gets a path mapping.
+- `demo/demo-server/src/dev-proxy.ts` gets a path mapping, e.g. `/fynops/ops-map` pointing to `../../../apps/fynops/ops-map`.
 - `demo/demo-server/scripts/build-demo-site.mts` gets a `packages` entry.
 - The `fynops-shell` route table gets an entry (phase 3: `fynops.routes.json`).
 
@@ -138,8 +142,9 @@ These are the parts most likely to break under SystemJS federation. Phase 0 test
 | Web workers from a FynApp | monaco, pdf.js and maplibre spawn workers from URLs. Those must resolve relative to the FynApp's dist, not the page. | Build one FynApp per lib. Load it in the shell and confirm the worker starts. |
 | Library CSS | maplibre, ag-grid, fullcalendar and tiptap ship CSS. It has to load with the FynApp and not leak. | Same spikes, check styles |
 | Monaco size and loading | Its ESM build is large and uses dynamic imports for languages | Measure the chunk count and first-load cost with only one custom language |
-| Basemap tiles | The static site has no tile server | Use the public MapLibre demo tiles. Fall back to bundled GeoJSON of US states if they are down. |
-| Svelte + three.js next to React | Needs its own framework runtime | Reuse the `fynapp-8-svelte` setup |
+| Basemap tiles | The static site has no tile server | Use a public third-party tile source, such as OpenFreeMap or the MapLibre demo tiles |
+| ag-grid enterprise on shared community | `ag-grid-enterprise` imports `ag-grid-community` directly. Those imports must resolve to the shared `esm-ag-grid`, or a second community copy loads and module registration breaks. | Build `fynops-grid-lib`. Confirm grouping works and that only one community copy is in the Network panel. |
+| Svelte and Vue next to React | Each needs its own framework runtime | Reuse the `fynapp-8-svelte` and `fynapp-4-vue` setups |
 
 If workers can't load cleanly from a FynApp, that is a kernel or federation gap worth fixing. It is not a reason to drop the feature.
 
@@ -155,7 +160,7 @@ Done when all three render in `fynops.html` and each worker runs. The measured s
 ### Phase 1: shell and first three features
 
 1. `fynops-shell` with the route table, layout, drawer and session middleware
-2. `fynops-ui`, `fynops-data`, `fynops-charts-lib`
+2. `fynops-ui`, `fynops-data`, `fynops-charts-lib`, `fynops-grid-lib`
 3. `ops-shipments`, `ops-map`, `ops-analytics`
 4. The `fynops.html` host page, plus dev-proxy and build-site entries
 
@@ -180,7 +185,7 @@ Done when:
 
 ### Phase 3: breadth and independent deploy
 
-1. `ops-notes`, `ops-warehouse` (Svelte), `ops-flows`
+1. `ops-notes`, `ops-warehouse` (Svelte), `ops-flows` (Vue)
 2. Move the route table into `fynops.routes.json`
 3. Lazy locale bundles in `fynops-ui` (`en`, `es`)
 
@@ -198,9 +203,9 @@ Done when:
 
 Done when the report runs from the live site and its numbers are recorded in this doc.
 
-## Open questions
+## Decisions
 
-1. **Folder.** Is `demo/fynops/` the right home, or should it be a top-level `apps/fynops/`?
-2. **Enterprise ag-grid.** Community edition is enough for grouping. Enterprise adds size and pivot, but needs a license key for real use.
-3. **Tile source.** Is a third-party basemap OK on the public demo, or is bundled GeoJSON only safer?
-4. **Svelte feature.** Is one non-React feature enough, or should `ops-flows` also be Vue?
+- **Folder:** top-level `apps/fynops/`
+- **ag-grid:** enterprise, unlicensed with the watermark. Remove it if AG Grid objects.
+- **Map tiles:** a third-party tile source is fine on the public demo
+- **Non-React features:** `ops-warehouse` in Svelte and `ops-flows` in Vue
