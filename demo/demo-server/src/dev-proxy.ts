@@ -183,6 +183,15 @@ startDevProxy([
   ...[
     "fynops-data",
     "fynops-grid-lib",
+    "fynops-ui",
+    "fynops-charts-lib",
+    "ops-shipments",
+    "ops-map",
+    "ops-analytics",
+    // Phase 1 stubs, deleted in Wave C
+    "stub-view",
+    "stub-ui",
+    "stub-charts",
     // Phase 0 spikes, loaded with fynops.html?load=<name>
     "spike-monaco",
     "spike-pdf",
