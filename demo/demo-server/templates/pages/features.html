@@ -171,6 +171,7 @@
     <a class="fx-chip" href="#middleware">FynMesh Middleware</a>
     <a class="fx-chip" href="#fynbus">FynBus</a>
     <a class="fx-chip" href="#inspect">Federation Inspector</a>
+    <a class="fx-chip" href="#combine">Combined Bundles</a>
     <a class="fx-chip" href="#small">Small Footprint</a>
     <a class="fx-chip" href="#also">Also built in</a>
 </nav>
@@ -536,6 +537,49 @@
         </figure>
     </section>
 
+    <section class="fx-plate" id="combine">
+        <div>
+            <h2>Combined Bundles</h2>
+            <p>Many small modules ship in one file. Each module still acts like its own file. It keeps its URL and runs only when something imports it.</p>
+        </div>
+        <figure>
+            <div class="fx-fig">
+                <svg viewBox="0 0 760 250" role="img" aria-label="federation-combine folds three small files, hello.js, banner.js and getInfo.js, into one combo.js file, so three requests become one. Inside it each module keeps its own URL. hello and banner were imported and ran. getInfo is registered but has not run.">
+                    <defs>
+                        <marker id="c-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-acc" d="M0 0 L10 5 L0 10 z"/></marker>
+                    </defs>
+                    <text class="s m" x="110" y="22" text-anchor="middle">3 FILES · 3 REQUESTS</text>
+                    <rect class="box" x="20" y="40" width="180" height="44" rx="10"/>
+                    <text class="t" x="36" y="67">hello.js</text>
+                    <rect class="box" x="20" y="100" width="180" height="44" rx="10"/>
+                    <text class="t" x="36" y="127">banner.js</text>
+                    <rect class="box" x="20" y="160" width="180" height="44" rx="10"/>
+                    <text class="t" x="36" y="187">getInfo.js</text>
+
+                    <path class="ln-acc" d="M200 122 L354 122" marker-end="url(#c-arr)"/>
+                    <text class="la" x="277" y="112" text-anchor="middle">federation-combine</text>
+
+                    <text class="s m" x="550" y="22" text-anchor="middle">1 FILE · 1 REQUEST</text>
+                    <rect class="box-acc" x="360" y="34" width="380" height="190" rx="12"/>
+                    <text class="t" x="376" y="60">combo.js</text>
+                    <rect class="box" x="376" y="76" width="348" height="40" rx="8"/>
+                    <text class="t" x="392" y="101">hello.js</text>
+                    <text class="la" x="708" y="101" text-anchor="end">ran</text>
+                    <rect class="box" x="376" y="124" width="348" height="40" rx="8"/>
+                    <text class="t" x="392" y="149">banner.js</text>
+                    <text class="la" x="708" y="149" text-anchor="end">ran</text>
+                    <rect class="box" x="376" y="172" width="348" height="40" rx="8"/>
+                    <text class="t" x="392" y="197">getInfo.js</text>
+                    <text class="s" x="708" y="197" text-anchor="end">registered, not run</text>
+
+                    <text class="s" x="550" y="244" text-anchor="middle">each module keeps its own URL</text>
+                </svg>
+            </div>
+            <pre class="fx-snippet">federation-combine dist</pre>
+            <figcaption>It runs after the build, so it can repack apps you didn't build. The first import of any member pulls the whole file. If the map is stale, the loader fetches the module's own file instead.</figcaption>
+        </figure>
+    </section>
+
     <section class="fx-plate" id="small">
         <div>
             <h2>Small Footprint</h2>
@@ -570,7 +614,6 @@
             </div>
             <figcaption>Minified with esbuild, gzip level 9.</figcaption>
             <ul class="fx-extras">
-                <li><b>federation-combine.</b> Merges an app's chunks into one bundle, so the page makes fewer requests.</li>
                 <li><b>Embedded manifest.</b> Each app's manifest rides inside its entry file, so one request brings both.</li>
             </ul>
         </figure>
