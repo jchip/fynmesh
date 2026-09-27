@@ -17,6 +17,11 @@ const { load, exec } = xrun;
  * explicit group is for. Every other app is left to the size policy, which is
  * the case worth demonstrating by default.
  *
+ * An app that combines itself in its own build (the Perf Lab analytics suite;
+ * see notes/PERF-LAB-DESIGN.md) never needs an entry here: `combine-demo` skips
+ * a dist that already carries `federation.bundles.json`, so that app's own
+ * `--group` is the only policy that ever applies to it.
+ *
  * Refs are chunk stems, not fileNames, because the hashes move every build: a
  * share surface is `_mf-share-surface_<shared module>`, and an unhashed file is
  * its own stem. `assertGroupsFormed` fails the build if a ref stops matching.
@@ -66,7 +71,10 @@ function assertGroupsFormed(
  * Presence of that file is the test rather than a hardcoded list, because it is
  * also what `combineDist` needs to read -- so a directory that passes here is
  * one it can actually process. Skips `demo-server`, whose dist is not a
- * federation build, and any app that has not been built yet.
+ * federation build, and any app that has not been built yet. A dist here may
+ * already carry `federation.bundles.json` too, if the app's own build combined
+ * it -- the caller skips those rather than this function, since presence of
+ * `federation.json` is still the right test for "built".
  *
  * @returns [app directory name, dist path] pairs
  */
@@ -103,6 +111,10 @@ load({
          * `build-prod` regenerates the shell templates afterwards -- without
          * that step it leaves a shell.html preloading chunks the runtime no
          * longer requests, the very regression this feature has to avoid.
+         *
+         * A dist that already has `federation.bundles.json` combined itself as
+         * part of its own build and owns its policy -- this step leaves it
+         * untouched rather than recombining it with the defaults below.
          */
         task: async () => {
             /*
@@ -125,7 +137,13 @@ load({
             }
 
             let saved = 0;
+            let skipped = 0;
             for (const [app, dist] of apps) {
+                if (fs.existsSync(path.join(dist, "federation.bundles.json"))) {
+                    console.log(`[combine ${app}] already combined by its own build; leaving it`);
+                    skipped++;
+                    continue;
+                }
                 const groups = COMBINE_GROUPS[app];
                 const result = combineDist(dist, {
                     groups,
@@ -134,7 +152,11 @@ load({
                 assertGroupsFormed(app, groups, result.bundles);
                 saved += result.requestsSaved;
             }
-            console.log(`[combine] ${apps.length} FynApps, ${saved} fewer requests`);
+            console.log(
+                `[combine] ${apps.length - skipped} FynApps combined` +
+                (skipped ? `, ${skipped} already self-combined` : "") +
+                `, ${saved} fewer requests`
+            );
         }
     },
     "release-gate": {
