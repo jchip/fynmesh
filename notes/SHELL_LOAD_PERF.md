@@ -144,6 +144,18 @@ contains a `<stem>-` prefix. Verified against the built output: 49/49 hashed
 chunks covered, **0** non-hashed files matched, **0** files matching more than
 one rule. 23 rules, against a platform limit of 100.
 
+**Unhashed files now revalidate on every load.** Leaving them on the Pages
+default was not enough. `max-age=14400, must-revalidate` lets the browser reuse
+a file for 4 hours without asking; `must-revalidate` only applies after that.
+So a returning visitor ran the previous deploy's entries and loader for up to 4
+hours. The Perf Lab deploy surfaced it: a browser that had loaded `/shell` that
+morning kept the old `fynapp-shell-mw` entry, which named the old shell layout,
+so `?perf=` did nothing. `cache-headers.mts` now gives every unhashed `.js` and
+`.json` file an exact-name `max-age=0, must-revalidate` rule: entries,
+`index.js`, federation metadata, and the loader runtime (`system*.js`,
+`federation-js`, the kernel). That's 19 rules, 70 in all. A stem rule that would
+match one of those names is dropped, so no url gets both headers.
+
 
 Everything is served `cache-control: public, max-age=14400, must-revalidate`,
 including immutable content-hashed chunks like

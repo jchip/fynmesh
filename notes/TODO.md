@@ -89,8 +89,9 @@ cooperation from the page. What shipped there instead, as views under
 - [x] Runtime entry-file preloading, on by default at depth 1 — see the preload gap below
 - [x] Combined bundles (`federation-combine`) — folds a dist's small chunks together and
       publishes `federation.bundles.json` so a host can preload the carrier, not the member
-- [x] Immutable cache headers for content-hashed chunks (`_headers`), with the
-      non-hashed artifacts deliberately excluded
+- [x] Immutable cache headers for content-hashed chunks (`_headers`), and
+      `max-age=0, must-revalidate` for every unhashed `.js`/`.json`, so a deploy
+      reaches returning visitors at once
 - [x] Perf Lab: an analytics suite in `/shell?perf=raw|combined|hints` with a live
       metrics panel. Deployed; on the live site combine + hints cut time to ready by
       72%. See [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)
