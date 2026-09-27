@@ -597,10 +597,11 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const cacheHeaders = generateCacheHeaders(outputDir, msg => log(`⚠️  _headers: ${msg}`));
         if (cacheHeaders) {
             writeFileSync(path.join(outputDir, "_headers"), cacheHeaders);
-            const ruleCount = (cacheHeaders.match(/^\/:pkg\//gm) || []).length;
-            log(`📄 Generated: _headers (${ruleCount} immutable chunk rules)`);
+            const immutable = (cacheHeaders.match(/immutable$/gm) || []).length;
+            const revalidate = (cacheHeaders.match(/max-age=0, must-revalidate$/gm) || []).length;
+            log(`📄 Generated: _headers (${immutable} immutable, ${revalidate} revalidate rules)`);
         } else {
-            log("⚠️  No content-hashed chunks found — skipped _headers");
+            log("⚠️  No JS or JSON files found — skipped _headers");
         }
 
         const missingRefs = [

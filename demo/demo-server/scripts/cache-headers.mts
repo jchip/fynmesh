@@ -8,6 +8,51 @@ const PAGES_HEADER_RULE_LIMIT = 100;
 const IMMUTABLE = "public, max-age=31536000, immutable";
 
 /**
+ * For every file that is not content-addressed. `/shell` and the other HTML
+ * pages already get this from Pages; the JS and JSON beside them do not.
+ */
+const REVALIDATE = "public, max-age=0, must-revalidate";
+
+/** The package folders that hold federation output. */
+const DIST_FOLDERS = ["dist", "dist-raw"];
+
+/** Files the browser loads by a fixed url: the loader runtime, entries, metadata. */
+const MUTABLE_FILE = /\.(js|json)$/;
+
+/**
+ * Every unhashed `.js`/`.json` file the site serves, as `_headers` url patterns.
+ *
+ * Inside package folders the pattern names the file under a `:pkg` placeholder,
+ * so `/:pkg/dist/fynapp-entry.js` covers all 28 entries in one rule. Files at
+ * the site root are named exactly.
+ *
+ * @param outputDir the built site root
+ * @returns folder -> unhashed basenames found in it, and the root files
+ */
+function collectMutable(outputDir: string): { byFolder: Map<string, Set<string>>; root: string[] } {
+    const byFolder = new Map<string, Set<string>>(DIST_FOLDERS.map((f) => [f, new Set<string>()]));
+    const root: string[] = [];
+
+    for (const entry of readdirSync(outputDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) {
+            if (MUTABLE_FILE.test(entry.name)) root.push(entry.name);
+            continue;
+        }
+        for (const folder of DIST_FOLDERS) {
+            const dir = path.join(outputDir, entry.name, folder);
+            if (!existsSync(dir) || !statSync(dir).isDirectory()) continue;
+            for (const file of readdirSync(dir)) {
+                if (MUTABLE_FILE.test(file) && !HASHED_CHUNK_RE.test(file)) {
+                    byFolder.get(folder)!.add(file);
+                }
+            }
+        }
+    }
+
+    return { byFolder, root: root.sort() };
+}
+
+/**
  * A `//# sourceMappingURL=` comment on the last line of a chunk.
  *
  * Its presence is the tell that a chunk carries bytes rollup did not hash --
@@ -114,13 +159,21 @@ function collectSealedStems(
 
 /**
  * Generate the body of a Cloudflare Pages `_headers` file that marks
- * content-hashed chunks as immutable.
+ * content-hashed chunks as immutable and everything else unhashed as
+ * revalidate-every-time.
  *
- * Background: Pages' default for everything is
- * `public, max-age=14400, must-revalidate`. That is correct for mutable files
- * but wasteful for content-addressed ones — after four hours a returning
- * visitor revalidates every chunk (~58ms per 304), serialized behind the
- * loader, for zero changed bytes.
+ * Background: Pages' default for assets is
+ * `public, max-age=14400, must-revalidate`, and wrong both ways. For
+ * content-addressed chunks it is wasteful: after four hours a returning visitor
+ * revalidates every chunk (~58ms per 304), serialized behind the loader, for
+ * zero changed bytes. For unhashed files it is stale: `must-revalidate` only
+ * applies once the four hours are up, so until then a returning visitor runs
+ * the entries and loader of the previous deploy without asking. An old
+ * `fynapp-entry.js` names the old chunks, so the visitor gets old code, or a
+ * broken page once those chunks are gone. The Perf Lab first surfaced it: a
+ * browser that had loaded `/shell` before the deploy kept the old shell and
+ * never showed the lab. Those files get {@link REVALIDATE}: one 304 per load,
+ * never a stale deploy.
  *
  * Two constraints from the Pages `_headers` spec drive the shape of the output:
  *
@@ -137,11 +190,12 @@ function collectSealedStems(
  * per distinct chunk *stem*: `/:pkg/dist/main-*`. That is one placeholder plus
  * one splat (legal), and it cannot match the two non-hashed JS filenames the
  * build produces — `fynapp-entry.js` and `index.js` — because neither contains a
- * `<stem>-` prefix. Those, along with `federation.json`, `fynapp.manifest.json`
- * and `federation.bundles.json`, keep the revalidating default, which is
- * required: they are not content-addressed, so freezing them would break
+ * `<stem>-` prefix. Those, along with `federation.json`, `fynapp.manifest.json`,
+ * `federation.bundles.json` and the loader runtime, get their own exact-name
+ * rules instead. They are not content-addressed, so freezing them would break
  * deploys. A frozen bundle map is the worst of them — it would name carrier
- * files a later deploy no longer has.
+ * files a later deploy no longer has. A stem rule that would also match one of
+ * those names is dropped, so the two sets of rules stay disjoint.
  *
  * The same rule shape is emitted again for `/:pkg/dist-raw/<stem>-*`, a Perf
  * Lab suite app's pre-combine snapshot (see notes/PERF-LAB-DESIGN.md) — a warm
@@ -166,24 +220,50 @@ function generateCacheHeaders(
 
     const stems = collectSealedStems(outputDir, "dist", warn);
     const rawStems = collectSealedStems(outputDir, "dist-raw", warn);
+    const mutable = collectMutable(outputDir);
+    const mutableCount = mutable.root.length + [...mutable.byFolder.values()].reduce((n, s) => n + s.size, 0);
 
-    if (stems.size === 0 && rawStems.size === 0) return null;
+    if (stems.size === 0 && rawStems.size === 0 && mutableCount === 0) return null;
 
-    const totalStems = stems.size + rawStems.size;
-    if (totalStems > PAGES_HEADER_RULE_LIMIT) {
+    /*
+     * Pages joins the values of every rule a url matches, so a stem rule that
+     * also matched a mutable name would send both headers. Drop the stem: the
+     * chunks keep the default, which is slow but never stale.
+     */
+    const disjoint = (folder: string, folderStems: Set<string>): string[] =>
+        [...folderStems].sort().filter((stem) => {
+            const clash = [...mutable.byFolder.get(folder)!].find((f) => f.startsWith(`${stem}-`));
+            if (clash) warn(`"${stem}-*" would also match ${folder}/${clash}, so it is not marked immutable`);
+            return !clash;
+        });
+
+    const revalidateRules = [
+        ...DIST_FOLDERS.flatMap((folder) =>
+            [...mutable.byFolder.get(folder)!].sort().map((file) => `/:pkg/${folder}/${file}`)
+        ),
+        ...mutable.root.map((file) => `/${file}`),
+    ];
+    const immutableRules = [
+        ...disjoint("dist", stems).map((stem) => `/:pkg/dist/${stem}-*`),
+        ...disjoint("dist-raw", rawStems).map((stem) => `/:pkg/dist-raw/${stem}-*`),
+    ];
+
+    const total = revalidateRules.length + immutableRules.length;
+    if (total > PAGES_HEADER_RULE_LIMIT) {
         warn(
-            `${totalStems} chunk stems exceeds the Cloudflare Pages limit of ` +
-            `${PAGES_HEADER_RULE_LIMIT} header rules — some chunks will not be cached immutably`
+            `${total} header rules exceeds the Cloudflare Pages limit of ` +
+            `${PAGES_HEADER_RULE_LIMIT} — some chunks will not be cached immutably`
         );
     }
 
     const lines = [
         "# Generated by scripts/cache-headers.mts — do not edit by hand.",
         "#",
-        "# Content-hashed chunks only. `fynapp-entry.js`, `index.js`,",
-        "# `federation.json`, `fynapp.manifest.json` and `federation.bundles.json`",
-        "# are intentionally absent: they are not content-addressed, so they must",
-        "# keep revalidating or a deploy would not be picked up.",
+        "# Unhashed files first: entries, `index.js`, federation metadata and the",
+        "# loader runtime. They are not content-addressed, so they revalidate on",
+        "# every load or a deploy would not be picked up for four hours.",
+        "#",
+        "# Then content-hashed chunks, which are immutable.",
         "#",
         "# Rules must stay disjoint — Pages joins duplicate header values with a",
         "# comma rather than letting the most specific rule win.",
@@ -197,12 +277,11 @@ function generateCacheHeaders(
         "",
     ];
 
-    const rules = [
-        ...[...stems].sort().map(stem => `/:pkg/dist/${stem}-*`),
-        ...[...rawStems].sort().map(stem => `/:pkg/dist-raw/${stem}-*`),
-    ].slice(0, PAGES_HEADER_RULE_LIMIT);
-
-    for (const rule of rules) {
+    // Revalidate rules are never the ones cut: a missing one ships a stale deploy.
+    for (const rule of revalidateRules) {
+        lines.push(rule, `  Cache-Control: ${REVALIDATE}`, "");
+    }
+    for (const rule of immutableRules.slice(0, Math.max(0, PAGES_HEADER_RULE_LIMIT - revalidateRules.length))) {
         lines.push(rule, `  Cache-Control: ${IMMUTABLE}`, "");
     }
 

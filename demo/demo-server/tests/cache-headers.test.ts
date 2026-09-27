@@ -89,12 +89,59 @@ describe("generateCacheHeaders", () => {
         expect(warnings).toEqual([]);
     });
 
-    it("still ignores files that are not content-hashed at all", () => {
+    /**
+     * Pages' asset default is `max-age=14400, must-revalidate`, and
+     * `must-revalidate` only applies once those four hours are up. So without
+     * a rule, a returning visitor runs the previous deploy's entries and loader
+     * for four hours. The Perf Lab first surfaced it: a browser that had loaded
+     * `/shell` before the deploy kept the old shell and never showed the lab.
+     */
+    it("makes files that are not content-hashed revalidate on every load", () => {
         chunk("fynapp-1", "fynapp-entry.js");
         chunk("fynapp-1", "index.js");
+        chunk("fynapp-1", "federation.json", "{}");
 
-        expect(generateCacheHeaders(outputDir, warn)).toBeNull();
+        const headers = generateCacheHeaders(outputDir, warn)!;
+
+        for (const rule of ["/:pkg/dist/fynapp-entry.js", "/:pkg/dist/index.js", "/:pkg/dist/federation.json"]) {
+            expect(headers).toContain(`${rule}\n  Cache-Control: public, max-age=0, must-revalidate`);
+        }
+        expect(headers).not.toContain("immutable\n");
         expect(warnings).toEqual([]);
+    });
+
+    it("covers the loader runtime at the site root and under dist-raw", () => {
+        writeFileSync(path.join(outputDir, "system.min.js"), "");
+        chunk("kernel", "fynmesh-browser-kernel.min.js");
+        chunk("fynapp-analytics", "fynapp-entry.js", undefined, "dist-raw");
+
+        const headers = generateCacheHeaders(outputDir, warn)!;
+
+        expect(headers).toContain("/system.min.js\n  Cache-Control: public, max-age=0, must-revalidate");
+        expect(headers).toContain("/:pkg/dist/fynmesh-browser-kernel.min.js\n  Cache-Control: public, max-age=0");
+        expect(headers).toContain("/:pkg/dist-raw/fynapp-entry.js\n  Cache-Control: public, max-age=0");
+    });
+
+    it("drops a stem rule that would also match an unhashed file, so no url gets both headers", () => {
+        chunk("fynapp-1", "fynapp-entry.js");
+        chunk("fynapp-1", "fynapp-AAAAAAAA.js");
+
+        const headers = generateCacheHeaders(outputDir, warn)!;
+
+        expect(headers).toContain("/:pkg/dist/fynapp-entry.js");
+        expect(headers).not.toContain("/:pkg/dist/fynapp-*");
+        expect(warnings.join("\n")).toContain("would also match dist/fynapp-entry.js");
+    });
+
+    it("never cuts a revalidate rule to fit the Pages rule limit", () => {
+        chunk("fynapp-1", "fynapp-entry.js");
+        for (let i = 0; i < 120; i++) chunk("fynapp-1", `c${i}-AAAAAAAA.js`);
+
+        const headers = generateCacheHeaders(outputDir, warn)!;
+
+        expect(headers).toContain("/:pkg/dist/fynapp-entry.js");
+        expect(headers.match(/^\/:pkg\//gm)).toHaveLength(100);
+        expect(warnings.join("\n")).toContain("exceeds the Cloudflare Pages limit");
     });
 
     it("returns null for an output dir that does not exist", () => {
