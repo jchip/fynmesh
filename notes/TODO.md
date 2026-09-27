@@ -1,7 +1,8 @@
 # FynMesh Development Roadmap
 
-_Status reviewed 2026-09-13 against the source; see "Known gaps" for items that are
-built but not switched on._
+_Status reviewed 2026-09-26 against the source; see "Known gaps" for items that are
+built but not switched on. This is the single roadmap; the older
+`FRAMEWORK_ROADMAP.md` is in `archive/`._
 
 ## Current State (Completed)
 
@@ -21,8 +22,8 @@ built but not switched on._
       (`docs/federation-inspector.min.js`; design: [`federation-inspector-design.md`](./federation-inspector-design.md))
 - [x] Combined-bundle optimization (`federation-combine`) with pre-execution bundle maps
 - [x] Embedded manifest (`__FYNAPP_MANIFEST__`) — a splice miss now fails the build (FYM-296)
-- [x] **Published to npm** — `federation-js` 1.1.3, `@fynmesh/kernel` 1.1.3,
-      `rollup-plugin-federation` 1.1.2, `create-fynapp` 1.1.5
+- [x] **Published to npm** — `federation-js` 1.1.4, `@fynmesh/kernel` 1.1.5,
+      `rollup-plugin-federation` 1.1.3, `create-fynapp` 1.1.7
 - [~] Runtime telemetry & observability (KernelTelemetry: ring buffer, scopes, transports)
       — built, but no entry point passes a `TelemetryConfig`, so it is off in practice
 
@@ -85,15 +86,45 @@ cooperation from the page. What shipped there instead, as views under
 ### 4. **Performance & Optimization** ⭐ Priority 4
 - [ ] Lazy region loading (Intersection Observer)
 - [x] Preload hints in manifest (`shared-providers`, `import-exposed`, `requires`)
-- [x] Entry file preloading with depth-based prioritization
+- [x] Runtime entry-file preloading, on by default at depth 1 — see the preload gap below
 - [x] Combined bundles (`federation-combine`) — folds a dist's small chunks together and
       publishes `federation.bundles.json` so a host can preload the carrier, not the member
 - [x] Immutable cache headers for content-hashed chunks (`_headers`), with the
       non-hashed artifacts deliberately excluded
-- [ ] Implement preload **priority** — `priorityByDepth` and the types exist but
-      `fetchpriority` is never set from them
 - [ ] Performance event emission
 - [ ] Bundle analysis tooling
+
+#### Preload gap: automatic, but shallow
+
+The runtime preload is automatic but small. The big win (−69% cold start in
+[`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md)) comes from build-time HTML hints. Those
+live only in the demo (`demo/demo-server/scripts/shell-preload.mts`), with a
+hand-written chunk list per app. A FynMesh user gets none of it for free.
+
+- [ ] **Generate startup preload hints from build output.** Read `federation.json` and
+      `federation.bundles.json` and emit `<link rel="preload" as="script">` tags. The app
+      has to say which chunks are startup and which are lazy, because globbing every chunk
+      would pull the ~1 MB AG Grid chunk into cold start. Ship it as tooling, not demo code.
+- [ ] **Preload past the entry file.** The runtime only hints `fynapp-entry.js`
+      (`manifest-resolver.ts:76`). The chunks behind each entry still load as a chain.
+- [ ] **Preload on the direct path too.** Hints fire only through
+      `loadFynAppsByName()`. `loadFynApp(url)` skips them, and the demo shell uses that path.
+- [ ] **Walk manifests in parallel.** `buildGraph` awaits each dependency in turn
+      (`manifest-resolver.ts:233`). Hints go out one at a time as each manifest arrives.
+- [ ] **Implement preload priority.** `priorityByDepth` and the types exist but
+      `fetchpriority` is never set from them.
+
+#### Combined bundles: remaining work
+
+- [ ] **Let apps opt in from their own build.** Combining runs only in this repo's
+      `build-prod` (`scripts/xrun-tasks.ts`) and in `fynapp-bundled`. create-fynapp
+      scaffolds never run it, and the rollup plugin has no option for it.
+- [ ] **Use startup groups as the preload source.** An explicit `startup` group is
+      one file the host can preload. That pairs with the hint generator above.
+      Today the only group is hand-listed for `fynapp-react-19`.
+- [ ] **Revisit the default policy.** A 2 KB raw threshold groups little outside apps
+      with many small exposes (`fynapp-1`, `fynapp-1-b`). `measure: "brotli"` exists but
+      is not the default.
 
 ---
 
@@ -107,7 +138,7 @@ cooperation from the page. What shipped there instead, as views under
 
 ### 6. **Dependency Resolution**
 - [x] Runtime dependency graph with topological sort (`buildGraph`, `topoBatches`)
-- [x] Intelligent preloading and prefetching (entry file preloading with depth tracking)
+- [x] Entry-file preloading with depth tracking (not yet chunk-level; see the preload gap)
 - [x] Circular dependency detection (warning + best-effort loading)
 - [x] federation.json generation (`emitFederationJson`, on by default)
 
@@ -161,7 +192,7 @@ cooperation from the page. What shipped there instead, as views under
 
 ## Known gaps
 
-Verified against the source on 2026-09-13. These are not roadmap items so much as
+Verified against the source on 2026-09-26. These are not roadmap items so much as
 things that already exist and do not do what their presence implies — the kind that
 cost the most time when discovered from a symptom.
 
@@ -173,13 +204,17 @@ cost the most time when discovered from a symptom.
 - **`eager` does nothing.** Accepted on the share config and emitted into the
   container, read by nothing — documented as such at `federation-js/src/types.ts`.
   It is a build-time concern the runtime cannot act on.
-- **Deferred middleware never times out.** `middleware-executor.ts` has no
+- **Deferred middleware never times out.** `modules/middleware-executor.ts` has no
   `setTimeout` anywhere: a provider that never arrives parks the waiting group
   indefinitely, with no error and no diagnostic.
 - **One manifest read has no fallback.** `module-loader.ts` step 6 reads
   `__FYNAPP_MANIFEST__` straight off the container to register middleware from
   `import-exposed`. Absent, the block is skipped in silence and the failure surfaces
   later at a consumer. See [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md).
+- **Preload priority is config that does nothing.** `PreloadStrategy.priorityByDepth`
+  and `priority` are accepted, and `types.ts:559-563` says they pick `modulepreload` or
+  `prefetch` with a `fetchpriority`. `browser-kernel.ts` always emits a plain
+  `preload as="script"` and never reads them.
 - **The JSON artifacts are unversioned.** No `schemaVersion` on any of them, and the
   packages are now published — so a shape change is someone else's breakage.
 

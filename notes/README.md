@@ -26,8 +26,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 
 | File                                                       | What it covers                                                   |
 | ---------------------------------------------------------- | --------------------------------------------------------------- |
-| [`FRAMEWORK_ROADMAP.md`](./FRAMEWORK_ROADMAP.md)           | Demo-ready → production-ready roadmap; framework gaps            |
-| [`TODO.md`](./TODO.md)                                     | Development roadmap / completed-vs-pending checklist            |
+| [`TODO.md`](./TODO.md)                                     | The roadmap: completed-vs-pending checklist and known gaps      |
 | [`FYNAPP-HOWTO.md`](./FYNAPP-HOWTO.md)                     | Pointer → canonical FynApp docs in `dev-tools/create-fynapp/agent/` |
 | [`BUILD-ARTIFACTS.md`](./BUILD-ARTIFACTS.md)               | The JSON a FynApp build emits: purpose, producers, consumers, what breaks |
 | [`MF2-VS-FEDERATION-JS.md`](./MF2-VS-FEDERATION-JS.md)     | Module Federation 2.0 (2.9.0) vs FynMesh's SystemJS federation: full capability comparison + gap analysis |

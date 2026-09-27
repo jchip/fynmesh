@@ -19,7 +19,7 @@ well for *state*, but there is no sanctioned primitive for *messages*:
   (`FYNAPP_BOOTSTRAPPED`, `MIDDLEWARE_READY`, …), not an app-facing channel.
 
 FynBus is the sanctioned messaging API. The roadmap sketch
-(`FRAMEWORK_ROADMAP.md` § FynBus) left three open questions; this doc answers them.
+(`archive/FRAMEWORK_ROADMAP.md` § FynBus) left three open questions; this doc answers them.
 
 ## Goals
 
