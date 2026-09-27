@@ -10,7 +10,7 @@ A working console with three real features on one page:
 - Providers: `fynops-ui`, `fynops-charts-lib`, plus `fynops-data` and `fynops-grid-lib` from Phase 0.
 - Features: `ops-shipments`, `ops-map`, `ops-analytics`.
 
-The page loads only the shell by name. The kernel pulls in every provider from the manifests.
+The page loads only the shell by name. The kernel pulls in every provider from the manifests. A feature finds its providers through its package.json: create-fynapp records a provider FynApp as a `shared-provider` only when the feature lists it as a dependency.
 
 ## Contracts
 
@@ -71,7 +71,7 @@ execute(runtime) {
 
 | Call | Returns | Used by |
 |---|---|---|
-| `shipments.rows(req)` | rows for an ag-grid server-side request (grouping, sort, filter, block range) | ops-shipments |
+| `shipments.rows(req)` | `{ rowData, rowCount }`, the exact argument of the grid's `params.success()`, for grouping, sort, filter and block range | ops-shipments |
 | `shipments.get(id)` | one shipment with lane, carrier and vehicle | drawer, map |
 | `vehicles.positions()` | current `{id, lon, lat, status}` for every vehicle | ops-map first paint |
 | `analytics.onTime(by)`, `analytics.laneCost()`, `analytics.trend(days)` | chart-ready rows | ops-analytics, sparklines |
