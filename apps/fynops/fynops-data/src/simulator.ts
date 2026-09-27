@@ -5,6 +5,9 @@
  * shuttles between that lane's origin and destination warehouses. The other
  * vehicles stay put. Progress is not stored: on start, each vehicle's stored
  * position is projected onto its lane, so a reload resumes where it left off.
+ *
+ * A vehicle that reaches either warehouse is `loading` for a few ticks before it
+ * heads out again, and a fixed few are in `maintenance`, so the status mix moves.
  */
 import type sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import type { VehiclePosition, VehiclePositionsTick } from "fynops-data-core";
@@ -15,6 +18,10 @@ type DB = InstanceType<Awaited<ReturnType<typeof sqlite3InitModule>>["oo1"]["DB"
 const MILES_PER_TICK = 8;
 /** Delayed shipments crawl. */
 const DELAYED_FACTOR = 0.5;
+/** Ticks a vehicle spends loading at a warehouse. */
+const LOADING_TICKS = 12;
+/** Every Nth vehicle is parked for maintenance. */
+const MAINTENANCE_EVERY = 40;
 
 interface Leg {
   shipmentId: number;
@@ -27,13 +34,15 @@ interface Leg {
   /** 0 at origin, 1 at destination */
   progress: number;
   forward: boolean;
+  /** Ticks left at a warehouse; 0 while driving. */
+  dwell: number;
 }
 
 interface SimVehicle extends VehiclePosition {
   leg?: Leg;
 }
 
-function project(lat: number, lon: number, leg: Omit<Leg, "progress" | "forward">): number {
+function project(lat: number, lon: number, leg: Omit<Leg, "progress" | "forward" | "dwell">): number {
   const dx = leg.toLon - leg.fromLon;
   const dy = leg.toLat - leg.fromLat;
   const len2 = dx * dx + dy * dy;
@@ -94,9 +103,12 @@ export class Simulator {
           delayed: l.status === "delayed",
         };
         // Odd ids start out heading home, so the map is not all one-way traffic.
-        vehicle.leg = { ...base, progress: project(v.lat, v.lon, base), forward: v.id % 2 === 0 };
+        // Staggered start: some vehicles begin mid-load, so loading is never empty.
+        const dwell = v.id % 7 === 0 ? (v.id % LOADING_TICKS) + 1 : 0;
+        vehicle.leg = { ...base, progress: project(v.lat, v.lon, base), forward: v.id % 2 === 0, dwell };
         vehicle.shipment_id = l.shipment_id;
-        vehicle.status = "en_route";
+        vehicle.status =
+          v.id % MAINTENANCE_EVERY === 0 ? "maintenance" : dwell > 0 ? "loading" : "en_route";
       }
       return vehicle;
     });
@@ -119,15 +131,22 @@ export class Simulator {
     const moved: SimVehicle[] = [];
     for (const v of this.vehicles) {
       const leg = v.leg;
-      if (!leg) continue;
+      if (!leg || v.status === "maintenance") continue;
+      if (leg.dwell > 0) {
+        leg.dwell -= 1;
+        if (leg.dwell === 0) {
+          v.status = "en_route";
+          moved.push(v);
+        }
+        continue;
+      }
       const delta = (MILES_PER_TICK * (leg.delayed ? DELAYED_FACTOR : 1)) / leg.miles;
       let p = leg.progress + (leg.forward ? delta : -delta);
-      if (p >= 1) {
-        p = 1;
-        leg.forward = false;
-      } else if (p <= 0) {
-        p = 0;
-        leg.forward = true;
+      if (p >= 1 || p <= 0) {
+        p = p >= 1 ? 1 : 0;
+        leg.forward = p === 0;
+        leg.dwell = LOADING_TICKS;
+        v.status = "loading";
       }
       leg.progress = p;
       v.lat = round5(leg.fromLat + (leg.toLat - leg.fromLat) * p);

@@ -1,6 +1,6 @@
 # FynOps Phase 1 — Plan
 
-Status: proposed. Parent design: [`FYNOPS-DESIGN.md`](./FYNOPS-DESIGN.md).
+Status: done 2026-09-27 (see Results). Parent design: [`FYNOPS-DESIGN.md`](./FYNOPS-DESIGN.md).
 
 ## Goal
 
@@ -136,3 +136,35 @@ From the design doc, plus the contracts above:
 2. **Selection is shared state owned by the shell, not a bus event.** See Bus topics.
 3. **The UI kit ships its own CSS-variable tokens.** It doesn't build on the `fynapp-design-tokens` middleware. That keeps the kit free of middleware coupling. Theme switching through design-tokens can come later.
 4. **Features register views through the shell middleware.** They don't use the `./component` expose or execution override from `shell-layout.ts`. It is framework-neutral, so the Svelte and Vue features in Phase 3 use the same path.
+
+## Results
+
+All checks pass, on both the dev build and the production build. No kernel, federation or create-fynapp change was needed.
+
+| Check | Result |
+|---|---|
+| Grid selection pans the map | A row click sets the selection and opens the drawer. The map then flies to that vehicle and highlights it. |
+| Map selection reaches the grid | A vehicle click sets `{ vehicleId, shipmentId }` in the shared state and opens the shipment in the drawer. |
+| Vehicles move in real time | 500 vehicles, 1Hz, over `ops:vehicle.positions`. The drawer's vehicle position updates live too. |
+| echarts downloads once | One `esm-echarts` request, used by both `ops-shipments` sparklines and `ops-analytics`. |
+| Cold `#/shipments` loads only what it needs | React 19, the shell, `ops-shipments` and its six providers. `ops-map` and `ops-analytics` load on first visit. |
+| The kernel resolves providers by name | `fynops.html` names only `fynops-shell`, and each feature is loaded by name. |
+| `fyn build-demo` passes | All eight packages ship. The data worker and `sqlite3.wasm` get the revalidate rule. |
+
+**Shipped size.** Phase 1 ships 6.6MB raw and 2.0MB gzip across ten FynApps, counting the shared React 19 and community grid. The feature apps themselves are tiny: `ops-shipments` 5.9KB gz, `ops-analytics` 3.6KB gz, and the shell 4.4KB gz. The weight sits in the shared libraries and the map. monaco and pdf.js add about 1.9MB gz in Phase 2.
+
+**Contract changes during the build.**
+
+- `shipments.rows()` returns `{ rowData, rowCount }`, the grid's `success()` argument.
+- A feature must list each provider FynApp in its package.json `dependencies`. That is how create-fynapp records `shared-providers`, and the kernel resolves providers from them.
+- The kernel runs an auto-applied middleware's `setup` once per target app, not once overall. The shell middleware keeps its state in a shared module for that reason.
+
+**Changed during integration.** The simulator had every vehicle `en_route` forever, so the live status tiles never moved. Vehicles now spend 12 ticks `loading` at each warehouse, and every 40th vehicle is in `maintenance`.
+
+**Open items.**
+
+1. The dev proxy sends no `Cache-Control`, `ETag` or `Last-Modified` on FynApp files. After a rebuild, the browser can keep an old `fynapp-entry.js`. This predates FynOps. A `no-cache` header on the dev proxy would fix it.
+2. With the server-side row model, grid Excel export covers loaded rows only. The UI says so.
+3. The UI kit's badge status colors are close together for a categorical chart. The analytics donut adds labels to compensate. Worth a palette pass in the kit.
+4. agent-browser sessions sometimes stop producing frames after long use. Closing and reopening the session fixes it.
+

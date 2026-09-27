@@ -9,8 +9,6 @@ export const ROUTES: RouteDef[] = [
   { path: "/shipments", app: "ops-shipments", title: "Shipments" },
   { path: "/map", app: "ops-map", title: "Fleet map" },
   { path: "/analytics", app: "ops-analytics", title: "Analytics" },
-  // Temporary: proves the view contract until the real features land (Phase 1, Wave C removes it).
-  { path: "/stub", app: "stub-view", title: "Stub view" },
 ];
 
 export const DEFAULT_ROUTE = "/shipments";

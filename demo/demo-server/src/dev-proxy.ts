@@ -188,16 +188,9 @@ startDevProxy([
     "ops-shipments",
     "ops-map",
     "ops-analytics",
-    // Phase 1 stubs, deleted in Wave C
-    "stub-view",
-    "stub-ui",
-    "stub-charts",
-    // Phase 0 spikes, loaded with fynops.html?load=<name>
+    // Phase 0 spikes kept for Phase 2, loaded with fynops.html?load=<name>
     "spike-monaco",
     "spike-pdf",
-    "spike-maplibre",
-    "spike-grid",
-    "spike-data",
   ].map((name): Parameters<typeof startDevProxy>[0][number] => [
     { path: `/${name}` },
     { protocol: "file", path: Path.join(__dirname, "../../../apps/fynops", name) },
