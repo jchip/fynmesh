@@ -33,7 +33,7 @@ export interface FynOpsView {
 }
 
 export interface FynOpsShellApi {
-  /** The signed-in user. Features only mount after sign-in, and sign-out reloads the page. */
+  /** The signed-in user. Features only mount after sign-in, and sign-out unmounts them first. */
   readonly session: FynOpsSession;
   /** Call once from the feature's execute(). */
   registerView(view: FynOpsView): void;

@@ -28,6 +28,7 @@ const views = new Map<string, FynOpsView>();
 const viewWaiters = new Map<string, Array<(view: FynOpsView) => void>>();
 const appLoads = new Map<string, Promise<FynOpsView>>();
 const drawerListeners = new Set<(req: DrawerRequest | undefined) => void>();
+const sessionListeners = new Set<(s: FynOpsSession | undefined) => void>();
 
 export interface DrawerRequest {
   app: string;
@@ -47,14 +48,26 @@ export function signIn(next: FynOpsSession): void {
   }
 }
 
-/** Sign-out reloads, so no mounted feature ever sees the session change under it. */
+/**
+ * Sign-out stays on the page. The shell unmounts every view before the login
+ * shows, so no mounted feature sees the session change under it. Loaded FynApps
+ * and their views stay in memory, so signing back in fetches nothing.
+ */
 export function signOut(): void {
+  session = undefined;
   try {
     localStorage.removeItem(SESSION_KEY);
   } catch {
     // Nothing stored, nothing to clear.
   }
-  location.reload();
+  closeDrawer();
+  selectionState().set({});
+  for (const fn of sessionListeners) fn(undefined);
+}
+
+export function onSession(fn: (s: FynOpsSession | undefined) => void): () => void {
+  sessionListeners.add(fn);
+  return () => sessionListeners.delete(fn);
 }
 
 /** The selection lives in the kernel's global middleware registry, so any FynApp can look it up. */

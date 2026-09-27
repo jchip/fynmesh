@@ -6,6 +6,7 @@ import {
   getSession,
   loadView,
   onDrawer,
+  onSession,
   signIn,
   signOut,
   type DrawerRequest,
@@ -180,6 +181,7 @@ const Shell: React.FC = () => {
 
 const App: React.FC = () => {
   const [signedIn, setSignedIn] = useState(() => !!getSession());
+  useEffect(() => onSession((s) => setSignedIn(!!s)), []);
   return signedIn ? <Shell /> : <Login onSignIn={() => setSignedIn(true)} />;
 };
 
