@@ -162,8 +162,14 @@ function collectSealedStems(
  * content-hashed chunks as immutable and everything else unhashed as
  * revalidate-every-time.
  *
- * Background: Pages' default for assets is
- * `public, max-age=14400, must-revalidate`, and wrong both ways. For
+ * Background: static assets reach the browser as
+ * `public, max-age=14400, must-revalidate`, and that is wrong both ways. The
+ * four hours come from the zone's Browser Cache TTL, which raises any lower
+ * `max-age` on file types Cloudflare caches (`.js`, images), whatever `_headers`
+ * says. `.json` and HTML are not cached there and keep this file's value. So the
+ * {@link REVALIDATE} rules only reach `.js` once Browser Cache TTL is set to
+ * "Respect Existing Headers" in the dashboard. The immutable rules are longer
+ * than four hours, so they apply either way. For
  * content-addressed chunks it is wasteful: after four hours a returning visitor
  * revalidates every chunk (~58ms per 304), serialized behind the loader, for
  * zero changed bytes. For unhashed files it is stale: `must-revalidate` only

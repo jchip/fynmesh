@@ -92,6 +92,8 @@ cooperation from the page. What shipped there instead, as views under
 - [x] Immutable cache headers for content-hashed chunks (`_headers`), and
       `max-age=0, must-revalidate` for every unhashed `.js`/`.json`, so a deploy
       reaches returning visitors at once
+- [ ] Set the zone's Browser Cache TTL to "Respect Existing Headers". Until then it
+      raises the `.js` revalidate rules to 4 hours. See `SHELL_LOAD_PERF.md`
 - [x] Perf Lab: an analytics suite in `/shell?perf=raw|combined|hints` with a live
       metrics panel. Deployed; on the live site combine + hints cut time to ready by
       72%. See [`PERF-LAB-DESIGN.md`](./PERF-LAB-DESIGN.md)

@@ -90,7 +90,7 @@ describe("generateCacheHeaders", () => {
     });
 
     /**
-     * Pages' asset default is `max-age=14400, must-revalidate`, and
+     * Static assets reach the browser as `max-age=14400, must-revalidate`, and
      * `must-revalidate` only applies once those four hours are up. So without
      * a rule, a returning visitor runs the previous deploy's entries and loader
      * for four hours. The Perf Lab first surfaced it: a browser that had loaded

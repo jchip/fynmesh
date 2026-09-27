@@ -156,6 +156,13 @@ so `?perf=` did nothing. `cache-headers.mts` now gives every unhashed `.js` and
 `federation-js`, the kernel). That's 19 rules, 70 in all. A stem rule that would
 match one of those names is dropped, so no url gets both headers.
 
+Live, the `.json` rules work but the `.js` rules don't yet. The 4 hours come from
+the zone's **Browser Cache TTL**, not from Pages. It raises any lower `max-age`
+to 4 hours on file types Cloudflare caches (`.js`, `.png`, `.ico`). `.json` and
+HTML aren't cached there, so they keep the `_headers` value. The fix is in the
+dashboard: Caching → Configuration → Browser Cache TTL → "Respect Existing
+Headers". No redeploy is needed after that.
+
 
 Everything is served `cache-control: public, max-age=14400, must-revalidate`,
 including immutable content-hashed chunks like

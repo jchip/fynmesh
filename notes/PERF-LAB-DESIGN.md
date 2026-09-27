@@ -150,7 +150,7 @@ An earlier set of 3 cold runs per mode, before the main set. The first run of ea
 | combined | 1478 | 782 | 741 | 175 |
 | hints | 491 | 1353 | 654 | 157 |
 
-- **Warm reload** was ready in ~160 ms in every mode, with all 16 or 9 startup files from cache (`transferSize` 0). Hashed chunks, including `dist-raw`, are served `public, max-age=31536000, immutable`. At measurement time, entries had Pages' default `max-age=14400, must-revalidate`, so they came from cache too. Entries now revalidate on every load (finding 5), so a warm reload adds a few 304s.
+- **Warm reload** was ready in ~160 ms in every mode, with all 16 or 9 startup files from cache (`transferSize` 0). Hashed chunks, including `dist-raw`, are served `public, max-age=31536000, immutable`. Entries arrived with `max-age=14400, must-revalidate`, so they came from cache too. Once finding 5's fix takes effect, entries revalidate on every load, and a warm reload adds a few 304s.
 - The suite never appears in the `/shell` Early Hints `Link:` header, so the script-injected hints stay mode-specific.
 
 #### What the live data says
@@ -192,7 +192,7 @@ Summary of the local runs:
 2. **`fynapp.manifest.json` is not on the load path.** Because of finding 1, the kernel never fetches it when the entry embeds the manifest. A hint for it would only download a file nothing reads.
 3. **Cloudflare Pages sends static preload tags as Early Hints.** It copies them into a `Link:` response header, so Chrome starts those fetches from the header. DevTools lists these requests with initiator "Other" and no initiator data. The 5 `fetchpriority="low"` tags on `/shell` are left out of the header. Any preload a page wants only sometimes has to be injected by script.
 4. **Combine and hints stack.** Combine cuts request count, and hints cut the serial depth. Hints on the raw build would still pay for 16 requests. Combine without hints still pays for the serial walk.
-5. **Unhashed files served stale deploys for 4 hours.** Pages serves assets with `max-age=14400, must-revalidate`, and `must-revalidate` only applies once the 4 hours are up. After the lab deployed, a browser that had loaded `/shell` earlier kept the old `fynapp-shell-mw` entry. That entry named the old shell layout, still in its cache, so `?perf=` did nothing. Fresh sessions worked, which hid it from the measurements. `cache-headers.mts` now gives every unhashed `.js` and `.json` file `max-age=0, must-revalidate`. That covers entries, federation metadata and the loader runtime. See [`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md).
+5. **Unhashed files served stale deploys for 4 hours.** `.js` files reach the browser with `max-age=14400, must-revalidate`, and `must-revalidate` only applies once the 4 hours are up. After the lab deployed, a browser that had loaded `/shell` earlier kept the old `fynapp-shell-mw` entry. That entry named the old shell layout, still in its cache, so `?perf=` did nothing. Fresh sessions worked, which hid it from the measurements. `cache-headers.mts` now gives every unhashed `.js` and `.json` file `max-age=0, must-revalidate`. That covers entries, federation metadata and the loader runtime. The `.json` rules work. The `.js` rules are overridden: the zone's Browser Cache TTL raises any lower `max-age` to 4 hours on file types Cloudflare caches. They take effect once that setting is "Respect Existing Headers". See [`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md).
 
 ## Method
 
