@@ -162,7 +162,7 @@ apps/fynops/ops-shipments
 
 Each app has to be registered by hand in three places:
 
-- `demo/demo-server/src/dev-proxy.ts` gets a path mapping, e.g. `/fynops/ops-map` pointing to `../../../apps/fynops/ops-map`.
+- `demo/demo-server/src/dev-proxy.ts` gets a path mapping, e.g. `/ops-map` pointing to `../../../apps/fynops/ops-map`. URLs stay flat as `/<name>/dist`, like every other FynApp. The site build's chunk guard and the `/:pkg/dist/*` cache rules only look one level deep.
 - `demo/demo-server/scripts/build-demo-site.mts` gets a `packages` entry.
 - The `fynops-shell` route table gets an entry (phase 3: `fynops.routes.json`).
 

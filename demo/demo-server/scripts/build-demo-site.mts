@@ -394,6 +394,15 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(shellOutputPath, shellHtml);
         log("📄 Generated: " + shellOutputPath);
 
+        // FynOps host page -- see notes/FYNOPS-DESIGN.md.
+        const fynopsHtml = env.render("pages/fynops.html", {
+            isProduction,
+            pathPrefix,
+            ...pageSeo("fynops"),
+        });
+        writeFileSync(path.join(outputDir, "fynops.html"), fynopsHtml);
+        log("📄 Generated: fynops.html");
+
         // Copy all required static assets (skip index.html since we build it directly)
         log("📁 Copying static assets...");
 
@@ -548,7 +557,11 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { name: "fynapp-analytics", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
             { name: "fynapp-analytics-charts", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
             { name: "fynapp-analytics-reports", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
-            { name: "fynapp-analytics-lib", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] }
+            { name: "fynapp-analytics-lib", basePath: path.join(__dirname, "../.."), extraDists: ["dist-raw"] },
+            // FynOps lives in apps/fynops but ships flat, as /<name>/dist like every
+            // other FynApp, so the chunk guard and the `/:pkg/dist/*` cache rules
+            // cover it unchanged.
+            { name: "fynops-shell", basePath: path.join(__dirname, "../../../apps/fynops") }
         ];
 
         // Define file filter based on production mode

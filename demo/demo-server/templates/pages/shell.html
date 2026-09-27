@@ -200,15 +200,7 @@
     {% endfor %}
     {% endif %}
 
-    {% if isProduction %}
-    <script src="{{pathPrefix}}system.min.js"></script>
-    <script src="{{pathPrefix}}federation-js/dist/federation-js.min.js"></script>
-    <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.min.js"></script>
-    {% else %}
-    <script src="{{pathPrefix}}system.js"></script>
-    <script src="{{pathPrefix}}federation-js/dist/federation-js.dev.js"></script>
-    <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
-    {% endif %}
+    {% include "components/kernel-scripts.html" %}
 
     {% if bundleMaps | length %}
     <!--

@@ -174,4 +174,10 @@ startDevProxy([
     { path: "/fynapp-analytics-lib" },
     { protocol: "file", path: Path.join(__dirname, "../../fynapp-analytics-lib") },
   ],
+  // FynOps (notes/FYNOPS-DESIGN.md). Lives in apps/fynops but is served flat,
+  // as /<name>, the same way the published site lays it out.
+  [
+    { path: "/fynops-shell" },
+    { protocol: "file", path: Path.join(__dirname, "../../../apps/fynops/fynops-shell") },
+  ],
 ]);

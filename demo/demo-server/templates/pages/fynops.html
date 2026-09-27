@@ -1,0 +1,43 @@
+{% extends "layouts/base.html" %}
+
+{#
+  Host page for FynOps, the logistics console built from many FynApps
+  (notes/FYNOPS-DESIGN.md). It boots the kernel, loads the shared providers,
+  then hands the page to fynops-shell, which owns routing and layout.
+
+  Not /shell: that page boots a fixed provider list for the existing demo and
+  the Perf Lab suite, and owns its own app picker and ?perf= state.
+#}
+
+{% block title %}FynOps - FynMesh Logistics Console{% endblock %}
+
+{# Work in progress until Phase 4 links it from the landing page. #}
+{% block robots %}
+<meta name="robots" content="noindex, follow">
+{% endblock %}
+
+{% block body_class %}{% endblock %}
+
+{% block scripts_head %}
+    {% include "components/kernel-scripts.html" %}
+{% endblock %}
+
+{% block content %}
+    <div id="fynops-root">Loading FynOps...</div>
+{% endblock %}
+
+{# In the body, so #fynops-root exists before the shell renders into it. #}
+{% block scripts_body %}
+    <script>
+        (async () => {
+            try {
+                await fynMeshKernel.loadFynApp("{{pathPrefix}}fynapp-react-19/dist");
+                await fynMeshKernel.loadFynApp("{{pathPrefix}}fynops-shell/dist");
+            } catch (error) {
+                console.error("❌ Failed to load FynOps:", error);
+                document.getElementById("fynops-root").textContent =
+                    `FynOps failed to load: ${error.message}`;
+            }
+        })();
+    </script>
+{% endblock %}

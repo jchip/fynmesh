@@ -1,0 +1,14 @@
+{#
+  The loader runtime every FynMesh host page boots from: SystemJS, then
+  federation-js, then the kernel. Order matters, each one reads the global the
+  previous one defines. Shared by shell.html and fynops.html.
+#}
+{% if isProduction %}
+    <script src="{{pathPrefix}}system.min.js"></script>
+    <script src="{{pathPrefix}}federation-js/dist/federation-js.min.js"></script>
+    <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.min.js"></script>
+{% else %}
+    <script src="{{pathPrefix}}system.js"></script>
+    <script src="{{pathPrefix}}federation-js/dist/federation-js.dev.js"></script>
+    <script src="{{pathPrefix}}kernel/dist/fynmesh-browser-kernel.dev.js"></script>
+{% endif %}

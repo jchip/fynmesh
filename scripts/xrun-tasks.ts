@@ -66,7 +66,8 @@ function assertGroupsFormed(
 }
 
 /**
- * Every built FynApp dist directory: `demo/*` that has a `federation.json`.
+ * Every built FynApp dist directory: `demo/*` and `apps/fynops/*` that has a
+ * `federation.json`.
  *
  * Presence of that file is the test rather than a hardcoded list, because it is
  * also what `combineDist` needs to read -- so a directory that passes here is
@@ -79,9 +80,13 @@ function assertGroupsFormed(
  * @returns [app directory name, dist path] pairs
  */
 function builtFynApps(): Array<[string, string]> {
-    return fs
-        .readdirSync("demo")
-        .map((app): [string, string] => [app, path.join("demo", app, "dist")])
+    return ["demo", "apps/fynops"]
+        .filter((root) => fs.existsSync(root))
+        .flatMap((root) =>
+            fs
+                .readdirSync(root)
+                .map((app): [string, string] => [app, path.join(root, app, "dist")])
+        )
         .filter(([, dist]) => fs.existsSync(path.join(dist, "federation.json")));
 }
 
@@ -133,7 +138,7 @@ load({
 
             const apps = builtFynApps();
             if (!apps.length) {
-                throw new Error("no built FynApp found under demo/*/dist - run a build first");
+                throw new Error("no built FynApp found under demo/*/dist or apps/fynops/*/dist - run a build first");
             }
 
             let saved = 0;

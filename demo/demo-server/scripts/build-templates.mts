@@ -159,6 +159,16 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         writeFileSync(shellOutputPath, shellHtml);
         log(`📄 Generated: ${shellOutputPath}`);
 
+        // FynOps host page -- see notes/FYNOPS-DESIGN.md.
+        const fynopsHtml = env.render("pages/fynops.html", {
+            isProduction,
+            pathPrefix,
+            ...pageSeo("fynops"),
+        });
+        const fynopsOutputPath = path.join(outputDir, "fynops.html");
+        writeFileSync(fynopsOutputPath, fynopsHtml);
+        log(`📄 Generated: ${fynopsOutputPath}`);
+
         log("✅ Templates compiled successfully!");
         log(`🌐 Path prefix: ${pathPrefix}`);
 
