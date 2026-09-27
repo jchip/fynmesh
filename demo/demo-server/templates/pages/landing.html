@@ -105,10 +105,40 @@
         border: none;
     }
 
-    /* Buttons are anchors, so Spectre's `a:visited` (0,1,1) outranks the
-       class-only `.btn-*` rules below and repaints visited buttons #807fe2. */
-    .btn:visited {
+    /* Buttons are anchors, so Spectre's `a:visited` and `a:hover`/`a:focus`
+       (0,1,1) outrank the class-only `.btn-*` rules below and repaint the text
+       purple. */
+    .btn:visited,
+    .btn:hover,
+    .btn:focus {
         color: white;
+    }
+
+    /* Spectre's `.btn:focus` (0,2,0) also outranks `.btn-*`, and paints a light
+       #f1f1fc background under the white text. A clicked link keeps focus, and
+       browser Back restores it. Each variant keeps its own colors on focus, and
+       keyboard focus gets a ring. These sit before the `:hover` rules so hover
+       still wins when both apply. */
+    .btn:focus {
+        box-shadow: none;
+    }
+
+    .btn:focus-visible {
+        outline: 2px solid white;
+        outline-offset: 3px;
+    }
+
+    .btn-primary:focus {
+        background: var(--primary);
+    }
+
+    .btn-secondary:focus {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .btn-github:focus {
+        background: #24292e;
     }
 
     .btn-primary {
