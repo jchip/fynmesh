@@ -227,17 +227,15 @@ export const ManifestResolver = function (telemetry?: KernelTelemetry): Manifest
         return key;
       }
 
-      // Preload a dependency's entry file, then walk into it. The three
-      // dependency sources below differ only in where they get the name and
-      // semver from; everything after that is identical.
-      const visitDep = async (depName: string, semver?: string): Promise<void> => {
-        preloadEntryFile(calculateDistBase(await registryResolver!(depName, semver)), depth + 1);
-        await visit(depName, semver, key, depth + 1);
-      };
+      // Collect every dependency first, then walk them all at once. Walking
+      // them one after another costs a round trip per dependency, since each
+      // walk starts by importing that dependency's entry file. The three
+      // sources below differ only in where they get the name and semver from.
+      const deps: Array<[string, string | undefined]> = [];
 
       // Process explicit requires field
       for (const req of manifest.requires || []) {
-        await visitDep(req.name, req.range);
+        deps.push([req.name, req.range]);
       }
 
       // Process import-exposed dependencies (middleware providers, component libraries, etc.)
@@ -255,7 +253,7 @@ export const ManifestResolver = function (telemetry?: KernelTelemetry): Manifest
               }
             }
           }
-          await visitDep(packageName, semver);
+          deps.push([packageName, semver]);
         }
       }
 
@@ -270,16 +268,24 @@ export const ManifestResolver = function (telemetry?: KernelTelemetry): Manifest
             semver = providerInfo.semver as string;
           }
           console.debug(`  → Loading shared provider: ${packageName}@${semver || 'latest'}`);
-          await visitDep(packageName, semver);
+          deps.push([packageName, semver]);
         }
       }
+
+      // Preload a dependency's entry file, then walk into it. A dependency
+      // reached twice at once is safe: the node check above runs after the
+      // await, so only the first walk to resume processes its dependencies.
+      await Promise.all(
+        deps.map(async ([depName, semver]) => {
+          preloadEntryFile(calculateDistBase(await registryResolver!(depName, semver)), depth + 1);
+          await visit(depName, semver, key, depth + 1);
+        }),
+      );
 
       return key;
     };
 
-    for (const r of requests) {
-      await visit(r.name, r.range);
-    }
+    await Promise.all(requests.map((r) => visit(r.name, r.range)));
 
     console.debug('buildGraph completed, nodes:', Array.from(nodes));
     captureEvent(tel, "graph.built", { nodes: nodes.size });

@@ -1,8 +1,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { ICellRendererParams } from "ag-grid-community";
 // Typed through the tsconfig path to echarts; the code comes from fynops-charts-lib.
-import * as echarts from "esm-echarts";
+import type * as Echarts from "esm-echarts";
 import { fynopsData } from "fynops-data-core";
+
+let echartsLoad: Promise<typeof Echarts> | undefined;
+
+/**
+ * echarts is imported on first use, not at startup. The grid can then show its
+ * rows without waiting for echarts' ~290KB, and the sparklines fill in after.
+ */
+function loadEcharts(): Promise<typeof Echarts> {
+  echartsLoad ??= import("esm-echarts").catch((err) => {
+    echartsLoad = undefined;
+    throw err;
+  });
+  return echartsLoad;
+}
 
 /** Weekly on-time rate (0..1, or null for a week with no deliveries), per lane. */
 export type LaneTrends = Map<string, Array<number | null>>;
@@ -52,18 +66,20 @@ export const LaneTrendCell: React.FC<ICellRendererParams> = ({ node }) => {
   const ref = useRef<HTMLDivElement>(null);
   const lane = node.group && node.field === "lane" ? String(node.key) : undefined;
   const [series, setSeries] = useState<Array<number | null>>();
+  const [echarts, setEcharts] = useState<typeof Echarts>();
 
   useEffect(() => {
     if (!lane) return;
     let live = true;
     loadLaneTrends().then((all) => live && setSeries(all.get(lane) ?? []), () => {});
+    loadEcharts().then((lib) => live && setEcharts(() => lib), () => {});
     return () => {
       live = false;
     };
   }, [lane]);
 
   useEffect(() => {
-    if (!ref.current || !series) return;
+    if (!ref.current || !series || !echarts) return;
     const chart = echarts.init(ref.current, undefined, { renderer: "svg", width: 120, height: 26 });
     chart.setOption({
       animation: false,
@@ -83,7 +99,7 @@ export const LaneTrendCell: React.FC<ICellRendererParams> = ({ node }) => {
       ],
     });
     return () => chart.dispose();
-  }, [series]);
+  }, [series, echarts]);
 
   if (!lane) return null;
   const known = series?.filter((v): v is number => v !== null) ?? [];

@@ -14,6 +14,9 @@ import {
     collectShellPreloadModules,
     collectShellBundleMaps,
     collectPerfLab,
+    collectFynOps,
+    FYNOPS_ROUTE_STARTUP,
+    FYNOPS_DEFAULT_ROUTE,
 } from "../scripts/shell-preload.mts";
 
 let demoRoot: string;
@@ -342,5 +345,119 @@ describe("collectPerfLab", () => {
         labApp("fynapp-analytics", ["main-AAAAAAAA.js"]);
 
         expect(hrefs("fynapp-analytics")).toEqual([]);
+    });
+});
+
+describe("collectFynOps route hints", () => {
+    let repoRoot: string;
+
+    /** One FynApp dist under `root` in a shared repo root. The entry names every chunk. */
+    const dist = (root: string, appDir: string, files: string[], bundles?: Record<string, string[]>) => {
+        const dir = path.join(repoRoot, root, appDir, "dist");
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(path.join(dir, "fynapp-entry.js"), entryNaming(files));
+        for (const f of files) writeFileSync(path.join(dir, f), "//chunk\n");
+        if (bundles) writeFileSync(path.join(dir, "federation.bundles.json"), JSON.stringify(bundles));
+    };
+
+    /** The FynOps tree as the production build lays it out, trimmed to what the routes touch. */
+    const fynopsTree = () => {
+        repoRoot = mkdtempSync(path.join(tmpdir(), "fynops-preload-test-"));
+        dist("demo", "fynapp-react-19", ["startup-AAAAAAAA.js"]);
+        dist("demo", "fynapp-ag-grid-lib", [
+            "_mf-share-surface_esm-ag-grid-AAAAAAAA.js",
+            "_mf-share-surface_esm-ag-grid-react-BBBBBBBB.js",
+        ]);
+        dist("apps/fynops", "fynops-shell", ["main-AAAAAAAA.js"]);
+        dist("apps/fynops", "ops-shipments", ["main-AAAAAAAA.js"]);
+        dist("apps/fynops", "ops-map", ["main-AAAAAAAA.js", "maplibre-gl-worker-BBBBBBBB.js"]);
+        dist("apps/fynops", "ops-analytics", ["main-AAAAAAAA.js"]);
+        dist("apps/fynops", "fynops-ui", ["_mf-share-surface_fynops-ui-kit-AAAAAAAA.js"]);
+        dist("apps/fynops", "fynops-grid-lib", ["_mf-share-surface_esm-ag-grid-enterprise-AAAAAAAA.js"]);
+        dist("apps/fynops", "fynops-charts-lib", ["_mf-share-surface_esm-echarts--_-AAAAAAAA.js"]);
+        dist(
+            "apps/fynops",
+            "fynops-data",
+            ["main-AAAAAAAA.js", "_mf-share-surface_fynops-data-core-BBBBBBBB.js", "combo-CCCCCCCC.js"],
+            { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "_mf-share-surface_fynops-data-core-BBBBBBBB.js"] }
+        );
+    };
+
+    const routeHrefs = (route: string) =>
+        collectFynOps(repoRoot, "/").routeHints[route].map((hint) => hint.href);
+
+    afterEach(() => {
+        repoRoot && rmSync(repoRoot, { recursive: true, force: true });
+    });
+
+    it("covers every shell route, and opens on the shell's default", async () => {
+        const { ROUTES, DEFAULT_ROUTE } = await import("../../../apps/fynops/fynops-shell/src/routes.ts");
+
+        expect(Object.keys(FYNOPS_ROUTE_STARTUP).sort()).toEqual(ROUTES.map((r) => r.path).sort());
+        expect(FYNOPS_DEFAULT_ROUTE).toBe(DEFAULT_ROUTE);
+        for (const route of ROUTES) {
+            const dirs = FYNOPS_ROUTE_STARTUP[route.path].flatMap(({ apps }) => apps.map((a) => a.dir));
+            expect(dirs).toContain(route.app);
+        }
+    });
+
+    it("hints the shipments grid and its providers, but not echarts", () => {
+        fynopsTree();
+
+        expect(routeHrefs("/shipments")).toEqual([
+            "/ops-shipments/dist/fynapp-entry.js",
+            "/ops-shipments/dist/main-AAAAAAAA.js",
+            "/fynops-ui/dist/fynapp-entry.js",
+            "/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-AAAAAAAA.js",
+            "/fynops-data/dist/fynapp-entry.js",
+            "/fynops-data/dist/combo-CCCCCCCC.js",
+            "/fynops-grid-lib/dist/fynapp-entry.js",
+            "/fynops-grid-lib/dist/_mf-share-surface_esm-ag-grid-enterprise-AAAAAAAA.js",
+            "/fynops-charts-lib/dist/fynapp-entry.js",
+            "/fynapp-ag-grid-lib/dist/fynapp-entry.js",
+            "/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-AAAAAAAA.js",
+            "/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-react-BBBBBBBB.js",
+        ]);
+    });
+
+    it("hints echarts for analytics", () => {
+        fynopsTree();
+
+        expect(routeHrefs("/analytics")).toContain(
+            "/fynops-charts-lib/dist/_mf-share-surface_esm-echarts--_-AAAAAAAA.js"
+        );
+    });
+
+    it("hints the map's main chunk, not maplibre's worker", () => {
+        fynopsTree();
+        const hrefs = routeHrefs("/map");
+
+        expect(hrefs).toContain("/ops-map/dist/main-AAAAAAAA.js");
+        expect(hrefs).not.toContain("/ops-map/dist/maplibre-gl-worker-BBBBBBBB.js");
+    });
+
+    it("keeps route hints low, and out of the static hints", () => {
+        fynopsTree();
+        const fynops = collectFynOps(repoRoot, "/");
+        const statics = new Set(fynops.hints.map((hint) => hint.href));
+
+        expect(statics.has("/fynops-shell/dist/fynapp-entry.js")).toBe(true);
+        for (const list of Object.values(fynops.routeHints)) {
+            for (const hint of list) {
+                expect(hint.priority).toBe("low");
+                expect(statics.has(hint.href)).toBe(false);
+            }
+        }
+    });
+
+    it("declares a route app's bundle map once", () => {
+        fynopsTree();
+
+        expect(collectFynOps(repoRoot, "/").bundleMaps.filter((m) => m.base === "/fynops-data/dist/")).toEqual([
+            {
+                base: "/fynops-data/dist/",
+                bundles: { "combo-CCCCCCCC.js": ["main-AAAAAAAA.js", "_mf-share-surface_fynops-data-core-BBBBBBBB.js"] },
+            },
+        ]);
     });
 });

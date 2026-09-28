@@ -23,7 +23,7 @@
       React 19 and the shell, preloaded off the HTML parse. Same reasoning as the
       startup hints in shell.html: `preload as="script"` with no crossorigin, and
       combined files named instead of their members. Built by collectFynOps in
-      scripts/shell-preload.mts. Features load by name later and are not hinted.
+      scripts/shell-preload.mts.
     #}
     {% for hint in preloadModules %}<link rel="preload" as="script" href="{{ hint.href }}"{% if hint.priority %} fetchpriority="{{ hint.priority }}"{% endif %}>
     {% endfor %}
@@ -35,6 +35,41 @@
         if (Federation.declareBundles) {
             {% for map in bundleMaps %}Federation.declareBundles({{ map.bundles | dump | safe }}, "{{ map.base }}");
             {% endfor %}}
+    </script>
+    {% endif %}
+{% endblock %}
+
+{% block head_start %}
+    {#
+      The route's feature and its providers, hinted at low priority behind the
+      React and shell hints in scripts_head. Without them the kernel finds each
+      provider one round trip at a time, and the shared libraries wait for all
+      of them. This sits in head_start, ahead of the layout's stylesheets: an
+      inline script waits for every stylesheet above it, which held these hints
+      back a full round trip. Only the route the
+      page opens on is hinted. Features mount only after sign-in, so nothing is
+      hinted on the login form. "fynops.session" is SESSION_KEY in
+      fynops-shell's shell-state.ts. The hash parse mirrors parseHash in its
+      routes.ts. An unknown route renders an error and loads nothing.
+    #}
+    {% if routeHints %}
+    <script>
+        (function () {
+            try {
+                if (!localStorage.getItem("fynops.session")) return;
+            } catch (e) {
+                return;
+            }
+            var route = location.hash.replace(/^#/, "").split("?")[0] || "{{ defaultRoute }}";
+            ({{ routeHints | dump | safe }}[route] || []).forEach(function (hint) {
+                var link = document.createElement("link");
+                link.rel = "preload";
+                link.as = "script";
+                link.href = hint.href;
+                if (hint.priority) link.fetchPriority = hint.priority;
+                document.head.appendChild(link);
+            });
+        })();
     </script>
     {% endif %}
 {% endblock %}

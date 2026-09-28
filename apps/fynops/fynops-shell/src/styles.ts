@@ -21,6 +21,13 @@ const CSS = `
 .fo-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem;
   border-bottom: 1px solid #e5e7eb; font-weight: 600; }
 .fo-drawer-body { flex: 1; overflow: auto; }
+.fo-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
+  height: 100%; min-height: 160px; color: #6b7280; }
+.fo-loading-count { font-size: 0.8rem; color: #9ca3af; font-variant-numeric: tabular-nums; }
+.fo-spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #e5e7eb; border-top-color: #4f46e5;
+  animation: fo-spin 0.8s linear infinite; }
+@keyframes fo-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fo-spinner { animation-duration: 2.4s; } }
 .fo-panel { margin: 2rem; padding: 1.25rem 1.5rem; border-radius: 8px; background: #fff; border: 1px solid #e5e7eb; }
 .fo-panel.fo-error { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
 .fo-panel h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }

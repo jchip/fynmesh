@@ -165,11 +165,14 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             pathPrefix,
             msg => log(`⚠️  fynops: ${msg}`)
         );
+        log(`🔗 FynOps route hints: ${Object.entries(fynops.routeHints).map(([r, h]) => `${r} ${h.length}`).join(", ")}`);
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
             preloadModules: fynops.hints,
             bundleMaps: fynops.bundleMaps,
+            routeHints: fynops.routeHints,
+            defaultRoute: fynops.defaultRoute,
             ...pageSeo("fynops"),
         });
         const fynopsOutputPath = path.join(outputDir, "fynops.html");

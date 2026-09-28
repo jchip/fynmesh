@@ -175,6 +175,16 @@ export type FynApp = FynAppInfo & {
  */
 export type FynAppStatus = "bootstrapping" | "mounted" | "suspended" | "failed" | "shutdown";
 
+/** Detail of the `FYNAPP_LOADING` and `FYNAPP_LOADED` events (see `loadFynAppsByName`). */
+export type FynAppLoadEventDetail = {
+  name: string;
+  version: string;
+  /** Names of the requests the `loadFynAppsByName` call was given. */
+  requestedBy: string[];
+  /** `FYNAPP_LOADED` only: false when the load failed. */
+  ok?: boolean;
+};
+
 /**
  * A snapshot of a FynApp's kernel-side lifecycle state.
  */
@@ -534,6 +544,14 @@ export interface FynMeshKernel {
    * - Isolates per-app failures: each FynApp is loaded via `loadFynApp`, whose
    *   `null` result (a failed individual load) does not abort the batch. The
    *   call resolves once every reachable FynApp has been attempted.
+   *
+   * Progress events, so a host can show what a load is waiting on:
+   * - `FYNAPP_LOADING` once per FynApp the batch will load, as soon as the
+   *   dependency graph is known. Apps already loaded get no events.
+   * - `FYNAPP_LOADED` when that FynApp's load attempt ends. `ok` is false if
+   *   it failed.
+   * Both carry a `FynAppLoadEventDetail`. `requestedBy` names this call's
+   * requests, so a host can tell its own load apart from a concurrent one.
    *
    * @param requests - FynApps to load, by name and optional semver range
    * @param options - batch options (concurrency, preload strategy)

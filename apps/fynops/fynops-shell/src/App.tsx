@@ -5,11 +5,14 @@ import {
   closeDrawer,
   getSession,
   loadView,
+  getLoadProgress,
   onDrawer,
+  onLoadProgress,
   onSession,
   signIn,
   signOut,
   type DrawerRequest,
+  type LoadProgress,
 } from "./shell-state";
 
 const USERS: Array<{ user: string; role: FynOpsRole }> = [
@@ -26,17 +29,31 @@ const ViewHost: React.FC<{ app: string; props: FynOpsViewProps; hidden?: boolean
   const ref = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string>();
   const [attempt, setAttempt] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState<LoadProgress | undefined>(() => getLoadProgress(app));
+
+  useEffect(
+    () =>
+      onLoadProgress((loadedApp, p) => {
+        if (loadedApp === app) setProgress(p);
+      }),
+    [app]
+  );
 
   useEffect(() => {
     let unmount: (() => void) | undefined;
     let cancelled = false;
     setError(undefined);
+    setLoading(true);
     loadView(app)
       .then((view) => {
         if (!cancelled && ref.current) unmount = view.mount(ref.current, props);
       })
       .catch((err: Error) => {
         if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -48,6 +65,17 @@ const ViewHost: React.FC<{ app: string; props: FynOpsViewProps; hidden?: boolean
 
   return (
     <div className="fo-host" hidden={hidden} data-fynapp-host={app} data-target={props.target}>
+      {loading && !error && (
+        <div className="fo-loading" role="status" data-testid="fynops-view-loading">
+          <span className="fo-spinner" aria-hidden="true" />
+          <span>Loading {ROUTES.find((r) => r.app === app)?.title ?? app}</span>
+          {progress && progress.total > 0 && (
+            <span className="fo-loading-count">
+              {progress.done} of {progress.total} FynApps
+            </span>
+          )}
+        </div>
+      )}
       {error && (
         <div className="fo-panel fo-error" role="alert">
           <h2>{app} is not available</h2>

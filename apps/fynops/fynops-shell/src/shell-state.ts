@@ -1,4 +1,4 @@
-import type { FynMeshKernel } from "@fynmesh/kernel";
+import type { FynAppLoadEventDetail, FynMeshKernel } from "@fynmesh/kernel";
 import type { FynOpsSession, FynOpsShellApi, FynOpsView, Selection } from "./api";
 
 /**
@@ -106,6 +106,44 @@ function waitForView(app: string): Promise<FynOpsView> {
   });
 }
 
+/** How many of the FynApps a view load needs have finished loading. */
+export interface LoadProgress {
+  done: number;
+  total: number;
+}
+
+const progress = new Map<string, LoadProgress>();
+const progressListeners = new Set<(app: string, p: LoadProgress) => void>();
+
+export function getLoadProgress(app: string): LoadProgress | undefined {
+  return progress.get(app);
+}
+
+export function onLoadProgress(fn: (app: string, p: LoadProgress) => void): () => void {
+  progressListeners.add(fn);
+  return () => progressListeners.delete(fn);
+}
+
+/** Count the kernel's load events for `app`'s own load. Returns the unsubscribe. */
+function trackProgress(app: string): () => void {
+  const events = kernel().events;
+  const onEvent = (e: Event) => {
+    const detail = (e as CustomEvent<FynAppLoadEventDetail>).detail;
+    if (!detail.requestedBy.includes(app)) return;
+    const p = progress.get(app) ?? { done: 0, total: 0 };
+    const next = e.type === "FYNAPP_LOADING" ? { ...p, total: p.total + 1 } : { ...p, done: p.done + 1 };
+    progress.set(app, next);
+    for (const fn of progressListeners) fn(app, next);
+  };
+  events.addEventListener("FYNAPP_LOADING", onEvent);
+  events.addEventListener("FYNAPP_LOADED", onEvent);
+  return () => {
+    events.removeEventListener("FYNAPP_LOADING", onEvent);
+    events.removeEventListener("FYNAPP_LOADED", onEvent);
+    progress.delete(app);
+  };
+}
+
 /**
  * Load a feature by name and resolve with the view it registers. The kernel
  * walks the app's manifest and loads its providers first. The promise is kept,
@@ -115,7 +153,12 @@ export function loadView(app: string): Promise<FynOpsView> {
   let load = appLoads.get(app);
   if (!load) {
     load = (async () => {
-      await kernel().loadFynAppsByName([{ name: app }]);
+      const stop = trackProgress(app);
+      try {
+        await kernel().loadFynAppsByName([{ name: app }]);
+      } finally {
+        stop();
+      }
       if (!views.has(app) && !kernel().getFynAppState(app)) {
         throw new Error(`${app} could not be loaded. Check that it is built and registered.`);
       }

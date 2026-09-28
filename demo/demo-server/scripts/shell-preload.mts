@@ -388,8 +388,72 @@ const FYNOPS_STARTUP: Array<{ root: string; apps: ShellStartupFynApp[] }> = [
     { root: "apps/fynops", apps: [{ dir: "fynops-shell", chunks: "all" }] },
 ];
 
+/** The route an empty hash opens. Keep in sync with `DEFAULT_ROUTE` in fynops-shell's `routes.ts`. */
+const FYNOPS_DEFAULT_ROUTE = "/shipments";
+
 /**
- * Hints and bundle maps for `fynops.html`, the same pair `shell.html` gets.
+ * What each FynOps route needs before its view can paint, beyond React and the
+ * shell. Keys match `ROUTES` in fynops-shell's `routes.ts`.
+ *
+ * The shell loads a route's feature by name, and the kernel reads each manifest
+ * out of an entry before it knows the next one. So without hints each level of
+ * providers costs a round trip, and the large shared libraries wait until the
+ * feature's code runs. The page hints only the route it opens on. Other routes
+ * load on first visit.
+ *
+ * Each list is the feature plus the providers in its manifest's
+ * `shared-providers`, and their own providers. Two things are left out on
+ * purpose. `fynops-data`'s worker and `sqlite3.wasm` are fetched by the worker,
+ * which never reuses a page preload. For the same reason `ops-map` hints only
+ * `main`, not maplibre's worker chunk.
+ */
+const FYNOPS_ROUTE_STARTUP: Record<string, Array<{ root: string; apps: ShellStartupFynApp[] }>> = {
+    "/shipments": [
+        {
+            root: "apps/fynops",
+            apps: [
+                { dir: "ops-shipments", chunks: "all" },
+                { dir: "fynops-ui", chunks: "all" },
+                { dir: "fynops-data", chunks: "all" },
+                { dir: "fynops-grid-lib", chunks: "all" },
+                // Entry only. The sparklines import echarts after the grid paints.
+                { dir: "fynops-charts-lib", chunks: "none" },
+            ],
+        },
+        // AG Grid community and its React binding, which fynops-grid-lib builds on.
+        { root: "demo", apps: [{ dir: "fynapp-ag-grid-lib", chunks: "all" }] },
+    ],
+    "/map": [
+        {
+            root: "apps/fynops",
+            apps: [
+                { dir: "ops-map", chunks: ["main"] },
+                { dir: "fynops-ui", chunks: "all" },
+                { dir: "fynops-data", chunks: "all" },
+            ],
+        },
+    ],
+    "/analytics": [
+        {
+            root: "apps/fynops",
+            apps: [
+                { dir: "ops-analytics", chunks: "all" },
+                { dir: "fynops-ui", chunks: "all" },
+                { dir: "fynops-data", chunks: "all" },
+                { dir: "fynops-charts-lib", chunks: "all" },
+            ],
+        },
+    ],
+};
+
+/**
+ * Hints and bundle maps for `fynops.html`, the same pair `shell.html` gets,
+ * plus a hint list per route for the page's head script to pick from.
+ *
+ * Route hints are `low`, so a server that honors priority sends the static React
+ * and shell hints first. Over HTTP/1.1, as with the dev proxy, they share the
+ * bandwidth instead, and the nav paints about 100ms later on Fast 4G. A file
+ * the static hints already name is left out of every route list.
  *
  * @param repoRoot  the monorepo root
  * @param pathPrefix deployment path prefix, e.g. `/`
@@ -399,12 +463,37 @@ function collectFynOps(
     repoRoot: string,
     pathPrefix: string,
     warn: (message: string) => void = () => {}
-): { hints: ShellPreloadHint[]; bundleMaps: Array<{ base: string; bundles: BundleMap }> } {
-    const roots = FYNOPS_STARTUP.map(({ root, apps }) => ({ dir: path.join(repoRoot, root), apps }));
-    return {
-        hints: roots.flatMap(({ dir, apps }) => collectShellPreloadModules(dir, pathPrefix, warn, apps)),
-        bundleMaps: roots.flatMap(({ dir, apps }) => collectShellBundleMaps(dir, pathPrefix, warn, apps)),
-    };
+): {
+    hints: ShellPreloadHint[];
+    bundleMaps: Array<{ base: string; bundles: BundleMap }>;
+    routeHints: Record<string, ShellPreloadHint[]>;
+    defaultRoute: string;
+} {
+    const rooted = (list: Array<{ root: string; apps: ShellStartupFynApp[] }>) =>
+        list.map(({ root, apps }) => ({ dir: path.join(repoRoot, root), apps }));
+    const startup = rooted(FYNOPS_STARTUP);
+    const hints = startup.flatMap(({ dir, apps }) => collectShellPreloadModules(dir, pathPrefix, warn, apps));
+    const hinted = new Set(hints.map((hint) => hint.href));
+
+    const routeHints: Record<string, ShellPreloadHint[]> = {};
+    // Every route app's map is declared, since any of them can load later.
+    const bundleMaps = startup.flatMap(({ dir, apps }) => collectShellBundleMaps(dir, pathPrefix, warn, apps));
+    for (const [route, list] of Object.entries(FYNOPS_ROUTE_STARTUP)) {
+        const seen = new Set(hinted);
+        routeHints[route] = [];
+        for (const { dir, apps } of rooted(list)) {
+            for (const hint of collectShellPreloadModules(dir, pathPrefix, warn, apps)) {
+                if (seen.has(hint.href)) continue;
+                seen.add(hint.href);
+                routeHints[route].push({ href: hint.href, priority: "low" });
+            }
+            for (const map of collectShellBundleMaps(dir, pathPrefix, warn, apps)) {
+                if (!bundleMaps.some((m) => m.base === map.base)) bundleMaps.push(map);
+            }
+        }
+    }
+
+    return { hints, bundleMaps, routeHints, defaultRoute: FYNOPS_DEFAULT_ROUTE };
 }
 
 export {
@@ -416,6 +505,8 @@ export {
     carriersOf,
     SHELL_STARTUP_FYNAPPS,
     ANALYTICS_STARTUP_FYNAPPS,
+    FYNOPS_ROUTE_STARTUP,
+    FYNOPS_DEFAULT_ROUTE,
     HASHED_CHUNK_RE,
 };
 export type { ShellPreloadHint, ShellStartupFynApp, BundleMap };

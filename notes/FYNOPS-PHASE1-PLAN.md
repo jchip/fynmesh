@@ -168,3 +168,28 @@ All checks pass, on both the dev build and the production build. No kernel, fede
 3. The UI kit's badge status colors are close together for a categorical chart. The analytics donut adds labels to compensate. Worth a palette pass in the kit.
 4. agent-browser sessions sometimes stop producing frames after long use. Closing and reopening the session fixes it.
 
+
+## Load performance on Fast 4G
+
+A cold reload of `#/shipments` with DevTools "Fast 4G" (about 1 MB/s, 165ms RTT), cache disabled, production build. The page and the sqlite worker were both throttled. Script: `.temp/perf/cold-load.mjs`.
+
+| Milestone | Before | After |
+|---|---|---|
+| Nav paints | 590ms | 695ms |
+| Loading spinner | none | 695ms |
+| Providers bootstrapped | 1620ms | 1035ms |
+| Grid on screen | 3277ms | 1685ms |
+| 20 rows | 3400ms | 2073ms |
+
+What changed:
+
+- **Kernel.** `buildGraph` walks sibling dependencies at the same time. Before, it awaited each one, so six providers cost six round trips.
+- **Kernel.** `loadFynAppsByName` emits `FYNAPP_LOADING` and `FYNAPP_LOADED` for each app it loads, with `requestedBy`.
+- **Page.** `fynops.html` hints the open route's feature and providers at low priority. The script sits in `head_start`, ahead of the stylesheets, because an inline script waits for them.
+- **ops-shipments.** The sparklines import echarts on first use, so its 290KB comes after the rows.
+- **Shell.** `ViewHost` shows a spinner and "n of m FynApps" until the view mounts.
+
+What is left:
+
+- The nav is 100ms later. The dev proxy is HTTP/1.1, so low-priority hints share bandwidth with the shell. A server that honors priority should close most of that gap.
+- `sqlite3.wasm` (341KB) is now the last thing the rows wait for. Its fetch starts in the worker, which can't reuse a page preload. With the cache enabled, a content-hashed name and an immutable cache rule would let a page preload warm it.

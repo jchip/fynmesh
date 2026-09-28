@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FynMesh Micro Frontend Demo{% endblock %}</title>
-    
+    {# Runs before any stylesheet below, which would otherwise hold up an inline script until it loads. #}
+    {% block head_start %}{% endblock %}
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">
 

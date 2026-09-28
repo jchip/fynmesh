@@ -24,6 +24,7 @@ import type {
   FynMeshRuntimeData,
   FynApp,
   FynAppEntry,
+  FynAppLoadEventDetail,
   FynAppState,
   FynAppStatus,
   FynUnit,
@@ -244,6 +245,16 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
     const concurrency = Math.max(1, Math.min(options?.concurrency ?? 4, 8));
     const allMeta = this.manifestResolver.nodeMeta;
 
+    // Progress events for the apps this batch will actually load.
+    const requestedBy = requests.map((r) => r.name);
+    const emitLoad = (type: string, key: string, ok?: boolean) => {
+      const { name, version } = allMeta.get(key)!;
+      const detail: FynAppLoadEventDetail = { name, version, requestedBy, ...(ok !== undefined && { ok }) };
+      this.events.dispatchEvent(new CustomEvent(type, { detail }));
+    };
+    const toLoad = new Set(batches.flat().filter((key) => !this.fynAppRegistry.has(key)));
+    for (const key of toLoad) emitLoad("FYNAPP_LOADING", key);
+
     for (const batch of batches) {
       // Bounded-concurrency walk over the batch. Workers share one cursor, so
       // each key is claimed once; there is no need to materialise a closure per
@@ -252,10 +263,12 @@ export abstract class FynMeshKernelCore implements FynMeshKernel {
       await Promise.all(
         Array.from({ length: Math.min(concurrency, batch.length) }, async () => {
           while (next < batch.length) {
-            const meta = allMeta.get(batch[next++])!;
+            const key = batch[next++];
+            const meta = allMeta.get(key)!;
             const baseUrl = meta.distBase || meta.url.replace(/\/[^/]*$/, "/");
             console.debug(`📦 Loading ${meta.name}@${meta.version} from ${baseUrl}`);
-            await this.loadFynApp(baseUrl);
+            const fynApp = await this.loadFynApp(baseUrl);
+            if (toLoad.has(key)) emitLoad("FYNAPP_LOADED", key, fynApp !== null);
           }
         })
       );
