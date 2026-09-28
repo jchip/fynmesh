@@ -401,11 +401,14 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             pathPrefix,
             msg => log(`⚠️  fynops: ${msg}`)
         );
+        log(`🔗 FynOps route hints: ${Object.entries(fynops.routeHints).map(([r, h]) => `${r} ${h.length}`).join(", ")}`);
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
             preloadModules: fynops.hints,
             bundleMaps: fynops.bundleMaps,
+            routeHints: fynops.routeHints,
+            defaultRoute: fynops.defaultRoute,
             ...pageSeo("fynops"),
         });
         writeFileSync(path.join(outputDir, "fynops.html"), fynopsHtml);
