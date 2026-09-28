@@ -33,9 +33,16 @@ const CSS = `
 .fo-panel h2 { margin: 0 0 0.5rem; font-size: 1.1rem; }
 .fo-login { display: flex; align-items: center; justify-content: center; height: 100vh; background: #f1f5f9;
   font-family: system-ui, -apple-system, sans-serif; }
-.fo-login form { display: flex; flex-direction: column; gap: 0.75rem; width: 280px; padding: 1.5rem;
-  background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; }
+.fo-login form { display: flex; flex-direction: column; gap: 0.75rem; width: 360px; max-width: calc(100vw - 2rem);
+  box-sizing: border-box; padding: 1.5rem; background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; }
 .fo-login h1 { margin: 0; font-size: 1.25rem; }
+.fo-demo-note { padding: 0.75rem; border-radius: 6px; background: #eef2ff; color: #3730a3; font-size: 0.85rem; line-height: 1.45; }
+.fo-demo-note p { margin: 0 0 0.5rem; }
+.fo-demo-note p:last-child { margin: 0; }
+.fo-demo-note a { color: #4338ca; }
+.fo-topbar .fo-demo-tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: #4f46e5;
+  color: #fff; text-decoration: none; }
+.fo-topbar .fo-demo-tag:hover { background: #4338ca; }
 .fo-btn { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; font: inherit; }
 .fo-btn.fo-primary { background: #4f46e5; border-color: #4f46e5; color: #fff; }
 .fo-topbar .fo-btn { background: transparent; color: inherit; border-color: #4b5563; }

@@ -102,6 +102,20 @@ const Login: React.FC<{ onSignIn: () => void }> = ({ onSignIn }) => {
         }}
       >
         <h1>FynOps sign in</h1>
+        <div className="fo-demo-note" data-testid="fynops-demo-note">
+          <p>
+            <strong>FynOps is a demo app for FynMesh.</strong> It is a logistics console built from
+            ten FynApps. Each route loads its own FynApp, and they share React, AG Grid and ECharts at
+            runtime.
+          </p>
+          <p>
+            The shipments, fleet and users are simulated in your browser. Pick any user. There is no
+            password.
+          </p>
+          <p>
+            <a href="./">About FynMesh</a> · <a href="https://github.com/jchip/fynmesh">GitHub</a>
+          </p>
+        </div>
         <label>
           User{" "}
           <select
@@ -154,6 +168,9 @@ const Shell: React.FC = () => {
     <div className="fo-shell">
       <header className="fo-topbar">
         <span className="fo-brand">FynOps</span>
+        <a className="fo-demo-tag" href="./" title="FynOps is a demo app for FynMesh">
+          FynMesh demo
+        </a>
         <span className="fo-spacer" />
         <span data-testid="fynops-user">{session.user}</span>
         <span className="fo-role" data-testid="fynops-role">

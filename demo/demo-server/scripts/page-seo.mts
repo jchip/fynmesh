@@ -84,12 +84,12 @@ export const PAGE_SEO = {
     },
     fynops: {
         canonicalPath: "fynops",
-        ogTitle: "FynOps - A Logistics Console Built from FynApps",
+        ogTitle: "FynOps - A FynMesh Demo App: Logistics Console Built from FynApps",
         ogDescription:
-            "A large logistics operations console composed from many independently " +
-            "deployed FynApps and shared module providers.",
+            "A FynMesh demo app: a large logistics operations console composed from many " +
+            "independently deployed FynApps and shared module providers.",
         metaDescription:
-            "FynOps: a logistics operations console built from ten FynApps. A shipments " +
+            "FynOps, a FynMesh demo app: a logistics console built from ten FynApps. A shipments " +
             "grid, a live fleet map and analytics load per route and share React, AG Grid " +
             "and ECharts at runtime through Module Federation.",
     },
