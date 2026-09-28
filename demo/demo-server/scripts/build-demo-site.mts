@@ -463,6 +463,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             { file: "features.html", loc: "/features", priority: "0.8" },
             { file: "demo.html", loc: "/demo", priority: "0.8" },
             { file: "shell.html", loc: "/shell", priority: "0.8" },
+            { file: "fynops.html", loc: "/fynops", priority: "0.8" },
         ];
         const lastmod = new Date().toISOString().slice(0, 10);
         const sitemapUrls = sitemapPages

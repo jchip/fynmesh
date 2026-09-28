@@ -283,7 +283,7 @@ Done when:
 
 1. Add a size and load report. For each route it lists total bytes available, bytes downloaded on first visit, and bytes reused from cache on the next route.
 2. Hook FynOps into Perf Lab telemetry so raw, combined and hints modes can be compared at this scale.
-3. Add `fynops.html` to the published demo site and link it from the landing page.
+3. Add `fynops.html` to the published demo site and link it from the landing page. Done 2026-09-27: it is linked from the landing page, features nav and 404 page, and listed in the sitemap.
 
 Done when the report runs from the live site and its numbers are recorded in this doc.
 

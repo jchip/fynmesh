@@ -246,6 +246,45 @@
         font-size: 0.95rem;
     }
 
+    /* FynOps Section */
+    .fynops {
+        padding: 5rem 2rem;
+        background: #eef4ff;
+    }
+
+    .fynops-stats {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .fynops-stat {
+        background: white;
+        border: 1px solid #dbe4f3;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        text-align: center;
+        min-width: 140px;
+    }
+
+    .fynops-stat strong {
+        display: block;
+        font-size: 1.75rem;
+        color: var(--primary-dark);
+        line-height: 1.2;
+    }
+
+    .fynops-stat span {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .fynops .feature-card {
+        background: white;
+    }
+
     /* Frameworks Section */
     .frameworks {
         padding: 5rem 2rem;
@@ -370,6 +409,10 @@
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14z"/><path d="M7 7h4v4H7V7zm6 0h4v2h-4V7zm0 4h4v2h-4v-2zm-6 4h10v2H7v-2z"/></svg>
                 Shell Demo
             </a>
+            <a href="{{pathPrefix}}fynops.html" class="btn btn-secondary">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 5h12v10H3V5zm12 4h3l3 3v3h-6V9zM6.5 19a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm11 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
+                FynOps
+            </a>
             <a href="{{pathPrefix}}features.html" class="btn btn-secondary">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Features
@@ -434,6 +477,53 @@
         </div>
         <div class="hero-buttons">
             <a href="{{pathPrefix}}features.html" class="btn btn-primary">See every feature</a>
+        </div>
+    </div>
+</section>
+
+<!-- FynOps Section -->
+<section class="fynops">
+    <div class="container">
+        <div class="section-title">
+            <h2>FynOps: A Real App at Scale</h2>
+            <p>
+                FynOps is a logistics operations console built from ten FynApps and run by one shell.
+                Each route loads its own feature app on first visit.
+                React, AG Grid and ECharts ship once and are shared at runtime.
+                The data lives in SQLite, running right in your browser.
+            </p>
+        </div>
+        <div class="fynops-stats">
+            <div class="fynops-stat"><strong>10</strong><span>FynApps</span></div>
+            <div class="fynops-stat"><strong>6.6MB</strong><span>JS in total</span></div>
+            <div class="fynops-stat"><strong>2.0MB</strong><span>gzip</span></div>
+            <div class="fynops-stat"><strong>1 route</strong><span>loaded at a time</span></div>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon blue">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v4H3V3zm0 6h18v4H3V9zm0 6h18v4H3v-4z"/></svg>
+                </div>
+                <h3>Shipments</h3>
+                <p>A 10k-row AG Grid that pages its rows from the in-browser database, with a sparkline per shipment.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon green">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+                </div>
+                <h3>Live Map</h3>
+                <p>Fleet positions on a MapLibre map, moving as the simulator ticks. Pick a shipment and the map follows.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon purple">
+                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M4 20V10h3v10H4zm6.5 0V4h3v16h-3zM17 20v-7h3v7h-3z"/></svg>
+                </div>
+                <h3>Analytics</h3>
+                <p>On-time rate, lane cost and trends drawn with ECharts, from the same shared chart provider.</p>
+            </div>
+        </div>
+        <div class="hero-buttons">
+            <a href="{{pathPrefix}}fynops.html" class="btn btn-primary">Open FynOps</a>
         </div>
     </div>
 </section>
@@ -509,6 +599,9 @@
             </a>
             <a href="{{pathPrefix}}shell.html" class="btn btn-secondary">
                 Shell Layout Demo
+            </a>
+            <a href="{{pathPrefix}}fynops.html" class="btn btn-secondary">
+                FynOps Console
             </a>
         </div>
     </div>

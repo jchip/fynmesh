@@ -66,7 +66,7 @@ describe("public URLs", () => {
         for (const script of ["scripts/build-demo-site.mts", "scripts/build-templates.mts"]) {
             const src = read(script);
             expect(src, `${script} must import the shared SEO identity`).toContain("page-seo.mts");
-            for (const page of ["landing", "notFound", "demo", "features", "shell"]) {
+            for (const page of ["landing", "notFound", "demo", "features", "shell", "fynops"]) {
                 expect(src, `${script} must render ${page} with it`).toContain(`pageSeo("${page}")`);
             }
         }
@@ -78,6 +78,13 @@ describe("public URLs", () => {
         expect(landing).toContain("{{pathPrefix}}demo.html");
         expect(landing).toContain("{{pathPrefix}}shell.html");
         expect(landing).toContain("{{pathPrefix}}features.html");
+        expect(landing).toContain("{{pathPrefix}}fynops.html");
+    });
+
+    it("publishes FynOps: listed in the sitemap and indexable", () => {
+        expect(sitemapLocs()).toContain("/fynops");
+        expect(PAGE_SEO.fynops.canonicalPath).toBe("fynops");
+        expect(read("templates/pages/fynops.html")).not.toContain("noindex");
     });
 });
 

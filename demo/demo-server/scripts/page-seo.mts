@@ -82,14 +82,16 @@ export const PAGE_SEO = {
             "FynMesh shell demo: a middleware-driven micro frontend layout composed from " +
             "independently deployed FynApps using Module Federation with Rollup.",
     },
-    // Work in progress: the page is noindex and stays out of the sitemap until
-    // it is linked from the landing page (notes/FYNOPS-DESIGN.md, Phase 4).
     fynops: {
         canonicalPath: "fynops",
         ogTitle: "FynOps - A Logistics Console Built from FynApps",
         ogDescription:
             "A large logistics operations console composed from many independently " +
             "deployed FynApps and shared module providers.",
+        metaDescription:
+            "FynOps: a logistics operations console built from ten FynApps. A shipments " +
+            "grid, a live fleet map and analytics load per route and share React, AG Grid " +
+            "and ECharts at runtime through Module Federation.",
     },
 } satisfies Record<string, PageSeo>;
 

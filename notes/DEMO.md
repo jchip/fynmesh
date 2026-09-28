@@ -7,6 +7,7 @@
 | https://www.fynmesh.fyi/           | Landing page          |
 | https://www.fynmesh.fyi/demo.html  | All FynApps demo      |
 | https://www.fynmesh.fyi/shell.html | Shell middleware demo |
+| https://www.fynmesh.fyi/fynops     | FynOps logistics console |
 
 Alternative: https://jchip.github.io/fynmesh/
 
@@ -20,6 +21,7 @@ fyn bootstrap && fyn start
 - http://localhost:3000/
 - http://localhost:3000/demo.html
 - http://localhost:3000/shell.html
+- http://localhost:3000/fynops.html
 
 Production build: `fyn build-prod` · Clean Demo build: `fyn clean:demo`
 
