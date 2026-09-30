@@ -14,6 +14,12 @@ jobs:
         node: [22.22.2, 24.15.0, 26]
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: jchip/rollup-federation
+          ref: latest
+          path: rollup-federation
+          ssh-key: ${{ secrets.FEDERATION_DEPLOY_KEY }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
