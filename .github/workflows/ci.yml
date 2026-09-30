@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: jchip/rollup-federation
-          ref: latest
+          ref: main
           path: rollup-federation
           ssh-key: ${{ secrets.FEDERATION_DEPLOY_KEY }}
       - uses: actions/setup-node@v4
