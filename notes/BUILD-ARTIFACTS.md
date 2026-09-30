@@ -1,7 +1,9 @@
 # FynApp build artifacts — the JSON files in `dist/`
 
 Every FynApp build emits JSON alongside its JavaScript. This is the reference for what each
-file is, who writes it, who reads it, and what breaks if it goes missing.
+file is, who writes it, who reads it, and what breaks if it goes missing. One JavaScript
+artifact is covered too: [shared chunks](#shared-chunks--_mf-share-surface_key-hashjs), whose
+filenames are otherwise hard to read.
 
 > Line numbers verified 2026-09-13. Note that `rollup-federation/` is a **separate git repo**,
 > nested here and gitignored (`.gitignore:5`) — not a submodule. Citations into it drift with
@@ -256,3 +258,59 @@ keeping straight when reading either one:
 
 `FynAppManifest.exposes` (`core/kernel/src/types.ts:329-337`) declares the string form, which
 is the one the kernel reads; `federation.json` is the only artifact that names build output.
+
+## Shared chunks — `_mf-share-surface_<key>-<hash>.js`
+
+A FynApp that provides a shared module emits one chunk per share key with this name. For
+example, `_mf-share-surface_esm-react-BeKV73vu.js`. The name comes from the virtual module id
+`\0mf-share-surface:<key>` (`constants.mts:15`). Rollup turns the `\0` and the `:` into `_`
+when it writes the file. The hash is base64url and can contain `-` and `_`, so
+`_mf-share-surface_esm-echarts--_-c3NjY.js` is the key `esm-echarts` plus the hash `-_-c3NjY`.
+
+### Why the chunk exists
+
+A shared chunk is a public API. Other FynApps, built separately, bind to it and read exports
+off it. Rollup doesn't know that. Left alone, it treats the chunk as internal and keeps only
+the exports this build's own code imports. A consumer that needs any other export reads
+`undefined` and crashes. Neither app's author can see this happening (FYM-282).
+
+So the plugin emits each share as an **entry chunk**, which rollup exports in full under real
+names. What it exports comes from a generated **surface module**, not from the one file the
+share key names. Consumers bind to deeper modules of the same package. Svelte components use
+`svelte/internal`, and preact hooks use preact's `options`. All of those must be in this one
+chunk.
+
+### How it's built
+
+All in `rollup-federation/rollup-plugin-federation/src/utils/shared-chunks.mts`:
+
+1. `emitSharedEntryChunks` runs from the container entry's `load` hook (`index.mts:458`). It
+   resolves each provided share and emits the surface module as an entry chunk. Consume-only
+   shares (`import: false`) and externals are skipped.
+2. `loadShareSurface` generates the surface module (`index.mts:439`). It waits for the module
+   graph to settle, then collects every JS module in the share's package directory. It
+   re-exports them **by name**, not with `export *`. Rollup silently drops a name that two
+   star exports both provide, such as `createRoot` in `esm-react-dom`. The module the share
+   key names wins such a collision, and a default export only ever comes from it.
+3. `makeShareChunks` adds a `manualChunks` rule (`index.mts:373`) that puts the whole package
+   and its surface in one chunk. Without it, rollup splits the modules this app uses from the
+   ones only the surface reaches. The registered chunk would then just re-export a second
+   chunk. Consumers would bind to that second chunk, miss the share, and load their own copy.
+   A singleton would quietly become two.
+
+### When a share gets no surface chunk
+
+A surface needs exactly one package directory to cover. Two cases fall back to emitting the
+share's resolved module directly, under rollup's usual chunk name:
+
+- a plugin's own virtual module, such as marko's `marko-browser-entry:...`, which has no
+  package
+- a share key backed by more than one copy of a package, which keeps one chunk per copy rather
+  than merging them into one wrong chunk
+
+### Who cares about the name
+
+Nothing at runtime depends on the prefix. The container maps share keys to chunk files
+itself. Tooling reads the name to tell share chunks apart from app chunks. That includes the
+federation inspector (`dev-tools/federation-inspector/src/core/collectors/federation.ts`) and
+the demo-server preload tests (`demo/demo-server/tests/shell-preload.test.ts`).
