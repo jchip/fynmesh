@@ -45,5 +45,8 @@
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-wrap-plugin": "^1.0.3",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "fynapp-react-lib": "^19.0.0"
   }
 }
