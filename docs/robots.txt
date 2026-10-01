@@ -1,0 +1,12 @@
+# FynMesh - Micro Frontend Framework
+# https://www.fynmesh.fyi
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.fynmesh.fyi/sitemap.xml
+
+# Disallow development/internal paths
+Disallow: /node_modules/
+Disallow: /*.map$

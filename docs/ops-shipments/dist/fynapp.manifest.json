@@ -1,0 +1,73 @@
+{
+  "name": "ops-shipments",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    },
+    "esm-ag-grid": {
+      "semver": "^35.0.0"
+    },
+    "esm-ag-grid-react": {
+      "semver": "^35.0.0"
+    },
+    "esm-ag-grid-enterprise": {
+      "semver": "^35.0.0"
+    },
+    "esm-echarts": {
+      "semver": "^6.0.0"
+    },
+    "fynops-ui-kit": {
+      "semver": "^1.0.0"
+    },
+    "fynops-data-core": {
+      "semver": "^1.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-ag-grid-lib": {
+      "semver": "^35.3.1",
+      "provides": [
+        "esm-ag-grid",
+        "esm-ag-grid-react"
+      ]
+    },
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    },
+    "fynops-charts-lib": {
+      "semver": "^6.1.0",
+      "provides": [
+        "esm-echarts"
+      ]
+    },
+    "fynops-data": {
+      "semver": "^1.0.0",
+      "provides": [
+        "fynops-data-core"
+      ]
+    },
+    "fynops-grid-lib": {
+      "semver": "^35.3.1",
+      "provides": [
+        "esm-ag-grid-enterprise"
+      ]
+    },
+    "fynops-ui": {
+      "semver": "^1.0.0",
+      "provides": [
+        "fynops-ui-kit"
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "fynops-shell",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-DPorE3if.js"
+      ]
+    },
+    "./middleware/fynops-shell": {
+      "path": "./src/middleware/fynops-shell.ts",
+      "chunks": [
+        "fynops-shell-ChDRMU2A.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-10-01T07:20:11.304Z",
+  "version": "1.0.0"
+}

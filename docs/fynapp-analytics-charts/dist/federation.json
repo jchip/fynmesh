@@ -1,0 +1,56 @@
+{
+  "name": "fynapp-analytics-charts",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./grid": {
+      "path": "./src/grid.tsx",
+      "chunks": [
+        "grid-hKW_kL_w.js"
+      ]
+    },
+    "./renderer": {
+      "path": "./src/renderer.tsx",
+      "chunks": [
+        "renderer-CIHB2xCu.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "analytics-core": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-10-01T07:20:15.377Z",
+  "version": "1.0.0",
+  "bundles": {
+    "startup-av5SQRGz.js": [
+      "grid-hKW_kL_w.js",
+      "renderer-CIHB2xCu.js"
+    ]
+  }
+}

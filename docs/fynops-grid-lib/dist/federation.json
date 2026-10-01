@@ -1,0 +1,60 @@
+{
+  "name": "fynops-grid-lib",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-ag-grid": {
+      "moduleIds": [
+        "esm-ag-grid"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^35.0.0"
+      },
+      "importers": [
+        {
+          "from": "node_modules/esm-ag-grid-enterprise/dist/ag-grid-enterprise.production.js",
+          "path": "esm-ag-grid"
+        }
+      ],
+      "versions": [
+        {
+          "version": "35.3.1",
+          "path": "esm-ag-grid"
+        }
+      ]
+    },
+    "esm-ag-grid-enterprise": {
+      "moduleIds": [
+        "node_modules/esm-ag-grid-enterprise/dist/ag-grid-enterprise.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-ag-grid-enterprise-DtL7NZrL.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^35.0.0",
+        "requiredVersion": {
+          "esm-ag-grid": "^35.0.0"
+        }
+      },
+      "importers": [
+        {
+          "from": "src/index.ts",
+          "path": "node_modules/esm-ag-grid-enterprise/dist/ag-grid-enterprise.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "35.3.1",
+          "path": "node_modules/esm-ag-grid-enterprise/dist/ag-grid-enterprise.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-01T07:20:17.434Z",
+  "version": "35.3.1"
+}

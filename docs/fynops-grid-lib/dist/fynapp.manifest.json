@@ -1,0 +1,27 @@
+{
+  "name": "fynops-grid-lib",
+  "version": "35.3.1",
+  "exposes": {},
+  "provide-shared": {
+    "esm-ag-grid-enterprise": {
+      "singleton": true,
+      "semver": "^35.0.0",
+      "requiredVersion": {
+        "esm-ag-grid": "^35.0.0"
+      }
+    }
+  },
+  "consume-shared": {
+    "esm-ag-grid": {
+      "semver": "^35.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-ag-grid-lib": {
+      "semver": "^35.3.1",
+      "provides": [
+        "esm-ag-grid"
+      ]
+    }
+  }
+}

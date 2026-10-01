@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynOps - A FynMesh Demo App</title>
+    
+    
+    
+    
+    <script>
+        (function () {
+            try {
+                if (!localStorage.getItem("fynops.session")) return;
+            } catch (e) {
+                return;
+            }
+            var route = location.hash.replace(/^#/, "").split("?")[0] || "/shipments";
+            ({"/shipments":[{"href":"/ops-shipments/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-shipments/dist/main-BpS-F7wz.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"},{"href":"/fynops-grid-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-grid-lib/dist/_mf-share-surface_esm-ag-grid-enterprise-DtL7NZrL.js","priority":"low"},{"href":"/fynops-charts-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-DTcoiWcc.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-react-CU5LtfaX.js","priority":"low"}],"/map":[{"href":"/ops-map/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-map/dist/main-Blf_VNsQ.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"}],"/analytics":[{"href":"/ops-analytics/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-analytics/dist/main-BNm_Dd-y.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"},{"href":"/fynops-charts-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-charts-lib/dist/_mf-share-surface_esm-echarts--_-c3NjY.js","priority":"low"}]}[route] || []).forEach(function (hint) {
+                var link = document.createElement("link");
+                link.rel = "preload";
+                link.as = "script";
+                link.href = hint.href;
+                if (hint.priority) link.fetchPriority = hint.priority;
+                document.head.appendChild(link);
+            });
+        })();
+    </script>
+    
+
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynOps, a FynMesh demo app: a logistics console built from ten FynApps. A shipments grid, a live fleet map and analytics load per route and share React, AG Grid and ECharts at runtime through Module Federation.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/fynops">
+    <meta property="og:title" content="FynOps - A FynMesh Demo App: Logistics Console Built from FynApps">
+    <meta property="og:description" content="A FynMesh demo app: a large logistics operations console composed from many independently deployed FynApps and shared module providers.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/fynops">
+    <meta name="twitter:title" content="FynOps - A FynMesh Demo App: Logistics Console Built from FynApps">
+    <meta name="twitter:description" content="A FynMesh demo app: a large logistics operations console composed from many independently deployed FynApps and shared module providers.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
+
+    <!-- Canonical URL -->
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/fynops">
+    
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "FynMesh",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "description": "Enterprise micro frontend framework for building scalable applications with Module Federation. Support for React, Vue, Preact, Solid, Svelte, and Marko.",
+        "url": "https://www.fynmesh.fyi/",
+        "author": {
+            "@type": "Organization",
+            "name": "FynMesh",
+            "url": "https://www.fynmesh.fyi/"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "keywords": "micro frontend, microfrontend, module federation, react, vue, preact, solid, svelte, marko, javascript framework, web framework, independent deployment, shared dependencies, enterprise architecture"
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/",
+        "description": "Enterprise micro frontend framework with Module Federation support"
+    }
+    </script>
+    
+
+    <!-- CSS Stylesheets -->
+    
+    <link rel="stylesheet" href="/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="/spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="/spectre.css/dist/spectre-icons.min.css">
+    
+    
+    
+    
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/fynapp-entry.js">
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/startup-nBIAwtiE.js">
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/_mf-share-surface_esm-react-dom-Bn8NSrK6.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/fynapp-entry.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/fynops-shell-ChDRMU2A.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/main-DPorE3if.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/shell-state-290Hxv29.js">
+    
+
+    
+
+    <script src="/system.min.js"></script>
+    <script src="/federation-js/dist/federation-js.min.js"></script>
+    <script src="/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+
+
+
+    
+    <script>
+        if (Federation.declareBundles) {
+            Federation.declareBundles({"startup-nBIAwtiE.js":["index.js","_mf-share-surface_esm-react-BiJXemGR.js"]}, "/fynapp-react-19/dist/");
+            Federation.declareBundles({"combo-DYiZRjrP.js":["index.js","main-DEwuPOOW.js","_mf-share-surface_fynops-data-core-CTLcAdnq.js"]}, "/fynops-data/dist/");
+            }
+    </script>
+    
+
+</head>
+<body class="" style="min-height: 100vh;">
+    
+    <div id="fynops-root">Loading FynOps, a demo app for FynMesh...</div>
+
+    
+    <script>
+        (async () => {
+            try {
+                /*
+                  Every FynApp resolves by name to /<name>/dist/. The React
+                  provider shows range-based resolution on purpose: one package
+                  name, fynapp-react-lib, ships as two versions, and the major in
+                  the consumer's range picks which one loads. Keep it that way.
+                */
+                fynMeshKernel.setRegistryResolver(async (name, range) => {
+                    const dir = name === "fynapp-react-lib"
+                        ? (/^[~^]?18(\.|$)/.test(range || "") ? "fynapp-react-18" : "fynapp-react-19")
+                        : name;
+                    const distBase = `/${dir}/dist/`;
+                    return { name, version: "0.0.0", url: `${distBase}fynapp.manifest.json`, distBase };
+                });
+
+                // Only the shell is named here. The kernel reads its manifest and
+                // loads React first; the shell then loads each feature by name.
+                await fynMeshKernel.loadFynAppsByName([{ name: "fynops-shell" }]);
+
+                // Phase 0 spikes: ?load=a,b,c loads each /<name>/dist in order.
+                const load = new URLSearchParams(location.search).get("load");
+                for (const name of load ? load.split(",") : []) {
+                    await fynMeshKernel.loadFynApp(`/${name}/dist`);
+                }
+            } catch (error) {
+                console.error("❌ Failed to load FynOps:", error);
+                document.getElementById("fynops-root").textContent =
+                    `FynOps failed to load: ${error.message}`;
+            }
+        })();
+    </script>
+
+</body>
+</html>

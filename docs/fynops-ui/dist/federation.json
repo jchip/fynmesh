@@ -1,0 +1,46 @@
+{
+  "name": "fynops-ui",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "fynops-ui-kit": {
+      "moduleIds": [
+        "node_modules/fynops-ui-kit/dist/index.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_fynops-ui-kit-DNezUToj.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^1.0.0",
+        "requiredVersion": {
+          "esm-react": "^19.0.0"
+        }
+      },
+      "importers": [
+        {
+          "from": "src/index.ts",
+          "path": "node_modules/fynops-ui-kit/dist/index.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "node_modules/fynops-ui-kit/dist/index.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-01T07:20:04.543Z",
+  "version": "1.0.0"
+}

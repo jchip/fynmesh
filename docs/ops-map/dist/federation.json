@@ -1,0 +1,81 @@
+{
+  "name": "ops-map",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-Blf_VNsQ.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "fynops-data-core": {
+      "moduleIds": [
+        "fynops-data-core"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/MapView.tsx",
+          "path": "fynops-data-core"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "fynops-data-core"
+        }
+      ]
+    },
+    "fynops-ui-kit": {
+      "moduleIds": [
+        "fynops-ui-kit"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/MapView.tsx",
+          "path": "fynops-ui-kit"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "fynops-ui-kit"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-01T07:20:20.504Z",
+  "version": "1.0.0"
+}

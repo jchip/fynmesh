@@ -1,0 +1,98 @@
+{
+  "name": "fynapp-analytics",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-xvRMGhTW.js"
+      ]
+    },
+    "./component": {
+      "path": "./src/component.tsx",
+      "chunks": [
+        "component-kXS9DRh0.js"
+      ]
+    },
+    "./header": {
+      "path": "./src/header.tsx",
+      "chunks": [
+        "header-BZSxLrXg.js"
+      ]
+    },
+    "./toolbar": {
+      "path": "./src/toolbar.tsx",
+      "chunks": [
+        "toolbar-ur-NRfXf.js"
+      ]
+    },
+    "./filters": {
+      "path": "./src/filters.tsx",
+      "chunks": [
+        "filters-DQzREOWJ.js"
+      ]
+    },
+    "./date-range": {
+      "path": "./src/date-range.tsx",
+      "chunks": [
+        "date-range-Bc-XsP_q.js"
+      ]
+    },
+    "./kpi-tile": {
+      "path": "./src/kpi-tile.tsx",
+      "chunks": [
+        "kpi-tile-B4O9T3E4.js"
+      ]
+    },
+    "./format-badge": {
+      "path": "./src/format-badge.tsx",
+      "chunks": [
+        "format-badge-BUNV1qiC.js"
+      ]
+    },
+    "./empty-state": {
+      "path": "./src/empty-state.tsx",
+      "chunks": [
+        "empty-state-r-_UibJX.js"
+      ]
+    },
+    "./perf-panel": {
+      "path": "./src/perf-panel.tsx",
+      "chunks": [
+        "perf-panel-DZhokMnq.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "analytics-core": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-10-01T07:20:18.616Z",
+  "version": "1.0.0"
+}

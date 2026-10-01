@@ -1,0 +1,62 @@
+{
+  "name": "ops-analytics",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-BNm_Dd-y.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-echarts": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^6.0.0"
+      }
+    },
+    "fynops-ui-kit": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      }
+    },
+    "fynops-data-core": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-10-01T07:20:17.566Z",
+  "version": "1.0.0"
+}

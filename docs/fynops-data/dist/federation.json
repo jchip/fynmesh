@@ -1,0 +1,52 @@
+{
+  "name": "fynops-data",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-DEwuPOOW.js"
+      ]
+    }
+  },
+  "shared": {
+    "fynops-data-core": {
+      "moduleIds": [
+        "node_modules/fynops-data-core/dist/index.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_fynops-data-core-CTLcAdnq.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^1.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/index.ts",
+          "path": "node_modules/fynops-data-core/dist/index.js"
+        },
+        {
+          "from": "src/main.ts",
+          "path": "node_modules/fynops-data-core/dist/index.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "node_modules/fynops-data-core/dist/index.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-01T07:20:04.784Z",
+  "version": "1.0.0",
+  "bundles": {
+    "combo-DYiZRjrP.js": [
+      "index.js",
+      "main-DEwuPOOW.js",
+      "_mf-share-surface_fynops-data-core-CTLcAdnq.js"
+    ]
+  }
+}

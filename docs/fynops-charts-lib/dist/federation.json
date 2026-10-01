@@ -1,0 +1,34 @@
+{
+  "name": "fynops-charts-lib",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {},
+  "shared": {
+    "esm-echarts": {
+      "moduleIds": [
+        "node_modules/esm-echarts/dist/echarts.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-echarts--_-c3NjY.js"
+      ],
+      "config": {
+        "singleton": true,
+        "semver": "^6.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/index.ts",
+          "path": "node_modules/esm-echarts/dist/echarts.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "6.1.0",
+          "path": "node_modules/esm-echarts/dist/echarts.production.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-01T07:20:07.307Z",
+  "version": "6.1.0"
+}

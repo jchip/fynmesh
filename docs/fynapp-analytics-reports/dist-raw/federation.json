@@ -1,0 +1,44 @@
+{
+  "name": "fynapp-analytics-reports",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./table": {
+      "path": "./src/table.tsx",
+      "chunks": [
+        "table-D5Y0GqcG.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "esm-react-dom": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^19.0.0"
+      }
+    },
+    "analytics-core": {
+      "moduleIds": [],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": true,
+        "semver": "^1.0.0"
+      }
+    }
+  },
+  "timestamp": "2026-10-01T07:20:13.999Z",
+  "version": "1.0.0"
+}

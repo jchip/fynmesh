@@ -1,0 +1,11 @@
+{
+  "name": "fynops-charts-lib",
+  "version": "6.1.0",
+  "exposes": {},
+  "provide-shared": {
+    "esm-echarts": {
+      "singleton": true,
+      "semver": "^6.0.0"
+    }
+  }
+}

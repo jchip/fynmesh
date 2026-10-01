@@ -1,0 +1,11 @@
+{
+  "name": "fynapp-analytics-lib",
+  "version": "1.0.0",
+  "exposes": {},
+  "provide-shared": {
+    "analytics-core": {
+      "singleton": true,
+      "semver": "^1.0.0"
+    }
+  }
+}
