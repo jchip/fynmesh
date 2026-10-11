@@ -47,19 +47,19 @@
     "directory": "dev-tools/federation-inspector"
   },
   "devDependencies": {
-    "@fynjs/run": "^1.0.0",
+    "@fynjs/run": "^1.1.11",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^24.0.10",
-    "rollup": "^4.44.2",
+    "@types/node": "^26.6.5",
+    "rollup": "^4.64.5",
     "rollup-plugin-esbuild": "^6.2.1",
     "terser": "^5.43.1",
-    "typescript": "^5.8.3",
-    "vite": "^7.3.6",
-    "vitest": "^5.0.1"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
-    "@preact/signals": "^2.0.0",
+    "@preact/signals": "^2.11.3",
     "elkjs": "^0.12.0",
     "preact": "^10.27.0"
   }

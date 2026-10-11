@@ -80,16 +80,16 @@ describe("release gate configuration", () => {
   // cli-args 1.0.0 counted an option's separated value as a command argument
   // while pre-scanning argv, so `create-fynapp --name x --framework vue` died
   // with "No command given" and FYM-256 reverted to nix-clap 2.0.0. FJM-137
-  // fixed the pre-scan in 1.0.1, so that is the floor. Check the resolved copy
+  // fixed the pre-scan in 1.0.1. 1.2.0 is the verified release. Check the resolved copy
   // too, so a lockfile that drifted below it fails here rather than only in a
   // consumer's install.
   it("requires the @fynjs/cli-args release whose defaultCommand survives option values", () => {
-    expect(pkg.dependencies["@fynjs/cli-args"]).toBe("^1.0.1");
+    expect(pkg.dependencies["@fynjs/cli-args"]).toBe("^1.2.0");
     expect(pkg.dependencies["nix-clap"]).toBeUndefined();
     const resolved = readJson(require.resolve("@fynjs/cli-args/package.json")).version;
     const [major, minor, patch] = resolved.split(".").map(Number);
-    expect([major, minor, patch]).toEqual([1, 0, expect.any(Number)]);
-    expect(patch).toBeGreaterThanOrEqual(1);
+    expect([major, minor, patch]).toEqual([1, 2, expect.any(Number)]);
+    expect(patch).toBeGreaterThanOrEqual(0);
   });
 
   it("uses fyn for the global install script", () => {

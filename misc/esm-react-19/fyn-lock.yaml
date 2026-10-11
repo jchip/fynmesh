@@ -3,16 +3,16 @@ $fyn:
  flattenTop: true
 $pkg:
  dev:
-  prettier: ^3.6.2
+  prettier: ^3.9.10
   react: ^19.2.8
 prettier:
- _latest: 3.9.6
+ _latest: 3.9.10
  _:
-  ^3.6.2: 3.9.6
- 3.9.6:
+  ^3.9.10: 3.9.10
+ 3.9.10:
   top: 1
-  $: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==
-  _: 'https://registry.npmjs.org/prettier/-/prettier-3.9.6.tgz'
+  $: sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==
+  _: 'https://registry.npmjs.org/prettier/-/prettier-3.9.10.tgz'
 react:
  _latest: 19.2.8
  _:

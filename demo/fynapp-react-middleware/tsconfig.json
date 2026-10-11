@@ -6,7 +6,7 @@
       "ES2018",
       "DOM"
     ],
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",

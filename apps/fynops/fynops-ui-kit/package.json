@@ -20,7 +20,7 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
+    "typescript": "^7.0.2",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5"
   }

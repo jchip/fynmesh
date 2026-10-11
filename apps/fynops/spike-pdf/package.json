@@ -14,7 +14,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "pdfjs-dist": "^6.3.289",
+    "pdfjs-dist": "^6.4.299",
     "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
@@ -22,15 +22,15 @@
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^24.0.10",
+    "@types/node": "^26.6.5",
     "create-fynapp": "^1.1.7",
-    "esbuild": "^0.25.12",
-    "postcss": "^8.5.28",
-    "rollup": "^4.63.3",
+    "esbuild": "^0.28.2",
+    "postcss": "^8.5.29",
+    "rollup": "^4.64.5",
     "rollup-plugin-esbuild": "^6.2.1",
     "rollup-plugin-federation": "^1.1.2",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-wrap-plugin": "^1.0.0",
-    "typescript": "^5.2.2"
+    "typescript": "^7.0.2"
   }
 }

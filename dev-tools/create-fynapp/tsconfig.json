@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "lib": [
       "es2022"
     ],
@@ -17,6 +18,7 @@
     ],
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
+    "strict": false,
     "alwaysStrict": true,
     "strictFunctionTypes": true,
     "skipLibCheck": true,

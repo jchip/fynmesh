@@ -111,7 +111,7 @@ export async function promptForMissingInfo(args: any): Promise<AppConfig> {
     }
 
     // Get answers to questions
-    const answers = questions.length > 0 ? await inquirer.prompt(questions) : {};
+    const answers = questions.length > 0 ? await inquirer.prompt(questions) : ({} as any);
 
     // Combine command line args with prompted answers
     const chosenFramework =
