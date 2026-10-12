@@ -5,8 +5,8 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # 3am US Pacific (PDT); GitHub cron is UTC, so this is 2am during PST
-    - cron: "17 10 * * *"
+    # 12:23am US Pacific (PDT); GitHub cron is UTC, so this is 11:23pm during PST
+    - cron: "23 7 * * *"
 
 jobs:
   test:
