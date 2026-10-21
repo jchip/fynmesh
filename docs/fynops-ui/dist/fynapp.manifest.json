@@ -1,0 +1,19 @@
+{
+  "name": "fynops-ui",
+  "version": "1.0.0",
+  "exposes": {},
+  "provide-shared": {
+    "fynops-ui-kit": {
+      "singleton": true,
+      "semver": "^1.0.0",
+      "requiredVersion": {
+        "esm-react": "^19.0.0"
+      }
+    }
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    }
+  }
+}

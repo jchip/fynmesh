@@ -1,0 +1,72 @@
+{
+  "esm-react": {
+    "options": {
+      "import": false,
+      "singleton": false,
+      "semver": "^19.0.0"
+    },
+    "byImporters": {
+      "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware": {
+        "_key": "esm-react",
+        "importerDir": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+        "allImportees": [
+          {
+            "id": "esm-react",
+            "importer": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+            "resolveOptions": {
+              "attributes": {},
+              "custom": {},
+              "importerAttributes": {},
+              "isEntry": false
+            }
+          }
+        ],
+        "importee": {
+          "id": "esm-react",
+          "importer": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+          "resolveOptions": {
+            "attributes": {},
+            "custom": {},
+            "importerAttributes": {},
+            "isEntry": false
+          }
+        }
+      }
+    }
+  },
+  "esm-react-dom": {
+    "options": {
+      "import": false,
+      "singleton": false,
+      "semver": "^19.0.0"
+    },
+    "byImporters": {
+      "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware": {
+        "_key": "esm-react-dom",
+        "importerDir": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware",
+        "allImportees": [
+          {
+            "id": "esm-react-dom",
+            "importer": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+            "resolveOptions": {
+              "attributes": {},
+              "custom": {},
+              "importerAttributes": {},
+              "isEntry": false
+            }
+          }
+        ],
+        "importee": {
+          "id": "esm-react-dom",
+          "importer": "/Users/joel.chen/dev/fynmesh/demo/fynapp-shell-mw/src/middleware/shell-layout.ts",
+          "resolveOptions": {
+            "attributes": {},
+            "custom": {},
+            "importerAttributes": {},
+            "isEntry": false
+          }
+        }
+      }
+    }
+  }
+}

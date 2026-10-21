@@ -1,0 +1,62 @@
+{
+  "name": "fynapp-analytics",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./component": "./src/component.tsx",
+    "./header": "./src/header.tsx",
+    "./toolbar": "./src/toolbar.tsx",
+    "./filters": "./src/filters.tsx",
+    "./date-range": "./src/date-range.tsx",
+    "./kpi-tile": "./src/kpi-tile.tsx",
+    "./format-badge": "./src/format-badge.tsx",
+    "./empty-state": "./src/empty-state.tsx",
+    "./perf-panel": "./src/perf-panel.tsx"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    },
+    "analytics-core": {
+      "semver": "^1.0.0"
+    }
+  },
+  "import-exposed": {
+    "fynapp-analytics-charts": {
+      "grid": {
+        "semver": "^1.0.0",
+        "sites": [
+          "src/component.tsx"
+        ],
+        "type": "module"
+      }
+    },
+    "fynapp-analytics-reports": {
+      "table": {
+        "semver": "^1.0.0",
+        "sites": [
+          "src/component.tsx"
+        ],
+        "type": "module"
+      }
+    }
+  },
+  "shared-providers": {
+    "fynapp-analytics-lib": {
+      "semver": "^1.0.0",
+      "provides": [
+        "analytics-core"
+      ]
+    },
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}

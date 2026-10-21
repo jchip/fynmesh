@@ -1,0 +1,34 @@
+{
+  "name": "fynapp-analytics-charts",
+  "version": "1.0.0",
+  "exposes": {
+    "./grid": "./src/grid.tsx",
+    "./renderer": "./src/renderer.tsx"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    },
+    "analytics-core": {
+      "semver": "^1.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-analytics-lib": {
+      "semver": "^1.0.0",
+      "provides": [
+        "analytics-core"
+      ]
+    },
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}
