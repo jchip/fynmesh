@@ -18,8 +18,9 @@ import { defineConfig } from "rollup";
 
 // amd-bridge.json is the one place that says which libs and versions legacy AMD code gets.
 type Mapping = {
-  provider: { name: string; semver: string };
-  modules: Record<string, { share: string; semver: string }>;
+  /** provider FynApp name -> semver range */
+  providers: Record<string, string>;
+  modules: Record<string, { share: string; semver: string; provider: string }>;
 };
 // AMD_BRIDGE=<variant> builds amd-bridge.<variant>.json into dist-<variant>/ (the demo's version switch).
 const variant = process.env.AMD_BRIDGE;
@@ -46,13 +47,22 @@ const shared = Object.fromEntries(
   Object.values(mapping.modules).map((m) => [m.share, { import: false, singleton: false, semver: m.semver }]),
 );
 
-// The provider comes from the mapping, not from package.json devDependencies.
+// The providers come from the mapping, not from package.json devDependencies.
+const sharedProviders = Object.fromEntries(
+  Object.entries(mapping.providers).map(([name, semver]) => [
+    name,
+    {
+      semver,
+      provides: Object.values(mapping.modules)
+        .filter((m) => m.provider === name)
+        .map((m) => m.share),
+    },
+  ]),
+);
 const enrich = createEnrichManifest();
 const enrichManifest = async (...args: Parameters<typeof enrich>) => {
   const manifest = await enrich(...args);
-  manifest["shared-providers"] = {
-    [mapping.provider.name]: { semver: mapping.provider.semver, provides: Object.keys(shared) },
-  };
+  manifest["shared-providers"] = sharedProviders;
   return manifest;
 };
 

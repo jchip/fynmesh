@@ -86,7 +86,7 @@ A run of the demo page records:
 ```
 amd.bridge  3ms  fynapp-amd-bridge ok
 amd.module  4ms  react      bridge  deps []
-amd.module  5ms  ui-kit     legacy  deps [react]                      .../dist/ui-kit.js
+amd.module  9ms  ui-kit     bridge  deps []
 amd.module 10ms  react-dom  bridge  deps []
 amd.module 16ms  widget-a   legacy  deps [react, react-dom, ui-kit]   .../dist/widget-a.js
 amd.module 16ms  widget-b   legacy  deps [react, react-dom, ui-kit]   .../dist/widget-b.js
@@ -104,10 +104,14 @@ what version:
 
 ```json
 {
-  "provider": { "name": "fynapp-react-lib", "semver": "^19.0.0" },
+  "providers": {
+    "fynapp-react-lib": "^19.0.0",
+    "fynapp-ui-kit": "^1.4.0"
+  },
   "modules": {
-    "react": { "share": "esm-react", "semver": "^19.0.0" },
-    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0" }
+    "react": { "share": "esm-react", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
+    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
+    "ui-kit": { "share": "ui-kit", "semver": "^1.4.0", "provider": "fynapp-ui-kit" }
   }
 }
 ```
@@ -117,9 +121,26 @@ The bridge's `rollup.config.ts` reads it and derives three things:
 - **`exposes`**: `./amd/<id>` per module, each from a generated file in
   `src/amd-gen/` that does `import * as ns from "<share>"; export { ns }`.
 - **`shared`**: one consume-only entry per share, with its semver.
-- **`shared-providers` in the manifest**: the kernel uses it to load the provider
-  FynApp. This overrides create-fynapp's usual detection from `devDependencies`,
-  so the bridge has no React packages installed.
+- **`shared-providers` in the manifest**: one entry per provider, listing the
+  shares it provides. The kernel uses it to load the provider FynApps. This
+  overrides create-fynapp's usual detection from `devDependencies`, so the
+  bridge has no lib packages installed.
+
+### A federated UI kit
+
+`fynapp-ui-kit` builds the same `legacy-components/src/ui-kit.jsx` the webpack
+build bundles, and shares it as `ui-kit`. Its `react` import is aliased to the
+`esm-react` share, so the UI kit renders with the same React as the widgets.
+Its `shared-providers` names the React provider for its build variant, the
+same way the bridge does. Its share chunk carries the version from its own
+`package.json`, 1.4.0.
+
+The UI kit has to run on the one React the legacy page runs. So it builds two
+variants, like the bridge: `dist/` on React `^19` and `dist-react18/` on `^18`
+(`UI_KIT_REACT=18`).
+
+A shared module that re-exports with `export * from` builds an empty share
+chunk with no error. `src/index.js` names its exports instead.
 
 To change what legacy code gets, edit the mapping and rebuild only the bridge.
 Verified: switching `^19.0.0` to `^18.0.0` moves the unchanged page from React
@@ -141,8 +162,10 @@ packages are served flat as `/<package>/`, like every other FynApp. Same webpack
 bundles throughout: `ui-kit` and three team widgets, built against React 18.3.1.
 
 - **Version switch.** `?source=umd` uses the UMD files through RequireJS
-  `paths`. `?source=react18` and `?source=react19` use the bridge built from
-  `amd-bridge.react18.json` or `amd-bridge.json`. One version per page load.
+  `paths`, with the webpack-built `ui-kit.js`. `?source=react18` and
+  `?source=react19` use the bridge built from `amd-bridge.react18.json` or
+  `amd-bridge.json`, and take `ui-kit` from the matching `fynapp-ui-kit`
+  variant. One version per page load.
 - **On-demand load.** Team C loads only on a button click, through
   `require(["widget-c"])`. Only `widget-c.js` is fetched; React is reused.
 - **FynApps alongside.** After the widgets mount, two ordinary FynApps load:
@@ -192,6 +215,7 @@ baseline) and `bridged.html` (add-on, React 19).
 | `demo/demo-server/templates/pages/legacy-amd.html` | the demo page, a site template              |
 | `demo-legacy-amd/legacy-components/`  | webpack 5 AMD build, UMD React 18 libs, test pages       |
 | `demo-legacy-amd/fynapp-amd-bridge/`  | bridge: `amd-bridge.json` and the generator in `rollup.config.ts` |
+| `demo-legacy-amd/fynapp-ui-kit/`      | the legacy ui-kit source built as a FynApp that shares `ui-kit` |
 | `demo-legacy-amd/fynapp-react1[89]-user/` | the two plain FynApps on the demo page               |
 | `demo-legacy-amd/kernel-addon-amd/`   | `addon-amd.js`: the `requirejs.load` hook and metrics    |
 | `demo/demo-server/src/dev-proxy.ts`   | flat `/<package>` routes into `demo-legacy-amd/`         |

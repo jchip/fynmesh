@@ -138,8 +138,8 @@ export const PAGE_SEO = {
         pageName: "Legacy RequireJS widgets",
         crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
-            "Webpack AMD widgets loaded by RequireJS get React from Module Federation through " +
-            "a bridge FynApp, with no rebuild, and share it with FynApps on the same page.",
+            "Webpack AMD widgets loaded by RequireJS get React and their UI kit from Module " +
+            "Federation through a bridge FynApp, with no rebuild, and share React with FynApps.",
     },
     docs: {
         canonicalPath: "docs",

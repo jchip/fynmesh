@@ -75,6 +75,10 @@ startDevProxy([
     { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-amd-bridge") },
   ],
   [
+    { path: "/fynapp-ui-kit" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-ui-kit") },
+  ],
+  [
     { path: "/fynapp-react19-user" },
     { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-react19-user") },
   ],

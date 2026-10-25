@@ -641,10 +641,11 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 "ops-map",
                 "ops-analytics",
             ].map(name => ({ name, basePath: path.join(__dirname, "../../../apps/fynops") })),
-            // Legacy AMD demo, flat like FynOps. The bridge's dist-react18 backs
-            // the page's React 18 switch, and public/libs holds RequireJS and
-            // the UMD React files.
+            // Legacy AMD demo, flat like FynOps. The bridge's and ui-kit's
+            // dist-react18 back the page's React 18 switch, and public/libs holds
+            // RequireJS and the UMD React files.
             { name: "fynapp-amd-bridge", basePath: legacyAmdDir, extraDists: ["dist-react18"] },
+            { name: "fynapp-ui-kit", basePath: legacyAmdDir, extraDists: ["dist-react18"] },
             { name: "fynapp-react19-user", basePath: legacyAmdDir },
             { name: "fynapp-react18-user", basePath: legacyAmdDir },
             { name: "legacy-components", basePath: legacyAmdDir, extraDists: ["public/libs"] },

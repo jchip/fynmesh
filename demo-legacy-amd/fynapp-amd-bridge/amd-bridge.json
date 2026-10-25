@@ -1,10 +1,11 @@
 {
-  "provider": {
-    "name": "fynapp-react-lib",
-    "semver": "^19.0.0"
+  "providers": {
+    "fynapp-react-lib": "^19.0.0",
+    "fynapp-ui-kit": "^1.4.0"
   },
   "modules": {
-    "react": { "share": "esm-react", "semver": "^19.0.0" },
-    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0" }
+    "react": { "share": "esm-react", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
+    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
+    "ui-kit": { "share": "ui-kit", "semver": "^1.4.0", "provider": "fynapp-ui-kit" }
   }
 }

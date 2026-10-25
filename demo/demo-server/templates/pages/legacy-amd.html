@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {#
-  Legacy RequireJS widgets getting React from federation through the AMD bridge
+  Legacy RequireJS widgets getting React and ui-kit from federation through the AMD bridge
   (notes/LEGACY-AMD-BRIDGE.md). Its packages live in demo-legacy-amd/ and ship
   flat, as /<name>/..., like every other FynApp.
 #}
@@ -140,10 +140,11 @@
         <section class="panel">
           <h3>The bridge</h3>
           <p>
-            A bridge FynApp serves React from federation under the AMD ids the bundles already ask
-            for. A kernel add-on makes RequireJS fetch them through the bridge. Changing the legacy
-            React major is now an edit to the bridge's mapping file. New FynApps on the page share
-            that React or load their own major. Legacy components on one page still share one React.
+            A bridge FynApp serves React and the UI kit from federation, under the AMD ids the
+            bundles already ask for. A kernel add-on routes RequireJS through it. The UI kit is the
+            same source, built as a FynApp on federated React. Changing the legacy React major is an
+            edit to the bridge's mapping file. New FynApps share that React or load their own major.
+            Legacy components on one page still share one React.
           </p>
         </section>
       </div>
@@ -153,16 +154,16 @@
           <div class="flow-row">
             <span class="flow-label">Before</span>
             <span class="node legacy">Team A, B, C bundles<small>webpack AMD</small></span>
-            <span class="arrow">define("react") →</span>
-            <span class="node legacy">Common bundle<small>React 18, one version for all</small></span>
+            <span class="arrow">define("react", "ui-kit") →</span>
+            <span class="node legacy">Common bundle<small>React 18 and ui-kit, one copy for all</small></span>
           </div>
           <div class="flow-row">
             <span class="flow-label">With the bridge</span>
             <span class="node legacy">Team A, B, C bundles<small>same files, not rebuilt</small></span>
-            <span class="arrow">define("react") →</span>
-            <span class="node bridge">AMD add-on + bridge FynApp<small>mapping file picks the major</small></span>
             <span class="arrow">→</span>
-            <span class="node bridge">Federated React<small>18 or 19</small></span>
+            <span class="node bridge">AMD add-on + bridge FynApp<small>mapping file picks the versions</small></span>
+            <span class="arrow">→</span>
+            <span class="node bridge">Federated React and ui-kit<small>React 18 or 19, ui-kit 1.4.0</small></span>
             <span class="arrow">←</span>
             <span class="node inline">New FynApps<small>share it, or bring another major</small></span>
           </div>
@@ -171,7 +172,7 @@
 
       <h2 style="margin-top: 24px">Try it</h2>
       <ol class="try">
-        <li>Switch where React comes from. "Legacy UMD files" is the old setup. The bridge modes serve React 18 or React 19 from federation to the same bundles, which were built against React 18.</li>
+        <li>Switch where React comes from. "Legacy UMD files" is the old setup. The bridge modes serve React 18 or React 19 from federation to the same bundles, which were built against React 18. In those modes ui-kit comes from <code>fynapp-ui-kit</code>, not <code>legacy-components/dist/ui-kit.js</code>, as the Files fetched table shows.</li>
         <li>Load Team C. RequireJS fetches only <code>widget-c.js</code> and reuses the React already loaded.</li>
         <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched.</li>
       </ol>
@@ -261,8 +262,8 @@
       (function () {
         var SOURCES = {
           umd: "The old setup: RequireJS loads React 18 from UMD files. No federation.",
-          react18: "The bridge serves React 18 from federation (amd-bridge.react18.json).",
-          react19: "The bridge serves React 19 from federation (amd-bridge.json).",
+          react18: "The bridge serves React 18 and ui-kit from federation (amd-bridge.react18.json).",
+          react19: "The bridge serves React 19 and ui-kit from federation (amd-bridge.json).",
         };
         var source = new URLSearchParams(location.search).get("source");
         if (!SOURCES[source]) source = "react19";
@@ -291,6 +292,7 @@
           [/legacy-components\/public\/libs\/react/, "UMD lib"],
           [/fynapp-amd-bridge\//, "bridge"],
           [/fynapp-react-1[89]\//, "React provider"],
+          [/fynapp-ui-kit\//, "ui-kit provider"],
           [/fynapp-react1[89]-user\//, "FynApp"],
         ];
 
@@ -418,6 +420,7 @@
           "fynapp-amd-bridge": ["{{pathPrefix}}fynapp-amd-bridge/" + (source === "react18" ? "dist-react18/" : "dist/"), "1.0.0"],
           "fynapp-react19-user": ["{{pathPrefix}}fynapp-react19-user/dist/", "1.0.0"],
           "fynapp-react18-user": ["{{pathPrefix}}fynapp-react18-user/dist/", "1.0.0"],
+          "fynapp-ui-kit": ["{{pathPrefix}}fynapp-ui-kit/" + (source === "react18" ? "dist-react18/" : "dist/"), "1.4.0"],
           "fynapp-react-lib@^18.0.0": ["{{pathPrefix}}fynapp-react-18/dist/", "18.3.0"],
           "fynapp-react-lib@^19.0.0": ["{{pathPrefix}}fynapp-react-19/dist/", "19.2.8"],
         };
