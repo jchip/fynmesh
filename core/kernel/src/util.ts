@@ -1,4 +1,4 @@
-import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, FynMeshKernel, MiddlewareInfo, GetMiddlewareFn } from "./types";
+import type { FynApp, FynUnit, FynAppMiddlewareReg, FynAppMiddlewareCallContext, FynUnitRuntime, MiddlewareKernel, MiddlewareInfo, GetMiddlewareFn } from "./types";
 
 /** Prefix for middleware expose modules (e.g., "./middleware/design-tokens") */
 export const MIDDLEWARE_EXPOSE_PREFIX = "./middleware";
@@ -72,7 +72,7 @@ export function createMiddlewareCallContext(
   fynUnit: FynUnit,
   fynApp: FynApp,
   runtime: FynUnitRuntime,
-  kernel: FynMeshKernel,
+  kernel: MiddlewareKernel,
   config?: any,
   status?: string,
   /** Overrides the identity taken from `mwReg` — the "-FYNAPP_MIDDLEWARE" string
@@ -110,7 +110,7 @@ export async function executeMiddlewareOverride(
   fynUnit: FynUnit,
   fynApp: FynApp,
   runtime: FynUnitRuntime,
-  kernel: FynMeshKernel
+  kernel: MiddlewareKernel
 ): Promise<void> {
   console.debug(`🎭 Middleware ${executionOverride.mw.name} is overriding execution for ${fynApp.name}`);
 
@@ -149,7 +149,7 @@ export async function parseMiddlewareString(
   config: unknown,
   fynUnit: FynUnit,
   fynApp: FynApp,
-  kernel: FynMeshKernel,
+  kernel: MiddlewareKernel,
   runtime: FynUnitRuntime,
   getMiddleware: GetMiddlewareFn,
   loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>

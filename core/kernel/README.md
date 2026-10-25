@@ -162,6 +162,46 @@ export const main = {};                        // No execute method
 export const main = { run() {} };              // Wrong method name
 ```
 
+## Bundles and Add-ons
+
+The core kernel loads, orders and bootstraps FynApps. Everything else is an add-on.
+
+| Add-on | Adds |
+| --- | --- |
+| middleware | `registerMiddleware`, `getMiddleware`, `getMiddlewareRegistry`, `signalMiddlewareReady`, auto-apply, execution overrides |
+| bus | `kernel.bus` and per-app `runtime.bus` |
+| telemetry | `kernel.setTelemetry(config)` |
+| dev-overlay | an on-page panel for bootstrap failures (dev only) |
+
+Browser bundles in `dist/`:
+
+| File | Contents |
+| --- | --- |
+| `fynmesh-browser-kernel.{dev,min}.js` | core and every add-on; the dev one also has the overlay |
+| `fynmesh-kernel-core.{dev,min}.js` | core only |
+| `fynmesh-kernel-middleware.{dev,min}.js` | middleware add-on |
+| `fynmesh-kernel-bus.{dev,min}.js` | bus add-on |
+| `fynmesh-kernel-telemetry.{dev,min}.js` | telemetry add-on |
+| `fynmesh-kernel-dev-overlay.dev.js` | dev overlay add-on |
+
+Load core first. Each add-on installs itself into `globalThis.fynMeshKernel` when it runs, and throws if core is missing.
+Order among add-ons does not matter, and loading one twice is harmless.
+
+```html
+<script src="fynmesh-kernel-core.min.js"></script>
+<script src="fynmesh-kernel-middleware.min.js"></script>
+<script src="fynmesh-kernel-bus.min.js"></script>
+```
+
+To ship one file, concatenate them with core first:
+
+```sh
+cat fynmesh-kernel-core.min.js fynmesh-kernel-middleware.min.js fynmesh-kernel-bus.min.js > kernel.js
+```
+
+Without the middleware add-on, a FynUnit runs as plain `initialize` then `execute`.
+A unit that declares middleware gets a console warning.
+
 ## Usage
 
 ### Basic Kernel Setup

@@ -231,15 +231,16 @@ describe("Telemetry Capture Points", () => {
     });
 
     it("should capture 'dependency.not_found' error when package not found", async () => {
-      const result = await loader.loadMiddlewareFromDependency(
-        "missing-package",
-        "middleware/test",
-        new FynAppRegistry() // empty registry
-      );
+      // loadMiddlewareFromDependency now lives in the middleware add-on
+      const transport = createMockTransport();
+      const kernel = createTestKernel({ telemetryConfig: { transport: transport.transport } });
+
+      const result = await kernel.loadMiddlewareFromDependency("missing-package", "middleware/test");
+      kernel.tel.flush();
 
       expect(result.success).toBe(false);
 
-      const notFoundErrors = findEntries(spy.entries, "dependency.not_found");
+      const notFoundErrors = findEntries(transport.batches.flat(), "dependency.not_found");
       expect(notFoundErrors).toHaveLength(1);
       expect(notFoundErrors[0].type).toBe("error");
       expect(notFoundErrors[0].data).toEqual({

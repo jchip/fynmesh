@@ -104,6 +104,21 @@ export function captureEvent(
 }
 
 /**
+ * Telemetry that forwards to whatever `sink()` returns at call time. Modules
+ * take their scopes when the kernel is built, and this lets those scopes follow
+ * a sink the telemetry add-on swaps in later.
+ */
+export function forwardTelemetry(sink: () => KernelTelemetry, prefix = ""): KernelTelemetry {
+  const named = (name: string) => (prefix ? `${prefix}.${name}` : name);
+  return {
+    capture: (entry) => sink().capture({ ...entry, name: named(entry.name) }),
+    capErr: (name, data, error) => sink().capErr(named(name), data, error),
+    scope: (sub) => forwardTelemetry(sink, named(sub)),
+    flush: () => sink().flush(),
+  };
+}
+
+/**
  * No-op telemetry instance for when telemetry is not configured.
  * All methods are silent no-ops.
  */

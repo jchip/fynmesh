@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { MiddlewareExecutor } from "../src/modules/middleware-executor.js";
-import { ModuleLoader } from "../src/modules/module-loader.js";
+import { createTestKernel } from "./fixtures/test-kernel";
 
 describe("MiddlewareExecutor degraded execution", () => {
   it("executes unit when middleware setup defers and deferOk=true, and does not re-execute on resume", async () => {
@@ -62,19 +62,22 @@ describe("MiddlewareExecutor degraded execution", () => {
   });
 });
 
-describe("ModuleLoader override execution context", () => {
+// Override handling lives in the middleware add-on's runUnit hook, ahead of loader.invokeFynUnit
+describe("Add-on override execution context", () => {
   it("provides kernel reference to override middleware context", async () => {
-    const loader = new ModuleLoader();
-
-    const fynApp: any = {
-      name: "test-app",
-      version: "1.0.0",
-      exposes: {},
-    };
+    const kernel = createTestKernel();
 
     const execute = vi.fn();
     const initialize = vi.fn();
     const fynUnit: any = { initialize, execute };
+
+    const fynApp: any = {
+      name: "test-app",
+      version: "1.0.0",
+      entry: { container: { name: "test-app", version: "1.0.0", $E: { "./main": "./main" } } },
+      exposes: { "./main": { main: fynUnit } },
+      middlewareContext: new Map(),
+    };
 
     // Create a middleware that captures the context to verify kernel is present
     let capturedContext: any = null;
@@ -98,34 +101,35 @@ describe("ModuleLoader override execution context", () => {
       mw: [],
     };
 
-    // Mock kernel object
-    const mockKernel: any = {
-      version: "1.0.0",
-      events: { on: vi.fn(), dispatchEvent: vi.fn() },
-    };
+    vi.spyOn(kernel.mwMgr, "getAutoApply").mockReturnValue(autoApply as any);
+    const invokeSpy = vi.spyOn(kernel.loader, "invokeFynUnit");
 
-    await loader.invokeFynUnit(fynUnit, fynApp, autoApply, mockKernel);
+    await kernel.bootstrapFynApp(fynApp);
 
     expect(overrideExecute).toHaveBeenCalledTimes(1);
     expect(capturedContext).not.toBeNull();
-    expect(capturedContext.kernel).toBe(mockKernel);
-    expect(capturedContext.kernel.version).toBe("1.0.0");
+    expect(capturedContext.kernel).toBe(kernel);
+    expect(capturedContext.kernel.version).toBe(kernel.version);
+    // The override is handled before the loader is ever called
+    expect(invokeSpy).not.toHaveBeenCalled();
     // FynUnit's execute should NOT have been called since middleware overrode it
     expect(execute).not.toHaveBeenCalled();
   });
 
   it("passes kernel to non-override execution path", async () => {
-    const loader = new ModuleLoader();
-
-    const fynApp: any = {
-      name: "test-app",
-      version: "1.0.0",
-      exposes: {},
-    };
+    const kernel = createTestKernel();
 
     const execute = vi.fn();
     const initialize = vi.fn();
     const fynUnit: any = { initialize, execute };
+
+    const fynApp: any = {
+      name: "test-app",
+      version: "1.0.0",
+      entry: { container: { name: "test-app", version: "1.0.0", $E: { "./main": "./main" } } },
+      exposes: { "./main": { main: fynUnit } },
+      middlewareContext: new Map(),
+    };
 
     // No override middleware
     const autoApply = {
@@ -133,11 +137,9 @@ describe("ModuleLoader override execution context", () => {
       mw: [],
     };
 
-    const mockKernel: any = {
-      version: "1.0.0",
-    };
+    vi.spyOn(kernel.mwMgr, "getAutoApply").mockReturnValue(autoApply as any);
 
-    await loader.invokeFynUnit(fynUnit, fynApp, autoApply, mockKernel);
+    await kernel.bootstrapFynApp(fynApp);
 
     // Normal execution should proceed
     expect(initialize).toHaveBeenCalledTimes(1);

@@ -49,9 +49,12 @@ describe("Resume path execution overrides", () => {
     return { fynApp, runtime, reg, cc, setup, apply };
   }
 
-  // Mirrors the "middleware ready" event detail consumed by handleMiddlewareReady.
-  const makeReadyEvent = (cc: any) =>
-    ({ detail: { name: cc.fynApp.name, status: "ready", cc, share: { shareKey: "abc" } } } as any);
+  // Fires MIDDLEWARE_READY, which the middleware add-on's listener resumes from.
+  // Event listeners are not awaited by dispatch, so let the resume loop settle.
+  const signalReady = async (kernel: any, cc: any) => {
+    await kernel.signalMiddlewareReady(cc, { name: cc.fynApp.name, share: { shareKey: "abc" } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
 
   it("applies a registered execution override when a deferred FynUnit resumes in 'full' mode", async () => {
     const kernel = createTestKernel();
@@ -79,7 +82,7 @@ describe("Resume path execution overrides", () => {
     expect((kernel.testDeferInvoke[0] as any).resumeMode).toBe("full");
 
     // Provider becomes ready -> kernel resume loop runs with runTime.autoApply.
-    await (kernel as any).handleMiddlewareReady(makeReadyEvent(cc));
+    await signalReady(kernel, cc);
 
     // The override takes over execution; the unit's own execute is skipped.
     expect(setup).toHaveBeenCalledTimes(2);
@@ -102,7 +105,7 @@ describe("Resume path execution overrides", () => {
     expect(first).toBe("defer");
     expect(execute).not.toHaveBeenCalled();
 
-    await (kernel as any).handleMiddlewareReady(makeReadyEvent(cc));
+    await signalReady(kernel, cc);
 
     // With no override, the resumed unit runs its own execute exactly once.
     expect(execute).toHaveBeenCalledTimes(1);

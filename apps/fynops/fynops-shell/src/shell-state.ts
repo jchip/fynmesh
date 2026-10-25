@@ -1,4 +1,4 @@
-import type { FynAppLoadEventDetail, FynMeshKernel } from "@fynmesh/kernel";
+import type { FynAppLoadEventDetail, MiddlewareKernel } from "@fynmesh/kernel";
 import type { FynOpsSession, FynOpsShellApi, FynOpsView, Selection } from "./api";
 
 /**
@@ -12,7 +12,7 @@ const SESSION_KEY = "fynops.session";
 const SELECTION_KEY = "fynops-selection";
 const VIEW_WAIT_MS = 10_000;
 
-const kernel = (): FynMeshKernel => (globalThis as any).fynMeshKernel;
+const kernel = (): MiddlewareKernel => (globalThis as any).fynMeshKernel;
 
 function readSession(): FynOpsSession | undefined {
   try {

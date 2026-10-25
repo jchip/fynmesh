@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { FynBusRoot, KERNEL_BUS_SOURCE } from "../src/fyn-bus.js";
 import { FynBusError, KernelErrorCode } from "../src/errors.js";
 import { FynMeshKernelCore } from "../src/kernel-core.js";
+import { allAddons } from "../src/addons/index.js";
 import type { FynApp } from "../src/types.js";
 import type { KernelTelemetry } from "../src/types.js";
 
@@ -432,6 +433,23 @@ describe("FynBus request/response", () => {
 
 describe("FynBus kernel integration", () => {
   class TestKernel extends FynMeshKernelCore {
+    // Set by the add-ons installed in the constructor
+    declare mwMgr: import("../src/modules/middleware-manager").MiddlewareManager;
+    declare middlewareExecutor: import("../src/modules/middleware-executor").MiddlewareExecutor;
+    declare busRoot: import("../src/fyn-bus").FynBusRoot;
+    declare bus: import("../src/fyn-bus").FynBus;
+    declare registerMiddleware: import("../src/types").MiddlewareKernelApi["registerMiddleware"];
+    declare getMiddleware: import("../src/types").MiddlewareKernelApi["getMiddleware"];
+    declare getMiddlewareRegistry: import("../src/types").MiddlewareKernelApi["getMiddlewareRegistry"];
+    declare signalMiddlewareReady: import("../src/types").MiddlewareKernelApi["signalMiddlewareReady"];
+    declare setTelemetry: import("../src/types").TelemetryKernelApi["setTelemetry"];
+    declare loadMiddlewareFromDependency: (packageName: string, middlewarePath: string) => Promise<any>;
+
+    constructor() {
+      super();
+      allAddons.forEach((addon) => this.use(addon));
+    }
+
     async loadFynApp(): Promise<FynApp | null> {
       return null;
     }

@@ -1,5 +1,9 @@
 import { createBrowserKernel } from "./browser-kernel.ts";
+import { allAddons } from "./addons/index.ts";
+
 /**
- * Global browser kernel instance attached to globalThis
+ * Global browser kernel with every add-on, attached to globalThis
  */
-(globalThis as any).fynMeshKernel = createBrowserKernel();
+const kernel = createBrowserKernel();
+allAddons.forEach((addon) => kernel.use(addon));
+(globalThis as any).fynMeshKernel = kernel;

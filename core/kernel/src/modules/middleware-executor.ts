@@ -9,7 +9,7 @@ import type {
   FynUnitRuntime,
   FynAppMiddlewareReg,
   FynAppMiddlewareCallContext,
-  FynMeshKernel,
+  MiddlewareKernel,
   MiddlewareUseMeta,
   KernelTelemetry,
   GetMiddlewareFn,
@@ -98,7 +98,7 @@ export interface MiddlewareExecutor {
   useMiddlewareOnFynUnit(
     fynUnit: FynUnit,
     fynApp: FynApp,
-    kernel: FynMeshKernel,
+    kernel: MiddlewareKernel,
     createRuntime: () => FynUnitRuntime,
     getMiddleware: GetMiddlewareFn,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
@@ -107,7 +107,7 @@ export interface MiddlewareExecutor {
   applyAutoScopeMiddlewares(
     fynApp: FynApp,
     fynUnit: FynUnit | undefined,
-    kernel: FynMeshKernel,
+    kernel: MiddlewareKernel,
     autoApply: { fynapp: FynAppMiddlewareReg[]; mw: FynAppMiddlewareReg[] } | undefined,
     createRuntime: () => FynUnitRuntime,
     signalReady?: (cc: FynAppMiddlewareCallContext, share?: any) => Promise<void>,
@@ -343,7 +343,7 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
     fynUnit: FynUnit,
     fynApp: FynApp,
     runtime: FynUnitRuntime,
-    kernel: FynMeshKernel,
+    kernel: MiddlewareKernel,
     autoApply?: {
       fynapp: FynAppMiddlewareReg[];
       mw: FynAppMiddlewareReg[];
@@ -479,7 +479,7 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
   const useMiddlewareOnFynUnit = async (
     fynUnit: FynUnit,
     fynApp: FynApp,
-    kernel: FynMeshKernel,
+    kernel: MiddlewareKernel,
     createRuntime: () => FynUnitRuntime,
     getMiddleware: GetMiddlewareFn,
     loadMiddlewareFromDependency?: (packageName: string, middlewarePath: string) => Promise<void>,
@@ -595,7 +595,7 @@ export const MiddlewareExecutor = function (telemetry?: KernelTelemetry): Middle
   const applyAutoScopeMiddlewares = async (
     fynApp: FynApp,
     fynUnit: FynUnit | undefined,
-    kernel: FynMeshKernel,
+    kernel: MiddlewareKernel,
     autoApply: {
       fynapp: FynAppMiddlewareReg[];
       mw: FynAppMiddlewareReg[];

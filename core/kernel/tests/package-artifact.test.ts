@@ -19,8 +19,7 @@ describe("published package artifact", () => {
     const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
 
     expect(pkg.exports["."].import).toBe("./dist/index.js");
-    expect(rollupConfig).toContain('input: "src/index.ts"');
-    expect(rollupConfig).toContain('file: "dist/index.js"');
+    expect(rollupConfig).toContain('esmBundle("src/index.ts", "dist/index.js")');
   });
 
   /*
@@ -44,9 +43,27 @@ describe("published package artifact", () => {
   it("keeps the development error overlay out of the production browser entry", () => {
     const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
 
-    expect(rollupConfig).toContain('input: "src/browser-dev.ts"');
-    expect(rollupConfig).toContain('file: "dist/fynmesh-browser-kernel.dev.js"');
-    expect(rollupConfig).toContain('input: "src/browser.ts"');
-    expect(rollupConfig).toContain('file: "dist/fynmesh-browser-kernel.min.js"');
+    expect(rollupConfig).toContain('browserBundle("src/browser-dev.ts", "fynmesh-browser-kernel", false)');
+    expect(rollupConfig).toContain('browserBundle("src/browser.ts", "fynmesh-browser-kernel", true)');
+    expect(rollupConfig).toContain("dist/${name}.${min ? \"min\" : \"dev\"}.js");
+    expect(fs.readFileSync(path.resolve("src/browser.ts"), "utf-8")).not.toContain("devOverlay");
+    // The overlay add-on ships as a dev bundle only
+    expect(rollupConfig).toContain(
+      'browserBundle("src/entries/addon-dev-overlay.ts", "fynmesh-kernel-dev-overlay", false)'
+    );
+    expect(rollupConfig).not.toMatch(/addon-dev-overlay\.ts", "[^"]+", true/);
+  });
+
+  it("builds core and each add-on as its own bundle", () => {
+    const rollupConfig = fs.readFileSync(path.resolve("rollup.config.ts"), "utf-8");
+
+    for (const [input, name] of [
+      ["src/browser-core.ts", "fynmesh-kernel-core"],
+      ["src/entries/addon-middleware.ts", "fynmesh-kernel-middleware"],
+      ["src/entries/addon-bus.ts", "fynmesh-kernel-bus"],
+      ["src/entries/addon-telemetry.ts", "fynmesh-kernel-telemetry"],
+    ]) {
+      expect(rollupConfig).toContain(`["${input}", "${name}"]`);
+    }
   });
 });

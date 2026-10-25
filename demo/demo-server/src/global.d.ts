@@ -1,8 +1,5 @@
-import { FynMeshKernel } from "@fynmesh/kernel";
-
-declare global {
-    var fynMeshKernel: FynMeshKernel;
-}
+// The kernel declares the global `fynMeshKernel`; importing it brings that in
+import type {} from "@fynmesh/kernel";
 
 // Type declarations for modules without types
 declare module "@jchip/redbird" {

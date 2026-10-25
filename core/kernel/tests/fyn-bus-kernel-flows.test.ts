@@ -15,6 +15,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { FynMeshKernelCore } from "../src/kernel-core.js";
+import { installAddons } from "./fixtures/test-kernel.js";
+import { allAddons } from "../src/addons/index.js";
 import { createNodeKernel } from "../src/node-kernel.js";
 import { createBrowserKernel } from "../src/browser-kernel.js";
 import { useMiddleware } from "../src/use-middleware.js";
@@ -36,6 +38,23 @@ import type {
 
 /** Minimal concrete kernel, mirroring kernel-core-integration.test.ts */
 class FlowTestKernel extends FynMeshKernelCore {
+  // Set by the add-ons installed in the constructor
+  declare mwMgr: import("../src/modules/middleware-manager").MiddlewareManager;
+  declare middlewareExecutor: import("../src/modules/middleware-executor").MiddlewareExecutor;
+  declare busRoot: import("../src/fyn-bus").FynBusRoot;
+  declare bus: import("../src/fyn-bus").FynBus;
+  declare registerMiddleware: import("../src/types").MiddlewareKernelApi["registerMiddleware"];
+  declare getMiddleware: import("../src/types").MiddlewareKernelApi["getMiddleware"];
+  declare getMiddlewareRegistry: import("../src/types").MiddlewareKernelApi["getMiddlewareRegistry"];
+  declare signalMiddlewareReady: import("../src/types").MiddlewareKernelApi["signalMiddlewareReady"];
+  declare setTelemetry: import("../src/types").TelemetryKernelApi["setTelemetry"];
+  declare loadMiddlewareFromDependency: (packageName: string, middlewarePath: string) => Promise<any>;
+
+  constructor() {
+    super();
+    allAddons.forEach((addon) => this.use(addon));
+  }
+
   async loadFynApp(): Promise<FynApp | null> {
     return null;
   }
@@ -400,7 +419,7 @@ describe("FynBus on concrete kernels", () => {
   it("NodeKernel: kernel.bus and per-app runtime buses work with correct source stamping", async () => {
     // NodeKernel.loadFynApp uses a real dynamic import(), so we drive the same
     // internal flow it performs after import: loadFynAppBasics + bootstrapFynApp.
-    const kernel = createNodeKernel();
+    const kernel = installAddons(createNodeKernel());
     const kernelSideSpy = vi.fn();
     const appSideSpy = vi.fn();
 
@@ -438,7 +457,7 @@ describe("FynBus on concrete kernels", () => {
     });
 
     it("two apps loaded via loadFynApp can message each other", async () => {
-      const kernel = createBrowserKernel();
+      const kernel = installAddons(createBrowserKernel());
       const received: any[] = [];
 
       mockFederation.import.mockResolvedValueOnce(
@@ -470,7 +489,7 @@ describe("FynBus on concrete kernels", () => {
     });
 
     it("loading the same app twice returns the existing instance without duplicating bus subscriptions", async () => {
-      const kernel = createBrowserKernel();
+      const kernel = installAddons(createBrowserKernel());
       const dupSpy = vi.fn();
       const execute = vi.fn().mockImplementation((rt: FynUnitRuntime) => {
         rt.bus!.on("dup-topic", dupSpy);

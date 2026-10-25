@@ -14,6 +14,7 @@ import { describe, it, expect, vi } from "vitest";
 import { FynBusRoot, KERNEL_BUS_SOURCE } from "../src/fyn-bus.js";
 import type { FynBus, FynBusMeta } from "../src/fyn-bus.js";
 import { FynMeshKernelCore } from "../src/kernel-core.js";
+import { allAddons } from "../src/addons/index.js";
 import type { FynApp } from "../src/types.js";
 
 /** Standard two-party setup: appA emits, appB (and friends) subscribe */
@@ -714,6 +715,23 @@ describe("FynBus pub/sub edge cases", () => {
 
   describe("kernel lifecycle event independence", () => {
     class TestKernel extends FynMeshKernelCore {
+      // Set by the add-ons installed in the constructor
+      declare mwMgr: import("../src/modules/middleware-manager").MiddlewareManager;
+      declare middlewareExecutor: import("../src/modules/middleware-executor").MiddlewareExecutor;
+      declare busRoot: import("../src/fyn-bus").FynBusRoot;
+      declare bus: import("../src/fyn-bus").FynBus;
+      declare registerMiddleware: import("../src/types").MiddlewareKernelApi["registerMiddleware"];
+      declare getMiddleware: import("../src/types").MiddlewareKernelApi["getMiddleware"];
+      declare getMiddlewareRegistry: import("../src/types").MiddlewareKernelApi["getMiddlewareRegistry"];
+      declare signalMiddlewareReady: import("../src/types").MiddlewareKernelApi["signalMiddlewareReady"];
+      declare setTelemetry: import("../src/types").TelemetryKernelApi["setTelemetry"];
+      declare loadMiddlewareFromDependency: (packageName: string, middlewarePath: string) => Promise<any>;
+
+      constructor() {
+        super();
+        allAddons.forEach((addon) => this.use(addon));
+      }
+
       async loadFynApp(): Promise<FynApp | null> {
         return null;
       }

@@ -7,7 +7,9 @@ export type FynAppEntry = FederationEntry & {
 
 // Declare the global fynMeshKernel
 declare global {
-  var fynMeshKernel: FynMeshKernel;
+  /** Each add-on's API is present only once that add-on is installed. */
+  var fynMeshKernel: FynMeshKernel &
+    Partial<MiddlewareKernelApi & BusKernelApi & TelemetryKernelApi>;
 }
 
 /**
@@ -206,7 +208,7 @@ export type FynAppMiddlewareCallContext = {
   fynApp: FynApp;
   reg: FynAppMiddlewareReg;
   runtime: FynUnitRuntime;
-  kernel: FynMeshKernel;
+  kernel: MiddlewareKernel;
   status: string;
 };
 
@@ -388,8 +390,6 @@ export type RegistryResolver = (
 export interface FynMeshKernel {
   /** emitter of kernel events */
   events: FynAppEventTarget;
-  /** inter-FynApp messaging bus (see notes/FYNBUS_DESIGN.md) */
-  bus: import("./fyn-bus").FynBus;
   /** kernel version */
   version: string;
   /**
@@ -405,28 +405,9 @@ export interface FynMeshKernel {
   shareScopeName: string;
 
   /**
-   * Register a middleware implementation (called automatically during FynApp loading)
+   * Install an add-on. Installing a name that is already installed is a no-op.
    */
-  registerMiddleware(meta: FynAppMiddlewareReg): void;
-
-  /**
-   * Get middleware by name and provider
-   * @param name - middleware name
-   * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
-   * @param opts - lookup options; `version` is the semver range the consumer
-   *   asked for. Omitting it resolves to the `default` version, as it always has.
-   */
-  getMiddleware(
-    name: string,
-    provider?: string,
-    opts?: MiddlewareLookupOptions
-  ): FynAppMiddlewareReg;
-
-  /**
-   * Get middleware state registry for global or region scope
-   * @param scope - either "global" or { region: string }
-   */
-  getMiddlewareRegistry(scope: "global" | { region: string }): import("./middleware-state-registry").MiddlewareStateRegistry;
+  use(addon: KernelAddon): void;
 
   /**
    * Load the basics of a fynapp federation entry into a FynApp object
@@ -521,15 +502,6 @@ export interface FynMeshKernel {
   emitAsync(event: CustomEvent): Promise<boolean>;
 
   /**
-   * Programmatic API for middlewares to signal readiness to the kernel without emitting DOM events.
-   * - Optionally pass a share object to be provided to waiting consumers via cc.runtime.share
-   */
-  signalMiddlewareReady(
-    cc: FynAppMiddlewareCallContext,
-    detail?: { name?: string; status?: string; share?: any }
-  ): Promise<void>;
-
-  /**
    * Set a resolver that maps {name, range} to a concrete manifest URL (and optional dist base)
    */
   setRegistryResolver(resolver: RegistryResolver): void;
@@ -561,6 +533,111 @@ export interface FynMeshKernel {
     options?: LoadFynAppsOptions
   ): Promise<void>;
 }
+
+/**
+ * A capability that plugs into the kernel: middleware, FynBus, telemetry, the
+ * dev overlay. Each ships as its own bundle that calls
+ * `globalThis.fynMeshKernel.use(addon)` when it runs.
+ */
+export interface KernelAddon {
+  name: string;
+  install(kernel: FynMeshKernel, hooks: KernelHooks): void;
+}
+
+/**
+ * What the kernel hands an add-on at install time. Add-ons reach the kernel
+ * only through this and the public kernel API, never through its internals:
+ * each bundle mangles property names on its own, so a name only survives the
+ * trip between bundles when it is declared here.
+ *
+ * The array members are hook lists. Add-ons push handlers; the kernel calls
+ * them in install order.
+ */
+export interface KernelHooks {
+  /** Root kernel telemetry. Scope it per add-on. */
+  tel: KernelTelemetry;
+  /** Swap where telemetry goes. Scopes taken earlier follow the swap. */
+  setTel(sink: KernelTelemetry): void;
+  /** The kernel's runtime data. */
+  rt(): FynMeshRuntimeData;
+  /** Look up a loaded FynApp by "name" or "name@version". */
+  findApp(name: string): FynApp | undefined;
+  /** Load an expose of a FynApp, record it, and run the `exposeLoaded` hooks. */
+  loadExpose(fynApp: FynApp, exposeName: string): Promise<import("./errors").Result<any, import("./errors").ModuleLoadError>>;
+  /** A FynUnit runtime for a FynApp, with the `runtime` hooks applied. */
+  runtimeFor(fynApp: FynApp): FynUnitRuntime;
+  /** Record that a FynApp provides or consumes something, for bootstrap ordering. */
+  providerMode(fynAppName: string, name: string, mode: "provider" | "consumer"): void;
+
+  /** `initRunTime` was called with new runtime data. */
+  init: Array<(data: FynMeshRuntimeData) => void>;
+  /** An expose module was loaded and recorded on the FynApp. */
+  exposeLoaded: Array<(fynApp: FynApp, exposeName: string, exposedModule: any) => void>;
+  /** A FynApp's config, setup and main are loaded; it is not yet in the registry. */
+  basicsLoaded: Array<(fynApp: FynApp) => Promise<void>>;
+  /** Bootstrap holds the lock and is about to run the main FynUnit. */
+  beforeMain: Array<(fynApp: FynApp) => Promise<void>>;
+  /**
+   * Run the main FynUnit. Return true when the handler ran it. The kernel runs
+   * the unit itself (initialize, then execute) when no handler does.
+   */
+  runUnit: Array<(fynApp: FynApp, fynUnit: FynUnit) => Promise<boolean>>;
+  /** A FynUnit runtime was created. Add fields to it. */
+  runtime: Array<(fynApp: FynApp, runtime: FynUnitRuntime) => void>;
+  /** A FynApp shut down or failed bootstrap. Drop what is held for it. */
+  appGone: Array<(fynApp: FynApp) => void>;
+}
+
+/** Kernel API added by the middleware add-on. */
+export interface MiddlewareKernelApi {
+  /**
+   * Register a middleware implementation (called automatically during FynApp loading)
+   */
+  registerMiddleware(meta: FynAppMiddlewareReg): void;
+
+  /**
+   * Get middleware by name and provider
+   * @param name - middleware name
+   * @param provider - provider FynApp name (optional, triggers fallback search if not provided)
+   * @param opts - lookup options; `version` is the semver range the consumer
+   *   asked for. Omitting it resolves to the `default` version, as it always has.
+   */
+  getMiddleware(
+    name: string,
+    provider?: string,
+    opts?: MiddlewareLookupOptions
+  ): FynAppMiddlewareReg;
+
+  /**
+   * Get middleware state registry for global or region scope
+   * @param scope - either "global" or { region: string }
+   */
+  getMiddlewareRegistry(scope: "global" | { region: string }): import("./middleware-state-registry").MiddlewareStateRegistry;
+
+  /**
+   * Programmatic API for middlewares to signal readiness to the kernel without emitting DOM events.
+   * - Optionally pass a share object to be provided to waiting consumers via cc.runtime.share
+   */
+  signalMiddlewareReady(
+    cc: FynAppMiddlewareCallContext,
+    detail?: { name?: string; status?: string; share?: any }
+  ): Promise<void>;
+}
+
+/** Kernel API added by the FynBus add-on. */
+export interface BusKernelApi {
+  /** inter-FynApp messaging bus (see notes/FYNBUS_DESIGN.md) */
+  bus: import("./fyn-bus").FynBus;
+}
+
+/** Kernel API added by the telemetry add-on. */
+export interface TelemetryKernelApi {
+  /** Start recording kernel telemetry into a ring buffer sent to `config.transport`. */
+  setTelemetry(config?: TelemetryConfig): void;
+}
+
+/** A kernel with the middleware add-on installed. */
+export type MiddlewareKernel = FynMeshKernel & MiddlewareKernelApi;
 
 /**
  * Preload priority levels for resource loading.

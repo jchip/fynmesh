@@ -1,5 +1,9 @@
 import { vi } from "vitest";
 import { FynMeshKernelCore } from "../../src/kernel-core";
+import { allAddons } from "../../src/addons/index";
+import type { MiddlewareManager } from "../../src/modules/middleware-manager";
+import type { MiddlewareExecutor } from "../../src/modules/middleware-executor";
+import type { FynBusRoot, FynBus } from "../../src/fyn-bus";
 import { TestBootstrapCoordinator } from "./test-bootstrap-coordinator";
 import { TestMiddlewareExecutor } from "./test-middleware-executor";
 import type {
@@ -13,6 +17,18 @@ import type {
  * Test implementation of the kernel for unit testing
  */
 export class TestKernel extends FynMeshKernelCore {
+  // Set by the add-ons installed in the constructor
+  declare mwMgr: MiddlewareManager;
+  declare middlewareExecutor: MiddlewareExecutor;
+  declare loadMiddlewareFromDependency: (packageName: string, middlewarePath: string) => Promise<any>;
+  declare busRoot: FynBusRoot;
+  declare bus: FynBus;
+  declare registerMiddleware: import("../../src/types").MiddlewareKernelApi["registerMiddleware"];
+  declare getMiddleware: import("../../src/types").MiddlewareKernelApi["getMiddleware"];
+  declare getMiddlewareRegistry: import("../../src/types").MiddlewareKernelApi["getMiddlewareRegistry"];
+  declare signalMiddlewareReady: import("../../src/types").MiddlewareKernelApi["signalMiddlewareReady"];
+  declare setTelemetry: import("../../src/types").TelemetryKernelApi["setTelemetry"];
+
   // Track calls to loadFynApp for testing
   public loadFynAppCalls: Array<{ baseUrl: string; loadId?: string }> = [];
 
@@ -21,7 +37,11 @@ export class TestKernel extends FynMeshKernelCore {
   public loadDelay = 0;
 
   constructor(telemetryConfig?: TelemetryConfig) {
-    super(telemetryConfig);
+    super();
+    allAddons.forEach((addon) => this.use(addon));
+    if (telemetryConfig) {
+      this.setTelemetry(telemetryConfig);
+    }
     // Replace with test fixtures that expose protected methods
     // Pass scoped tel so capture points are active in tests
     this.bootstrapCoordinator = new TestBootstrapCoordinator(this.events, undefined, this.tel.scope("bootstrap"));
@@ -125,10 +145,7 @@ export class TestKernel extends FynMeshKernelCore {
   }
 
   testLoadMiddlewareFromDependency(packageName: string, middlewarePath: string) {
-    // Pass the middleware scanner to delegate to MiddlewareManager
-    const scanner = (fa: any, en: string, em: any) =>
-      this.mwMgr.scanAndRegisterMiddleware(fa, en, em);
-    return this.loader.loadMiddlewareFromDependency(packageName, middlewarePath, this.fynAppRegistry, scanner);
+    return this.loadMiddlewareFromDependency(packageName, middlewarePath);
   }
 
   testBuildFynAppUrl(baseUrl: string, entryFile?: string) {
@@ -238,4 +255,12 @@ export function createMockManifestWithDeps(
     version,
     requires: deps.map(d => ({ name: d.name, range: d.range })),
   };
+}
+
+/**
+ * Install all add-ons (middleware, bus, telemetry) on a core kernel.
+ */
+export function installAddons<T extends FynMeshKernelCore>(kernel: T): T {
+  allAddons.forEach((addon) => kernel.use(addon));
+  return kernel;
 }

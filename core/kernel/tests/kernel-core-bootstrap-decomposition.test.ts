@@ -1,9 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FynMeshKernelCore } from '../src/kernel-core.js';
+import { allAddons } from '../src/addons/index.js';
 import type { FynApp, FynAppEntry, FynUnit } from '../src/types.js';
 
 // Concrete test kernel exposing private methods for testing
 class DecompTestKernel extends FynMeshKernelCore {
+  // Set by the add-ons installed in the constructor
+  declare mwMgr: import("../src/modules/middleware-manager").MiddlewareManager;
+  declare middlewareExecutor: import("../src/modules/middleware-executor").MiddlewareExecutor;
+  declare busRoot: import("../src/fyn-bus").FynBusRoot;
+  declare bus: import("../src/fyn-bus").FynBus;
+  declare registerMiddleware: import("../src/types").MiddlewareKernelApi["registerMiddleware"];
+  declare getMiddleware: import("../src/types").MiddlewareKernelApi["getMiddleware"];
+  declare getMiddlewareRegistry: import("../src/types").MiddlewareKernelApi["getMiddlewareRegistry"];
+  declare signalMiddlewareReady: import("../src/types").MiddlewareKernelApi["signalMiddlewareReady"];
+  declare setTelemetry: import("../src/types").TelemetryKernelApi["setTelemetry"];
+  declare loadMiddlewareFromDependency: (packageName: string, middlewarePath: string) => Promise<any>;
+
+  constructor() {
+    super();
+    allAddons.forEach((addon) => this.use(addon));
+  }
+
   async loadFynApp(baseUrl: string, loadId?: string): Promise<FynApp | null> {
     return null;
   }
@@ -13,16 +31,22 @@ class DecompTestKernel extends FynMeshKernelCore {
     return (this as any).checkBootstrapReadiness(fynApp);
   }
 
-  public testLoadMiddlewareModules(fynApp: FynApp): Promise<void> {
-    return (this as any).loadMiddlewareModules(fynApp);
+  // Middleware module loading is the middleware add-on's beforeMain hook
+  public async testLoadMiddlewareModules(fynApp: FynApp): Promise<void> {
+    for (const h of (this as any).hooks.beforeMain) {
+      await h(fynApp);
+    }
   }
 
-  public testPrepareMainExport(fynApp: FynApp): Promise<FynUnit | null> {
-    return (this as any).prepareMainExport(fynApp);
+  public testRunMainUnit(fynUnit: FynUnit, fynApp: FynApp): Promise<void> {
+    return (this as any).runMainUnit(fynApp, fynUnit);
   }
 
-  public testExecuteFynUnit(fynUnit: FynUnit, fynApp: FynApp): Promise<void> {
-    return (this as any).executeFynUnit(fynUnit, fynApp);
+  // Drives bootstrapFynApp past the readiness check
+  public async testBootstrapWithReadiness(fynApp: FynApp): Promise<void> {
+    vi.spyOn(this.bootstrapCoordinator, 'canBootstrap').mockReturnValue(true);
+    vi.spyOn(this.bootstrapCoordinator, 'acquireBootstrapLock').mockReturnValue(true);
+    return this.bootstrapFynApp(fynApp);
   }
 
   public testValidateFynUnit(mainExport: any, fynAppName: string): FynUnit {
@@ -133,56 +157,57 @@ describe('bootstrapFynApp decomposition', () => {
     });
   });
 
-  describe('prepareMainExport', () => {
-    it('should return null when no main export exists', async () => {
+  describe('main unit preparation (bootstrapFynApp)', () => {
+    it('should not invoke any unit when no main export exists', async () => {
       const fynApp = createTestFynApp('no-main-app');
+      const invokeSpy = vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
-      const result = await kernel.testPrepareMainExport(fynApp);
-      expect(result).toBeNull();
+      await kernel.testBootstrapWithReadiness(fynApp);
+      expect(invokeSpy).not.toHaveBeenCalled();
     });
 
-    it('should validate and return FynUnit for function export', async () => {
+    it('should validate and invoke FynUnit for function export', async () => {
       const executeFn = vi.fn();
       const fynApp = createTestFynApp('fn-app', {
         exposes: { './main': { main: executeFn } },
       });
 
       vi.spyOn(kernel.middlewareExecutor, 'applyAutoScopeMiddlewares').mockResolvedValue([]);
+      const invokeSpy = vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
-      const result = await kernel.testPrepareMainExport(fynApp);
-      expect(result).toBeDefined();
-      expect(result!.execute).toBe(executeFn);
+      await kernel.testBootstrapWithReadiness(fynApp);
+      expect(invokeSpy).toHaveBeenCalledOnce();
+      expect(invokeSpy.mock.calls[0][0].execute).toBe(executeFn);
     });
 
-    it('should validate and return FynUnit for object export', async () => {
+    it('should validate and invoke FynUnit for object export', async () => {
       const fynUnit = { execute: vi.fn(), initialize: vi.fn() };
       const fynApp = createTestFynApp('obj-app', {
         exposes: { './main': { main: fynUnit } },
       });
 
       vi.spyOn(kernel.middlewareExecutor, 'applyAutoScopeMiddlewares').mockResolvedValue([]);
+      const invokeSpy = vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
-      const result = await kernel.testPrepareMainExport(fynApp);
-      expect(result).toBe(fynUnit);
+      await kernel.testBootstrapWithReadiness(fynApp);
+      expect(invokeSpy.mock.calls[0][0]).toBe(fynUnit);
     });
   });
 
-  describe('executeFynUnit', () => {
+  describe('runMainUnit', () => {
     it('should delegate to loader.invokeFynUnit', async () => {
       const fynUnit: FynUnit = { execute: vi.fn() };
       const fynApp = createTestFynApp('exec-app');
 
       const invokeSpy = vi.spyOn(kernel.loader, 'invokeFynUnit').mockResolvedValue(undefined);
 
-      await kernel.testExecuteFynUnit(fynUnit, fynApp);
+      await kernel.testRunMainUnit(fynUnit, fynApp);
 
-      // Verify the call was made with the right fynUnit, fynApp, and kernel
+      // Verify the call was made with the right fynUnit and fynApp
       expect(invokeSpy).toHaveBeenCalledOnce();
       const callArgs = invokeSpy.mock.calls[0];
       expect(callArgs[0]).toBe(fynUnit);
       expect(callArgs[1]).toBe(fynApp);
-      // autoApply may be undefined when none are registered
-      expect(callArgs[3]).toBe(kernel);
     });
   });
 
