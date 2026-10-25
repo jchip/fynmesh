@@ -21,6 +21,7 @@ const TEMPLATE_OF: Record<string, string> = {
     fynops: "fynops.html",
     docs: "section-index.html",
     guides: "section-index.html",
+    demos: "demos.html",
 };
 
 const day = (iso: string) => iso.slice(0, 10);
@@ -28,12 +29,15 @@ const newest = (dates: string[]) => dates.filter(Boolean).sort().pop() ?? "";
 
 /**
  * One entry per page that exists in `outputDir`: the PAGE_SEO pages (not the
- * 404) and every docs and guides page. `lastmod` is the newest commit date of
- * the page's sources, or the build date when git has none.
+ * 404), every content page, and any `extra` pages such as the API reference.
+ * `lastmod` is the newest commit date of the page's sources, or the build
+ * date when git has none.
  */
 export function buildSitemapEntries(opts: {
     outputDir: string;
     contentPages: ContentPage[];
+    /** pages not built from templates: an extensionless path and the repo files it comes from */
+    extra?: { path: string; sources: string[] }[];
     templateDir?: string;
     now?: Date;
 }): SitemapEntry[] {
@@ -57,6 +61,10 @@ export function buildSitemapEntries(opts: {
         const dates = [templateDate("content.html"), page.dateModified];
         entries.push({ loc: siteUrl(page.canonicalPath), lastmod: day(newest(dates)) || buildDay });
     }
+
+    for (const page of opts.extra ?? []) {
+        entries.push({ loc: siteUrl(page.path), lastmod: day(newest(page.sources.map(gitDate))) || buildDay });
+    }
     return entries;
 }
 
@@ -75,8 +83,8 @@ const link = (title: string, url: string, description: string) =>
     `- [${title}](${url}): ${description}`;
 
 /** llms.txt, following the llmstxt.org layout. */
-export function buildLlmsTxt(contentPages: ContentPage[]): string {
-    const listed = (kind: "docs" | "guides") =>
+export function buildLlmsTxt(contentPages: ContentPage[], opts: { apiUrl?: string } = {}): string {
+    const listed = (kind: "pages" | "docs" | "guides") =>
         contentPages
             .filter(p => p.kind === kind && p.slug !== "changelog")
             .map(p => link(p.title, siteUrl(p.canonicalPath), p.description));
@@ -85,13 +93,25 @@ export function buildLlmsTxt(contentPages: ContentPage[]): string {
     const changelog = contentPages.find(p => p.slug === "changelog");
 
     const sections: [string, string[]][] = [
+        ["Overview", listed("pages")],
         ["Docs", listed("docs")],
         ["Guides", listed("guides")],
-        ["Demos", [demo("demo"), demo("shell"), demo("fynops")]],
+        [
+            "Demos",
+            [
+                link(PAGE_SEO.demos.title, siteUrl("demos"), PAGE_SEO.demos.metaDescription),
+                demo("demo"),
+                demo("shell"),
+                demo("fynops"),
+            ],
+        ],
         [
             "Optional",
             [
                 link(PAGE_SEO.features.title, siteUrl("features"), PAGE_SEO.features.metaDescription),
+                ...(opts.apiUrl
+                    ? [link("API reference", opts.apiUrl, "TypeDoc reference for the kernel, federation-js and the Rollup plugin.")]
+                    : []),
                 ...(changelog ? [link(changelog.title, siteUrl(changelog.canonicalPath), changelog.description)] : []),
                 link("Source code", GITHUB_URL, "The FynMesh repository on GitHub."),
                 link("npm package", NPM_URL, "The @fynmesh/kernel package on npm."),
@@ -104,9 +124,9 @@ export function buildLlmsTxt(contentPages: ContentPage[]): string {
         ``,
         `> ${SITE_DEFINITION}`,
         ``,
-        `FynMesh loads independently deployed apps, called FynApps, into one page. ` +
-            `Each app can bring its own React or other framework version. ` +
-            `The links below are the docs, guides and live demos.`,
+        `FynMesh loads independently deployed apps, called FynApps, into one page and shares ` +
+            `their dependencies at runtime. The links below are the overview pages, docs, guides ` +
+            `and live demos.`,
     ];
     for (const [name, items] of sections) {
         if (items.length === 0) continue;
@@ -118,7 +138,9 @@ export function buildLlmsTxt(contentPages: ContentPage[]): string {
 /** llms-full.txt: the definition, then every doc and guide as markdown. */
 export function buildLlmsFull(contentPages: ContentPage[]): string {
     const out = [`# FynMesh`, ``, `> ${SITE_DEFINITION}`];
-    for (const p of contentPages.filter(p => p.inLlmsFull)) {
+    // overview pages first, then docs and guides
+    const ordered = [...contentPages].sort((a, b) => Number(b.kind === "pages") - Number(a.kind === "pages"));
+    for (const p of ordered.filter(p => p.inLlmsFull)) {
         out.push(``, `---`, ``, `# ${p.title}`, ``, `URL: ${siteUrl(p.canonicalPath)}`, ``, p.bodyMarkdown.trim());
     }
     return out.join("\n") + "\n";

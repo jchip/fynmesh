@@ -1,0 +1,13 @@
+{
+  "name": "fynmesh-api-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeDoc API reference for the fynmesh.fyi site. Its own package so TypeDoc gets the TypeScript it supports.",
+  "devDependencies": {
+    "typedoc": "^0.28.20",
+    "typescript": "~6.0.3"
+  },
+  "author": "Joel Chen",
+  "license": "Apache-2.0"
+}

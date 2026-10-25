@@ -6,7 +6,10 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
     DOCS,
+    GUIDE_GROUPS,
+    PAGES,
     assertNoMf2,
+    faqEntities,
     filterChangelog,
     loadContentPages,
     renderContentSite,
@@ -15,7 +18,7 @@ import {
 import { buildLlmsFull, buildLlmsTxt, buildSitemapEntries, renderSitemap } from "../scripts/seo-files.mts";
 import { findMissingLocalRefs } from "../scripts/build-demo-site.mts";
 import { buildTemplates } from "../scripts/build-templates.mts";
-import { SITE_ORIGIN, siteUrl } from "../scripts/page-seo.mts";
+import { SITE_ORIGIN, pageSeo, siteUrl } from "../scripts/page-seo.mts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const templateDir = path.join(here, "../templates");
@@ -109,11 +112,11 @@ describe("content pages and builds", () => {
         for (const p of pages()) {
             const html = readFileSync(path.join(tmp, `${p.canonicalPath}.html`), "utf8");
             const json = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)![1];
-            const node = JSON.parse(json)["@graph"].find((n: any) => n["@type"] === "TechArticle");
-            expect(node.url).toBe(siteUrl(p.canonicalPath));
+            const node = JSON.parse(json)["@graph"].find((n: any) => n["@id"] === `${siteUrl(p.canonicalPath)}#webpage`);
+            expect(node["@type"]).toBe(PAGES.find(x => x.slug === p.slug)?.schemaType ?? "TechArticle");
             expect(html).toContain(`<title>${p.title.replace(/&/g, "&amp;")}</title>`);
         }
-        for (const idx of ["docs", "guides"]) {
+        for (const idx of ["docs", "guides", "demos"]) {
             const html = readFileSync(path.join(tmp, `${idx}.html`), "utf8");
             const json = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)![1];
             const node = JSON.parse(json)["@graph"].find((n: any) => n["@type"] === "CollectionPage");
@@ -152,6 +155,43 @@ describe("content pages and builds", () => {
     });
 });
 
+describe("ordered sections", () => {
+    const pages = () => loadContentPages({ pathPrefix: "/", htmlExt: "" });
+
+    it("lists every guide and top-level page in order, under their groups", () => {
+        const all = pages();
+        expect(all.filter(p => p.kind === "guides").map(p => p.slug)).toEqual(GUIDE_GROUPS.flatMap(g => g.slugs));
+        expect(all.filter(p => p.kind === "pages").map(p => p.canonicalPath)).toEqual(PAGES.map(p => p.slug));
+    });
+
+    it("fails the build when a guide file is not listed", () => {
+        const contentDir = path.join(tmp, "content");
+        mkdirSync(path.join(contentDir, "guides"), { recursive: true });
+        writeFileSync(path.join(contentDir, "guides", "stray.md"), "---\ntitle: Stray\n---\n\nBody.\n");
+        expect(() => loadContentPages({ pathPrefix: "/", htmlExt: "", contentDir })).toThrow(/not listed: stray/);
+    });
+
+    it("turns the FAQ's ### questions into FAQPage entities", () => {
+        const entities = faqEntities("## Basics\n\n### What is a FynApp?\n\nA micro frontend. See [docs](/docs).\n\n### Is it free?\n\nYes.\n");
+        expect(entities).toEqual([
+            { "@type": "Question", name: "What is a FynApp?", acceptedAnswer: { "@type": "Answer", text: "A micro frontend. See docs." } },
+            { "@type": "Question", name: "Is it free?", acceptedAnswer: { "@type": "Answer", text: "Yes." } },
+        ]);
+        const faq = pages().find(p => p.slug === "faq")!;
+        expect((faq.seo.pageProps!.mainEntity as unknown[]).length).toBeGreaterThan(10);
+    });
+});
+
+describe("demo apps", () => {
+    it("carry no site header, footer or GitHub link", () => {
+        const env = nunjucks.configure(templateDir, { autoescape: true });
+        for (const page of ["shell", "fynops"] as const) {
+            const html = env.render(`pages/${page}.html`, { pathPrefix: "/", htmlExt: "", ...pageSeo(page) });
+            expect(html, page).not.toMatch(/class="fm-(header|footer|gh)"/);
+        }
+    });
+});
+
 describe("sitemap and llms files", () => {
     it("lists existing pages with YYYY-MM-DD lastmod and no changefreq or priority", () => {
         const env = nunjucks.configure(templateDir, { autoescape: true });
@@ -176,7 +216,8 @@ describe("sitemap and llms files", () => {
         const all = loadContentPages({ pathPrefix: "/", htmlExt: "" });
         const txt = buildLlmsTxt(all);
         expect(txt.startsWith("# FynMesh\n\n> FynMesh is an open source")).toBe(true);
-        for (const h of ["## Docs", "## Guides", "## Demos", "## Optional"]) expect(txt).toContain(h);
+        for (const h of ["## Overview", "## Docs", "## Guides", "## Demos", "## Optional"]) expect(txt).toContain(h);
+        expect(txt).toContain("(https://www.fynmesh.fyi/faq): ");
         expect(txt).toMatch(/- \[[^\]]+\]\(https:\/\/www\.fynmesh\.fyi\/docs\/kernel\): /);
         expect(txt).not.toMatch(/\.html\)/);
         const full = buildLlmsFull(all);

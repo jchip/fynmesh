@@ -14,7 +14,7 @@ import {
 import { generateCacheHeaders } from "./cache-headers.mts";
 import { resolveLoaderVariant } from "../src/loader-variant.ts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
-import { pageSeo } from "./page-seo.mts";
+import { pageSeo, siteUrl } from "./page-seo.mts";
 import { renderContentSite, assertNoMf2 } from "./content-pages.mts";
 import { buildSitemapEntries, renderSitemap, buildLlmsTxt, buildLlmsFull } from "./seo-files.mts";
 
@@ -380,6 +380,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             isProduction,
             pathPrefix,
             htmlExt,
+            navSection: "features",
             ...pageSeo("features"),
         });
         const featuresOutputPath = path.join(outputDir, "features.html");
@@ -469,7 +470,8 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "og-image.png",    // SEO: Open Graph / Twitter card image (1200x630)
             "robots.txt",      // SEO: Robots.txt (sitemap.xml is generated below)
             "site.webmanifest",
-            "apple-touch-icon.png"
+            "apple-touch-icon.png",
+            "site.css"         // The site's design system; every page links it
             // Note: shell.html is now generated from template
         ];
         
@@ -487,12 +489,24 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             }
         });
 
+        // Screenshots and other images the pages reference
+        if (existsSync(path.join(publicDir, "images"))) {
+            copyDirFiltered(path.join(publicDir, "images"), path.join(outputDir, "images"), () => true);
+            log("🖼️  Copied: images/");
+        }
+
+        // API reference: TypeDoc HTML under api/. It runs from its own package,
+        // api-docs/, so TypeDoc gets the TypeScript version it supports.
+        const { buildApiDocs } = await import("../api-docs/build-api.mjs");
+        const apiPages = await buildApiDocs({ outDir: outputDir, repoRoot: path.join(__dirname, "../../..") });
+        log(`📚 Generated: api/ (${apiPages.length} pages)`);
+
         // SEO: sitemap.xml and the llms files are generated, never shipped
         // static. Entries are extensionless (Cloudflare Pages 308s the .html
         // form) and only cover pages that landed in the output.
-        const sitemapEntries = buildSitemapEntries({ outputDir, contentPages });
+        const sitemapEntries = buildSitemapEntries({ outputDir, contentPages, extra: apiPages });
         const sitemapXml = renderSitemap(sitemapEntries);
-        const llmsTxt = buildLlmsTxt(contentPages);
+        const llmsTxt = buildLlmsTxt(contentPages, { apiUrl: siteUrl("api/") });
         const llmsFull = buildLlmsFull(contentPages);
         writeFileSync(path.join(outputDir, "sitemap.xml"), sitemapXml);
         writeFileSync(path.join(outputDir, "llms.txt"), llmsTxt);
@@ -502,9 +516,11 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Guard every generated page and file, not only the content pages.
         const pageFiles = [
             ...readdirSync(outputDir).filter(f => f.endsWith(".html")),
-            ...["docs", "guides"].flatMap(d =>
+            ...["docs", "guides", "api"].flatMap(d =>
                 existsSync(path.join(outputDir, d))
-                    ? readdirSync(path.join(outputDir, d)).map(f => `${d}/${f}`)
+                    ? (readdirSync(path.join(outputDir, d), { recursive: true }) as string[])
+                          .filter(f => f.endsWith(".html"))
+                          .map(f => `${d}/${f}`)
                     : []
             ),
         ].filter(f => !f.startsWith("google"));

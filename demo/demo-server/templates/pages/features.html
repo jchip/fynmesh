@@ -1,27 +1,27 @@
 {% extends "layouts/base.html" %}
 
-{% block body_class %}fx-body{% endblock %}
+{% block body_class %}fm-site fx-body{% endblock %}
 
 {% block styles %}
 <style>
     /*
-     * Everything is scoped under .fx and prefixed fx- because base.html loads
-     * Spectre, which owns .btn, .chip, code, a and heading styles site-wide.
+     * Feature diagrams, scoped under .fx. Colors and type come from the site
+     * tokens in public/site.css; the version accent is the one local addition.
      */
     :root {
-        --fx-bg: #f8fafc;
-        --fx-panel: #ffffff;
-        --fx-ink: #1f2937;
-        --fx-muted: #6b7280;
-        --fx-line: #dbe3ee;
-        --fx-acc: #2563eb;
-        --fx-acc-soft: #e8f0fe;
+        --fx-bg: var(--fm-surface);
+        --fx-panel: var(--fm-card);
+        --fx-ink: var(--fm-text);
+        --fx-muted: var(--fm-muted);
+        --fx-line: var(--fm-border);
+        --fx-acc: var(--fm-blue);
+        --fx-acc-soft: var(--fm-blue-soft);
         --fx-ver: #b45309;
         --fx-ver-soft: #fef3c7;
-        --fx-navy: #1e3a5f;
-        --fx-gold: #fbbf24;
-        --fx-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --fx-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        --fx-navy: var(--fm-navy);
+        --fx-gold: var(--fm-amber);
+        --fx-sans: var(--fm-sans);
+        --fx-mono: var(--fm-mono);
     }
 
     body.fx-body {
@@ -41,15 +41,9 @@
     .fx-inner { max-width: 1040px; margin: 0 auto; padding-inline: 16px; }
 
     /* Hero */
-    .fx-hero { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%); color: #fff; padding-block: 56px 64px; }
-    /* padding-right keeps the links clear of the fixed GitHub corner icon */
-    .fx-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; padding-right: 64px; min-height: 48px; }
-    .fx-hero .fx-home { color: #fff; font-weight: 700; text-decoration: none; letter-spacing: .02em; }
-    .fx-toplinks { display: flex; gap: 20px; flex-wrap: wrap; }
-    .fx-hero .fx-toplinks a { color: #cbd5e1; text-decoration: none; font-size: 15px; }
-    .fx-hero .fx-toplinks a:hover, .fx-hero .fx-toplinks a[aria-current="page"] { color: #fff; }
+    .fx-hero { background: var(--fm-navy); color: #fff; padding-block: 72px 72px; }
     .fx-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; margin: 0 0 12px; }
-    .fx-hero h1 { font-size: clamp(24px, 7vw, 52px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; margin: 0 0 18px; color: var(--fx-gold); text-wrap: balance; max-width: 24ch; }
+    .fx-hero h1 { font-size: clamp(32px, 7vw, 48px); line-height: 1.1; font-weight: 700; margin: 0 0 18px; color: #fff; text-wrap: balance; max-width: 24ch; }
     .fx-hero h1 .nw { white-space: nowrap; }
     .fx-lede { font-size: 19px; color: #cbd5e1; max-width: 58ch; margin: 0 0 28px; }
     .fx-cta { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -135,17 +129,16 @@
 {% endblock %}
 
 {% block content %}
-{% include "components/github-corner.html" %}
-<div class="fx">
+<main class="fx">
 
 <section class="fx-hero">
     <div class="fx-inner">
         <p class="fx-eyebrow">FynMesh + federation-js at a glance</p>
-        <h1><span class="nw">FynMesh Features:</span> multi-version apps and semver sharing</h1>
-        <p class="fx-lede">FynMesh runs independently built apps together on one page. They share code at runtime through Module Federation, even different versions of the same module. Teams need little coordination. Here is each feature, one picture at a time.</p>
+        <h1>FynMesh Features</h1>
+        <p class="fx-lede">Independently built FynApps run together on one page and share code at runtime through Module Federation. Here is each feature, one picture at a time.</p>
         <div class="fx-cta">
-            <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}">Open the live demo</a>
-            <a class="fx-btn fx-btn-ghost" href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}">See the shell demo</a>
+            <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demos{{ htmlExt | default(".html") }}">See the demos</a>
+            <a class="fx-btn fx-btn-ghost" href="{{pathPrefix}}docs/getting-started{{ htmlExt | default(".html") }}">Get started</a>
         </div>
     </div>
 </section>
@@ -634,42 +627,6 @@
     </div>
 </section>
 
-<section class="fx-also" id="faq" itemscope itemtype="https://schema.org/FAQPage">
-    <h2>Questions</h2>
-    <div class="fx-also-grid">
-        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 itemprop="name">Does every app have to pick the same version of a shared library?</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                <p itemprop="text">No. Each app lists a semver range. Apps whose ranges agree share one copy, and a range that needs a different major gets its own.</p>
-            </div>
-        </div>
-        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 itemprop="name">Do I need a shell app to use FynMesh?</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                <p itemprop="text">No. The kernel loads FynApps on any page. A shell is one pattern, built with middleware, as the <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}">shell demo</a> shows.</p>
-            </div>
-        </div>
-        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 itemprop="name">How do FynApps talk to each other?</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                <p itemprop="text">Through middleware APIs and FynBus. FynBus lets apps send messages and ask each other questions. The platform stamps the sender of each message.</p>
-            </div>
-        </div>
-        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 itemprop="name">How do I see which versions are loaded?</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                <p itemprop="text">Call <code>Federation.__I()</code> or open the in-page inspector. Both list each shared module, its version and its provider. The <a href="{{pathPrefix}}docs/federation-inspector{{ htmlExt | default(".html") }}">inspector docs</a> explain the tool.</p>
-            </div>
-        </div>
-        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
-            <h3 itemprop="name">How big is the runtime?</h3>
-            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
-                <p itemprop="text">The loader is about 8.7 KB gzip, made of SystemJS and federation-js. The browser kernel adds about 9.7 KB.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
 <section class="fx-start">
     <h2>Start a FynApp</h2>
     <pre class="fx-snippet">fyn global add create-fynapp
@@ -682,5 +639,5 @@ create-fynapp</pre>
 
 </div>
 
-</div>
+</main>
 {% endblock %}

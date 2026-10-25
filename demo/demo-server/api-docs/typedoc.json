@@ -1,0 +1,30 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "FynMesh API",
+  "entryPointStrategy": "packages",
+  "readme": "none",
+  "includeVersion": false,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "skipErrorChecking": true,
+  "validation": {
+    "notExported": false
+  },
+  "packageOptions": {
+    "entryPoints": [
+      "src/index.*"
+    ],
+    "validation": {
+      "notExported": false
+    },
+    "readme": "none"
+  },
+  "githubPages": false,
+  "customCss": "./typedoc-site.css",
+  "navigationLinks": {
+    "FynMesh": "/",
+    "Docs": "/docs",
+    "Guides": "/guides",
+    "GitHub": "https://github.com/jchip/fynmesh"
+  }
+}

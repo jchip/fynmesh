@@ -1,0 +1,93 @@
+{% extends "layouts/base.html" %}
+{# Demos launch page: what each demo shows and what to try. The demo apps themselves carry no site chrome. #}
+{% set ext = htmlExt | default(".html") %}
+
+{% block content %}
+<main>
+    <div class="fm-container fm-index">
+        <div class="fm-index-head">
+            <nav class="fm-crumbs" aria-label="Breadcrumb"><a href="{{pathPrefix}}">Home</a><span aria-hidden="true">/</span>Demos</nav>
+            <h1>Demos</h1>
+            <p class="fm-lead">Each demo is a real page built from independently deployed FynApps. Open the Federation Inspector from its corner badge to see which app supplied each shared module.</p>
+        </div>
+
+        <article class="fm-demo-row">
+            <a href="{{pathPrefix}}demo{{ext}}" aria-label="Open the six frameworks demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-six-frameworks.png" alt="The demo page with React, Vue, Preact, Solid, Svelte and Marko FynApps side by side" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Six frameworks on one page</h2>
+                <p>Thirteen FynApps load into one page. React 18 and React 19 apps run next to Vue, Preact, Solid, Svelte and Marko, and each gets the React copy it was built for.</p>
+                <h3>What to look at</h3>
+                <ul>
+                    <li>The two React majors, each in its own apps</li>
+                    <li>Two releases of fynapp-x1 loaded under one name</li>
+                    <li>Two apps chatting over FynBus</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="{{pathPrefix}}demo{{ext}}">Launch demo</a>
+                    <a href="{{pathPrefix}}guides/run-multiple-react-versions{{ext}}">Guide: multiple React versions</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="{{pathPrefix}}shell{{ext}}" aria-label="Open the shell layout demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-shell.png" alt="The shell demo with a sidebar of FynApps and a main region" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Shell layout</h2>
+                <p>A layout middleware builds the page from FynApps. Pick an app and a region, and the shell places it there while the page runs.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Load a FynApp into Main, then another into the sidebar</li>
+                    <li>Clear all and load them again without a page reload</li>
+                    <li>Watch the status bar count the loaded middleware</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="{{pathPrefix}}shell{{ext}}">Launch demo</a>
+                    <a href="{{pathPrefix}}how-it-works{{ext}}#6-middleware">How middleware works</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="{{pathPrefix}}fynops{{ext}}" aria-label="Open the FynOps demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-fynops.png" alt="The FynOps logistics console" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>FynOps logistics console</h2>
+                <p>A larger app built from ten FynApps. A shipments grid, a live fleet map and analytics each load on their own route, and they share React, AG Grid and ECharts at runtime.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Sign in as any user. It is simulated and needs no password.</li>
+                    <li>Move between routes and watch each FynApp load on its first visit</li>
+                    <li>Open a shipment while the map keeps updating</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="{{pathPrefix}}fynops{{ext}}">Launch demo</a>
+                    <a href="{{pathPrefix}}guides/share-dependencies-semver{{ext}}">Guide: share dependencies by semver</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="{{pathPrefix}}shell{{ext}}?perf=combined" aria-label="Open the Perf Lab"><img class="fm-shot" src="{{pathPrefix}}images/demo-perf-lab.png" alt="The Perf Lab analytics suite inside the shell, with its mode panel" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Perf Lab</h2>
+                <p>An analytics suite of four FynApps that runs inside the shell. A mode switch reloads it raw, with combined chunks, or with combined chunks plus preload hints, and a panel shows what each mode costs.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Switch between raw, combined and hints, and compare the request counts</li>
+                    <li>Reload warm to see the cache at work</li>
+                    <li>Throttle the network in DevTools to make the differences clear</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="{{pathPrefix}}shell{{ext}}?perf=combined">Launch the Perf Lab</a>
+                    <a href="{{pathPrefix}}guides/micro-frontends-with-rollup{{ext}}">Guide: micro frontends with Rollup</a>
+                </div>
+            </div>
+        </article>
+
+        <section class="fm-index-group">
+            <h2>How the demos are built</h2>
+            <p class="fm-lead">Every FynApp in these demos is a separate Rollup build with its own manifest. The page loads only the kernel, which resolves each app by name and range, boots its dependencies first, and shares one copy of each library that fits.</p>
+            <p><a href="{{pathPrefix}}how-it-works{{ext}}">How FynMesh works</a></p>
+        </section>
+    </div>
+</main>
+{% endblock %}

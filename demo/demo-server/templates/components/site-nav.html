@@ -1,29 +1,25 @@
 {#
-  Site-wide navigation, rendered as plain links so crawlers reach every
-  section from every page. `htmlExt` is "" on the deployed site, where
-  Cloudflare Pages serves clean urls, and ".html" on the dev server, which
-  only serves the files by name.
+  Site header, on every page except the full-screen demo apps. `htmlExt` is
+  "" on the deployed site, where Cloudflare Pages serves clean urls, and
+  ".html" on the dev server, which only serves files by name. `navSection`
+  marks the current section.
 #}
 {% set ext = htmlExt | default(".html") %}
-<nav class="fm-nav" aria-label="Site">
-    <div class="fm-nav-inner">
-        <a class="fm-nav-home" href="{{pathPrefix}}">FynMesh</a>
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="{{pathPrefix}}">FynMesh</a>
         <div class="fm-nav-links">
-            <a href="{{pathPrefix}}features{{ext}}"{% if canonicalPath == "features" %} aria-current="page"{% endif %}>Features</a>
-            <a href="{{pathPrefix}}docs{{ext}}"{% if canonicalPath and canonicalPath.indexOf("docs") == 0 %} aria-current="page"{% endif %}>Docs</a>
-            <a href="{{pathPrefix}}guides{{ext}}"{% if canonicalPath and canonicalPath.indexOf("guides") == 0 %} aria-current="page"{% endif %}>Guides</a>
-            <a href="{{pathPrefix}}demo{{ext}}"{% if canonicalPath == "demo" %} aria-current="page"{% endif %}>Demo</a>
-            <a href="{{pathPrefix}}shell{{ext}}"{% if canonicalPath == "shell" %} aria-current="page"{% endif %}>Shell</a>
-            <a href="{{pathPrefix}}fynops{{ext}}"{% if canonicalPath == "fynops" %} aria-current="page"{% endif %}>FynOps</a>
-            <a href="{{ githubUrl | default('https://github.com/jchip/fynmesh') }}">GitHub</a>
+            {% for item in [
+                ["why", "why-fynmesh", "Why FynMesh"],
+                ["how", "how-it-works", "How it works"],
+                ["features", "features", "Features"],
+                ["docs", "docs", "Docs"],
+                ["guides", "guides", "Guides"],
+                ["demos", "demos", "Demos"],
+                ["faq", "faq", "FAQ"]
+            ] %}
+            <a href="{{pathPrefix}}{{ item[1] }}{{ ext }}"{% if navSection == item[0] %} aria-current="page"{% endif %}>{{ item[2] }}</a>
+            {% endfor %}
         </div>
-    </div>
-</nav>
-<style>
-    .fm-nav { background: #0f172a; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .fm-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0.6rem 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: center; justify-content: space-between; }
-    .fm-nav a { color: #cbd5e1; text-decoration: none; }
-    .fm-nav a:hover, .fm-nav a[aria-current="page"] { color: #fff; }
-    .fm-nav-home { color: #fbbf24 !important; font-weight: 700; }
-    .fm-nav-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; }
-</style>
+    </nav>
+</header>

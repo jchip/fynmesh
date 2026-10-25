@@ -24,16 +24,12 @@ export const GITHUB_URL = "https://github.com/jchip/fynmesh";
 export const NPM_URL = "https://www.npmjs.com/package/@fynmesh/kernel";
 
 /**
- * The one sentence that says what FynMesh is. Title tags, descriptions,
- * JSON-LD, llms.txt and the homepage all reuse it, so search engines and AI
- * answer engines see the same claim everywhere. It leads with running several
- * versions of the same app on one page, the thing FynMesh does that others
- * do not.
+ * The one sentence that says what FynMesh is. Descriptions, JSON-LD,
+ * llms.txt and the footer all reuse it, so search engines and AI answer
+ * engines see the same claim everywhere.
  */
 export const SITE_DEFINITION =
-    "FynMesh is an open source micro frontend framework that can run several versions " +
-    "of the same app on one page. Independently deployed apps share dependencies by " +
-    "semver range, built with Rollup and Module Federation.";
+    "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.";
 
 const kernelPkg = JSON.parse(
     readFileSync(new URL("../../../core/kernel/package.json", import.meta.url), "utf8"),
@@ -77,6 +73,8 @@ export interface PageSeo {
     headline?: string;
     /** ISO date of the last change to the page's source. */
     dateModified?: string;
+    /** Extra properties on the page node itself, e.g. an FAQPage's mainEntity. */
+    pageProps?: Record<string, unknown>;
     /** Set on pages that must not be indexed (the 404). */
     noindex?: boolean;
 }
@@ -84,11 +82,11 @@ export interface PageSeo {
 export const PAGE_SEO = {
     landing: {
         canonicalPath: "",
-        title: "FynMesh: Micro Frontend Framework for Multi-Version Apps",
+        title: "FynMesh: Micro Frontends with Module Federation",
         pageName: "FynMesh",
         metaDescription:
-            "FynMesh is an open source micro frontend framework. Run several versions of the " +
-            "same app on one page and share dependencies by semver range.",
+            "FynMesh is an open source micro frontend framework built on Module Federation and " +
+            "Rollup. Apps join a page by loading and are addressed by name and version range.",
     },
     // Claims no canonical of its own and is noindex; this only keeps og:url
     // resolving to the site root rather than to a not-found path.
@@ -101,24 +99,26 @@ export const PAGE_SEO = {
     },
     demo: {
         canonicalPath: "demo",
-        title: "FynMesh Demo: Six Frameworks and Many Versions on One Page",
-        pageName: "Demo",
+        title: "FynMesh Demo: Six Frameworks on One Page",
+        pageName: "Six frameworks",
+        crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
-            "Live FynMesh demo: React, Vue, Preact, Solid, Svelte and Marko micro frontends on " +
-            "one page, with two React versions side by side and shared dependencies.",
+            "Live FynMesh demo: thirteen FynApps written in React, Vue, Preact, Solid, Svelte " +
+            "and Marko load into one page and share dependencies at runtime.",
     },
     features: {
         canonicalPath: "features",
-        title: "FynMesh Features: Multi-Version Apps, Semver Sharing",
+        title: "FynMesh Features: Module Federation for Micro Frontends",
         pageName: "Features",
         metaDescription:
-            "FynMesh features: run multiple versions of the same micro frontend side by side, " +
-            "share dependencies by semver range, and mix any framework on one small loader.",
+            "What FynMesh does: apps that join by loading, version-range addressing, semver " +
+            "sharing, ordered boot, lifecycle, middleware, FynBus and the Federation Inspector.",
     },
     shell: {
         canonicalPath: "shell",
         title: "FynMesh Shell Demo: Middleware-Driven Micro Frontend Layout",
-        pageName: "Shell Demo",
+        pageName: "Shell layout",
+        crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
             "FynMesh shell demo: a micro frontend layout composed at runtime from independently " +
             "deployed FynApps, using FynMesh middleware and Module Federation.",
@@ -127,6 +127,7 @@ export const PAGE_SEO = {
         canonicalPath: "fynops",
         title: "FynOps: A Logistics Console Built from FynApps",
         pageName: "FynOps",
+        crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
             "FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load " +
             "per route and share React, AG Grid and ECharts at runtime.",
@@ -137,8 +138,8 @@ export const PAGE_SEO = {
         pageName: "Docs",
         schemaType: "CollectionPage",
         metaDescription:
-            "FynMesh docs: the kernel API, the federation runtime, the Rollup plugin, the " +
-            "FynApp contract and the release notes, rendered from the project repo.",
+            "FynMesh docs: getting started, the FynApp contract, reference for the kernel, " +
+            "federation-js, the Rollup plugin and the inspector, and the release notes.",
     },
     guides: {
         canonicalPath: "guides",
@@ -146,8 +147,17 @@ export const PAGE_SEO = {
         pageName: "Guides",
         schemaType: "CollectionPage",
         metaDescription:
-            "Short FynMesh guides: run several React versions on one page, share dependencies " +
-            "by semver range, and upgrade a micro frontend app step by step.",
+            "FynMesh guides: share dependencies by semver range, run two React versions, " +
+            "upgrade one app at a time, and build micro frontends with Rollup.",
+    },
+    demos: {
+        canonicalPath: "demos",
+        title: "FynMesh Demos: Live Micro Frontend Examples",
+        pageName: "Demos",
+        schemaType: "CollectionPage",
+        metaDescription:
+            "Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the " +
+            "FynOps logistics console and the Perf Lab load analysis.",
     },
 } satisfies Record<string, PageSeo>;
 
@@ -209,6 +219,7 @@ export function buildJsonLd(seo: PageSeo): string {
         };
         if (seo.headline) page.headline = seo.headline;
         if (seo.dateModified) page.dateModified = seo.dateModified;
+        Object.assign(page, seo.pageProps);
         if (seo.schemaType === "TechArticle") {
             const org = { "@type": "Organization", name: "FynMesh", url: `${SITE_ORIGIN}/` };
             page.author = org;

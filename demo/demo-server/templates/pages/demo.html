@@ -1,5 +1,13 @@
 {% extends "layouts/base.html" %}
 
+{# A demo app is the app only: no site header, footer or GitHub link, just a way home #}
+{% block site_nav %}{% endblock %}
+{% block site_footer %}{% endblock %}
+{% block github_link %}{% include "components/demo-home-chip.html" %}{% endblock %}
+{% block vendor_css %}{% include "components/spectre-css.html" %}{% endblock %}
+{% block body_class %}body-gradient{% endblock %}
+
+
 {% block styles %}
     {% include "components/styles.html" %}
 {% endblock %}
@@ -65,18 +73,6 @@
 
     <!-- Main Content -->
     <main style="padding: 3rem 2rem;" class="container">
-
-        <!-- Static explainer (the FynApps below render at runtime) -->
-        <section style="max-width: 820px; margin: 0 auto 3rem;">
-            <h2 style="font-size: 1.6rem; color: #1f2937;">What this demo shows</h2>
-            <p>This page runs {{ fynApps | length }} FynApps on one page. They use React 18, React 19, Preact, Vue, Solid, Svelte and Marko. Different teams could build each one and deploy it on its own. The FynMesh kernel loads every app by name and starts it.</p>
-            <p>The point to notice is that two React versions run together. FynApp 1 uses React 19 and FynApp 2 uses React 18, and each gets the version its semver range asks for. Apps with matching ranges share one copy, so the page does not download the same library twice.</p>
-            <p>Scroll down to see each app render in its own panel. Open the in-page inspector to list the shared modules and who provides them. Each app mounts itself after the kernel has booted its dependencies, which can take a moment. Some apps show their own headings once they load.</p>
-            <p>Next steps: browse the <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}">feature overview</a>, read the <a href="{{pathPrefix}}docs{{ htmlExt | default(".html") }}">docs</a>, or follow the guide <a href="{{pathPrefix}}guides/run-multiple-react-versions{{ htmlExt | default(".html") }}">Run Multiple React Versions on One Page</a>. For a full layout built the same way, open the <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}">shell demo</a>.</p>
-            <noscript><p><strong>This demo needs JavaScript.</strong> The FynApps load in your browser. Enable JavaScript to see them.</p></noscript>
-        </section>
-
-        <h2 style="font-size: 1.6rem; color: #1f2937; margin-bottom: 1rem;">Why FynMesh</h2>
         <!-- Info Cards -->
         <div class="columns" style="margin-bottom: 3rem;">
             {% for card in infoCards %}
@@ -86,7 +82,7 @@
                         <div style="display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 12px; margin-bottom: 1rem;" class="bg-{{ card.color }}">
                             <i class="{{ card.icon }} text-white" style="font-size: 1.5rem;"></i>
                         </div>
-                        <h3 class="card-title" style="color: #1f2937; font-size: 1rem;">{{ card.title }}</h3>
+                        <h5 class="card-title" style="color: #1f2937;">{{ card.title }}</h5>
                         <p class="card-text text-gray" style="font-size: 0.875rem;">{{ card.description }}</p>
                     </div>
                 </div>
@@ -95,14 +91,13 @@
         </div>
 
         <!-- FynApp Containers -->
-        <h2 style="font-size: 1.6rem; color: #1f2937; margin-bottom: 1rem;">The live FynApps</h2>
         <div class="columns">
             <!-- Primary FynApps Row -->
             <div class="column col-6" style="display: flex;">
                 <div style="margin-bottom: 1rem; width: 100%; display: flex; flex-direction: column;">
                     <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
                         <div class="bg-{{ fynApps[0].color }} pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
-                        <h3 style="margin: 0; color: #1f2937; font-size: 1rem;">{{ fynApps[0].name }}</h3>
+                        <h5 style="margin: 0; color: #1f2937;">{{ fynApps[0].name }}</h5>
                         <span class="label bg-{{ fynApps[0].badge }}" style="margin-left: 0.5rem; color: white;">{{ fynApps[0].framework }}</span>
                     </div>
                     <div id="{{ fynApps[0].id }}" class="loading-spinner card fynapp-card text-{{ fynApps[0].color }}" style="min-height: 200px; flex-grow: 1; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 1rem;" data-border-color="{{ fynApps[0].color }}"></div>
@@ -113,7 +108,7 @@
                 <div style="margin-bottom: 1rem; width: 100%; display: flex; flex-direction: column;">
                     <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
                         <div class="bg-{{ fynApps[1].color }} pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
-                        <h3 style="margin: 0; color: #1f2937; font-size: 1rem;">{{ fynApps[1].name }}</h3>
+                        <h5 style="margin: 0; color: #1f2937;">{{ fynApps[1].name }}</h5>
                         <span class="label bg-{{ fynApps[1].badge }}" style="margin-left: 0.5rem; color: white;">{{ fynApps[1].framework }}</span>
                     </div>
                     <div id="{{ fynApps[1].id }}" class="loading-spinner card fynapp-card text-{{ fynApps[1].color }}" style="min-height: 200px; flex-grow: 1; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 1rem;" data-border-color="{{ fynApps[1].color }}"></div>
@@ -127,7 +122,7 @@
                 <div style="margin-bottom: 1rem; height: 100%;">
                     <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
                         <div class="bg-{{ app.color }} pulse-animation" style="width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem;"></div>
-                        <h3 style="margin: 0; color: #1f2937; font-size: 1rem;">{{ app.name }}</h3>
+                        <h5 style="margin: 0; color: #1f2937;">{{ app.name }}</h5>
                         <span class="label bg-{{ app.badge }}" style="margin-left: 0.5rem; color: white;">{{ app.framework }}</span>
                     </div>
                     <div id="{{ app.id }}" class="loading-spinner card fynapp-card text-{{ app.color }}" style="min-height: 80vh; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border-left: 4px solid; padding: 0;" data-border-color="{{ app.color }}"></div>
@@ -138,8 +133,43 @@
         </div>
     </main>
 
-    <div id="sw-status" style="display: none;">
-        <span id="sw-indicator"></span>
-        <span id="sw-text">Service Worker Status</span>
-    </div>
+    <!-- Footer -->
+    <footer style="margin-top: 3rem; background: #1f2937; color: white;">
+        <div class="container" style="padding: 3rem 2rem;">
+            <div class="columns">
+                <div class="column col-4">
+                    <h5 style="color: white; margin-bottom: 1rem;">FynMesh</h5>
+                    <p style="color: #d1d5db; font-size: 0.875rem;">
+                        Enterprise-scale web application framework with Module Federation & Micro Frontends.
+                    </p>
+                </div>
+                <div class="column col-4">
+                    <h6 style="color: white; margin-bottom: 1rem;">Features</h6>
+                    <ul style="list-style: none; padding: 0; color: #d1d5db; font-size: 0.875rem;">
+                        <li style="margin-bottom: 0.5rem;">• Independent Development</li>
+                        <li style="margin-bottom: 0.5rem;">• Shared Dependencies</li>
+                        <li style="margin-bottom: 0.5rem;">• Federation-First</li>
+                        <li style="margin-bottom: 0.5rem;">• Type Safety</li>
+                    </ul>
+                </div>
+                <div class="column col-4">
+                    <h6 style="color: white; margin-bottom: 1rem;">Frameworks</h6>
+                    <ul style="list-style: none; padding: 0; color: #d1d5db; font-size: 0.875rem;">
+                        <li style="margin-bottom: 0.5rem;">• React 18 & 19</li>
+                        <li style="margin-bottom: 0.5rem;">• Vue.js</li>
+                        <li style="margin-bottom: 0.5rem;">• Preact & Solid</li>
+                        <li style="margin-bottom: 0.5rem;">• Svelte</li>
+                        <li style="margin-bottom: 0.5rem;">• Marko</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #374151; text-align: center;">
+                <p style="color: #9ca3af; font-size: 0.875rem; margin: 0;">&copy; 2025 FynMesh. Demonstrating the future of micro-frontend architecture.</p>
+                <div id="sw-status" style="margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; display: none;">
+                    <span id="sw-indicator" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem;"></span>
+                    <span id="sw-text">Service Worker Status</span>
+                </div>
+            </div>
+        </div>
+    </footer>
 {% endblock %}

@@ -125,6 +125,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
             isProduction,
             pathPrefix,
             htmlExt,
+            navSection: "features",
             ...pageSeo("features"),
         });
         const featuresOutputPath = path.join(outputDir, "features.html");

@@ -3,7 +3,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PAGE_SEO, siteUrl } from "../scripts/page-seo.mts";
+import nunjucks from "nunjucks";
+import { PAGE_SEO, pageSeo, siteUrl } from "../scripts/page-seo.mts";
 import { buildSitemapEntries } from "../scripts/seo-files.mts";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -80,12 +81,18 @@ describe("public URLs", () => {
     });
 
     it("keeps the .html extension on internal links, which the dev server serves", () => {
-        const landing = read("templates/pages/landing.html");
+        const env = nunjucks.configure(path.join(demoServer, "templates"), { autoescape: true });
+        const render = (htmlExt?: string) =>
+            env.render("pages/landing.html", { pathPrefix: "/", ...(htmlExt !== undefined && { htmlExt }), ...pageSeo("landing") });
 
-        expect(landing).toContain('{{pathPrefix}}demo{{ htmlExt | default(".html") }}');
-        expect(landing).toContain('{{pathPrefix}}shell{{ htmlExt | default(".html") }}');
-        expect(landing).toContain('{{pathPrefix}}features{{ htmlExt | default(".html") }}');
-        expect(landing).toContain('{{pathPrefix}}fynops{{ htmlExt | default(".html") }}');
+        // no htmlExt given means the dev server's .html form
+        const dev = render();
+        for (const href of ["/demos.html", "/demo.html", "/shell.html", "/fynops.html", "/faq.html", "/features.html"]) {
+            expect(dev).toContain(`href="${href}"`);
+        }
+        const site = render("");
+        expect(site).toContain('href="/demos"');
+        expect(site).not.toMatch(/href="\/[a-z-]+\.html"/);
     });
 
     it("publishes FynOps: listed in the sitemap and indexable", () => {
@@ -121,8 +128,12 @@ describe("404 page", () => {
     });
 
     it("is noindex and claims no canonical url", () => {
-        expect(template).toContain('content="noindex, follow"');
-        expect(template).toMatch(/\{%\s*block canonical\s*%\}\{%\s*endblock\s*%\}/);
+        const env = nunjucks.configure(path.join(demoServer, "templates"), { autoescape: true });
+        const html = env.render("pages/404.html", { pathPrefix: "/", ...pageSeo("notFound") });
+
+        expect(PAGE_SEO.notFound.noindex).toBe(true);
+        expect(html).toContain('content="noindex, follow"');
+        expect(html).not.toContain('rel="canonical"');
     });
 
     it("stays out of the sitemap", () => {
@@ -134,7 +145,8 @@ describe("404 page", () => {
     });
 
     it("links back with the .html paths the dev server serves", () => {
-        expect(template).toContain('{{pathPrefix}}demo{{ htmlExt | default(".html") }}');
-        expect(template).toContain('{{pathPrefix}}shell{{ htmlExt | default(".html") }}');
+        expect(template).toContain('{% set ext = htmlExt | default(".html") %}');
+        expect(template).toContain("{{pathPrefix}}docs{{ext}}");
+        expect(template).toContain("{{pathPrefix}}demos{{ext}}");
     });
 });

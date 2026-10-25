@@ -20,10 +20,17 @@ const CONTENT_DIR = path.resolve(__dirname, "../content");
 const RAW_URL = "https://raw.githubusercontent.com/jchip/fynmesh/main";
 
 /** Site pages a root-relative link may point at. */
-const SITE_SECTIONS = new Set(["demo", "shell", "fynops", "features", "docs", "guides"]);
+const SITE_SECTIONS = new Set([
+    "demo", "shell", "fynops", "demos", "features", "docs", "guides", "why-fynmesh", "how-it-works", "faq",
+]);
+
+/** Docs sidebar and index groups, in display order. */
+export const DOC_GROUPS = ["Start here", "Concepts", "Reference", "Releases"] as const;
+export type DocGroup = (typeof DOC_GROUPS)[number];
 
 export interface DocEntry {
     slug: string;
+    group: DocGroup;
     /** repo-relative source file */
     source: string;
     title: string;
@@ -34,6 +41,7 @@ export interface DocEntry {
 export const DOCS: DocEntry[] = [
     {
         slug: "getting-started",
+        group: "Start here",
         source: "dev-tools/create-fynapp/README.md",
         title: "Getting Started: Create a FynApp",
         pageName: "Getting Started",
@@ -43,6 +51,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "fynapp-guide",
+        group: "Start here",
         source: "dev-tools/create-fynapp/agent/GUIDE.md",
         title: "FynApp Guide: Create or Modify an App",
         pageName: "FynApp Guide",
@@ -52,6 +61,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "fynapp-contract",
+        group: "Concepts",
         source: "dev-tools/create-fynapp/agent/CONTRACT.md",
         title: "The FynApp Contract",
         pageName: "FynApp Contract",
@@ -61,6 +71,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "kernel",
+        group: "Reference",
         source: "core/kernel/README.md",
         title: "FynMesh Kernel API and Concepts",
         pageName: "Kernel",
@@ -70,6 +81,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "federation-js",
+        group: "Reference",
         source: "rollup-federation/federation-js/README.md",
         title: "federation-js: Runtime Module Federation",
         pageName: "federation-js",
@@ -79,6 +91,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "rollup-plugin-federation",
+        group: "Reference",
         source: "rollup-federation/rollup-plugin-federation/README.md",
         title: "rollup-plugin-federation: Module Federation for Rollup",
         pageName: "rollup-plugin-federation",
@@ -88,6 +101,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "federation-inspector",
+        group: "Reference",
         source: "dev-tools/federation-inspector/README.md",
         title: "Federation Inspector: Debug Shared Modules",
         pageName: "Federation Inspector",
@@ -97,6 +111,7 @@ export const DOCS: DocEntry[] = [
     },
     {
         slug: "changelog",
+        group: "Releases",
         source: "CHANGELOG.md",
         title: "FynMesh Changelog and Release Notes",
         pageName: "Changelog",
@@ -106,16 +121,37 @@ export const DOCS: DocEntry[] = [
     },
 ];
 
-export type ContentKind = "docs" | "guides";
+/**
+ * Guides in display order. Every file in content/guides must be listed here
+ * and every slug here must have a file, so a guide cannot go missing.
+ */
+export const GUIDE_GROUPS: { name: string; slugs: string[] }[] = [
+    {
+        name: "Versions and sharing",
+        slugs: ["run-multiple-react-versions", "share-dependencies-semver", "upgrade-react-incrementally"],
+    },
+    { name: "Building", slugs: ["micro-frontends-with-rollup", "module-federation-without-webpack"] },
+];
 
-export const SECTION_INTRO: Record<ContentKind, string> = {
+/**
+ * Top-level prose pages from content/pages, in display order, with the
+ * header section each one marks current. Same completeness rule as guides.
+ */
+export const PAGES: { slug: string; navSection: string; schemaType: string }[] = [
+    { slug: "why-fynmesh", navSection: "why", schemaType: "WebPage" },
+    { slug: "how-it-works", navSection: "how", schemaType: "TechArticle" },
+    { slug: "faq", navSection: "faq", schemaType: "FAQPage" },
+];
+
+export type ContentKind = "docs" | "guides" | "pages";
+
+export const SECTION_INTRO: Record<"docs" | "guides", string> = {
     docs:
-        "Reference docs for the FynMesh kernel, the federation runtime and the Rollup plugin. " +
-        "Start with Getting Started to scaffold an app. The FynApp contract lists the rules " +
-        "every app follows. The changelog tracks each release.",
+        "Start with Getting Started to build your first FynApp. Read the FynApp contract next, " +
+        "and keep the reference open while you work.",
     guides:
-        "Short how-tos for common micro frontend problems. Each guide starts with the direct " +
-        "answer, then shows how it works in FynMesh.",
+        "Each guide answers one question about running micro frontends with FynMesh. It starts " +
+        "with the short answer, then shows the config and code behind it.",
 };
 
 export interface TocEntry {
@@ -126,6 +162,8 @@ export interface TocEntry {
 export interface ContentPage {
     kind: ContentKind;
     slug: string;
+    /** sidebar and index group */
+    group: string;
     title: string;
     pageName: string;
     description: string;
@@ -203,6 +241,8 @@ export function rewriteLink(href: string, ctx: LinkContext): string {
     if (target.startsWith("/")) {
         const p = target.replace(/^\/+/, "").replace(/\.html$/, "");
         if (p === "") return ctx.prefix + tail;
+        // the TypeDoc reference is a directory of its own html, served as is
+        if (p === "api" || p.startsWith("api/")) return `${ctx.prefix}${target.replace(/^\/+/, "")}${tail}`;
         if (SITE_SECTIONS.has(p.split("/")[0])) return `${ctx.prefix}${p}${ctx.htmlExt}${tail}`;
         return href;
     }
@@ -360,7 +400,15 @@ function parseFrontMatter(src: string): { meta: Record<string, string>; body: st
 
 function makePage(
     kind: ContentKind,
-    entry: { slug: string; title: string; pageName: string; description: string; source: string },
+    entry: {
+        slug: string;
+        group: string;
+        title: string;
+        pageName: string;
+        description: string;
+        source: string;
+        schemaType?: string;
+    },
     body: string,
     opts: Required<Pick<ContentOptions, "pathPrefix" | "htmlExt">> & { repoRoot: string },
     docBySource: Map<string, string>,
@@ -379,11 +427,25 @@ function makePage(
     body = body.replace(/https?:\/\/(?:www\.)?fynmesh\.(?:win|fyi)/gi, SITE_ORIGIN);
     const rendered = renderMarkdown(body, !isChangelog, isChangelog ? 1 : 0);
     const absCtx: LinkContext = { ...ctx, prefix: `${SITE_ORIGIN}/`, htmlExt: "" };
-    const canonicalPath = `${kind}/${entry.slug}`;
+    // top-level pages live at the root; docs and guides under their section
+    const canonicalPath = kind === "pages" ? entry.slug : `${kind}/${entry.slug}`;
     const dateModified = gitDate(sourceAbs) || now.toISOString();
+    const schemaType = entry.schemaType ?? "TechArticle";
+    const seo: PageSeo = {
+        canonicalPath,
+        title: entry.title,
+        pageName: entry.pageName,
+        metaDescription: entry.description,
+        crumbs: kind === "pages" ? [] : [{ name: kind === "docs" ? "Docs" : "Guides", path: kind }],
+        schemaType,
+        dateModified,
+    };
+    if (schemaType === "TechArticle") seo.headline = entry.title;
+    if (schemaType === "FAQPage") seo.pageProps = { mainEntity: faqEntities(body) };
     return {
         kind,
         slug: entry.slug,
+        group: entry.group,
         title: entry.title,
         pageName: entry.pageName,
         description: entry.description,
@@ -394,20 +456,63 @@ function makePage(
         canonicalPath,
         dateModified,
         inLlmsFull: !isChangelog,
-        seo: {
-            canonicalPath,
-            title: entry.title,
-            pageName: entry.pageName,
-            metaDescription: entry.description,
-            crumbs: [{ name: kind === "docs" ? "Docs" : "Guides", path: kind }],
-            schemaType: "TechArticle",
-            headline: entry.title,
-            dateModified,
-        },
+        seo,
     };
 }
 
-/** All docs, then all guides, rendered with links for the given build. */
+/** Plain text of a markdown fragment, for structured data. */
+function plainText(mdText: string): string {
+    return mdText
+        .replace(/```[\s\S]*?```/g, "")
+        .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .replace(/`([^`]*)`/g, "$1")
+        .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, "$1")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+/** schema.org Question nodes: each `###` heading and the text under it. */
+export function faqEntities(body: string): Record<string, unknown>[] {
+    const entities: Record<string, unknown>[] = [];
+    for (const block of body.split(/^### /m).slice(1)) {
+        const nl = block.indexOf("\n");
+        const question = plainText(block.slice(0, nl));
+        const answer = plainText(block.slice(nl + 1).split(/^#{1,3} /m)[0]);
+        if (question && answer) {
+            entities.push({
+                "@type": "Question",
+                name: question,
+                acceptedAnswer: { "@type": "Answer", text: answer },
+            });
+        }
+    }
+    return entities;
+}
+
+/** Front-matter pages from `dir`, in `order`; throws when a file and the list disagree. */
+function loadOrdered(
+    dir: string,
+    order: string[],
+    what: string,
+): { slug: string; meta: Record<string, string>; body: string; file: string }[] {
+    const files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith(".md")) : [];
+    const slugs = files.map(f => f.replace(/\.md$/, ""));
+    const unlisted = slugs.filter(s => !order.includes(s));
+    const missing = order.filter(s => !slugs.includes(s));
+    if (unlisted.length || missing.length) {
+        throw new Error(
+            `${what} list out of sync with ${dir}: ` +
+                (unlisted.length ? `not listed: ${unlisted.join(", ")}. ` : "") +
+                (missing.length ? `no file for: ${missing.join(", ")}.` : ""),
+        );
+    }
+    return order.map(slug => {
+        const file = path.join(dir, `${slug}.md`);
+        return { slug, file, ...parseFrontMatter(readFileSync(file, "utf8")) };
+    });
+}
+
+/** All docs, then guides, then top-level pages, rendered with links for the given build. */
 export function loadContentPages(options: ContentOptions): ContentPage[] {
     const repoRoot = options.repoRoot ?? REPO_ROOT;
     const contentDir = options.contentDir ?? CONTENT_DIR;
@@ -415,6 +520,7 @@ export function loadContentPages(options: ContentOptions): ContentPage[] {
     const opts = { pathPrefix: options.pathPrefix, htmlExt: options.htmlExt, repoRoot };
     const docBySource = new Map(DOCS.map(d => [d.source, d.slug]));
     const pages: ContentPage[] = [];
+    const repoPath = (file: string) => path.relative(repoRoot, file).split(path.sep).join("/");
 
     for (const doc of DOCS) {
         const abs = path.join(repoRoot, doc.source);
@@ -423,41 +529,26 @@ export function loadContentPages(options: ContentOptions): ContentPage[] {
         const isChangelog = doc.slug === "changelog";
         if (isChangelog) body = filterChangelog(body);
         pages.push(
-            makePage(
-                "docs",
-                { ...doc, description: doc.metaDescription },
-                body,
-                opts,
-                docBySource,
-                isChangelog,
-                now,
-            ),
+            makePage("docs", { ...doc, description: doc.metaDescription }, body, opts, docBySource, isChangelog, now),
         );
     }
 
-    const guidesDir = path.join(contentDir, "guides");
-    const files = existsSync(guidesDir)
-        ? readdirSync(guidesDir)
-              .filter(f => f.endsWith(".md"))
-              .sort()
-        : [];
-    const guides: ContentPage[] = [];
-    for (const file of files) {
-        const slug = file.replace(/\.md$/, "");
-        const { meta, body } = parseFrontMatter(readFileSync(path.join(guidesDir, file), "utf8"));
-        const title = meta.title || slug;
-        const source = path.relative(repoRoot, path.join(guidesDir, file)).split(path.sep).join("/");
-        guides.push(
+    const guideOrder = GUIDE_GROUPS.flatMap(g => g.slugs);
+    for (const g of loadOrdered(path.join(contentDir, "guides"), guideOrder, "GUIDE_GROUPS")) {
+        const title = g.meta.title || g.slug;
+        const group = GUIDE_GROUPS.find(x => x.slugs.includes(g.slug))!.name;
+        pages.push(
             makePage(
                 "guides",
                 {
-                    slug,
+                    slug: g.slug,
+                    group,
                     title,
-                    pageName: meta.pageName || title,
-                    description: meta.description || title,
-                    source,
+                    pageName: g.meta.pageName || title,
+                    description: g.meta.description || title,
+                    source: repoPath(g.file),
                 },
-                body,
+                g.body,
                 opts,
                 docBySource,
                 false,
@@ -465,14 +556,42 @@ export function loadContentPages(options: ContentOptions): ContentPage[] {
             ),
         );
     }
-    guides.sort((a, b) => a.title.localeCompare(b.title));
-    return [...pages, ...guides];
+
+    const pageOrder = PAGES.map(p => p.slug);
+    for (const g of loadOrdered(path.join(contentDir, "pages"), pageOrder, "PAGES")) {
+        const title = g.meta.title || g.slug;
+        pages.push(
+            makePage(
+                "pages",
+                {
+                    slug: g.slug,
+                    group: "Learn",
+                    title,
+                    pageName: g.meta.pageName || title,
+                    description: g.meta.description || title,
+                    source: repoPath(g.file),
+                    schemaType: PAGES.find(p => p.slug === g.slug)!.schemaType,
+                },
+                g.body,
+                opts,
+                docBySource,
+                false,
+                now,
+            ),
+        );
+    }
+    return pages;
+}
+
+/** "Oct 24, 2026" from an ISO date. */
+function displayDate(iso: string): string {
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
 /**
- * Write docs.html, guides.html and every docs/ and guides/ page into
- * `outputDir`. Fails when any page mentions a term that must stay out of
- * public text.
+ * Write the docs, guides and top-level prose pages, their two index pages and
+ * the demos launch page into `outputDir`. Fails when any page mentions a term
+ * that must stay out of public text.
  */
 export function renderContentSite(
     env: { render(name: string, ctx: object): string },
@@ -491,32 +610,78 @@ export function renderContentSite(
         written.push({ name: rel, text: html });
     };
 
+    /** Sidebar groups for a section, in order, plus fixed links a section shows. */
+    const sidebarOf = (kind: ContentKind, current: string) => {
+        const groups: { name: string; items: { title: string; href: string; current: boolean }[] }[] = [];
+        for (const p of pages.filter(x => x.kind === kind)) {
+            let g = groups.find(x => x.name === p.group);
+            if (!g) groups.push((g = { name: p.group, items: [] }));
+            g.items.push({ title: p.pageName, href: hrefOf(p), current: p.slug === current });
+        }
+        if (kind === "docs") {
+            groups
+                .find(g => g.name === "Concepts")
+                ?.items.push({ title: "How it works", href: `${pathPrefix}how-it-works${htmlExt}`, current: false });
+            groups
+                .find(g => g.name === "Reference")
+                ?.items.push({ title: "API reference", href: `${pathPrefix}api/`, current: false });
+        }
+        if (kind === "pages") {
+            groups[0].items.splice(2, 0, { title: "Features", href: `${pathPrefix}features${htmlExt}`, current: false });
+        }
+        return groups;
+    };
+
     for (const page of pages) {
         const siblings = pages.filter(p => p.kind === page.kind);
-        const other = page.kind === "docs" ? "guides" : "docs";
+        const i = siblings.indexOf(page);
+        const link = (p?: ContentPage) => p && { title: p.pageName, href: hrefOf(p) };
         write(
             `${page.canonicalPath}.html`,
             env.render("pages/content.html", {
                 ...base,
                 ...pageSeo(page.seo),
-                sectionName: page.kind === "docs" ? "Docs" : "Guides",
+                navSection: page.kind === "pages" ? PAGES.find(p => p.slug === page.slug)!.navSection : page.kind,
+                sectionName: page.kind === "docs" ? "Docs" : page.kind === "guides" ? "Guides" : "",
                 sectionHref: `${pathPrefix}${page.kind}${htmlExt}`,
-                otherName: other === "docs" ? "Docs" : "Guides",
-                otherHref: `${pathPrefix}${other}${htmlExt}`,
                 lede: page.description,
                 toc: page.toc,
                 body: page.bodyHtml,
-                source: page.source,
+                updated: displayDate(page.dateModified),
                 isChangelog: page.slug === "changelog",
                 sourceUrl: `${GITHUB_URL}/${page.slug === "changelog" ? "blob" : "edit"}/main/${page.source}`,
-                related: siblings.map(p => ({
-                    title: p.pageName,
-                    href: hrefOf(p),
-                    current: p.slug === page.slug,
-                })),
+                sidebar: sidebarOf(page.kind, page.slug),
+                prev: link(siblings[i - 1]),
+                next: link(siblings[i + 1]),
             }),
         );
     }
+
+    const cardsOf = (kind: ContentKind) => {
+        const groups: { name: string; cards: { title: string; description: string; href: string }[] }[] = [];
+        for (const p of pages.filter(x => x.kind === kind)) {
+            let g = groups.find(x => x.name === p.group);
+            if (!g) groups.push((g = { name: p.group, cards: [] }));
+            g.cards.push({ title: p.pageName, description: p.description, href: hrefOf(p) });
+        }
+        return groups;
+    };
+
+    const docGroups = cardsOf("docs");
+    docGroups
+        .find(g => g.name === "Concepts")
+        ?.cards.push({
+            title: "How it works",
+            description: "From build to boot: manifests, loading by range, shared modules and boot order.",
+            href: `${pathPrefix}how-it-works${htmlExt}`,
+        });
+    docGroups
+        .find(g => g.name === "Reference")
+        ?.cards.push({
+            title: "API reference",
+            description: "Every exported type and function of the kernel, federation-js and the Rollup plugin.",
+            href: `${pathPrefix}api/`,
+        });
 
     for (const kind of ["docs", "guides"] as const) {
         write(
@@ -524,15 +689,15 @@ export function renderContentSite(
             env.render("pages/section-index.html", {
                 ...base,
                 ...pageSeo(kind),
+                navSection: kind,
                 heading: kind === "docs" ? "Docs" : "Guides",
                 intro: SECTION_INTRO[kind],
-                cards: pages
-                    .filter(p => p.kind === kind)
-                    .map(p => ({ title: p.title, description: p.description, href: hrefOf(p) })),
-                emptyText: "No guides yet. Check back soon.",
+                groups: kind === "docs" ? docGroups : cardsOf(kind),
             }),
         );
     }
+
+    write("demos.html", env.render("pages/demos.html", { ...base, ...pageSeo("demos"), navSection: "demos" }));
 
     assertNoMf2(written);
     return pages;

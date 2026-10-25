@@ -339,6 +339,8 @@ canOverrideExecution(fynApp, fynUnit) {
 
 ## API Reference
 
+The full reference, generated from the types, is at [www.fynmesh.fyi/api](https://www.fynmesh.fyi/api/modules/_fynmesh_kernel). The summary below covers what most hosts and FynApps use.
+
 ### FynMeshKernel
 
 The global `fynMeshKernel` implements this interface. `@fynmesh/kernel` exports it as a type.

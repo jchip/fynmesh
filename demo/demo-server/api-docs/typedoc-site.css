@@ -1,0 +1,26 @@
+/* The site's colors and type on TypeDoc's default theme; tokens match public/site.css */
+:root {
+  --light-color-background: #f8fafc;
+  --light-color-background-secondary: #ffffff;
+  --light-color-text: #1f2937;
+  --light-color-text-aside: #475569;
+  --light-color-link: #2563eb;
+  --light-color-accent: #e2e8f0;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+code, pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.tsd-page-toolbar {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.tsd-page-toolbar a.title {
+  color: #fbbf24;
+}
+.tsd-page-toolbar a,
+.tsd-page-toolbar .tsd-widget {
+  color: #cbd5e1;
+}

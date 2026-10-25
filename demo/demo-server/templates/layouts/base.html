@@ -79,21 +79,15 @@
     {% endif %}
     {% block schema_extra %}{% endblock %}
 
-    <!-- CSS Stylesheets -->
-    {% if isProduction %}
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.min.css">
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.min.css">
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.min.css">
-    {% else %}
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre.css">
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-exp.css">
-    <link rel="stylesheet" href="{{pathPrefix}}spectre.css/dist/spectre-icons.css">
-    {% endif %}
+    {# Spectre only for pages still built on its classes; see public/site.css for the site's own system #}
+    {% block vendor_css %}{% endblock %}
+    <link rel="stylesheet" href="{{pathPrefix}}site.css">
     {% block styles %}{% endblock %}
     {% block scripts_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}body-gradient{% endblock %}" style="min-height: 100vh;">
+<body class="{% block body_class %}fm-site{% endblock %}">
     {% block site_nav %}{% include "components/site-nav.html" %}{% endblock %}
+    {% block github_link %}{% include "components/github-corner.html" %}{% endblock %}
     {% block content %}{% endblock %}
     {% block site_footer %}{% include "components/site-footer.html" %}{% endblock %}
     {% block scripts_body %}{% endblock %}
