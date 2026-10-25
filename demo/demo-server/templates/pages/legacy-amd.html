@@ -91,17 +91,90 @@
       svg text { fill: var(--ink); font: 12px ui-monospace, Menlo, monospace; }
       svg .edge { stroke: var(--line); stroke-width: 1.5; fill: none; }
       .full { grid-column: 1 / -1; }
+      .lede { font-size: 17px; }
+      .intro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0 16px; }
+      @media (max-width: 860px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+      .intro h3 { font-size: 15px; margin: 0 0 6px; }
+      .intro p { color: var(--muted); }
+      .flow { display: grid; gap: 12px; }
+      .flow-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .flow-label { width: 130px; font-size: 13px; font-weight: 600; color: var(--muted); }
+      @media (max-width: 600px) { .flow-label { width: 100%; } }
+      .node { border: 1px solid; border-radius: 8px; padding: 6px 10px; font-size: 13px; line-height: 1.35; }
+      .node small { display: block; color: var(--muted); font-size: 12px; }
+      .node.legacy { border-color: var(--legacy); background: var(--legacy-bg); }
+      .node.bridge { border-color: var(--bridge); background: var(--bridge-bg); }
+      .node.inline { border-color: var(--inline); background: var(--inline-bg); }
+      .arrow { color: var(--muted); font-size: 13px; }
+      ol.try { margin: 0; padding-left: 20px; }
+      ol.try li { margin-bottom: 4px; }
     </style>
 {% endblock %}
 
 {% block content %}
     <main>
-      <h1>Legacy RequireJS components on FynMesh</h1>
+      <h1>Legacy RequireJS micro frontends on federated React</h1>
       <p class="lede">
-        Three team widgets, built by webpack 5 as AMD bundles with <code>react</code>,
-        <code>react-dom</code> and <code>ui-kit</code> as externals. The bundles were built
-        against React 18 and never change here. Pick where React comes from.
+        Micro frontends that load through RequireJS can get their shared libraries from Module
+        Federation, without being rebuilt.
       </p>
+
+      <div class="intro">
+        <section class="panel">
+          <h3>The setup</h3>
+          <p>
+            Before Module Federation, many teams built micro frontends with webpack as AMD bundles
+            loaded by RequireJS. Shared libraries like React and the UI kit are webpack externals.
+            The page loads one copy of each, and every bundle asks for them with
+            <code>define(["react", "react-dom", "ui-kit"], ...)</code>.
+          </p>
+        </section>
+        <section class="panel">
+          <h3>The problem</h3>
+          <p>
+            Every component is tied to that one copy. Moving React to a new major means updating,
+            rebuilding and releasing every team's component at once. Module Federation handles
+            version sharing for new apps, but it cannot load these AMD bundles.
+          </p>
+        </section>
+        <section class="panel">
+          <h3>The bridge</h3>
+          <p>
+            A bridge FynApp serves React from federation under the AMD ids the bundles already ask
+            for. A kernel add-on makes RequireJS fetch them through the bridge. Changing the legacy
+            React major is now an edit to the bridge's mapping file. New FynApps on the page share
+            that React or load their own major. Legacy components on one page still share one React.
+          </p>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="flow">
+          <div class="flow-row">
+            <span class="flow-label">Before</span>
+            <span class="node legacy">Team A, B, C bundles<small>webpack AMD</small></span>
+            <span class="arrow">define("react") →</span>
+            <span class="node legacy">Common bundle<small>React 18, one version for all</small></span>
+          </div>
+          <div class="flow-row">
+            <span class="flow-label">With the bridge</span>
+            <span class="node legacy">Team A, B, C bundles<small>same files, not rebuilt</small></span>
+            <span class="arrow">define("react") →</span>
+            <span class="node bridge">AMD add-on + bridge FynApp<small>mapping file picks the major</small></span>
+            <span class="arrow">→</span>
+            <span class="node bridge">Federated React<small>18 or 19</small></span>
+            <span class="arrow">←</span>
+            <span class="node inline">New FynApps<small>share it, or bring another major</small></span>
+          </div>
+        </div>
+      </section>
+
+      <h2 style="margin-top: 24px">Try it</h2>
+      <ol class="try">
+        <li>Switch where React comes from. "Legacy UMD files" is the old setup. The bridge modes serve React 18 or React 19 from federation to the same bundles, which were built against React 18.</li>
+        <li>Load Team C. RequireJS fetches only <code>widget-c.js</code> and reuses the React already loaded.</li>
+        <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched.</li>
+      </ol>
 
       <div class="bar">
         <nav class="seg" id="source-switch">
@@ -114,7 +187,7 @@
 
       <div class="grid">
         <section class="panel full">
-          <h2>Widgets</h2>
+          <h2>Legacy widgets: unchanged webpack AMD bundles</h2>
           <div class="widgets">
             <div id="widget-a"></div>
             <div id="widget-b"></div>
@@ -187,9 +260,9 @@
     <script>
       (function () {
         var SOURCES = {
-          umd: "UMD React 18 files through RequireJS paths. No bridge.",
-          react18: "fynapp-amd-bridge built from amd-bridge.react18.json. React from fynapp-react-18.",
-          react19: "fynapp-amd-bridge built from amd-bridge.json. React from fynapp-react-19.",
+          umd: "The old setup: RequireJS loads React 18 from UMD files. No federation.",
+          react18: "The bridge serves React 18 from federation (amd-bridge.react18.json).",
+          react19: "The bridge serves React 19 from federation (amd-bridge.json).",
         };
         var source = new URLSearchParams(location.search).get("source");
         if (!SOURCES[source]) source = "react19";
