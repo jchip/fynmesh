@@ -6,7 +6,8 @@
   "packages": {
     "autoSearch": true,
     "include": [
-      "dev-tools/create-fynapp/examples/*"
+      "dev-tools/create-fynapp/examples/*",
+      "demo/demo-server/api-docs"
     ],
     "publishInclude": [
       "path:core/*",
