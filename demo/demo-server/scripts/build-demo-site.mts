@@ -444,6 +444,16 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         writeFileSync(path.join(outputDir, "fynops.html"), fynopsHtml);
         log("📄 Generated: fynops.html");
 
+        // Legacy RequireJS widgets on the AMD bridge -- see notes/LEGACY-AMD-BRIDGE.md.
+        const legacyAmdHtml = env.render("pages/legacy-amd.html", {
+            isProduction,
+            pathPrefix,
+            htmlExt,
+            ...pageSeo("legacyAmd"),
+        });
+        writeFileSync(path.join(outputDir, "legacy-amd.html"), legacyAmdHtml);
+        log("📄 Generated: legacy-amd.html");
+
         // docs.html, guides.html, docs/*.html, guides/*.html
         const contentPages = renderContentSite(env, {
             outputDir,
@@ -583,6 +593,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         }
 
         // Copy dist directories from various packages
+        const legacyAmdDir = path.join(__dirname, "../../../demo-legacy-amd");
         const packages: DemoPackage[] = [
             // node_modules packages (federation-js is not here: it ships from
             // the loader variant, paired with the system.js copied above)
@@ -629,7 +640,14 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 "ops-shipments",
                 "ops-map",
                 "ops-analytics",
-            ].map(name => ({ name, basePath: path.join(__dirname, "../../../apps/fynops") }))
+            ].map(name => ({ name, basePath: path.join(__dirname, "../../../apps/fynops") })),
+            // Legacy AMD demo, flat like FynOps. The bridge's dist-react18 backs
+            // the page's React 18 switch, and public/libs holds RequireJS and
+            // the UMD React files.
+            { name: "fynapp-amd-bridge", basePath: legacyAmdDir, extraDists: ["dist-react18"] },
+            { name: "fynapp-react19-user", basePath: legacyAmdDir },
+            { name: "fynapp-react18-user", basePath: legacyAmdDir },
+            { name: "legacy-components", basePath: legacyAmdDir, extraDists: ["public/libs"] },
         ];
 
         // Define file filter based on production mode
@@ -659,6 +677,14 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         };
 
         packages.forEach(pkg => copyPackageDists(pkg, outputDir, fileFilter, log));
+
+        // The AMD kernel add-on is one source file with no build step.
+        copyDirFiltered(
+            path.join(legacyAmdDir, "kernel-addon-amd"),
+            path.join(outputDir, "kernel-addon-amd"),
+            fileName => fileName.endsWith(".js")
+        );
+        log("📁 Copied: kernel-addon-amd/");
 
         // federation-js, the other half of the loader pair. In the `standard`
         // variant both halves live in one directory, so skip the system.js

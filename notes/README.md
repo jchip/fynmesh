@@ -43,6 +43,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`KERNEL-ADDONS-DESIGN.md`](./KERNEL-ADDONS-DESIGN.md)     | Kernel add-ons: middleware, FynBus, telemetry, dev overlay as self-installing bundles (implemented) |
 | [`SITE-REDESIGN.md`](./SITE-REDESIGN.md)                   | fynmesh.fyi site map, design system, templates and docs sources (approved 2026-10-24) |
 | [`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md)               | `/shell` load-perf analysis: measured federation waterfall + ranked fixes |
+| [`LEGACY-AMD-BRIDGE.md`](./LEGACY-AMD-BRIDGE.md)           | Prototype: a FynApp serves federation React to legacy webpack/RequireJS AMD components, driven by a mapping file |
 
 ### Archived (`notes/archive/`)
 

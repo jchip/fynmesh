@@ -132,6 +132,15 @@ export const PAGE_SEO = {
             "FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load " +
             "per route and share React, AG Grid and ECharts at runtime.",
     },
+    legacyAmd: {
+        canonicalPath: "legacy-amd",
+        title: "FynMesh Demo: Legacy RequireJS Widgets on Federated React",
+        pageName: "Legacy RequireJS widgets",
+        crumbs: [{ name: "Demos", path: "demos" }],
+        metaDescription:
+            "Webpack AMD widgets loaded by RequireJS get React from Module Federation through " +
+            "a bridge FynApp, with no rebuild, and share it with FynApps on the same page.",
+    },
     docs: {
         canonicalPath: "docs",
         title: "FynMesh Docs: Kernel, Federation and Tooling",
@@ -157,7 +166,7 @@ export const PAGE_SEO = {
         schemaType: "CollectionPage",
         metaDescription:
             "Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the " +
-            "FynOps logistics console and the Perf Lab load analysis.",
+            "FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.",
     },
 } satisfies Record<string, PageSeo>;
 

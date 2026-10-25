@@ -1,0 +1,407 @@
+{% extends "layouts/base.html" %}
+
+{#
+  Legacy RequireJS widgets getting React from federation through the AMD bridge
+  (notes/LEGACY-AMD-BRIDGE.md). Its packages live in demo-legacy-amd/ and ship
+  flat, as /<name>/..., like every other FynApp.
+#}
+
+{# A demo app is the app only: no site header, footer or GitHub link, just a way home #}
+{% block site_nav %}{% endblock %}
+{% block site_footer %}{% endblock %}
+{% block github_link %}{% include "components/demo-home-chip.html" %}{% endblock %}
+{% block body_class %}{% endblock %}
+
+{% block styles %}
+    <style>
+      :root {
+        --bg: #f7f7f5;
+        --panel: #ffffff;
+        --ink: #1d1d1b;
+        --muted: #6b6b66;
+        --line: #e2e2dc;
+        --accent: #2f6fde;
+        --bridge: #2f6fde;
+        --bridge-bg: #e6eefc;
+        --legacy: #b26a00;
+        --legacy-bg: #fbf0dd;
+        --inline: #6b6b66;
+        --inline-bg: #efefeb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #161615;
+          --panel: #1f1f1d;
+          --ink: #ececea;
+          --muted: #a2a29c;
+          --line: #34342f;
+          --accent: #7aa7ff;
+          --bridge: #7aa7ff;
+          --bridge-bg: #1e2a44;
+          --legacy: #f0b45a;
+          --legacy-bg: #3a2c14;
+          --inline: #a2a29c;
+          --inline-bg: #2a2a27;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      /* top padding clears the home chip */
+      main { max-width: 1160px; margin: 0 auto; padding: 72px 16px 48px; }
+      h1 { font-size: 24px; margin: 0 0 6px; }
+      h2 { font-size: 15px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+      p { margin: 0 0 10px; }
+      code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 18px 0; }
+      .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+      .seg a { padding: 7px 12px; color: var(--ink); text-decoration: none; border-right: 1px solid var(--line); }
+      .seg a:last-child { border-right: 0; }
+      .seg a[aria-current="true"] { background: var(--accent); color: #fff; }
+      .source { color: var(--muted); }
+      button.load {
+        padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent);
+        background: var(--panel); color: var(--accent); font: inherit; cursor: pointer;
+      }
+      button.load:disabled { opacity: 0.5; cursor: default; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+      #files code, #files .kind { white-space: nowrap; }
+      #graph svg { width: 100%; max-width: 520px; height: auto; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+      .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+      .slot-empty { border: 1px dashed var(--line); border-radius: 8px; padding: 16px; color: var(--muted); }
+      .scroll { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      tr.divider td { color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--accent); }
+      tr.fresh td { background: var(--bridge-bg); }
+      .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+      .tag.bridge { color: var(--bridge); background: var(--bridge-bg); }
+      .tag.legacy { color: var(--legacy); background: var(--legacy-bg); }
+      .tag.inline { color: var(--inline); background: var(--inline-bg); }
+      .note { color: var(--muted); font-size: 13px; }
+      svg text { fill: var(--ink); font: 12px ui-monospace, Menlo, monospace; }
+      svg .edge { stroke: var(--line); stroke-width: 1.5; fill: none; }
+      .full { grid-column: 1 / -1; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <main>
+      <h1>Legacy RequireJS components on FynMesh</h1>
+      <p class="lede">
+        Three team widgets, built by webpack 5 as AMD bundles with <code>react</code>,
+        <code>react-dom</code> and <code>ui-kit</code> as externals. The bundles were built
+        against React 18 and never change here. Pick where React comes from.
+      </p>
+
+      <div class="bar">
+        <nav class="seg" id="source-switch">
+          <a href="?source=umd">Legacy UMD files</a>
+          <a href="?source=react18">Bridge: React 18</a>
+          <a href="?source=react19">Bridge: React 19</a>
+        </nav>
+        <span class="source" id="source-text"></span>
+      </div>
+
+      <div class="grid">
+        <section class="panel full">
+          <h2>Widgets</h2>
+          <div class="widgets">
+            <div id="widget-a"></div>
+            <div id="widget-b"></div>
+            <div id="widget-c">
+              <div class="slot-empty">
+                <p>Team C is not loaded yet.</p>
+                <button class="load" id="load-c">require(["widget-c"])</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel full">
+          <h2>FynApps on the same page</h2>
+          <p class="note">
+            Two ordinary FynApps that import <code>esm-react</code> through federation. They know
+            nothing about RequireJS or the legacy widgets.
+          </p>
+          <div class="widgets">
+            <div id="fynapp-react19-user"><div class="slot-empty">Loads after the legacy widgets.</div></div>
+            <div id="fynapp-react18-user"><div class="slot-empty">Loads after the legacy widgets.</div></div>
+          </div>
+          <h2 style="margin-top: 16px">React instances on this page</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>React</th><th>loaded from</th><th>used by</th><th class="num">files fetched</th></tr></thead>
+              <tbody id="instances"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Files fetched</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th class="num">at</th><th>kind</th><th>file</th></tr></thead>
+              <tbody id="files"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Dependency graph</h2>
+          <div class="scroll" id="graph"></div>
+          <p class="note" id="graph-note"></p>
+        </section>
+
+        <section class="panel full">
+          <h2>AMD add-on metrics</h2>
+          <p class="note" id="metrics-note">
+            <code>amd.*</code> entries from kernel telemetry. They are the input for generating
+            preload meta later.
+          </p>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr><th>entry</th><th>id</th><th>route</th><th>deps</th><th class="num">ms</th><th>url</th></tr>
+              </thead>
+              <tbody id="metrics"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+{% endblock %}
+
+{% block scripts_body %}
+    <script src="{{pathPrefix}}legacy-components/public/libs/require.js"></script>
+    {% include "components/kernel-scripts.html" %}
+    <script>
+      (function () {
+        var SOURCES = {
+          umd: "UMD React 18 files through RequireJS paths. No bridge.",
+          react18: "fynapp-amd-bridge built from amd-bridge.react18.json. React from fynapp-react-18.",
+          react19: "fynapp-amd-bridge built from amd-bridge.json. React from fynapp-react-19.",
+        };
+        var source = new URLSearchParams(location.search).get("source");
+        if (!SOURCES[source]) source = "react19";
+
+        document.querySelectorAll("#source-switch a").forEach(function (a) {
+          a.setAttribute("aria-current", a.getAttribute("href") === "?source=" + source ? "true" : "false");
+        });
+        document.getElementById("source-text").textContent = SOURCES[source];
+
+        // The legacy page config. Only UMD mode tells RequireJS where React lives.
+        var paths = {
+          "ui-kit": "dist/ui-kit",
+          "widget-a": "dist/widget-a",
+          "widget-b": "dist/widget-b",
+          "widget-c": "dist/widget-c",
+        };
+        if (source === "umd") {
+          paths.react = "public/libs/react.development";
+          paths["react-dom"] = "public/libs/react-dom.development";
+        }
+        requirejs.config({ baseUrl: "{{pathPrefix}}legacy-components/", paths: paths });
+
+        // ---- files fetched ----
+        var KINDS = [
+          [/legacy-components\/dist\//, "legacy bundle"],
+          [/legacy-components\/public\/libs\/react/, "UMD lib"],
+          [/fynapp-amd-bridge\//, "bridge"],
+          [/fynapp-react-1[89]\//, "React provider"],
+          [/fynapp-react1[89]-user\//, "FynApp"],
+        ];
+
+        // One row per React instance. "used by" follows from the source; the
+        // file count is measured, so one fetch per row means one shared copy.
+        // A production build may combine the share into the provider's startup-*.js.
+        var INSTANCES = [
+          { label: "18.3.1", from: "UMD file", file: /public\/libs\/react\.development\.js$/,
+            users: source === "umd" ? ["legacy widgets"] : [] },
+          { label: "18.3.1", from: "fynapp-react-18 share", file: /fynapp-react-18\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: (source === "react18" ? ["legacy widgets (bridge)"] : []).concat("fynapp-react18-user") },
+          { label: "19.2.8", from: "fynapp-react-19 share", file: /fynapp-react-19\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: (source === "react19" ? ["legacy widgets (bridge)"] : []).concat("fynapp-react19-user") },
+        ];
+        var instancesEl = document.getElementById("instances");
+        function renderInstances() {
+          var paths = performance.getEntriesByType("resource").map(function (e) { return new URL(e.name).pathname; });
+          instancesEl.innerHTML = "";
+          INSTANCES.forEach(function (inst) {
+            if (!inst.users.length) return;
+            var n = paths.filter(function (p) { return inst.file.test(p); }).length;
+            var tr = document.createElement("tr");
+            tr.innerHTML = "<td>" + inst.label + "</td><td>" + inst.from + "</td><td></td><td class='num'>" + n + "</td>";
+            tr.children[2].textContent = inst.users.join(", ");
+            instancesEl.appendChild(tr);
+          });
+        }
+
+        var filesEl = document.getElementById("files");
+        function addFile(entry) {
+          renderInstances();
+          var path = new URL(entry.name).pathname;
+          var kind = KINDS.find(function (k) { return k[0].test(path); });
+          if (!kind) return;
+          var tr = document.createElement("tr");
+          if (clickedAt !== null) tr.className = "fresh";
+          tr.innerHTML = "<td class='num'>" + Math.round(entry.startTime) + " ms</td><td class='kind'>" + kind[1] + "</td><td><code></code></td>";
+          tr.querySelector("code").textContent = path.replace(/^\//, "");
+          filesEl.appendChild(tr);
+        }
+        var clickedAt = null;
+        performance.getEntriesByType("resource").forEach(addFile);
+        new PerformanceObserver(function (list) { list.getEntries().forEach(addFile); }).observe({ type: "resource" });
+
+        // ---- metrics and graph ----
+        var modules = {};
+        var metricsEl = document.getElementById("metrics");
+        function tag(route) { return "<span class='tag " + route + "'>" + route + "</span>"; }
+        // telemetry flushes in batches, so place each row by its own timestamp
+        var clickedAtTs = null, metricsDivider = null;
+        function addMetric(e) {
+          var tr = document.createElement("tr");
+          var afterClick = clickedAtTs !== null && e.ts >= clickedAtTs;
+          if (afterClick) tr.className = "fresh";
+          var d = e.data || {};
+          if (e.name === "amd.bridge") {
+            tr.innerHTML = "<td><code>amd.bridge</code></td><td><code></code></td><td></td><td></td><td class='num'>" + e.value + "</td><td>" + (d.ok ? "loaded" : "failed") + "</td>";
+            tr.children[1].firstChild.textContent = d.name;
+          } else {
+            modules[d.id] = d;
+            tr.innerHTML = "<td><code>amd.module</code></td><td><code></code></td><td>" + tag(d.route) + "</td><td><code></code></td><td class='num'>" + (e.value == null ? "" : e.value) + "</td><td><code></code></td>";
+            tr.children[1].firstChild.textContent = d.id;
+            tr.children[3].firstChild.textContent = d.deps.join(", ");
+            tr.children[5].firstChild.textContent = d.url ? new URL(d.url).pathname.replace(/^\//, "") : "";
+          }
+          if (metricsDivider && !afterClick) metricsEl.insertBefore(tr, metricsDivider);
+          else metricsEl.appendChild(tr);
+        }
+
+        function renderGraph() {
+          var ids = Object.keys(modules);
+          var el = document.getElementById("graph");
+          if (!ids.length) return;
+          // column = longest path down to a module with no deps; libs land on the right
+          var depth = {};
+          function d(id) {
+            if (depth[id] != null) return depth[id];
+            var deps = (modules[id] && modules[id].deps) || [];
+            depth[id] = 0;
+            return (depth[id] = deps.length ? 1 + Math.max.apply(null, deps.map(d)) : 0);
+          }
+          ids.forEach(d);
+          var max = Math.max.apply(null, ids.map(function (id) { return depth[id]; }));
+          var cols = {};
+          ids.sort().forEach(function (id) { (cols[max - depth[id]] = cols[max - depth[id]] || []).push(id); });
+          var colW = 130, rowH = 40, nodeW = 104, nodeH = 26, pad = 8;
+          var rows = Math.max.apply(null, Object.keys(cols).map(function (c) { return cols[c].length; }));
+          var pos = {};
+          Object.keys(cols).forEach(function (c) {
+            cols[c].forEach(function (id, i) { pos[id] = { x: pad + c * colW, y: pad + i * rowH }; });
+          });
+          var w = pad * 2 + max * colW + nodeW, h = pad * 2 + (rows - 1) * rowH + nodeH;
+          var svg = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 " + w + " " + h + "' role='img' aria-label='AMD dependency graph'>";
+          ids.forEach(function (id) {
+            modules[id].deps.forEach(function (dep) {
+              if (!pos[dep]) return;
+              var a = pos[id], b = pos[dep];
+              var x1 = a.x + nodeW, y1 = a.y + nodeH / 2, x2 = b.x, y2 = b.y + nodeH / 2, mx = (x1 + x2) / 2;
+              svg += "<path class='edge' d='M" + x1 + "," + y1 + " C" + mx + "," + y1 + " " + mx + "," + y2 + " " + x2 + "," + y2 + "'/>";
+            });
+          });
+          ids.forEach(function (id) {
+            var p = pos[id], route = modules[id].route;
+            svg += "<g><rect x='" + p.x + "' y='" + p.y + "' width='" + nodeW + "' height='" + nodeH + "' rx='6' fill='var(--" + route + "-bg)' stroke='var(--" + route + ")'/>" +
+              "<text x='" + (p.x + nodeW / 2) + "' y='" + (p.y + 17) + "' text-anchor='middle'>" + id + "</text></g>";
+          });
+          el.innerHTML = svg + "</svg>";
+          document.getElementById("graph-note").innerHTML =
+            "Built from the <code>deps</code> of each <code>amd.module</code> entry. " + tag("bridge") + " " + tag("legacy");
+        }
+
+        function mount(names, then) {
+          require(names, function () {
+            var mods = arguments;
+            names.forEach(function (name, i) {
+              var el = document.getElementById(name);
+              el.innerHTML = "";
+              mods[i].mount(el);
+            });
+            if (then) then();
+          });
+        }
+
+        var apps = {
+          "fynapp-amd-bridge": ["{{pathPrefix}}fynapp-amd-bridge/" + (source === "react18" ? "dist-react18/" : "dist/"), "1.0.0"],
+          "fynapp-react19-user": ["{{pathPrefix}}fynapp-react19-user/dist/", "1.0.0"],
+          "fynapp-react18-user": ["{{pathPrefix}}fynapp-react18-user/dist/", "1.0.0"],
+          "fynapp-react-lib@^18.0.0": ["{{pathPrefix}}fynapp-react-18/dist/", "18.3.0"],
+          "fynapp-react-lib@^19.0.0": ["{{pathPrefix}}fynapp-react-19/dist/", "19.2.8"],
+        };
+        fynMeshKernel.setRegistryResolver(async function (name, range) {
+          var app = apps[name + "@" + range] || apps[name];
+          return { name: name, version: app[1], url: app[0] + "fynapp.manifest.json", distBase: app[0] };
+        });
+
+        // legacy widgets first, then the FynApps join the same page
+        function start() {
+          mount(["widget-a", "widget-b"], function () {
+            ["fynapp-react19-user", "fynapp-react18-user"].forEach(function (id) {
+              document.getElementById(id).innerHTML = "";
+            });
+            fynMeshKernel.loadFynAppsByName([{ name: "fynapp-react19-user" }, { name: "fynapp-react18-user" }]);
+          });
+        }
+
+        document.getElementById("load-c").addEventListener("click", function () {
+          this.disabled = true;
+          clickedAt = performance.now();
+          clickedAtTs = Date.now();
+          [filesEl, metricsEl].forEach(function (tbody) {
+            var tr = document.createElement("tr");
+            tr.className = "divider";
+            tr.innerHTML = "<td colspan='6'>require([\"widget-c\"]) at " + Math.round(clickedAt) + " ms</td>";
+            tbody.appendChild(tr);
+            if (tbody === metricsEl) metricsDivider = tr;
+          });
+          mount(["widget-c"]);
+        });
+
+        if (source === "umd") {
+          document.getElementById("metrics-note").textContent =
+            "The AMD add-on is not loaded in UMD mode, so there are no amd.* entries. Pick a bridge source to see them.";
+          document.getElementById("graph-note").textContent = "The graph comes from the add-on metrics.";
+          start();
+          return;
+        }
+
+        fynMeshKernel.setTelemetry({
+          transport: {
+            send: async function (batch) {
+              batch.filter(function (e) { return e.name.indexOf("amd.") === 0; }).forEach(addMetric);
+              renderGraph();
+            },
+          },
+        });
+        setInterval(function () { fynMeshKernel.tel.flush(); }, 250);
+
+        // the add-on must be installed before the first require()
+        var addon = document.createElement("script");
+        addon.src = "{{pathPrefix}}kernel-addon-amd/addon-amd.js";
+        addon.dataset.bridge = "fynapp-amd-bridge";
+        addon.onload = start;
+        document.body.appendChild(addon);
+      })();
+    </script>
+    {% include "components/inspector.html" %}
+{% endblock %}

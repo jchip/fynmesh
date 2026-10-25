@@ -1,0 +1,10 @@
+{
+  "provider": {
+    "name": "fynapp-react-lib",
+    "semver": "^19.0.0"
+  },
+  "modules": {
+    "react": { "share": "esm-react", "semver": "^19.0.0" },
+    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0" }
+  }
+}

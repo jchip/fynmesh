@@ -19,6 +19,7 @@ const TEMPLATE_OF: Record<string, string> = {
     features: "features.html",
     shell: "shell.html",
     fynops: "fynops.html",
+    legacyAmd: "legacy-amd.html",
     docs: "section-index.html",
     guides: "section-index.html",
     demos: "demos.html",
@@ -88,7 +89,7 @@ export function buildLlmsTxt(contentPages: ContentPage[], opts: { apiUrl?: strin
         contentPages
             .filter(p => p.kind === kind && p.slug !== "changelog")
             .map(p => link(p.title, siteUrl(p.canonicalPath), p.description));
-    const demo = (key: "demo" | "shell" | "fynops") =>
+    const demo = (key: "demo" | "shell" | "fynops" | "legacyAmd") =>
         link(PAGE_SEO[key].title, siteUrl(PAGE_SEO[key].canonicalPath), PAGE_SEO[key].metaDescription);
     const changelog = contentPages.find(p => p.slug === "changelog");
 
@@ -103,6 +104,7 @@ export function buildLlmsTxt(contentPages: ContentPage[], opts: { apiUrl?: strin
                 demo("demo"),
                 demo("shell"),
                 demo("fynops"),
+                demo("legacyAmd"),
             ],
         ],
         [

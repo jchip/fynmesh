@@ -189,6 +189,17 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         writeFileSync(fynopsOutputPath, fynopsHtml);
         log(`📄 Generated: ${fynopsOutputPath}`);
 
+        // Legacy RequireJS widgets on the AMD bridge -- see notes/LEGACY-AMD-BRIDGE.md.
+        const legacyAmdHtml = env.render("pages/legacy-amd.html", {
+            isProduction,
+            pathPrefix,
+            htmlExt,
+            ...pageSeo("legacyAmd"),
+        });
+        const legacyAmdOutputPath = path.join(outputDir, "legacy-amd.html");
+        writeFileSync(legacyAmdOutputPath, legacyAmdHtml);
+        log(`📄 Generated: ${legacyAmdOutputPath}`);
+
         // docs.html, guides.html, docs/*.html, guides/*.html
         const content = renderContentSite(env, { outputDir, isProduction, pathPrefix, htmlExt });
         log(`📚 Content pages: ${content.length}`);

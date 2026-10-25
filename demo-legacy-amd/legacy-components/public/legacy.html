@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Legacy host</title>
+</head>
+<body>
+  <h1>Legacy host (RequireJS + UMD React)</h1>
+  <div id="widget-a"></div>
+  <div id="widget-b"></div>
+  <div id="widget-c"></div>
+  <script src="libs/require.js"></script>
+  <script>
+    requirejs.config({
+      baseUrl: "../",
+      paths: {
+        react: "public/libs/react.development",
+        "react-dom": "public/libs/react-dom.development",
+        "ui-kit": "dist/ui-kit",
+        "widget-a": "dist/widget-a",
+        "widget-b": "dist/widget-b",
+        "widget-c": "dist/widget-c"
+      }
+    });
+    require(["widget-a", "widget-b", "widget-c"], function (a, b, c) {
+      a.mount(document.getElementById("widget-a"));
+      b.mount(document.getElementById("widget-b"));
+      c.mount(document.getElementById("widget-c"));
+    });
+  </script>
+</body>
+</html>

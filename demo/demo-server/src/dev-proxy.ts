@@ -69,6 +69,27 @@ startDevProxy([
     { path: "/kernel" },
     { protocol: "file", path: Path.join(__dirname, "../../../core/kernel") },
   ],
+  // Legacy AMD demo packages, flat like on the site
+  [
+    { path: "/fynapp-amd-bridge" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-amd-bridge") },
+  ],
+  [
+    { path: "/fynapp-react19-user" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-react19-user") },
+  ],
+  [
+    { path: "/fynapp-react18-user" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-react18-user") },
+  ],
+  [
+    { path: "/legacy-components" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/legacy-components") },
+  ],
+  [
+    { path: "/kernel-addon-amd" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/kernel-addon-amd") },
+  ],
   [{ path: "/fynapp-1" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-1") }],
   [{ path: "/fynapp-1-b" }, { protocol: "file", path: Path.join(__dirname, "../../fynapp-1-b") }],
   [

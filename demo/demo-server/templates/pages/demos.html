@@ -83,6 +83,24 @@
             </div>
         </article>
 
+        <article class="fm-demo-row">
+            <a href="{{pathPrefix}}legacy-amd{{ext}}" aria-label="Open the legacy RequireJS widgets demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-legacy-amd.png" alt="Three legacy widgets and two FynApps on one page, under a switch for where React comes from" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Legacy RequireJS widgets</h2>
+                <p>Three widgets were built by webpack as AMD bundles, with React as an external. Here they get React from federation instead of a UMD file, and the bundles are not rebuilt. Two ordinary FynApps on the same page share that copy of React.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Switch React's source between the UMD files, React 18 and React 19</li>
+                    <li>Load Team C on demand and see which files it fetches</li>
+                    <li>Check the React instances table to see which app uses which copy</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="{{pathPrefix}}legacy-amd{{ext}}">Launch demo</a>
+                    <a href="{{pathPrefix}}how-it-works{{ext}}#8-kernel-add-ons">How kernel add-ons work</a>
+                </div>
+            </div>
+        </article>
+
         <section class="fm-index-group">
             <h2>How the demos are built</h2>
             <p class="fm-lead">Every FynApp in these demos is a separate Rollup build with its own manifest. The page loads only the kernel, which resolves each app by name and range, boots its dependencies first, and shares one copy of each library that fits.</p>

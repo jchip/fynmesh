@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "legacy-amd-components",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "webpack --config webpack.config.cjs && node scripts/copy-libs.cjs"
+  },
+  "devDependencies": {
+    "@babel/core": "^7",
+    "@babel/preset-react": "^7",
+    "babel-loader": "^10.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "requirejs": "^2.3.7",
+    "webpack": "^5",
+    "webpack-cli": "^7.2.3"
+  }
+}
