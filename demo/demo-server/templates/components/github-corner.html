@@ -1,5 +1,9 @@
-<!-- GitHub Icon - Fixed Top Right -->
-<div style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1000;">
+<!-- GitHub Icon - fixed, below the site nav; bottom right on narrow screens where the nav wraps -->
+<style>
+    .gh-corner { position: fixed; top: 4.5rem; right: 1.5rem; z-index: 1000; }
+    @media (max-width: 640px) { .gh-corner { top: auto; bottom: 1.5rem; } }
+</style>
+<div class="gh-corner">
     <a href="https://github.com/jchip/fynmesh"
        target="_blank"
        rel="noopener noreferrer"
