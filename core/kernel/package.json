@@ -23,10 +23,11 @@
     "access": "public"
   },
   "scripts": {
-    "build": "xrun -s clean gen-version compile-lib build-dist",
+    "build": "xrun -s clean gen-version compile-lib check-examples build-dist",
     "clean": "rm -rf dist lib",
     "gen-version": "node build/gen-version.mjs",
     "compile-lib": "tsc --build tsconfig.lib.json",
+    "check-examples": "tsc -p examples/tsconfig.json",
     "build-dist": "rm -rf dist && rollup -c",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

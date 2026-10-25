@@ -1,9 +1,9 @@
-import type { MiddlewareUseMeta, FynUnit } from "./types.ts";
+import type { MiddlewareDeclaration, FynUnit } from "./types.ts";
 
 /**
  * Attach middleware metadata to a FynUnit
  *
- * @param meta Middleware metadata (single or array)
+ * @param meta Middleware declarations (single or array)
  * @param unit The FynUnit to attach middleware to
  * @returns The same unit with __middlewareMeta attached
  *
@@ -11,7 +11,10 @@ import type { MiddlewareUseMeta, FynUnit } from "./types.ts";
  * ```typescript
  * export const main = useMiddleware(
  *   [
- *     { mw: import('pkg/middleware'), config: { theme: 'dark' } },
+ *     {
+ *       mw: import('pkg/middleware/theme/theme', { with: { type: 'fynapp-middleware' } }),
+ *       config: { theme: 'dark' },
+ *     },
  *   ],
  *   {
  *     execute(runtime) { return { type: 'component', component: MyComponent }; }
@@ -20,10 +23,10 @@ import type { MiddlewareUseMeta, FynUnit } from "./types.ts";
  * ```
  */
 export const useMiddleware = <UnitT extends FynUnit = FynUnit>(
-  meta: MiddlewareUseMeta<unknown> | MiddlewareUseMeta<unknown>[],
+  meta: MiddlewareDeclaration | MiddlewareDeclaration[],
   unit: UnitT,
 ): UnitT => {
-  unit.__middlewareMeta = ([] as MiddlewareUseMeta<unknown>[]).concat(meta);
+  unit.__middlewareMeta = ([] as MiddlewareDeclaration[]).concat(meta);
   return unit;
 };
 

@@ -79,6 +79,28 @@ export interface MiddlewareUseMeta<ConfigT> {
 }
 
 /**
+ * A middleware import. In source it is
+ * `import("<pkg>/<exposeModule>/<name>", { with: { type: "fynapp-middleware" } })`;
+ * the build replaces it with an id string, which is what the kernel reads.
+ */
+export type MiddlewareImport = Promise<unknown> | string;
+
+/** Declare a middleware by import: the form FynApps use. */
+export interface MiddlewareImportMeta<ConfigT> {
+  mw: MiddlewareImport;
+  config?: ConfigT;
+}
+
+/**
+ * One `useMiddleware` declaration: by import with config, by name and
+ * provider, or a bare import.
+ */
+export type MiddlewareDeclaration<ConfigT = unknown> =
+  | MiddlewareImportMeta<ConfigT>
+  | MiddlewareUseMeta<ConfigT>
+  | MiddlewareImport;
+
+/**
  * Runtime context passed to FynUnit during execution
  */
 export type FynUnitRuntime = {
@@ -121,7 +143,7 @@ export type FynModuleRuntime = FynUnitRuntime;
  * ```
  */
 export interface FynUnit {
-  __middlewareMeta?: MiddlewareUseMeta<unknown>[];
+  __middlewareMeta?: MiddlewareDeclaration[];
   /** Tell middleware what you need - called first to determine readiness */
   initialize?(runtime: FynUnitRuntime): Promise<{ status: string; mode?: string }> | { status: string; mode?: string };
   /** Do your actual work - called when middleware is ready. Returns any value - middleware defines contract. */

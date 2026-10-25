@@ -275,7 +275,6 @@ const unit = {
 
 export const main = useMiddleware(
   {
-    // @ts-ignore - TS cannot type federation remote containers
     mw: import("fynapp-design-tokens/middleware/design-tokens/design-tokens",
       { with: { type: "fynapp-middleware" } }),
     config: { theme: "fynmesh-default", cssCustomProperties: true }
@@ -286,7 +285,14 @@ export const main = useMiddleware(
 
 `config` is passed to the provider as `context.meta.config`. Pass an array to use several middleware.
 
-The kernel also reads the typed `MiddlewareUseMeta` shape, `{ info: { name, provider, version? }, config }`, which looks up a registered middleware by name and provider. Demo FynApps use the `mw` form.
+The provider is a remote FynApp, so TypeScript has no types for its modules. Declare each provider once in a `.d.ts` file of the consumer, and every import from it type-checks:
+
+```typescript
+// src/remotes.d.ts
+declare module "fynapp-design-tokens/*";
+```
+
+Each declaration is a `MiddlewareDeclaration`. Besides `{ mw, config }`, the kernel accepts a bare `mw` import, and `{ info: { name, provider, version? }, config }`, which looks up a middleware that is already registered by name and provider.
 
 ### Creating Middleware
 

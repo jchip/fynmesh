@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "paths": {
+      "@fynmesh/kernel": ["../src/index.ts"]
+    }
+  },
+  "include": ["./*.ts"]
+}
