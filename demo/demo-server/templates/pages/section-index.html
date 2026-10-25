@@ -1,0 +1,41 @@
+{% extends "layouts/base.html" %}
+{% set ext = htmlExt | default(".html") %}
+
+{% block body_class %}fm-doc{% endblock %}
+
+{% block styles %}
+<style>
+    .fm-doc { background: #f8fafc; color: #1e293b; }
+    .fm-idx { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .fm-idx .fm-crumbs { font-size: 0.9rem; color: #64748b; }
+    .fm-idx .fm-crumbs a { color: #2563eb; text-decoration: none; }
+    .fm-idx .fm-crumbs span { margin: 0 0.4rem; }
+    .fm-idx h1 { font-size: 2rem; margin: 0.75rem 0 0.5rem; }
+    .fm-idx-intro { font-size: 1.15rem; color: #475569; margin: 0 0 2rem; max-width: 720px; }
+    .fm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .fm-card { display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.1rem; color: inherit; text-decoration: none; }
+    .fm-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(30, 64, 175, 0.12); }
+    .fm-card h2 { font-size: 1.1rem; margin: 0 0 0.4rem; color: #1d4ed8; line-height: 1.35; }
+    .fm-card p { margin: 0; font-size: 0.95rem; color: #475569; line-height: 1.55; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="fm-idx">
+    <nav class="fm-crumbs" aria-label="Breadcrumb"><a href="{{pathPrefix}}">Home</a><span>/</span>{{ heading }}</nav>
+    <h1>{{ heading }}</h1>
+    <p class="fm-idx-intro">{{ intro }}</p>
+    {% if cards.length %}
+    <div class="fm-cards">
+        {% for card in cards %}
+        <a class="fm-card" href="{{ card.href }}">
+            <h2>{{ card.title }}</h2>
+            <p>{{ card.description }}</p>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>{{ emptyText }}</p>
+    {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,42 @@
+{#
+  Site-wide footer: the one-sentence definition of FynMesh plus links to every
+  section, so each page carries crawlable text and links even when its main
+  content is rendered by JavaScript. See site-nav.html for `htmlExt`.
+#}
+{% set ext = htmlExt | default(".html") %}
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <p class="fm-footer-about">{{ siteDefinition }}</p>
+        <div class="fm-footer-cols">
+            <div>
+                <div class="fm-footer-h">Learn</div>
+                <a href="{{pathPrefix}}features{{ext}}">Features</a>
+                <a href="{{pathPrefix}}docs{{ext}}">Docs</a>
+                <a href="{{pathPrefix}}guides{{ext}}">Guides</a>
+                <a href="{{pathPrefix}}docs/changelog{{ext}}">Changelog</a>
+            </div>
+            <div>
+                <div class="fm-footer-h">Live demos</div>
+                <a href="{{pathPrefix}}demo{{ext}}">Six frameworks on one page</a>
+                <a href="{{pathPrefix}}shell{{ext}}">Shell layout demo</a>
+                <a href="{{pathPrefix}}fynops{{ext}}">FynOps logistics console</a>
+            </div>
+            <div>
+                <div class="fm-footer-h">Project</div>
+                <a href="{{ githubUrl }}">GitHub</a>
+                <a href="{{ npmUrl }}">npm</a>
+                <a href="{{ githubUrl }}/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+    </div>
+</footer>
+<style>
+    .fm-footer { background: #0f172a; color: #94a3b8; font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .fm-footer-inner { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+    .fm-footer-about { max-width: 60rem; margin: 0 0 1.5rem; color: #cbd5e1; }
+    .fm-footer-cols { display: flex; flex-wrap: wrap; gap: 1.5rem 4rem; }
+    .fm-footer-cols div { display: flex; flex-direction: column; gap: 0.3rem; }
+    .fm-footer-h { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin: 0 0 0.3rem; }
+    .fm-footer a { color: #cbd5e1; text-decoration: none; }
+    .fm-footer a:hover { color: #fff; }
+</style>

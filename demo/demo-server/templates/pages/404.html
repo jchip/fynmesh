@@ -18,8 +18,6 @@
     that depends on the thing that just failed to load is not an error page.
 #}
 
-{% block title %}404 — Page Not Found | FynMesh{% endblock %}
-
 {# An error page must never be indexed, and it is not the canonical form of anything. #}
 {% block robots %}
 <meta name="robots" content="noindex, follow">
@@ -63,7 +61,7 @@
     }
 
     .not-found .actions a {
-        margin: 0 0.25rem;
+        margin: 0.25rem;
     }
 </style>
 {% endblock %}
@@ -75,9 +73,14 @@
     <p>Nothing lives at this address. It may have moved, or the link may be wrong.</p>
     <div class="actions">
         <a href="{{pathPrefix}}" class="btn btn-primary">Home</a>
-        <a href="{{pathPrefix}}demo.html" class="btn">All FynApps</a>
-        <a href="{{pathPrefix}}shell.html" class="btn">Shell demo</a>
-        <a href="{{pathPrefix}}fynops.html" class="btn">FynOps</a>
+        <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}" class="btn">Features</a>
+        <a href="{{pathPrefix}}docs{{ htmlExt | default(".html") }}" class="btn">Docs</a>
+        <a href="{{pathPrefix}}guides{{ htmlExt | default(".html") }}" class="btn">Guides</a>
+    </div>
+    <div class="actions">
+        <a href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}" class="btn">All FynApps demo</a>
+        <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}" class="btn">Shell demo</a>
+        <a href="{{pathPrefix}}fynops{{ htmlExt | default(".html") }}" class="btn">FynOps</a>
     </div>
 </main>
 {% endblock %}

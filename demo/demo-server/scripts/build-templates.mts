@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { collectShellPreloadModules, collectShellBundleMaps, collectPerfLab, collectFynOps } from "./shell-preload.mts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
 import { pageSeo } from "./page-seo.mts";
+import { renderContentSite } from "./content-pages.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,8 @@ interface BuildTemplatesOptions {
     templateDir?: string;
     /** Whether this is a production build */
     isProduction?: boolean;
+    /** Link extension. The dev server serves files by name, so ".html". */
+    htmlExt?: string;
 }
 
 /**
@@ -35,7 +38,8 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         pathPrefix = process.env.PATH_PREFIX || "/",
         outputDir = path.join(__dirname, "../public"),
         templateDir = path.join(__dirname, "../templates"),
-        isProduction = process.env.NODE_ENV === "production"
+        isProduction = process.env.NODE_ENV === "production",
+        htmlExt = ".html"
     } = options;
 
     const log = (message: string) => {
@@ -57,6 +61,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const templateData = getDemoTemplateData({
             isProduction,
             pathPrefix,
+            htmlExt,
         });
 
         log("Rendering templates...");
@@ -78,9 +83,9 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
          * the base layout unnoticed.
          */
         const landingHtml = env.render("pages/landing.html", {
-            title: "FynMesh - Enterprise Micro Frontend Framework",
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("landing"),
         });
         const landingOutputPath = path.join(outputDir, "index.html");
@@ -99,6 +104,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const notFoundHtml = env.render("pages/404.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("notFound"),
         });
         const notFoundOutputPath = path.join(outputDir, "404.html");
@@ -107,6 +113,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
 
         const demoHtml = env.render("pages/demo.html", {
             ...templateData,
+            htmlExt,
             ...pageSeo("demo"),
         });
         const demoOutputPath = path.join(outputDir, "demo.html");
@@ -117,6 +124,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const featuresHtml = env.render("pages/features.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("features"),
         });
         const featuresOutputPath = path.join(outputDir, "features.html");
@@ -147,9 +155,9 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         );
         log(`🧪 Perf Lab hints: ${perfLab.hints.length}`);
         const shellHtml = env.render("pages/shell.html", {
-            title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
+            htmlExt,
             preloadModules,
             bundleMaps,
             perfLab,
@@ -169,6 +177,7 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             preloadModules: fynops.hints,
             bundleMaps: fynops.bundleMaps,
             routeHints: fynops.routeHints,
@@ -178,6 +187,10 @@ async function buildTemplates(options: BuildTemplatesOptions = {}): Promise<bool
         const fynopsOutputPath = path.join(outputDir, "fynops.html");
         writeFileSync(fynopsOutputPath, fynopsHtml);
         log(`📄 Generated: ${fynopsOutputPath}`);
+
+        // docs.html, guides.html, docs/*.html, guides/*.html
+        const content = renderContentSite(env, { outputDir, isProduction, pathPrefix, htmlExt });
+        log(`📚 Content pages: ${content.length}`);
 
         log("✅ Templates compiled successfully!");
         log(`🌐 Path prefix: ${pathPrefix}`);

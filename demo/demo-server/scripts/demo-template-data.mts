@@ -21,9 +21,10 @@ export interface InfoCard {
 }
 
 export interface DemoTemplateDataOptions {
-    title?: string;
     isProduction?: boolean;
     pathPrefix?: string;
+    /** Link extension: "" on the deployed site, ".html" for the dev server. */
+    htmlExt?: string;
 }
 
 export const DEMO_FYNAPPS: FynAppCard[] = [
@@ -141,15 +142,15 @@ export const DEMO_FEATURES: Record<string, boolean> = {
 
 export function getDemoTemplateData(options: DemoTemplateDataOptions = {}) {
     const {
-        title = "FynMesh Micro Frontend Demo",
         isProduction = false,
         pathPrefix = "/",
+        htmlExt = ".html",
     } = options;
 
     return {
-        title,
         isProduction,
         pathPrefix,
+        htmlExt,
         features: { ...DEMO_FEATURES },
         fynApps: [...DEMO_FYNAPPS],
         infoCards: [...DEMO_INFO_CARDS],

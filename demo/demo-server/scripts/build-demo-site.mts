@@ -14,7 +14,9 @@ import {
 import { generateCacheHeaders } from "./cache-headers.mts";
 import { resolveLoaderVariant } from "../src/loader-variant.ts";
 import { getDemoTemplateData } from "./demo-template-data.mts";
-import { SITE_ORIGIN, pageSeo } from "./page-seo.mts";
+import { pageSeo } from "./page-seo.mts";
+import { renderContentSite, assertNoMf2 } from "./content-pages.mts";
+import { buildSitemapEntries, renderSitemap, buildLlmsTxt, buildLlmsFull } from "./seo-files.mts";
 
 // ES module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +55,12 @@ interface BuildDemoSiteOptions {
     templateDir?: string;
     /** Whether this is a production build */
     isProduction?: boolean;
+    /**
+     * Link extension: "" for the deployed site (Cloudflare Pages serves clean
+     * urls), ".html" when writing into the dev server's public/. Defaults by
+     * output directory.
+     */
+    htmlExt?: string;
 }
 
 /**
@@ -92,6 +100,12 @@ function copyDirFiltered(src: string, dest: string, filter: (file: string) => bo
 function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
     const missing: string[] = [];
     const pages = readdirSync(outputDir).filter(f => f.endsWith(".html"));
+    for (const dir of ["docs", "guides"]) {
+        const sub = path.join(outputDir, dir);
+        if (existsSync(sub)) {
+            pages.push(...readdirSync(sub).filter(f => f.endsWith(".html")).map(f => `${dir}/${f}`));
+        }
+    }
 
     for (const page of pages) {
         const html = readFileSync(path.join(outputDir, page), "utf8");
@@ -108,7 +122,14 @@ function findMissingLocalRefs(outputDir: string, pathPrefix: string): string[] {
             const rel = ref.startsWith(pathPrefix)
                 ? ref.slice(pathPrefix.length)
                 : ref.replace(/^\//, "");
-            if (!existsSync(path.join(outputDir, rel))) {
+            // Clean links: `/demo` is `demo.html`, and the root is `index.html`.
+            const isFile = (p: string) => existsSync(p) && statSync(p).isFile();
+            const full = path.join(outputDir, rel);
+            const resolves =
+                rel === "" || rel.endsWith("/")
+                    ? isFile(path.join(full, "index.html"))
+                    : existsSync(full) || isFile(`${full}.html`);
+            if (!resolves) {
                 missing.push(`${page} -> ${ref}`);
             }
         }
@@ -283,6 +304,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         templateDir = path.join(__dirname, "../templates"),
         isProduction = process.env.NODE_ENV === "production"
     } = options;
+    const htmlExt =
+        options.htmlExt ??
+        (path.resolve(outputDir) === path.resolve(__dirname, "../public") ? ".html" : "");
 
     const log = (message: string) => {
         if (verbose) {
@@ -303,6 +327,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const templateData = getDemoTemplateData({
             isProduction,
             pathPrefix,
+            htmlExt,
         });
 
         log("Rendering templates...");
@@ -313,9 +338,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 
         // Build the landing page (index.html)
         const landingHtml = env.render("pages/landing.html", {
-            title: "FynMesh - Enterprise Micro Frontend Framework",
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("landing"),
         });
         const landingOutputPath = path.join(outputDir, "index.html");
@@ -333,6 +358,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const notFoundHtml = env.render("pages/404.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("notFound"),
         });
         const notFoundOutputPath = path.join(outputDir, "404.html");
@@ -342,6 +368,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         // Build the demo page (demo.html)
         const demoHtml = env.render("pages/demo.html", {
             ...templateData,
+            htmlExt,
             ...pageSeo("demo"),
         });
         const demoOutputPath = path.join(outputDir, "demo.html");
@@ -352,6 +379,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const featuresHtml = env.render("pages/features.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             ...pageSeo("features"),
         });
         const featuresOutputPath = path.join(outputDir, "features.html");
@@ -383,9 +411,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         log(`🧪 Perf Lab hints: ${perfLab.hints.length}`);
 
         const shellHtml = env.render("pages/shell.html", {
-            title: "FynMesh Shell Demo",
             isProduction,
             pathPrefix,
+            htmlExt,
             preloadModules,
             bundleMaps,
             perfLab,
@@ -405,6 +433,7 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         const fynopsHtml = env.render("pages/fynops.html", {
             isProduction,
             pathPrefix,
+            htmlExt,
             preloadModules: fynops.hints,
             bundleMaps: fynops.bundleMaps,
             routeHints: fynops.routeHints,
@@ -413,6 +442,15 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
         });
         writeFileSync(path.join(outputDir, "fynops.html"), fynopsHtml);
         log("📄 Generated: fynops.html");
+
+        // docs.html, guides.html, docs/*.html, guides/*.html
+        const contentPages = renderContentSite(env, {
+            outputDir,
+            isProduction,
+            pathPrefix,
+            htmlExt,
+        });
+        log(`📚 Content pages: ${contentPages.length}`);
 
         // Copy all required static assets (skip index.html since we build it directly)
         log("📁 Copying static assets...");
@@ -429,7 +467,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             "lazy-loader.js",  // Defines LazyLoader, used by the demo page's fynapp loader
             "favicon.ico",     // Favicon
             "og-image.png",    // SEO: Open Graph / Twitter card image (1200x630)
-            "robots.txt"       // SEO: Robots.txt (sitemap.xml is generated below)
+            "robots.txt",      // SEO: Robots.txt (sitemap.xml is generated below)
+            "site.webmanifest",
+            "apple-touch-icon.png"
             // Note: shell.html is now generated from template
         ];
         
@@ -447,42 +487,33 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
             }
         });
 
-        // SEO: generate sitemap.xml rather than shipping a static one, whose
-        // `lastmod` was frozen at a date in the file and went ~20 months stale.
-        // Publishing is a deliberate act (`fyn publish-demo`), so the build date
-        // is an honest `lastmod`.
-        //
-        // Cloudflare Pages serves pages extensionless and 308s the `.html` form,
-        // so `/demo` is canonical and `/demo.html` is a redirect -- a sitemap
-        // must list the former or every entry costs Google a redirect hop.
-        //
-        // Each page is listed only if it actually landed in the output, so a page
-        // that stops shipping drops out instead of becoming a 404 in the sitemap.
-        const sitemapPages = [
-            { file: "index.html", loc: "/", priority: "1.0" },
-            { file: "features.html", loc: "/features", priority: "0.8" },
-            { file: "demo.html", loc: "/demo", priority: "0.8" },
-            { file: "shell.html", loc: "/shell", priority: "0.8" },
-            { file: "fynops.html", loc: "/fynops", priority: "0.8" },
-        ];
-        const lastmod = new Date().toISOString().slice(0, 10);
-        const sitemapUrls = sitemapPages
-            .filter(p => existsSync(path.join(outputDir, p.file)))
-            .map(p => [
-                `    <url>`,
-                `        <loc>${SITE_ORIGIN}${p.loc}</loc>`,
-                `        <lastmod>${lastmod}</lastmod>`,
-                `        <changefreq>weekly</changefreq>`,
-                `        <priority>${p.priority}</priority>`,
-                `    </url>`,
-            ].join("\n"));
-        writeFileSync(
-            path.join(outputDir, "sitemap.xml"),
-            `<?xml version="1.0" encoding="UTF-8"?>\n` +
-            `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-            `${sitemapUrls.join("\n")}\n</urlset>\n`
-        );
-        log(`🗺️  Generated: sitemap.xml (${sitemapUrls.length} urls, lastmod ${lastmod})`);
+        // SEO: sitemap.xml and the llms files are generated, never shipped
+        // static. Entries are extensionless (Cloudflare Pages 308s the .html
+        // form) and only cover pages that landed in the output.
+        const sitemapEntries = buildSitemapEntries({ outputDir, contentPages });
+        const sitemapXml = renderSitemap(sitemapEntries);
+        const llmsTxt = buildLlmsTxt(contentPages);
+        const llmsFull = buildLlmsFull(contentPages);
+        writeFileSync(path.join(outputDir, "sitemap.xml"), sitemapXml);
+        writeFileSync(path.join(outputDir, "llms.txt"), llmsTxt);
+        writeFileSync(path.join(outputDir, "llms-full.txt"), llmsFull);
+        log(`🗺️  Generated: sitemap.xml (${sitemapEntries.length} urls), llms.txt, llms-full.txt`);
+
+        // Guard every generated page and file, not only the content pages.
+        const pageFiles = [
+            ...readdirSync(outputDir).filter(f => f.endsWith(".html")),
+            ...["docs", "guides"].flatMap(d =>
+                existsSync(path.join(outputDir, d))
+                    ? readdirSync(path.join(outputDir, d)).map(f => `${d}/${f}`)
+                    : []
+            ),
+        ].filter(f => !f.startsWith("google"));
+        assertNoMf2([
+            ...pageFiles.map(name => ({ name, text: readFileSync(path.join(outputDir, name), "utf8") })),
+            { name: "sitemap.xml", text: sitemapXml },
+            { name: "llms.txt", text: llmsTxt },
+            { name: "llms-full.txt", text: llmsFull },
+        ]);
 
         // The loader ships from the FEDERATION variant (fork by default), the
         // same source the dev server mounts -- never from public/ or from

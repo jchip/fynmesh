@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FynMesh Micro Frontend Demo{% endblock %}</title>
+    <title>{% block title %}{{ title | default("FynMesh") }}{% endblock %}</title>
     {# Runs before any stylesheet below, which would otherwise hold up an inline script until it loads. #}
     {% block head_start %}{% endblock %}
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{pathPrefix}}favicon.ico">
+    <link rel="apple-touch-icon" href="{{pathPrefix}}apple-touch-icon.png">
+    <link rel="manifest" href="{{pathPrefix}}site.webmanifest">
 
     {#
       One page identity, used by canonical / og:url / twitter:url alike. These
@@ -19,16 +21,20 @@
       EXTENSIONLESS form, because Cloudflare Pages 308s `/demo.html` -> `/demo`.
     #}
     {% set pageUrl = siteOrigin + "/" + (canonicalPath | default("")) %}
-    {% set socialTitle = ogTitle | default("FynMesh - Enterprise Micro Frontend Framework") %}
-    {% set socialDesc = ogDescription | default("Build scalable micro frontend applications with Module Federation. Framework-agnostic architecture supporting React, Vue, Preact, Solid, Svelte, and Marko.") %}
+    {% set socialTitle = ogTitle | default(title) %}
+    {% set socialDesc = ogDescription | default(metaDescription) %}
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{{ metaDescription | default('FynMesh - Enterprise micro frontend framework for building scalable web applications. Module Federation with Rollup, supporting React, Vue, Preact, Solid, Svelte, and Marko micro frontends.') }}">
+    <meta name="description" content="{{ metaDescription }}">
     <meta name="author" content="FynMesh">
     <meta name="theme-color" content="#3b82f6">
     {% block robots %}
+    {% if noindex %}
+    <meta name="robots" content="noindex, follow">
+    {% else %}
     <meta name="robots" content="index, follow">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    {% endif %}
     {% endblock %}
 
     <!-- Open Graph / Facebook -->
@@ -39,7 +45,7 @@
     <meta property="og:image" content="{{ siteOrigin }}/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta property="og:image:alt" content="{{ socialTitle }}">
     <meta property="og:site_name" content="FynMesh">
     <meta property="og:locale" content="en_US">
 
@@ -49,52 +55,28 @@
     <meta name="twitter:title" content="{{ socialTitle }}">
     <meta name="twitter:description" content="{{ socialDesc }}">
     <meta name="twitter:image" content="{{ siteOrigin }}/og-image.png">
-    <meta name="twitter:image:alt" content="FynMesh - Enterprise Micro Frontend Framework">
+    <meta name="twitter:image:alt" content="{{ socialTitle }}">
 
     <!-- Canonical URL -->
     {% block canonical %}
+    {% if not noindex %}
     <link rel="canonical" href="{{ pageUrl }}">
+    {% endif %}
     {% endblock %}
 
-    <!-- Schema.org Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "FynMesh",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Web",
-        "description": "Enterprise micro frontend framework for building scalable applications with Module Federation. Support for React, Vue, Preact, Solid, Svelte, and Marko.",
-        "url": "{{ siteOrigin }}/",
-        "author": {
-            "@type": "Organization",
-            "name": "FynMesh",
-            "url": "{{ siteOrigin }}/"
-        },
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD"
-        },
-        "keywords": "micro frontend, microfrontend, module federation, react, vue, preact, solid, svelte, marko, javascript framework, web framework, independent deployment, shared dependencies, enterprise architecture"
-    }
-    </script>
     {#
-      No `potentialAction`/SearchAction here. That property describes a search
-      endpoint ON THIS SITE for Google's sitelinks searchbox; this one pointed at
-      GitHub's search, which the site does not host and Google will not honour.
-      An unsupported action is noise at best, so it is omitted until the site has
-      a real search of its own.
+      Schema.org: one @graph per page (site, software, this page and its
+      breadcrumbs), built by `buildJsonLd` in scripts/page-seo.mts so the JSON
+      is always valid and escaped.
+
+      No `potentialAction`/SearchAction: that describes a search endpoint ON
+      THIS SITE for Google's sitelinks searchbox, and the site has no search.
     #}
+    {% if jsonLd %}
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "FynMesh",
-        "url": "{{ siteOrigin }}/",
-        "description": "Enterprise micro frontend framework with Module Federation support"
-    }
+{{ jsonLd | safe }}
     </script>
+    {% endif %}
     {% block schema_extra %}{% endblock %}
 
     <!-- CSS Stylesheets -->
@@ -111,7 +93,9 @@
     {% block scripts_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}body-gradient{% endblock %}" style="min-height: 100vh;">
+    {% block site_nav %}{% include "components/site-nav.html" %}{% endblock %}
     {% block content %}{% endblock %}
+    {% block site_footer %}{% include "components/site-footer.html" %}{% endblock %}
     {% block scripts_body %}{% endblock %}
 </body>
 </html>

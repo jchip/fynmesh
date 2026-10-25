@@ -180,8 +180,7 @@ The typical workflow for developing with FynMesh includes:
 - [Live demo site](https://www.fynmesh.fyi) — the framework running, with source links
 - [Build artifacts reference](./notes/BUILD-ARTIFACTS.md) — the JSON files a fynapp build
   emits, who produces each one, and who reads it
-- [Module Federation 2.0 vs FynMesh](./notes/MF2-VS-FEDERATION-JS.md) — a source-grounded
-  comparison of the two approaches, in both directions
+- [Docs](https://www.fynmesh.fyi/docs) and [guides](https://www.fynmesh.fyi/guides) on the site
 
 For more detailed documentation on how to use FynMesh, please check the documentation within each module.
 

@@ -67,11 +67,6 @@ describe("demo-template-data", () => {
         const footerIndex = html.indexOf("<footer");
         expect(footerIndex).toBeGreaterThan(0);
 
-        const copyrightIndex = html.indexOf(
-            "Demonstrating the future of micro-frontend architecture."
-        );
-        expect(copyrightIndex).toBeGreaterThan(footerIndex);
-
         for (const app of DEMO_FYNAPPS) {
             const containerPattern = `id="${app.id}"`;
             const containerIndex = html.indexOf(containerPattern);
@@ -84,6 +79,5 @@ describe("demo-template-data", () => {
         const notesIndex = html.indexOf('id="fynapp-notes"');
         expect(notesIndex).toBeGreaterThan(0);
         expect(notesIndex).toBeLessThan(footerIndex);
-        expect(notesIndex).toBeLessThan(copyrightIndex);
     });
 });

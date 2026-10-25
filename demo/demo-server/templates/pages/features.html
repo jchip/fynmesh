@@ -1,7 +1,5 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}FynMesh Features{% endblock %}
-
 {% block body_class %}fx-body{% endblock %}
 
 {% block styles %}
@@ -43,7 +41,7 @@
     .fx-inner { max-width: 1040px; margin: 0 auto; padding-inline: 16px; }
 
     /* Hero */
-    .fx-hero { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%); color: #fff; padding-block: 28px 64px; }
+    .fx-hero { background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%); color: #fff; padding-block: 56px 64px; }
     /* padding-right keeps the links clear of the fixed GitHub corner icon */
     .fx-topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; padding-right: 64px; min-height: 48px; }
     .fx-hero .fx-home { color: #fff; font-weight: 700; text-decoration: none; letter-spacing: .02em; }
@@ -51,7 +49,7 @@
     .fx-hero .fx-toplinks a { color: #cbd5e1; text-decoration: none; font-size: 15px; }
     .fx-hero .fx-toplinks a:hover, .fx-hero .fx-toplinks a[aria-current="page"] { color: #fff; }
     .fx-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; margin: 0 0 12px; }
-    .fx-hero h1 { font-size: clamp(24px, 7vw, 52px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; margin: 0 0 18px; color: var(--fx-gold); text-wrap: balance; max-width: 20ch; }
+    .fx-hero h1 { font-size: clamp(24px, 7vw, 52px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; margin: 0 0 18px; color: var(--fx-gold); text-wrap: balance; max-width: 24ch; }
     .fx-hero h1 .nw { white-space: nowrap; }
     .fx-lede { font-size: 19px; color: #cbd5e1; max-width: 58ch; margin: 0 0 28px; }
     .fx-cta { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -120,6 +118,7 @@
     .fx-also-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
     .fx-also-item { background: var(--fx-panel); border: 1px solid var(--fx-line); border-radius: 12px; padding: 16px; }
     .fx-also-item h3 { margin: 0 0 6px; font-family: var(--fx-mono); font-size: 14px; font-weight: 600; color: var(--fx-acc); }
+    #faq .fx-also-item h3 { font-family: var(--fx-sans); font-size: 15px; color: var(--fx-ink); }
     .fx-also-item p { margin: 0; font-size: 14px; color: var(--fx-muted); }
 
     /* Start + footer */
@@ -136,26 +135,16 @@
 {% endblock %}
 
 {% block content %}
-{% include "components/github-corner.html" %}
 <div class="fx">
 
 <section class="fx-hero">
     <div class="fx-inner">
-        <nav class="fx-topbar" aria-label="Site">
-            <a class="fx-home" href="{{pathPrefix}}index.html">FynMesh</a>
-            <div class="fx-toplinks">
-                <a href="{{pathPrefix}}features.html" aria-current="page">Features</a>
-                <a href="{{pathPrefix}}demo.html">Demo</a>
-                <a href="{{pathPrefix}}shell.html">Shell</a>
-                <a href="{{pathPrefix}}fynops.html">FynOps</a>
-            </div>
-        </nav>
-        <p class="fx-eyebrow">Features</p>
-        <h1><span class="nw">FynMesh + federation-js</span> at a glance</h1>
+        <p class="fx-eyebrow">FynMesh + federation-js at a glance</p>
+        <h1><span class="nw">FynMesh Features:</span> multi-version apps and semver sharing</h1>
         <p class="fx-lede">FynMesh runs independently built apps together on one page. They share code at runtime through Module Federation, even different versions of the same module. Teams need little coordination. Here is each feature, one picture at a time.</p>
         <div class="fx-cta">
-            <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo.html">Open the live demo</a>
-            <a class="fx-btn fx-btn-ghost" href="{{pathPrefix}}shell.html">See the shell demo</a>
+            <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}">Open the live demo</a>
+            <a class="fx-btn fx-btn-ghost" href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}">See the shell demo</a>
         </div>
     </div>
 </section>
@@ -229,7 +218,7 @@
     <section class="fx-plate" id="join">
         <div>
             <h2>Join by Loading</h2>
-            <p>Load an app and it joins the page's shared scope. No app lists its peers. Apps that land together share code automatically.</p>
+            <p>Load an app and it joins the page's shared scope. No app lists its peers. Apps that land together share code automatically. See <a href="{{pathPrefix}}docs/federation-js{{ htmlExt | default(".html") }}">federation-js</a>.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -279,7 +268,7 @@
     <section class="fx-plate" id="shared">
         <div>
             <h2>Semver Sharing</h2>
-            <p>React 18 and React 19 apps run on the same page. Apps whose ranges agree share one copy. A new major gets its own.</p>
+            <p>React 18 and React 19 apps run on the same page. Apps whose ranges agree share one copy. A new major gets its own. The <a href="{{pathPrefix}}guides/share-dependencies-semver{{ htmlExt | default(".html") }}">semver sharing guide</a> has the details.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -355,14 +344,14 @@
                     <text class="la" x="380" y="149" text-anchor="middle" font-size="14">one loader · SystemJS + federation-js</text>
                 </svg>
             </div>
-            <figcaption>All six run together in the <a href="{{pathPrefix}}demo.html">live demo</a>.</figcaption>
+            <figcaption>All six run together in the <a href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}">live demo</a>.</figcaption>
         </figure>
     </section>
 
     <section class="fx-plate" id="boot">
         <div>
             <h2>Dependency-Ordered Boot</h2>
-            <p>Ask for one app by name. The kernel reads manifests, builds the dependency graph, and boots providers before consumers.</p>
+            <p>Ask for one app by name. The kernel reads manifests, builds the dependency graph, and boots providers before consumers. See the <a href="{{pathPrefix}}docs/kernel{{ htmlExt | default(".html") }}">kernel docs</a>.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -512,14 +501,14 @@
                     <text class="s" x="380" y="176" text-anchor="middle">reply</text>
                 </svg>
             </div>
-            <figcaption>Both apps chat and answer requests in the <a href="{{pathPrefix}}demo.html">live demo</a>. Apps don't hear their own messages unless they ask to.</figcaption>
+            <figcaption>Both apps chat and answer requests in the <a href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}">live demo</a>. Apps don't hear their own messages unless they ask to.</figcaption>
         </figure>
     </section>
 
     <section class="fx-plate" id="inspect">
         <div>
             <h2>Federation Inspector</h2>
-            <p>One call shows what the page holds. You see every shared module, its version, and who provides it. The demo has an in-page inspector too.</p>
+            <p>One call shows what the page holds. You see every shared module, its version, and who provides it. The demo has an in-page inspector too. Read the <a href="{{pathPrefix}}docs/federation-inspector{{ htmlExt | default(".html") }}">inspector docs</a>.</p>
         </div>
         <figure>
             <div class="fx-console" role="img" aria-label="Example registry snapshot listing shared modules, their versions and providers.">
@@ -541,7 +530,7 @@
     <section class="fx-plate" id="combine">
         <div>
             <h2>Combined Bundles</h2>
-            <p>Many small modules ship in one file. Each module still acts like its own file. It keeps its URL and runs only when something imports it.</p>
+            <p>Many small modules ship in one file. Each module still acts like its own file. It keeps its URL and runs only when something imports it. The <a href="{{pathPrefix}}docs/rollup-plugin-federation{{ htmlExt | default(".html") }}">rollup plugin</a> builds them.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -584,7 +573,7 @@
     <section class="fx-plate" id="small">
         <div>
             <h2>Small Footprint</h2>
-            <p>The federation layer is under 9 KB gzip. The page loads it once, and every app uses it.</p>
+            <p>The federation layer is under 9 KB gzip. The page loads it once, and every app uses it. See <a href="{{pathPrefix}}docs/federation-js{{ htmlExt | default(".html") }}">federation-js</a>.</p>
         </div>
         <figure>
             <div class="fx-fig">
@@ -644,23 +633,53 @@
     </div>
 </section>
 
+<section class="fx-also" id="faq" itemscope itemtype="https://schema.org/FAQPage">
+    <h2>Questions</h2>
+    <div class="fx-also-grid">
+        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Does every app have to pick the same version of a shared library?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">No. Each app lists a semver range. Apps whose ranges agree share one copy, and a range that needs a different major gets its own.</p>
+            </div>
+        </div>
+        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Do I need a shell app to use FynMesh?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">No. The kernel loads FynApps on any page. A shell is one pattern, built with middleware, as the <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}">shell demo</a> shows.</p>
+            </div>
+        </div>
+        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">How do FynApps talk to each other?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Through middleware APIs and FynBus. FynBus lets apps send messages and ask each other questions. The platform stamps the sender of each message.</p>
+            </div>
+        </div>
+        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">How do I see which versions are loaded?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Call <code>Federation.__I()</code> or open the in-page inspector. Both list each shared module, its version and its provider. The <a href="{{pathPrefix}}docs/federation-inspector{{ htmlExt | default(".html") }}">inspector docs</a> explain the tool.</p>
+            </div>
+        </div>
+        <div class="fx-also-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">How big is the runtime?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">The loader is about 8.7 KB gzip, made of SystemJS and federation-js. The browser kernel adds about 9.7 KB.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="fx-start">
     <h2>Start a FynApp</h2>
     <pre class="fx-snippet">fyn global add create-fynapp
 create-fynapp</pre>
     <div class="fx-cta">
-        <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo.html">Open the live demo</a>
+        <a class="fx-btn fx-btn-primary" href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}">Open the live demo</a>
         <a class="fx-btn fx-btn-outline" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer">View on GitHub</a>
     </div>
 </section>
 
 </div>
-
-<footer class="fx-footer">
-    <div class="fx-inner">
-        <a href="{{pathPrefix}}index.html">FynMesh</a> · Enterprise-scale micro-frontend architecture · <a href="https://github.com/jchip/fynmesh">GitHub</a>
-    </div>
-</footer>
 
 </div>
 {% endblock %}

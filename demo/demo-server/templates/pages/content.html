@@ -1,0 +1,88 @@
+{% extends "layouts/base.html" %}
+{% set ext = htmlExt | default(".html") %}
+
+{% block body_class %}fm-doc{% endblock %}
+
+{% block styles %}
+<style>
+    .fm-doc { background: #f8fafc; color: #1e293b; }
+    .fm-doc-wrap { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 2rem; font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .fm-crumbs { grid-column: 1 / -1; font-size: 0.9rem; color: #64748b; }
+    .fm-crumbs a { color: #2563eb; text-decoration: none; }
+    .fm-crumbs span { margin: 0 0.4rem; }
+    .fm-side { font-size: 0.95rem; }
+    .fm-side h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 0.5rem; }
+    .fm-side ul { list-style: none; margin: 0 0 1.5rem; padding: 0; }
+    .fm-side li { margin: 0; }
+    .fm-side a { display: block; padding: 0.2rem 0.5rem; color: #334155; text-decoration: none; border-radius: 4px; }
+    .fm-side a:hover { background: #e2e8f0; }
+    .fm-side a[aria-current="page"] { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+    .fm-article { min-width: 0; max-width: 780px; }
+    .fm-article h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 0.5rem; }
+    .fm-lede { font-size: 1.15rem; color: #475569; margin: 0 0 1.5rem; }
+    .fm-toc { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; margin: 0 0 2rem; }
+    .fm-toc strong { display: block; font-size: 0.85rem; color: #64748b; }
+    .fm-toc ul { margin: 0.25rem 0 0 1.1rem; padding: 0; }
+    .fm-body h2 { font-size: 1.5rem; margin: 2.2rem 0 0.75rem; padding-top: 0.5rem; border-top: 1px solid #e2e8f0; }
+    .fm-body h3 { font-size: 1.2rem; margin: 1.6rem 0 0.5rem; }
+    .fm-body h4 { font-size: 1.05rem; margin: 1.2rem 0 0.4rem; }
+    .fm-body p, .fm-body ul, .fm-body ol { margin: 0 0 1rem; }
+    .fm-body a { color: #2563eb; }
+    .fm-body code { background: #e2e8f0; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    .fm-body pre { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 0 0 1.25rem; line-height: 1.5; }
+    .fm-body pre code { background: none; padding: 0; color: inherit; font-size: 0.875rem; }
+    .fm-body table { display: block; overflow-x: auto; border-collapse: collapse; margin: 0 0 1.25rem; }
+    .fm-body th, .fm-body td { border: 1px solid #cbd5e1; padding: 0.4rem 0.7rem; text-align: left; }
+    .fm-body th { background: #f1f5f9; }
+    .fm-body blockquote { margin: 0 0 1rem; padding: 0.25rem 1rem; border-left: 4px solid #93c5fd; color: #475569; }
+    .fm-body img { max-width: 100%; height: auto; }
+    .fm-edit { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.95rem; }
+    .fm-edit a { color: #2563eb; }
+    @media (max-width: 800px) {
+        .fm-doc-wrap { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+        .fm-side { order: 2; }
+        .fm-article h1 { font-size: 1.6rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fm-doc-wrap">
+    <nav class="fm-crumbs" aria-label="Breadcrumb">
+        <a href="{{pathPrefix}}">Home</a><span>/</span><a href="{{ sectionHref }}">{{ sectionName }}</a><span>/</span>{{ pageName }}
+    </nav>
+    <aside class="fm-side" aria-label="{{ sectionName }}">
+        <h2>{{ sectionName }}</h2>
+        <ul>
+            {% for item in related %}
+            <li><a href="{{ item.href }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.title }}</a></li>
+            {% endfor %}
+        </ul>
+        <h2>More</h2>
+        <ul>
+            <li><a href="{{ otherHref }}">{{ otherName }}</a></li>
+            <li><a href="{{pathPrefix}}demo{{ext}}">Live demo</a></li>
+        </ul>
+    </aside>
+    <main class="fm-article">
+        <h1>{{ title }}</h1>
+        <p class="fm-lede">{{ lede }}</p>
+        {% if toc.length > 1 %}
+        <nav class="fm-toc" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                {% for entry in toc %}
+                <li><a href="#{{ entry.id }}">{{ entry.text }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+        <article class="fm-body">
+            {{ body | safe }}
+        </article>
+        <p class="fm-edit">
+            <a href="{{ sourceUrl }}">{% if isChangelog %}View the source on GitHub{% else %}Edit this page on GitHub{% endif %}</a>
+        </p>
+    </main>
+</div>
+{% endblock %}

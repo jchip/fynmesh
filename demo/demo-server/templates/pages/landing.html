@@ -1,8 +1,5 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}FynMesh - Enterprise Micro Frontend Framework{% endblock %}
-
-
 {% block styles %}
 <style>
     :root {
@@ -81,6 +78,11 @@
         color: #cbd5e1;
         max-width: 700px;
         margin: 2rem auto;
+    }
+
+    .hero p.hero-sub {
+        font-size: 1.1rem;
+        margin-top: -1rem;
     }
 
     .hero-buttons {
@@ -362,6 +364,21 @@
         text-decoration: underline;
     }
 
+
+    /* Prose sections */
+    .prose-section { padding: 4rem 2rem; background: white; }
+    .prose-section.alt { background: var(--bg-light); }
+    .prose { max-width: 800px; margin: 0 auto; }
+    .prose h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--text-dark); }
+    .prose h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; color: var(--text-dark); }
+    .prose p { margin-bottom: 1rem; color: #374151; }
+    .prose ul, .prose ol { margin: 0 0 1rem 1.5rem; color: #374151; }
+    .prose li { margin-bottom: 0.5rem; }
+    .prose a { color: var(--primary-dark); }
+    .prose code { background: #eef2f7; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.9em; }
+    .faq-item { border-top: 1px solid #e2e8f0; padding: 1rem 0 0.25rem; }
+    .faq-item h3 { margin: 0 0 0.5rem; }
+
     /* Responsive */
     @media (max-width: 768px) {
         .hero h1 {
@@ -387,33 +404,32 @@
 
 {% block content %}
 <!-- Hero Section -->
-{% include "components/github-corner.html" %}
 
 <section class="hero">
 
     <div class="hero-content container">
         <h1>
-            FynMesh
-            <span>Enterprise Micro Frontend Framework</span>
+            FynMesh Micro Frontend Framework
+            <span>Run several versions of the same app on one page</span>
         </h1>
-        <p>
-            Build progressive scalable enterprise applications with independently deployable micro-frontends.
-            Powered by Module Federation and Rollup for seamless code sharing at runtime.
+        <p>{{ siteDefinition }}</p>
+        <p class="hero-sub">
+            Put React 18 and React 19 side by side, or v1 and v2 of one app. Each app picks the version it was built for.
         </p>
         <div class="hero-buttons">
-            <a href="{{pathPrefix}}demo.html" class="btn btn-primary">
+            <a href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}" class="btn btn-primary">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Demo
             </a>
-            <a href="{{pathPrefix}}shell.html" class="btn btn-secondary">
+            <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}" class="btn btn-secondary">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14z"/><path d="M7 7h4v4H7V7zm6 0h4v2h-4V7zm0 4h4v2h-4v-2zm-6 4h10v2H7v-2z"/></svg>
                 Shell Demo
             </a>
-            <a href="{{pathPrefix}}fynops.html" class="btn btn-secondary">
+            <a href="{{pathPrefix}}fynops{{ htmlExt | default(".html") }}" class="btn btn-secondary">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 5h12v10H3V5zm12 4h3l3 3v3h-6V9zM6.5 19a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm11 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>
                 FynOps
             </a>
-            <a href="{{pathPrefix}}features.html" class="btn btn-secondary">
+            <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}" class="btn btn-secondary">
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 Features
             </a>
@@ -425,10 +441,52 @@
     </div>
 </section>
 
+
+<!-- What is FynMesh -->
+<section class="prose-section">
+    <div class="prose">
+        <h2>What is FynMesh</h2>
+        <p>
+            FynMesh is a micro frontend framework. A micro frontend is a part of a web page that one team builds and ships on its own.
+            In FynMesh each part is a FynApp, a small app built with Rollup and <code>rollup-plugin-federation</code>.
+        </p>
+        <p>
+            The kernel, <code>@fynmesh/kernel</code>, runs in the browser. It loads FynApps by name, reads their manifests and boots them in dependency order.
+            A federation layer on SystemJS lets the apps share libraries at runtime.
+        </p>
+        <p>
+            The apps do not need to agree on one framework or one release day.
+            Read the <a href="{{pathPrefix}}docs{{ htmlExt | default(".html") }}">docs</a> or see the <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}">full feature list</a>.
+        </p>
+    </div>
+</section>
+
+<!-- Why several versions -->
+<section class="prose-section alt">
+    <div class="prose">
+        <h2>Why run several versions of one app</h2>
+        <p>
+            Most micro frontend setups force every app onto one copy of each shared library.
+            That ties every team to the same release schedule. FynMesh lets two versions live on the same page instead.
+        </p>
+        <ul>
+            <li><strong>Gradual upgrades.</strong> Move one screen to React 19 while the rest stays on React 18. Nothing waits for a big bang migration.</li>
+            <li><strong>Independent teams.</strong> Each team deploys its FynApp when it is ready. A new major version of a shared app does not break apps built against the old one.</li>
+            <li><strong>No lockstep releases.</strong> A consumer asks for a semver range, such as <code>^18.0.0</code>. The page gives it a loaded version that fits.</li>
+        </ul>
+        <p>
+            The demo ships React 18 and React 19 side by side, and two versions of a shared component app, <code>fynapp-x1</code>.
+            The guide <a href="{{pathPrefix}}guides/run-multiple-react-versions{{ htmlExt | default(".html") }}">Run Multiple React Versions on One Page</a> walks through it.
+            For a migration plan, read <a href="{{pathPrefix}}guides/upgrade-react-incrementally{{ htmlExt | default(".html") }}">Upgrade React Incrementally</a>.
+        </p>
+    </div>
+</section>
+
 <!-- Features Section -->
 <section class="features">
     <div class="container">
         <div class="section-title">
+            <h2>What FynMesh gives you</h2>
             <p>Discover the advantages of a truly dynamic and modular frontend architecture</p>
         </div>
         <div class="features-grid">
@@ -476,8 +534,24 @@
             </div>
         </div>
         <div class="hero-buttons">
-            <a href="{{pathPrefix}}features.html" class="btn btn-primary">See every feature</a>
+            <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}" class="btn btn-primary">See every feature</a>
         </div>
+    </div>
+</section>
+
+
+<!-- How it works -->
+<section class="prose-section">
+    <div class="prose">
+        <h2>How it works</h2>
+        <ol>
+            <li><strong>Build FynApps.</strong> Each app is a Rollup project with <code>rollup-plugin-federation</code>. The build emits an entry file and a manifest. See <a href="{{pathPrefix}}docs/rollup-plugin-federation{{ htmlExt | default(".html") }}">the plugin docs</a>.</li>
+            <li><strong>The kernel loads them by name.</strong> You ask for an app by name and optional semver range. The kernel reads the manifest, builds the dependency graph and boots providers before consumers. See <a href="{{pathPrefix}}docs/kernel{{ htmlExt | default(".html") }}">the kernel docs</a>.</li>
+            <li><strong>Dependencies are shared by semver range.</strong> Apps whose ranges agree share one copy of React or another library. A new major version gets its own copy. See <a href="{{pathPrefix}}guides/share-dependencies-semver{{ htmlExt | default(".html") }}">how shared dependencies are resolved</a>.</li>
+            <li><strong>Middleware wires cross-app concerns.</strong> One app provides a capability such as a layout, design tokens or shared state. Others declare <code>useMiddleware</code> and receive its API.</li>
+            <li><strong>Inspect the page.</strong> The <a href="{{pathPrefix}}docs/federation-inspector{{ htmlExt | default(".html") }}">federation inspector</a> lists every shared module, its version and who provides it.</li>
+        </ol>
+        <p>The runtime loader is small. The federation layer is under 9 KB gzip, as shown on the <a href="{{pathPrefix}}features{{ htmlExt | default(".html") }}#small">features page</a>.</p>
     </div>
 </section>
 
@@ -523,7 +597,7 @@
             </div>
         </div>
         <div class="hero-buttons">
-            <a href="{{pathPrefix}}fynops.html" class="btn btn-primary">Open FynOps</a>
+            <a href="{{pathPrefix}}fynops{{ htmlExt | default(".html") }}" class="btn btn-primary">Open FynOps</a>
         </div>
     </div>
 </section>
@@ -588,32 +662,79 @@
     </div>
 </section>
 
+
+<!-- FAQ -->
+<section class="prose-section alt">
+    <div class="prose" itemscope itemtype="https://schema.org/FAQPage">
+        <h2>Frequently asked questions</h2>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">What is a micro frontend framework?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">It is a toolkit for building one web page from several apps that are built and deployed on their own. FynMesh provides the loader, the dependency sharing and the middleware that make those apps work together.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Can two React versions run on one page?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Yes. FynMesh keeps each loaded version of a library separate. An app that asks for <code>^18.0.0</code> gets React 18 and an app that asks for <code>^19.0.0</code> gets React 19. The <a href="{{pathPrefix}}demo{{ htmlExt | default('.html') }}">live demo</a> runs both.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Does FynMesh need webpack?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">No. FynMesh builds with Rollup and <code>rollup-plugin-federation</code>. The runtime uses SystemJS modules. See <a href="{{pathPrefix}}guides/module-federation-without-webpack{{ htmlExt | default('.html') }}">Module Federation without webpack</a>.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">How are shared dependencies resolved?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Each app declares what it shares and the semver range it accepts. At runtime the loader picks a loaded version that satisfies the range and reuses it. If none fits, the app gets a copy of its own.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Which frameworks work?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">React 18 and 19, Vue, Preact, Solid, Svelte and Marko all run in the demo. Each app is a plain federated container, so no bridge or adapter is needed. <code>create-fynapp</code> has templates for eight frameworks and accepts any other name.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Is FynMesh free and open source?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Yes. The code is on <a href="{{ githubUrl }}">GitHub</a> under the Apache-2.0 license, and the packages are on <a href="{{ npmUrl }}">npm</a>.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">How do I start?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">Install the scaffolding tool with <code>fyn global add create-fynapp</code>, then run <code>create-fynapp</code>. The <a href="{{pathPrefix}}docs/getting-started{{ htmlExt | default('.html') }}">getting started guide</a> covers the rest.</p>
+            </div>
+        </div>
+        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+            <h3 itemprop="name">Does it work without a shell app?</h3>
+            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                <p itemprop="text">The kernel can load FynApps on any page. The <a href="{{pathPrefix}}shell{{ htmlExt | default('.html') }}">shell demo</a> shows one way to build a layout from FynApps with middleware.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- CTA Section -->
 <section class="cta">
     <div class="container">
         <h2>See It In Action</h2>
-        <p>Explore the live demos to see micro-frontends working together</p>
+        <p>Explore the live demos to see micro-frontends working together. Or read the <a href="{{pathPrefix}}docs{{ htmlExt | default(".html") }}" style="color:#93c5fd">docs</a> and <a href="{{pathPrefix}}guides{{ htmlExt | default(".html") }}" style="color:#93c5fd">guides</a>.</p>
         <div class="hero-buttons">
-            <a href="{{pathPrefix}}demo.html" class="btn btn-primary">
+            <a href="{{pathPrefix}}demo{{ htmlExt | default(".html") }}" class="btn btn-primary">
                 All FynApps Demo
             </a>
-            <a href="{{pathPrefix}}shell.html" class="btn btn-secondary">
+            <a href="{{pathPrefix}}shell{{ htmlExt | default(".html") }}" class="btn btn-secondary">
                 Shell Layout Demo
             </a>
-            <a href="{{pathPrefix}}fynops.html" class="btn btn-secondary">
+            <a href="{{pathPrefix}}fynops{{ htmlExt | default(".html") }}" class="btn btn-secondary">
                 FynOps Console
             </a>
         </div>
     </div>
 </section>
 
-<!-- Footer -->
-<footer class="footer">
-    <div class="container">
-        <p>&copy; 2025 FynMesh. Enterprise-scale micro-frontend architecture.</p>
-        <p style="margin-top: 0.5rem;">
-            <a href="https://github.com/jchip/fynmesh">GitHub</a>
-        </p>
-    </div>
-</footer>
 {% endblock %}

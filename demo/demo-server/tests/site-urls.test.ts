@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PAGE_SEO } from "../scripts/page-seo.mts";
+import { PAGE_SEO, siteUrl } from "../scripts/page-seo.mts";
+import { buildSitemapEntries } from "../scripts/seo-files.mts";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const demoServer = path.join(repoRoot, "demo/demo-server");
@@ -25,10 +27,15 @@ const read = (rel: string) => readFileSync(path.join(demoServer, rel), "utf8");
  * have always read the build script.
  */
 const sitemapLocs = (): string[] => {
-    const build = read("scripts/build-demo-site.mts");
-    const block = /const sitemapPages = \[([\s\S]*?)\];/.exec(build);
-    expect(block, "sitemapPages array not found in build-demo-site.mts").toBeTruthy();
-    return [...block![1].matchAll(/loc:\s*"([^"]+)"/g)].map(m => m[1]);
+    const dir = mkdtempSync(path.join(tmpdir(), "fynmesh-sitemap-"));
+    try {
+        for (const seo of Object.values(PAGE_SEO)) {
+            writeFileSync(path.join(dir, seo.canonicalPath ? `${seo.canonicalPath}.html` : "index.html"), "");
+        }
+        return buildSitemapEntries({ outputDir: dir, contentPages: [] }).map(e => e.loc);
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
 };
 
 describe("public URLs", () => {
@@ -75,14 +82,14 @@ describe("public URLs", () => {
     it("keeps the .html extension on internal links, which the dev server serves", () => {
         const landing = read("templates/pages/landing.html");
 
-        expect(landing).toContain("{{pathPrefix}}demo.html");
-        expect(landing).toContain("{{pathPrefix}}shell.html");
-        expect(landing).toContain("{{pathPrefix}}features.html");
-        expect(landing).toContain("{{pathPrefix}}fynops.html");
+        expect(landing).toContain('{{pathPrefix}}demo{{ htmlExt | default(".html") }}');
+        expect(landing).toContain('{{pathPrefix}}shell{{ htmlExt | default(".html") }}');
+        expect(landing).toContain('{{pathPrefix}}features{{ htmlExt | default(".html") }}');
+        expect(landing).toContain('{{pathPrefix}}fynops{{ htmlExt | default(".html") }}');
     });
 
     it("publishes FynOps: listed in the sitemap and indexable", () => {
-        expect(sitemapLocs()).toContain("/fynops");
+        expect(sitemapLocs()).toContain(siteUrl("fynops"));
         expect(PAGE_SEO.fynops.canonicalPath).toBe("fynops");
         expect(read("templates/pages/fynops.html")).not.toContain("noindex");
     });
@@ -127,7 +134,7 @@ describe("404 page", () => {
     });
 
     it("links back with the .html paths the dev server serves", () => {
-        expect(template).toContain("{{pathPrefix}}demo.html");
-        expect(template).toContain("{{pathPrefix}}shell.html");
+        expect(template).toContain('{{pathPrefix}}demo{{ htmlExt | default(".html") }}');
+        expect(template).toContain('{{pathPrefix}}shell{{ htmlExt | default(".html") }}');
     });
 });
