@@ -3,6 +3,11 @@
 Status: not planned. A page runs one federated CWP release, and the AMD add-on
 refuses a second one. Kept for the record in case that limit has to go.
 
+Why not: `ui-kit` peers on React 18 or 19. Supporting two releases means
+tracking a separate `ui-kit` instance for each React it bound to. That is
+Node's nested dependencies, where each copy in `node_modules` resolves its own
+deps, rebuilt at run time. We don't want that complexity in the runtime.
+
 ## Problem
 
 A share can import another share. `ui-kit` imports `esm-react`. A loaded

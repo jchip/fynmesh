@@ -201,7 +201,9 @@ The add-on refuses a second release of the same FynApp name. It logs an error
 naming both versions, records `amd.bridge` with `ok: false`, and sends the ids
 to the normal script load. Two releases ship the same libs. A lib that imports
 React binds to one copy of it, so a context on the second release could get the
-first release's instance. [`PEER-SHARE-RESOLUTION-DESIGN.md`](./PEER-SHARE-RESOLUTION-DESIGN.md)
+first release's instance. Fixing that means one instance of each lib per React
+it bound to. That is Node's nested dependencies rebuilt at run time, and we
+chose not to take it on. [`PEER-SHARE-RESOLUTION-DESIGN.md`](./PEER-SHARE-RESOLUTION-DESIGN.md)
 sets out what supporting it would take.
 
 ### Loading on demand
