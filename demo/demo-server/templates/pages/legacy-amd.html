@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {#
-  Legacy RequireJS widgets getting React and ui-kit from federation through the AMD bridge
+  Legacy RequireJS widgets getting React and ui-kit from federation through the CWP FynApp
   (notes/LEGACY-AMD-BRIDGE.md). Its packages live in demo-legacy-amd/ and ship
   flat, as /<name>/..., like every other FynApp.
 #}
@@ -138,13 +138,13 @@
           </p>
         </section>
         <section class="panel">
-          <h3>The bridge</h3>
+          <h3>The CWP as a FynApp</h3>
           <p>
-            A bridge FynApp serves React and the UI kit from federation, under the AMD ids the
-            bundles already ask for. A kernel add-on routes RequireJS through it. The UI kit is the
-            same source, built as a FynApp on federated React. Changing the legacy React major is an
-            edit to the bridge's mapping file. New FynApps share that React or load their own major.
-            Legacy components on one page still share one React.
+            The common web package (CWP) becomes a FynApp. It installs React and the UI kit from npm
+            at pinned versions. It serves them from federation, under the AMD ids the bundles already
+            ask for, and a kernel add-on routes RequireJS to it. A page loads one CWP release. Moving
+            to a new React major means pointing the page at a newer CWP, with no rebuild of the
+            bundles. New FynApps share the CWP's React when their range matches, or load their own.
           </p>
         </section>
       </div>
@@ -158,12 +158,12 @@
             <span class="node legacy">Common bundle<small>React 18 and ui-kit, one copy for all</small></span>
           </div>
           <div class="flow-row">
-            <span class="flow-label">With the bridge</span>
+            <span class="flow-label">With the CWP</span>
             <span class="node legacy">Team A, B, C bundles<small>same files, not rebuilt</small></span>
             <span class="arrow">→</span>
-            <span class="node bridge">AMD add-on + bridge FynApp<small>mapping file picks the versions</small></span>
+            <span class="node bridge">AMD add-on<small>reads the CWP's amd-meta.js</small></span>
             <span class="arrow">→</span>
-            <span class="node bridge">Federated React and ui-kit<small>React 18 or 19, ui-kit 1.4.0</small></span>
+            <span class="node bridge">CWP FynApp<small>CWP 3: React 18.3.1, CWP 4: React 19.2.8, ui-kit 1.4.0</small></span>
             <span class="arrow">←</span>
             <span class="node inline">New FynApps<small>share it, or bring another major</small></span>
           </div>
@@ -172,7 +172,7 @@
 
       <h2 style="margin-top: 24px">Try it</h2>
       <ol class="try">
-        <li>Switch where React comes from. "Legacy UMD files" is the old setup. The bridge modes serve React 18 or React 19 from federation to the same bundles, which were built against React 18. In those modes ui-kit comes from <code>fynapp-ui-kit</code>, not <code>legacy-components/dist/ui-kit.js</code>, as the Files fetched table shows.</li>
+        <li>Switch the CWP. "Legacy UMD files" is the old setup. CWP 3 and CWP 4 serve React 18 or React 19 from federation to the same bundles, which were built against React 18. With a CWP, ui-kit comes from the CWP, not <code>legacy-components/dist/ui-kit.js</code>, as the Files fetched table shows.</li>
         <li>Load Team C. RequireJS fetches only <code>widget-c.js</code> and reuses the React already loaded.</li>
         <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched.</li>
       </ol>
@@ -180,8 +180,8 @@
       <div class="bar">
         <nav class="seg" id="source-switch">
           <a href="?source=umd">Legacy UMD files</a>
-          <a href="?source=react18">Bridge: React 18</a>
-          <a href="?source=react19">Bridge: React 19</a>
+          <a href="?source=cwp3">CWP 3: React 18</a>
+          <a href="?source=cwp4">CWP 4: React 19</a>
         </nav>
         <span class="source" id="source-text"></span>
       </div>
@@ -262,11 +262,13 @@
       (function () {
         var SOURCES = {
           umd: "The old setup: RequireJS loads React 18 from UMD files. No federation.",
-          react18: "The bridge serves React 18 and ui-kit from federation (amd-bridge.react18.json).",
-          react19: "The bridge serves React 19 and ui-kit from federation (amd-bridge.json).",
+          cwp3: "CWP 3.2.0 serves React 18.3.1 and ui-kit 1.4.0 from federation.",
+          cwp4: "CWP 4.0.0 serves React 19.2.8 and ui-kit 1.4.0 from federation.",
         };
+        // the CWP release each mode loads: its dir and version
+        var CWPS = { cwp3: ["fynapp-cwp-3", "3.2.0"], cwp4: ["fynapp-cwp-4", "4.0.0"] };
         var source = new URLSearchParams(location.search).get("source");
-        if (!SOURCES[source]) source = "react19";
+        if (!SOURCES[source]) source = "cwp4";
 
         document.querySelectorAll("#source-switch a").forEach(function (a) {
           a.setAttribute("aria-current", a.getAttribute("href") === "?source=" + source ? "true" : "false");
@@ -280,19 +282,22 @@
           "widget-b": "dist/widget-b",
           "widget-c": "dist/widget-c",
         };
+        // The React 18 UMD react-dom also has the client API, so map sends
+        // react-dom/client to that one copy.
+        var map = {};
         if (source === "umd") {
           paths.react = "public/libs/react.development";
           paths["react-dom"] = "public/libs/react-dom.development";
+          map["*"] = { "react-dom/client": "react-dom" };
         }
-        requirejs.config({ baseUrl: "{{pathPrefix}}legacy-components/", paths: paths });
+        requirejs.config({ baseUrl: "{{pathPrefix}}legacy-components/", paths: paths, map: map });
 
         // ---- files fetched ----
         var KINDS = [
           [/legacy-components\/dist\//, "legacy bundle"],
           [/legacy-components\/public\/libs\/react/, "UMD lib"],
-          [/fynapp-amd-bridge\//, "bridge"],
+          [/fynapp-cwp-[34]\//, "CWP"],
           [/fynapp-react-1[89]\//, "React provider"],
-          [/fynapp-ui-kit\//, "ui-kit provider"],
           [/fynapp-react1[89]-user\//, "FynApp"],
         ];
 
@@ -302,10 +307,14 @@
         var INSTANCES = [
           { label: "18.3.1", from: "UMD file", file: /public\/libs\/react\.development\.js$/,
             users: source === "umd" ? ["legacy widgets"] : [] },
+          { label: "18.3.1", from: "fynapp-cwp 3.2.0 share", file: /fynapp-cwp-3\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: source === "cwp3" ? ["legacy widgets", "fynapp-react18-user"] : [] },
+          { label: "19.2.8", from: "fynapp-cwp 4.0.0 share", file: /fynapp-cwp-4\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: source === "cwp4" ? ["legacy widgets", "fynapp-react19-user"] : [] },
           { label: "18.3.1", from: "fynapp-react-18 share", file: /fynapp-react-18\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: (source === "react18" ? ["legacy widgets (bridge)"] : []).concat("fynapp-react18-user") },
+            users: source === "cwp3" ? [] : ["fynapp-react18-user"] },
           { label: "19.2.8", from: "fynapp-react-19 share", file: /fynapp-react-19\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: (source === "react19" ? ["legacy widgets (bridge)"] : []).concat("fynapp-react19-user") },
+            users: source === "cwp4" ? [] : ["fynapp-react19-user"] },
         ];
         var instancesEl = document.getElementById("instances");
         function renderInstances() {
@@ -417,10 +426,10 @@
         }
 
         var apps = {
-          "fynapp-amd-bridge": ["{{pathPrefix}}fynapp-amd-bridge/" + (source === "react18" ? "dist-react18/" : "dist/"), "1.0.0"],
+          "fynapp-cwp@3.2.0": ["{{pathPrefix}}fynapp-cwp-3/dist/", "3.2.0"],
+          "fynapp-cwp@4.0.0": ["{{pathPrefix}}fynapp-cwp-4/dist/", "4.0.0"],
           "fynapp-react19-user": ["{{pathPrefix}}fynapp-react19-user/dist/", "1.0.0"],
           "fynapp-react18-user": ["{{pathPrefix}}fynapp-react18-user/dist/", "1.0.0"],
-          "fynapp-ui-kit": ["{{pathPrefix}}fynapp-ui-kit/" + (source === "react18" ? "dist-react18/" : "dist/"), "1.4.0"],
           "fynapp-react-lib@^18.0.0": ["{{pathPrefix}}fynapp-react-18/dist/", "18.3.0"],
           "fynapp-react-lib@^19.0.0": ["{{pathPrefix}}fynapp-react-19/dist/", "19.2.8"],
         };
@@ -455,7 +464,7 @@
 
         if (source === "umd") {
           document.getElementById("metrics-note").textContent =
-            "The AMD add-on is not loaded in UMD mode, so there are no amd.* entries. Pick a bridge source to see them.";
+            "The AMD add-on is not loaded in UMD mode, so there are no amd.* entries. Pick a CWP to see them.";
           document.getElementById("graph-note").textContent = "The graph comes from the add-on metrics.";
           start();
           return;
@@ -464,18 +473,23 @@
         fynMeshKernel.setTelemetry({
           transport: {
             send: async function (batch) {
-              batch.filter(function (e) { return e.name.indexOf("amd.") === 0; }).forEach(addMetric);
+              // amd.module and amd.bridge only; a failed load also records an amd.load error
+              batch.filter(function (e) { return e.name === "amd.module" || e.name === "amd.bridge"; }).forEach(addMetric);
               renderGraph();
             },
           },
         });
         setInterval(function () { fynMeshKernel.tel.flush(); }, 250);
 
-        // the add-on must be installed before the first require()
+        // the add-on and the meta must both be in place before the first require()
         var addon = document.createElement("script");
         addon.src = "{{pathPrefix}}kernel-addon-amd/addon-amd.js";
-        addon.dataset.bridge = "fynapp-amd-bridge";
-        addon.onload = start;
+        addon.onload = function () {
+          var meta = document.createElement("script");
+          meta.src = "{{pathPrefix}}" + CWPS[source][0] + "/dist/amd-meta.js";
+          meta.onload = start;
+          document.body.appendChild(meta);
+        };
         document.body.appendChild(addon);
       })();
     </script>

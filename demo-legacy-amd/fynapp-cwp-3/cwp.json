@@ -1,0 +1,8 @@
+{
+  "externals": {
+    "react": "esm-react",
+    "react-dom": "esm-react-dom",
+    "react-dom/client": "esm-react-dom",
+    "ui-kit": "ui-kit"
+  }
+}

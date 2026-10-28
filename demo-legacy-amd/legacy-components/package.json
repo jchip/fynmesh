@@ -12,6 +12,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "requirejs": "^2.3.7",
+    "ui-kit": "1.4.0",
     "webpack": "^5",
     "webpack-cli": "^7.2.3"
   }

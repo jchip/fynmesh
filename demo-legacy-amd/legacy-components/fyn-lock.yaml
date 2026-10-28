@@ -9,6 +9,7 @@ $pkg:
   react: 18.3.1
   react-dom: 18.3.1
   requirejs: ^2.3.7
+  ui-kit: ../ui-kit
   webpack: ^5
   webpack-cli: ^7.2.3
 '@babel/code-frame':
@@ -1225,6 +1226,14 @@ terser:
    acorn: ^8.15.0
    commander: ^2.20.0
    source-map-support: ~0.5.20
+ui-kit:
+ _latest: 1.4.0-fynlocal_h
+ _:
+  ../ui-kit: 1.4.0-fynlocal_h
+ 1.4.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../ui-kit
 undici-types:
  _latest: 8.12.3
  _:

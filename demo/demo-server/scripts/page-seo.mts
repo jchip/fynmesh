@@ -139,7 +139,7 @@ export const PAGE_SEO = {
         crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
             "Webpack AMD widgets loaded by RequireJS get React and their UI kit from Module " +
-            "Federation through a bridge FynApp, with no rebuild, and share React with FynApps.",
+            "Federation through a CWP FynApp, with no rebuild, and share React with FynApps.",
     },
     docs: {
         canonicalPath: "docs",

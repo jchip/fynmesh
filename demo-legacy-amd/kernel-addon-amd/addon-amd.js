@@ -1,24 +1,36 @@
 /**
- * Kernel add-on: RequireJS loads legacy AMD deps from a FynMesh bridge on demand.
+ * Kernel add-on: RequireJS loads legacy AMD deps from FynMesh federation on demand.
  *
- * RequireJS reads a module's `define([...deps])` and calls `requirejs.load` for
- * each dep it has not seen. This add-on wraps that hook. When the bridge FynApp
- * exposes `./amd/<id>`, the dep comes from federation. Every other id falls
- * through to the normal script load. Nothing is preloaded.
+ * The contract is the legacy build's webpack `externals`. Each external becomes a
+ * `define([...deps])` id that a common RequireJS bundle used to provide. Federation
+ * provides those ids and nothing else.
  *
- * Load order: require.js, the kernel, then this script. Set the bridge name with
- * `data-bridge` on the script tag (default "fynapp-amd-bridge").
+ * RequireJS calls `requirejs.load` for each dep it has not seen. This add-on
+ * wraps that hook. It looks the id up in the FynMesh AMD meta, which lives in
+ * RequireJS module config:
+ *
+ *   requirejs.config({ config: { fynmesh: { modules: {
+ *     "react": { fynapp: "fynapp-cwp", version: "3.2.0", expose: "./amd/react" }
+ *   } } } });
+ *
+ * A CWP build emits that call as `amd-meta.js`, the way r.js emits a
+ * `bundles` config. `version` names the release, which the kernel keys as
+ * `name@version`. An entry without it loads the FynApp by name. RequireJS deep-merges `config`, so several meta files add up,
+ * and each RequireJS context has its own. A listed id loads its FynApp, then the
+ * expose. Every other id goes straight to the normal script load. Ids reach the
+ * hook after RequireJS applies `map`, so `map` picks the version per consumer.
+ *
+ * Load order: require.js, the kernel, this script, then the meta, all before the
+ * first `require()`.
  *
  * Metrics, for generating preload meta, go to kernel telemetry (recorded once
  * `kernel.setTelemetry` is called):
  * - `amd.module`: one per defined module. `value` is ms from request to defined.
  *   `data` is { id, route: "bridge" | "legacy" | "inline", url, deps }. The deps
  *   give the graph, and route plus url say where each module comes from.
- * - `amd.bridge`: the bridge load. `value` is ms, `data` is { name, ok }.
+ * - `amd.bridge`: one per FynApp load. `value` is ms, `data` is { name, ok }.
  */
 (function () {
-  var bridgeName = (document.currentScript && document.currentScript.dataset.bridge) || "fynapp-amd-bridge";
-
   // webpack AMD externals expect a CommonJS-style exports object: no __esModule,
   // so `import X from "x"` resolves to the object itself.
   function toAmdExports(ns) {
@@ -27,6 +39,11 @@
     delete out.default;
     delete out.__esModule;
     return out;
+  }
+
+  function lookup(context, id) {
+    var meta = context.config.config.fynmesh;
+    return meta && meta.modules && meta.modules[id];
   }
 
   globalThis.fynMeshKernel.use({
@@ -39,21 +56,22 @@
 
       var tel = hooks.tel.scope("amd");
 
-      // Loaded once, on the first AMD request. A failed bridge leaves legacy loading as it was.
-      var bridge;
-      function loadBridge() {
-        if (bridge) return bridge;
+      // Each FynApp loads once, on its first id. A failed one resolves to null.
+      var apps = {};
+      function loadApp(name, version) {
+        var key = version ? name + "@" + version : name;
+        if (apps[key]) return apps[key];
         var t0 = Date.now();
         var done = function (app) {
-          tel.capture({ type: "metric", name: "bridge", value: Date.now() - t0, data: { name: bridgeName, ok: !!app } });
+          tel.capture({ type: "metric", name: "bridge", value: Date.now() - t0, data: { name: key, ok: !!app } });
           return app;
         };
-        return (bridge = kernel.loadFynAppsByName([{ name: bridgeName }]).then(
+        return (apps[key] = kernel.loadFynAppsByName([{ name: name, range: version }]).then(
           function () {
-            return done(hooks.findApp(bridgeName) || null);
+            return done(hooks.findApp(key) || null);
           },
           function (e) {
-            console.error("addon-amd: bridge failed to load, using RequireJS paths", e);
+            console.error("addon-amd: " + key + " failed to load", e);
             return done(null);
           }
         ));
@@ -87,17 +105,29 @@
       var origLoad = req.load;
       req.load = function (context, id, url) {
         var self = this;
-        var p = (pending[id] = { t0: Date.now(), route: "legacy" });
-        loadBridge()
+        var args = arguments;
+        var m = lookup(context, id);
+        if (!m) {
+          pending[id] = { t0: Date.now(), route: "legacy" };
+          return origLoad.apply(self, args);
+        }
+        pending[id] = { t0: Date.now(), route: "bridge" };
+        // A `bundles` entry gives its ids one url, and RequireJS calls load once
+        // per url. Free it so the bundle's other ids reach this hook too.
+        delete context.urlFetched[url];
+        loadApp(m.fynapp, m.version)
           .then(function (app) {
-            var expose = "./amd/" + id;
-            if (!app || !app.entry.container.$E[expose]) {
-              return origLoad.call(self, context, id, url);
-            }
-            p.route = "bridge";
-            return hooks.loadExpose(app, expose).then(function (r) {
-              if (!r.success) throw r.error;
-              var exports = toAmdExports(r.value.ns);
+            if (!app) throw new Error("FynApp " + m.fynapp + " not loaded");
+            return hooks.loadExpose(app, m.expose);
+          })
+          .then(function (r) {
+            if (!r.success) throw r.error;
+            var exports = toAmdExports(r.value.ns);
+            // completeLoad binds any anonymous define still queued to this id. A
+            // script's anonymous define waits in that queue until its load event,
+            // and microtasks can run in between. A browser runs a script and fires
+            // its load event in one task, so a new task never lands in that gap.
+            setTimeout(function () {
               globalThis.define(id, [], function () {
                 return exports;
               });
@@ -105,8 +135,11 @@
             });
           })
           .catch(function (e) {
+            // Fall back to the page's own config. paths fallbacks and errbacks then work as usual.
             tel.capErr("load", { id: id }, e);
-            context.onError(e);
+            pending[id].route = "legacy";
+            context.urlFetched[url] = true;
+            origLoad.apply(self, args);
           });
       };
     },

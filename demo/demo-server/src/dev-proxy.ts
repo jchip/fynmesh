@@ -71,12 +71,12 @@ startDevProxy([
   ],
   // Legacy AMD demo packages, flat like on the site
   [
-    { path: "/fynapp-amd-bridge" },
-    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-amd-bridge") },
+    { path: "/fynapp-cwp-3" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-cwp-3") },
   ],
   [
-    { path: "/fynapp-ui-kit" },
-    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-ui-kit") },
+    { path: "/fynapp-cwp-4" },
+    { protocol: "file", path: Path.join(__dirname, "../../../demo-legacy-amd/fynapp-cwp-4") },
   ],
   [
     { path: "/fynapp-react19-user" },

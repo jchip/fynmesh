@@ -1,6 +1,6 @@
 
 import nunjucks from "nunjucks";
-import { existsSync, mkdirSync, rmSync, writeFileSync, cpSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync, cpSync, copyFileSync, readFileSync, readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -641,11 +641,9 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
                 "ops-map",
                 "ops-analytics",
             ].map(name => ({ name, basePath: path.join(__dirname, "../../../apps/fynops") })),
-            // Legacy AMD demo, flat like FynOps. The bridge's and ui-kit's
-            // dist-react18 back the page's React 18 switch, and public/libs holds
-            // RequireJS and the UMD React files.
-            { name: "fynapp-amd-bridge", basePath: legacyAmdDir, extraDists: ["dist-react18"] },
-            { name: "fynapp-ui-kit", basePath: legacyAmdDir, extraDists: ["dist-react18"] },
+            // Legacy AMD demo, flat like FynOps; public/libs holds RequireJS and UMD React.
+            { name: "fynapp-cwp-3", basePath: legacyAmdDir },
+            { name: "fynapp-cwp-4", basePath: legacyAmdDir },
             { name: "fynapp-react19-user", basePath: legacyAmdDir },
             { name: "fynapp-react18-user", basePath: legacyAmdDir },
             { name: "legacy-components", basePath: legacyAmdDir, extraDists: ["public/libs"] },
@@ -679,11 +677,12 @@ async function buildDemoSite(options: BuildDemoSiteOptions = {}): Promise<boolea
 
         packages.forEach(pkg => copyPackageDists(pkg, outputDir, fileFilter, log));
 
-        // The AMD kernel add-on is one source file with no build step.
-        copyDirFiltered(
-            path.join(legacyAmdDir, "kernel-addon-amd"),
-            path.join(outputDir, "kernel-addon-amd"),
-            fileName => fileName.endsWith(".js")
+        // The AMD kernel add-on is one source file with no build step. Its
+        // package dir also holds tests and node_modules, so copy just the file.
+        mkdirSync(path.join(outputDir, "kernel-addon-amd"), { recursive: true });
+        copyFileSync(
+            path.join(legacyAmdDir, "kernel-addon-amd/addon-amd.js"),
+            path.join(outputDir, "kernel-addon-amd/addon-amd.js")
         );
         log("📁 Copied: kernel-addon-amd/");
 

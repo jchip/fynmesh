@@ -20,7 +20,9 @@
         "widget-a": "dist/widget-a",
         "widget-b": "dist/widget-b",
         "widget-c": "dist/widget-c"
-      }
+      },
+      // the UMD react-dom also has the client API
+      map: { "*": { "react-dom/client": "react-dom" } }
     });
     require(["widget-a", "widget-b", "widget-c"], function (a, b, c) {
       a.mount(document.getElementById("widget-a"));

@@ -3,17 +3,21 @@ $fyn:
  flattenTop: true
 $pkg:
  dep:
-  '@rollup/plugin-virtual': ^3.0.2
-  rollup-plugin-no-emit: ^1.3.0
+  esm-react: ../../misc/esm-react-18
+  esm-react-dom: ../../misc/esm-react-dom-18
+  ui-kit: ../ui-kit
  dev:
   '@fynmesh/kernel': ../../core/kernel
   '@rollup/plugin-node-resolve': ^16.0.3
+  '@rollup/plugin-replace': ^6.0.3
+  '@rollup/plugin-virtual': ^3.0.2
   '@types/node': ^26.6.5
   create-fynapp: ../../dev-tools/create-fynapp
   esbuild: ^0.28.2
   rollup: ^4.64.5
   rollup-plugin-esbuild: ^6.2.1
   rollup-plugin-federation: ../../rollup-federation/rollup-plugin-federation
+  rollup-plugin-no-emit: ^1.3.0
   rollup-wrap-plugin: ../../dev-tools/rollup-wrap-plugin
   typescript: ^7.0.2
 '@babel/code-frame':
@@ -349,49 +353,49 @@ $pkg:
   dependencies:
    federation-js: ^1.0.0
 '@inquirer/ansi':
- _latest: 2.0.9
+ _latest: 2.0.10
  _:
-  ^2.0.9: 2.0.9
- 2.0.9:
-  $: sha512-0Ywt3S8tqM6TWUcsRlBFQ1x+X3/o8kktX0ZiKAnByYb9GFDknnOhse1PVtfiD2BXPI8ar+BWx9PV9R0lQIcygw==
-  _: 'https://registry.npmjs.org/@inquirer/ansi/-/ansi-2.0.9.tgz'
+  ^2.0.10: 2.0.10
+ 2.0.10:
+  $: sha512-dwrc+1aqVZpHNkNDswXGtn1typ+Pxpo5FHZRyBw1le7onEJUkPUkYOY1FIFC1LvFMYUqqLuWBwElhAmencL7MQ==
+  _: 'https://registry.npmjs.org/@inquirer/ansi/-/ansi-2.0.10.tgz'
 '@inquirer/checkbox':
- _latest: 5.2.7
+ _latest: 5.2.8
  _:
-  ^5.2.7: 5.2.7
- 5.2.7:
-  $: sha512-/+QmGE/9bvE/EobaZDnzYe+T+QWoJrnmxwBQNtoi2OVSUR9d1znYsNyEoUrOZvFSxDYttrhzRIpXpaLkN+iIsg==
-  _: 'https://registry.npmjs.org/@inquirer/checkbox/-/checkbox-5.2.7.tgz'
+  ^5.2.8: 5.2.8
+ 5.2.8:
+  $: sha512-NY/S1EalQhlonqhwwsarrcnkH7s9ByQuvjWYdk1jB2Gb9EPQJjKkhCTWjM3yQ0UpHaLm1XbIL89b+32G8rhO5w==
+  _: 'https://registry.npmjs.org/@inquirer/checkbox/-/checkbox-5.2.8.tgz'
   dependencies:
-   '@inquirer/ansi': ^2.0.9
-   '@inquirer/core': ^12.0.5
-   '@inquirer/figures': ^2.0.9
-   '@inquirer/type': 4.2.0
+   '@inquirer/ansi': ^2.0.10
+   '@inquirer/core': ^12.0.6
+   '@inquirer/figures': ^2.0.10
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/confirm':
- _latest: 6.3.4
+ _latest: 6.3.5
  _:
-  ^6.3.4: 6.3.4
- 6.3.4:
-  $: sha512-ZwnaZZDa1zxsyVrN32s447ydMnKcw7e8WWNT+R+Qsu0zAn8Rs6yi9d1B80Kob1Ul2cfUi7t8JD2t4/K7uEZpqA==
-  _: 'https://registry.npmjs.org/@inquirer/confirm/-/confirm-6.3.4.tgz'
+  ^6.3.5: 6.3.5
+ 6.3.5:
+  $: sha512-BJ59BOyURiZiAxdr9AuRu38/k+rV+DcTIM2fUF/c/BXrab6H8zMZTTOl3LgkSJH96Xob2vOJxDiBkHiz32Xx2w==
+  _: 'https://registry.npmjs.org/@inquirer/confirm/-/confirm-6.3.5.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/core':
- _latest: 12.0.5
+ _latest: 12.0.6
  _:
-  ^12.0.5: 12.0.5
- 12.0.5:
-  $: sha512-c0ZSnO9oVk/IlEGoZK3u8b3IZQeu9I6jUkXJSQnQEVRXsjKvtAq3AGqFL2LgfJhlzMZne08pZHWRWasIcI3Rew==
-  _: 'https://registry.npmjs.org/@inquirer/core/-/core-12.0.5.tgz'
+  ^12.0.6: 12.0.6
+ 12.0.6:
+  $: sha512-5yxn2LsJ8Tu4ei2a+yNkmFRhM/cb+JMEsEs/AW6CCOnBnpMy4IjYiPMFyHtYq8weOmlTyqqCx40y0DsD7OsEPw==
+  _: 'https://registry.npmjs.org/@inquirer/core/-/core-12.0.6.tgz'
   dependencies:
-   '@inquirer/ansi': ^2.0.9
-   '@inquirer/figures': ^2.0.9
-   '@inquirer/type': 4.2.0
+   '@inquirer/ansi': ^2.0.10
+   '@inquirer/figures': ^2.0.10
+   '@inquirer/type': 4.2.1
    cli-width: ^4.1.0
    fast-wrap-ansi: ^0.2.0
    mute-stream: ^3.0.0
@@ -399,152 +403,152 @@ $pkg:
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/editor':
- _latest: 5.3.5
+ _latest: 5.3.6
  _:
-  ^5.3.5: 5.3.5
- 5.3.5:
-  $: sha512-6lU3/pPx5z3lHWejFW061MV4qZooBQYv/+EeGhNOPiP/i+hrYsHfxxBnnDGsAfg8YdLUd69YckoeOjtr3QuAUg==
-  _: 'https://registry.npmjs.org/@inquirer/editor/-/editor-5.3.5.tgz'
+  ^5.3.6: 5.3.6
+ 5.3.6:
+  $: sha512-Z5SOeRC5VNkINfKN4rY8BSaYKb3GYi8iSEqZZRqogsE2GhBBToQ0Xw25SbI+4bcatLzU009mZ5d9EuJNiJuUCg==
+  _: 'https://registry.npmjs.org/@inquirer/editor/-/editor-5.3.6.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/external-editor': ^3.0.6
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/external-editor': ^3.0.7
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/expand':
- _latest: 5.1.7
+ _latest: 5.1.8
  _:
-  ^5.1.7: 5.1.7
- 5.1.7:
-  $: sha512-eiJ31YFCaB6fLoJCqLIn8S6eqUyME6vwr8KcP5h8cxmA+bV9RRVPO+kywoxb7G63HduDXV6sN/SM7o2R+ahEcQ==
-  _: 'https://registry.npmjs.org/@inquirer/expand/-/expand-5.1.7.tgz'
+  ^5.1.8: 5.1.8
+ 5.1.8:
+  $: sha512-dMEnTkpLqzM/sbILwL7QJgx9iX5hoEM8+bh6shgwd9mYJamdOnth7y2mMaFd08Glj9AXEFKllWcGYyBqnJsHrA==
+  _: 'https://registry.npmjs.org/@inquirer/expand/-/expand-5.1.8.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/external-editor':
- _latest: 3.0.6
+ _latest: 3.0.7
  _:
-  ^3.0.6: 3.0.6
- 3.0.6:
-  $: sha512-rWmw6WG8JZ7LMn/srXEylYGhL6EXXJeROE7/4x4GREh6NgzqJBDbIgpNGsYoLPfobeb4VZtEYzPGnT5EFNYhiQ==
-  _: 'https://registry.npmjs.org/@inquirer/external-editor/-/external-editor-3.0.6.tgz'
+  ^3.0.7: 3.0.7
+ 3.0.7:
+  $: sha512-enNqTJpojgISCG+a5acjnfJ02hcRTFUBVm8uXiCY40PRPZtSzFnNLskOTU+kDUUEODYma90syxuea1rRtUFh0Q==
+  _: 'https://registry.npmjs.org/@inquirer/external-editor/-/external-editor-3.0.7.tgz'
   dependencies:
    chardet: ^2.1.1
    iconv-lite: ^0.7.2
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/figures':
- _latest: 2.0.9
+ _latest: 2.0.10
  _:
-  ^2.0.9: 2.0.9
- 2.0.9:
-  $: sha512-EAWgUTGQ/Umgga51dE3B2PUHbufuXarDfg86uVgoSgNHNNQnyFKcOrQLWVqYMghuSyHh8+2HUH0Js9cTC1WAdg==
-  _: 'https://registry.npmjs.org/@inquirer/figures/-/figures-2.0.9.tgz'
+  ^2.0.10: 2.0.10
+ 2.0.10:
+  $: sha512-51elrUJV3jZpvD0ygz8+U10Kc6+Lzqln+/tYmnbhy6jo5oXpE6hMCcv+OTBC0enwJXsb3JIuT3VtEinRNCSK2A==
+  _: 'https://registry.npmjs.org/@inquirer/figures/-/figures-2.0.10.tgz'
 '@inquirer/input':
- _latest: 5.1.8
+ _latest: 5.1.9
  _:
-  ^5.1.8: 5.1.8
- 5.1.8:
-  $: sha512-psOSTgkL8y/OtgJJYbqJ0oISr2QBE0U1Ro/qQdA/EKjeJiwiUTQgQmq8o4ESNzVOWthIeh3YLD7BCUR9dKnR5g==
-  _: 'https://registry.npmjs.org/@inquirer/input/-/input-5.1.8.tgz'
+  ^5.1.9: 5.1.9
+ 5.1.9:
+  $: sha512-2Vd5T7lTxfgJMpAd3aOu6bQpbUnCU7tBgvTQIZkP/7juJzmRmTM2t5XfOCuirFduWLTSJI/WZp32Cq1E01TVeg==
+  _: 'https://registry.npmjs.org/@inquirer/input/-/input-5.1.9.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/number':
- _latest: 4.2.5
+ _latest: 4.2.6
  _:
-  ^4.2.5: 4.2.5
- 4.2.5:
-  $: sha512-lEy7LWsdF5qHx5QjHZqabUqM9P7i5uTMCt8GRzqxmwXXKbapKJDA+ucVflVVPAyj4snD5DTAD4L+sct85XOlOQ==
-  _: 'https://registry.npmjs.org/@inquirer/number/-/number-4.2.5.tgz'
+  ^4.2.6: 4.2.6
+ 4.2.6:
+  $: sha512-22LnGGCDm1M/pKXxxF8n6ppr/1IztdsxqeqeBRUMTTNnJTkjIBiAkewiDM4u/gjtazj/FvZS+nk9AbO/vEcBFQ==
+  _: 'https://registry.npmjs.org/@inquirer/number/-/number-4.2.6.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/password':
- _latest: 5.2.4
+ _latest: 5.2.5
  _:
-  ^5.2.4: 5.2.4
- 5.2.4:
-  $: sha512-T7ir3fflSSVCYEVqNyMBq+pIMsilQRtbZcD5gxn6Ewsin5TJWBxrGBdXveWtmeXVAeoInfhS+BhBUZaL4sFSDg==
-  _: 'https://registry.npmjs.org/@inquirer/password/-/password-5.2.4.tgz'
+  ^5.2.5: 5.2.5
+ 5.2.5:
+  $: sha512-0v0wLQA4uhWbybmdH6oPl7ooxCiymNylkvi2gCSc+mA5ZQB6QoJLVhoHq12T82lhozpp9fpMJnJkC1nJrU/A+A==
+  _: 'https://registry.npmjs.org/@inquirer/password/-/password-5.2.5.tgz'
   dependencies:
-   '@inquirer/ansi': ^2.0.9
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/ansi': ^2.0.10
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/prompts':
- _latest: 8.7.4
+ _latest: 8.7.5
  _:
-  ^8.7.4: 8.7.4
- 8.7.4:
-  $: sha512-SAJt+QhY5rOJAIgZBw9TrHWfgrp6wsb9cqRCyqax+Hl6EiFfRXmD9EsIWkST8yq/dQ8H46Is2Sr/JG7Ls/LQ+Q==
-  _: 'https://registry.npmjs.org/@inquirer/prompts/-/prompts-8.7.4.tgz'
+  ^8.7.5: 8.7.5
+ 8.7.5:
+  $: sha512-l/IWwC+QhOyXgxkZloOh+n5quGzc1m5ZawyzBmoizCZaxbJeLRdS3pStoqg/JVInJRXaG5aHMhjK6H6oYiBC9A==
+  _: 'https://registry.npmjs.org/@inquirer/prompts/-/prompts-8.7.5.tgz'
   dependencies:
-   '@inquirer/checkbox': ^5.2.7
-   '@inquirer/confirm': ^6.3.4
-   '@inquirer/editor': ^5.3.5
-   '@inquirer/expand': ^5.1.7
-   '@inquirer/input': ^5.1.8
-   '@inquirer/number': ^4.2.5
-   '@inquirer/password': ^5.2.4
-   '@inquirer/rawlist': ^5.3.7
-   '@inquirer/search': ^4.3.5
-   '@inquirer/select': ^5.2.7
+   '@inquirer/checkbox': ^5.2.8
+   '@inquirer/confirm': ^6.3.5
+   '@inquirer/editor': ^5.3.6
+   '@inquirer/expand': ^5.1.8
+   '@inquirer/input': ^5.1.9
+   '@inquirer/number': ^4.2.6
+   '@inquirer/password': ^5.2.5
+   '@inquirer/rawlist': ^5.3.8
+   '@inquirer/search': ^4.3.6
+   '@inquirer/select': ^5.2.8
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/rawlist':
- _latest: 5.3.7
+ _latest: 5.3.8
  _:
-  ^5.3.7: 5.3.7
- 5.3.7:
-  $: sha512-XveEe8v3BHj9ec00n+9i8FHjWhXjS6+jCTizYvXCqKUKtgkrq9xid8S5j3mYGW96qfxG3mwNoud3m3v8GDk9Pw==
-  _: 'https://registry.npmjs.org/@inquirer/rawlist/-/rawlist-5.3.7.tgz'
+  ^5.3.8: 5.3.8
+ 5.3.8:
+  $: sha512-h+6Y4pPvYvuRbksn1kIBdD9tCYD+E468W5sIcVfLmoLP5IasnY0r33N+r+46ej/P8b2PCREjyKR+MnnfPGdTzg==
+  _: 'https://registry.npmjs.org/@inquirer/rawlist/-/rawlist-5.3.8.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/search':
- _latest: 4.3.5
+ _latest: 4.3.6
  _:
-  ^4.3.5: 4.3.5
- 4.3.5:
-  $: sha512-kIUecMugEN2YTvTmff+uYz0nAE0f9RFNDVZknfrh264vAQM9P8tnsXiUp7z8XbGuNIBEtFMJhvc9QquawpC46A==
-  _: 'https://registry.npmjs.org/@inquirer/search/-/search-4.3.5.tgz'
+  ^4.3.6: 4.3.6
+ 4.3.6:
+  $: sha512-JZj9ttkIvuaFQIc2oxsyqC1ad05WL02ku6W/INVKTCzNaVq1KkhP3AfTRC0m7OWlKZyw+EWwPBFZfYiG9jF6Yw==
+  _: 'https://registry.npmjs.org/@inquirer/search/-/search-4.3.6.tgz'
   dependencies:
-   '@inquirer/core': ^12.0.5
-   '@inquirer/figures': ^2.0.9
-   '@inquirer/type': 4.2.0
+   '@inquirer/core': ^12.0.6
+   '@inquirer/figures': ^2.0.10
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/select':
- _latest: 5.2.7
+ _latest: 5.2.8
  _:
-  ^5.2.7: 5.2.7
- 5.2.7:
-  $: sha512-pRDWO4dTqSAvFQdO8yclKMtXNDm9K9HmvWB5UZmT3clw2OlOBNXveHzhyFmO/0d0yJMqlPcNITus1Jtpm6t8VQ==
-  _: 'https://registry.npmjs.org/@inquirer/select/-/select-5.2.7.tgz'
+  ^5.2.8: 5.2.8
+ 5.2.8:
+  $: sha512-BklkkAAOpjdCfuQw5fVGcDuhKxA7T1iBpn6b2JUvDDdkIsO3Ftlg+WnWUCVpkUBFagL2o036OFW+xL4lC9wIPw==
+  _: 'https://registry.npmjs.org/@inquirer/select/-/select-5.2.8.tgz'
   dependencies:
-   '@inquirer/ansi': ^2.0.9
-   '@inquirer/core': ^12.0.5
-   '@inquirer/figures': ^2.0.9
-   '@inquirer/type': 4.2.0
+   '@inquirer/ansi': ^2.0.10
+   '@inquirer/core': ^12.0.6
+   '@inquirer/figures': ^2.0.10
+   '@inquirer/type': 4.2.1
   peerDependencies:
    '@types/node': '>=18'
 '@inquirer/type':
- _latest: 4.2.0
+ _latest: 4.2.1
  _:
-  4.2.0: 4.2.0
- 4.2.0:
-  $: sha512-2rnHX8RPo4glJYqnFc/v3nQeIhDcjyRRyaT7MGcfL/8xv/8K03SXYoA2tX06WVSKywWOE/ncbG3dtuzLjR5TCQ==
-  _: 'https://registry.npmjs.org/@inquirer/type/-/type-4.2.0.tgz'
+  4.2.1: 4.2.1
+ 4.2.1:
+  $: sha512-lDkPsnv5M5CcYB2T1qTc3dobNTPkVr4DU3Ic2Q6SW8/qVRHgvzdRdmVZ6YqG9Ag1aJTeMsLU0s0WPRh3CZWDQQ==
+  _: 'https://registry.npmjs.org/@inquirer/type/-/type-4.2.1.tgz'
   peerDependencies:
    '@types/node': '>=18'
 '@jchip/error':
@@ -672,6 +676,19 @@ $pkg:
    resolve: ^1.22.1
   peerDependencies:
    rollup: ^2.78.0||^3.0.0||^4.0.0
+'@rollup/plugin-replace':
+ _latest: 6.0.3
+ _:
+  ^6.0.3: 6.0.3
+ 6.0.3:
+  top: 1
+  $: sha512-J4RZarRvQAm5IF0/LwUUg+obsm+xZhYnbMXmXROyoSE1ATJe3oXSb9L5MMppdxP2ylNSjv6zFBwKYjcKMucVfA==
+  _: 'https://registry.npmjs.org/@rollup/plugin-replace/-/plugin-replace-6.0.3.tgz'
+  dependencies:
+   '@rollup/pluginutils': ^5.0.1
+   magic-string: ^0.30.3
+  peerDependencies:
+   rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
 '@rollup/plugin-terser':
  _latest: 1.0.2
  _:
@@ -709,276 +726,276 @@ $pkg:
   peerDependencies:
    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
 '@rollup/rollup-android-arm-eabi':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-t2AnVba25baFdq7gczzS13JyVcdubLVbFX1X04mxrggDrTQPUXNv3XM0k9H1hr5tqvg7AVvtQ720QHAj0iYqhg==
-  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-5coxNSjqOI2J3NkVhlp3u+zGcyjnowQFsU9sg7MMz4UPXY4Dv63kFGLt7ConXz9CNq2i0yuOJZAF/2RMrgI2OA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.65.1.tgz'
   os:
    - android
   cpu:
    - arm
 '@rollup/rollup-android-arm64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-dNONUaEwPGhl/nuO2KV8VABWlcjYyU6KtZGN8dQv5OS5JU7JSCxPijVNKXbRJd0iuTzTiJ4TjPt/4bbvDRNiMQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-K0HFf6XMB3IYs+jDZ1/RRhZaVOwxNXrl0n4MDEyGDjuK7+B6K/nDJp8DCBitO3S1sK/fzNxAf9QZAny4AIUPtg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.65.1.tgz'
   os:
    - android
   cpu:
    - arm64
 '@rollup/rollup-darwin-arm64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-zWQqUH+9zavr2Bxuzfpuv2SIF3X31cr58TvSQC9o1GhpOvkqRwr60GkZdQcudyT/BEgdpdSafjgd2I13MbTL7g==
-  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-zkZrXYwNlIcSUmcwY2DpsaDHr0XjVUeQHCuSunG3eQD7/5Wn/DvI7OMUE8NRRweK87yG8ebJ1xGOzmwpMsbZQA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.65.1.tgz'
   os:
    - darwin
   cpu:
    - arm64
 '@rollup/rollup-darwin-x64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-RQYreBFWtO4//hIuOaZkYUnF/lPU4lz35dveDimDshWCJvVisVtJ/shmT9bkXK8wFJY+FJF89X6F3Cq1qI3LCw==
-  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-Zaed+R3cpkkA3aiNd7NO0GV5KFh/LVf8j6bGcoRdpoXkSm/mWH8M0oX2/3u/nyGcx/bHEovD9CzX+w9/gcpI4A==
+  _: 'https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.65.1.tgz'
   os:
    - darwin
   cpu:
    - x64
 '@rollup/rollup-freebsd-arm64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-A0NfMj6Cuh/9BE5k3awJKv6HoxFVXIcLAb6SZqAMoxUHPA1ZNNK4RsGuUPD/vL7nEAm9LG+ZzXWWTrnC0XtkpA==
-  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-h12p3WJWhyJ9kir0zqAPr0rKNmBzOWIjoaOMT9OULs9KZQZCeOMKd+mGSvERjd9VxJYShd3zIxtrVxkYz6BEVA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.65.1.tgz'
   os:
    - freebsd
   cpu:
    - arm64
 '@rollup/rollup-freebsd-x64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-BI6/H7q3aP0I7S7GOrjyxTjgEJlSnovXE38+bdxBpuKN6z+d//uF+T+VQ3Q7ltJL/71p17ufartARX9Ja5gOGQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-yRBwh/5imKY4DydDulVtrjy8Jf7h7NQJUqZbgmZ3zFsCD9QqlnWvZ7RtEF+ecO1b+IukKjXlu5Bb9fehV3tIbg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.65.1.tgz'
   os:
    - freebsd
   cpu:
    - x64
 '@rollup/rollup-linux-arm-gnueabihf':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-W1vUprf09RWaVWnsFP1vlUkEWJzTZlpObOEAYZXt9Fq0UVAOYEkeGr7wBX7McKqqIQskXdBnpiOMgwPujordgA==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-1XuPiWYYaLE1UDOqhbKVOfsqxvfmFS/lYPSk92U1hEX1qRfSYH0hNeAlbxFIgjp4d6+YQmL95EPRgdvjbZEddA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.65.1.tgz'
   os:
    - linux
   cpu:
    - arm
 '@rollup/rollup-linux-arm-musleabihf':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-s8QTcZWgrl9haFzEGIqyE5BWyo89pFDGLMBFZ752WYxk8DJwNU/O1X6pZgPw829d9/sm6CCHyrMP3aurt76p1Q==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-Y3C5e55Yrf6p2r5rBcc4P9hFWVNi6oqWy/53I/AyCJJGlp3KRSpTP8eoUmVntchTbEnhgBgAgLO9flj9AvOdUw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.65.1.tgz'
   os:
    - linux
   cpu:
    - arm
 '@rollup/rollup-linux-arm64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-ke1f6dLRzkqveyjjF2fkEwQYZvxHtNNwjegY8nJrwcO0Bdqr8CzFO/pKE0Bns13cx0qz2Ba2Y0Hs3dSwMdnHxA==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-Itj6coSswkYPIcVLczObXmwdplHNQQxyfnK1ppBg4czDaX8RiEzLKqU7EMc64BiBuiDZEUS+M93ktM18rv5llw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - arm64
 '@rollup/rollup-linux-arm64-musl':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-926SMeUcy4y18Rz/w2aJiUKOnyAnm6czg72bXkQEaeemsll+Wr0hnsjb2BGRpHvWgwAMYy5ACJCotbvfLCfj0A==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-KeO8jTEqdrnhvcahufbimyMoI44vedRUp1bVz2QUnRX2vDm/hxzCPt5F8fERVD5fsHyTW/vXmCElT054VOSVOA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.65.1.tgz'
   os:
    - linux
   cpu:
    - arm64
 '@rollup/rollup-linux-loong64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-6T7JNRP1hc4hqF2dUsEoVLOt9K8tmODoCLldtQRYnrddGGQY8Gqe2pM/qMMUo7EMowpP7oa2N95k0/8sYK/ipw==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-dDOz5VZZ+ZGnglpmET6VJefamWXFsgaVtuhSClf2/URZBp048jprD6z1hddsIMN6n1w+oUzGZEBp9u6Mlszsfg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - loong64
 '@rollup/rollup-linux-loong64-musl':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-SImGFl1Je5kpyAgOCPONVT7h6ASV8mAUwGRjY7eZvVjPg//PfHOXgI+P241RF/+HqsA4PP3qD527ysWFKNQyhQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-JbfRKz8nJCuo8gn1Dqx8lQWEHw4qhZ3uRaHphw5vrSjnSptJTKTRC/bLKHh8QQMsEnhL4uq+bdg3tkiXbJ2q/A==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.65.1.tgz'
   os:
    - linux
   cpu:
    - loong64
 '@rollup/rollup-linux-ppc64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-XeDTbmPF1Yu5asfXGPrMkWoxTDhgryQbmw5Q1+R582O51VNCk23J6f2pDrsAp5YkneBVBwtExx6ZGOb9D2aQ6A==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-3oQpe1q0emSeCAssVHMQdOz5fz3PBH5my/Fr0ZekV2UMNL4ZiRa1ciikYlGQXyDkeqseYYv1InwOY8YPqY7RIQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - ppc64
 '@rollup/rollup-linux-ppc64-musl':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-VS55JUI/1nsljmV/jfqNkLZXFw8uMO8nNlfoHmSevNf6fO3neuhyDvx9dv3c/Ytt8r/431SL8Qax1dpYvOMZTg==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-nNV3HHi23o1LtpGGwH+Bav4hqnc4+klQtC96tSvCfvql8bLlNFTnTFiGl/jai2nve3eEr/vT2ocuyf+h+eMnYQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.65.1.tgz'
   os:
    - linux
   cpu:
    - ppc64
 '@rollup/rollup-linux-riscv64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-Vblw84TbX7RS4la1Y4+yQ7aore/oSyaNtFbppuBr5Vs/4LfBeXKq9dIfoExw6zOvRERqd2rRAjnZRaMhH/0x5w==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-b5zab0FryBxuocuDeqOsYGAg2EzjKw4mKA6LjQXCyewXjGv/BXqACBsY2cO45xM4hV2weYtdjGThP2VB2ByAYg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - riscv64
 '@rollup/rollup-linux-riscv64-musl':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-7+gHjtONvKgwR9InTKFaLq53f6YzBJkgeMRBENdWTsQr+spahGqQm8HF5aXpq8i4JaRrOqYyv6Zn1WltDTxaZQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-Rh08xZakiUxKNgI3hbgH9mivlx478lSqckS9s+Oc3/TX1VrAH3W8z/5wpJXR/v5VjqcJ/jJNVBg64PU1+iQsTQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.65.1.tgz'
   os:
    - linux
   cpu:
    - riscv64
 '@rollup/rollup-linux-s390x-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-KvNDC0J6s4vVHhtJ6KrDXU0Er0au/hmRIBq/+1maCV8TseGupeKizq0bWcrbp2HE1T8xoknvN0Q/KZ/YF0qX3w==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-qDgtS6juN3/k97y4kcD6XLFpXEo4f6CnG8lTOGYwlhrUYTrMyhN0WHdZCPAW5rqS0MqQG7qI7dxnjugt6QB39Q==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - s390x
 '@rollup/rollup-linux-x64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-GExdD15WPvu/x/drELjVam7vX8EsPgvTMOa/iJL/p/4m/oOqzbb7JXZg8fXR4hlXtg/sF2zyTZ3bR0AEtEMlhQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-44IKzBPqXXVm0kt1O+F5eW4juR5FyIxGNlFkpP8qwIDzucBsjM1HCbdYUQrQw8rU/g6HRl/tfBm0+Qq4H4Ro3w==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.65.1.tgz'
   os:
    - linux
   cpu:
    - x64
 '@rollup/rollup-linux-x64-musl':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-8sT9PemIZfIMED4Vd4KGoOXVDj5CMSWNcGdbheRUx9TYS03yOWdT2Q0lXPyEyNBB9YTilwewIQKNIBk6Nxi0Kg==
-  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-tvYWZ/h2PCHs558Xu7B6LptuRCV8lXV2xI75ONMcldII1m2zlFwuI4BJZi9M6rSMkYqcPLLtPUPrjyqfbzLOdg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.65.1.tgz'
   os:
    - linux
   cpu:
    - x64
 '@rollup/rollup-openbsd-x64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-pO6Ehi0jo5yE0R6PltKhJhv9mlIiyzBJk5N5NUF2OF6xtVKI+1bdXxj/rb0jGXy3hck1ELVT0QPY3tzkAm360w==
-  _: 'https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-gdyeucgZCnei3pXwadKVTEAOgRx0B+c847DUPR/PdOMmp3olhfkYo6r0J4PzRFZB5ZICZQTxntyvgmWH5xT7rg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.65.1.tgz'
   os:
    - openbsd
   cpu:
    - x64
 '@rollup/rollup-openharmony-arm64':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-vo7N3/+cjjPDYr8vtxC+qSNgWa9sDvJ7g8N8R5SWqFY4WiNH1ULcAU70SKVyHeiIZOYYwNP9pTipmhN5sl1NPw==
-  _: 'https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-Wf/NEKdn2SAL4Nvt8HyDtdkseWTwiLbZEOoNYnEaHkbso0B9eHO42vKnZh+OYsn+IMhAMcWcuIwPlBOgOXsUzg==
+  _: 'https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.65.1.tgz'
   os:
    - openharmony
   cpu:
    - arm64
 '@rollup/rollup-win32-arm64-msvc':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-ArwvgFAbjKcDM7qqotZ4OVYf+UMT9xH2YzkCzK4+AuZSDihMlz1Ekoe4INwBVXzn2mnJzuIYOcSx07iTBijGRQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-x9VSsDmsMsEWy4cr/mFeaEsXnVJ6Kc4NCAU/lCnwml3s7LQbZoa9+/qwc9etWHbuuDT5mYxdyyKUwo76njtjZw==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.65.1.tgz'
   os:
    - win32
   cpu:
    - arm64
 '@rollup/rollup-win32-ia32-msvc':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-QGMmK4/cxKE/36FoLMSHQBCyymv/eFTnsCvvsBF0rgmOvVbvX78VWZRerL3dHa77f4pM6Xcc2iGDhJ10w/svKQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-RIDbiVvvLkN45mOFpbo6eYMgnuiBEB62BGR/0s4QJgGg2AvVxucDDNn67kpAcUoYyfmY8iX8/RifMcmxmmnejA==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.65.1.tgz'
   os:
    - win32
   cpu:
    - ia32
 '@rollup/rollup-win32-x64-gnu':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-XfKYFWHIPs4HPODIMsGF1IKlS3H1e3WokUZIgpmn4+uNnZBlnRDDHEylNyazbQXwhMKZre68OjtRYbKqb5+j8w==
-  _: 'https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-+KN8HIr88vN59JNxlrM2fMimzY43Y0lQB7+0xdVsFbvFCAA74CLKCdfzIHzzvndJryBc94Pm+MvwtukKjaS2ug==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.65.1.tgz'
   os:
    - win32
   cpu:
    - x64
 '@rollup/rollup-win32-x64-msvc':
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  4.65.0: 4.65.0
- 4.65.0:
-  $: sha512-wPWi++K4Bs1VR4XihOhfGi4IGX6Cub7FlerTf8X2v+2BtDHddgSqWCXwGD+h2yAe4/niIhNDwAltioOC+wEogQ==
-  _: 'https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.65.0.tgz'
+  4.65.1: 4.65.1
+ 4.65.1:
+  $: sha512-+Y1Sd49cSDq60UOl8/U2HI0ebUvnSl/hDhMHQn+ouw17yb8fYwMWIazzJ4JFpSkjPE7sj5NTNSX9IoyEqcFfyQ==
+  _: 'https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.65.1.tgz'
   os:
    - win32
   cpu:
@@ -1384,6 +1401,24 @@ esbuild:
    '@esbuild/win32-arm64': 0.28.2
    '@esbuild/win32-ia32': 0.28.2
    '@esbuild/win32-x64': 0.28.2
+esm-react:
+ _latest: 18.3.1-fynlocal_h
+ _:
+  '../../misc/esm-react-18,../esm-react-18': 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-18
+esm-react-dom:
+ _latest: 18.3.1-fynlocal_h
+ _:
+  ../../misc/esm-react-dom-18: 18.3.1-fynlocal_h
+ 18.3.1-fynlocal_h:
+  top: 1
+  $: local
+  _: ../../misc/esm-react-dom-18
+  dependencies:
+   esm-react: ^18.3.1
 estree-walker:
  _latest: 3.0.3
  _:
@@ -1510,17 +1545,17 @@ index-to-position:
   $: sha512-Yg7+ztRkqslMAS2iFaU+Oa4KTSidr63OsFGlOrJoW981kIYO3CGCS3wA95P1mUi/IVSJkn0D479KTJpVpvFNuw==
   _: 'https://registry.npmjs.org/index-to-position/-/index-to-position-1.2.0.tgz'
 inquirer:
- _latest: 14.2.4
+ _latest: 14.2.5
  _:
-  ^14.2.3: 14.2.4
- 14.2.4:
-  $: sha512-xPVejWqfkjG9OxSirMqu3pdzGIGsma68j2S+nEOuuwMbU3pRTHnYs9d8my+1M6OMlqr8XZPwCPonZ2DKMwQDLg==
-  _: 'https://registry.npmjs.org/inquirer/-/inquirer-14.2.4.tgz'
+  ^14.2.3: 14.2.5
+ 14.2.5:
+  $: sha512-s5r4MqAyAXGau1AYf9weaQbj6wbkY/wuuqROGRwyEiR3KvE4QSJ8y5OYfOfWLYyRVhoK6zU2hNmf9vbt/k+Wag==
+  _: 'https://registry.npmjs.org/inquirer/-/inquirer-14.2.5.tgz'
   dependencies:
-   '@inquirer/ansi': ^2.0.9
-   '@inquirer/core': ^12.0.5
-   '@inquirer/prompts': ^8.7.4
-   '@inquirer/type': 4.2.0
+   '@inquirer/ansi': ^2.0.10
+   '@inquirer/core': ^12.0.6
+   '@inquirer/prompts': ^8.7.5
+   '@inquirer/type': 4.2.1
    mute-stream: ^3.0.0
    run-async: ^4.0.6
   peerDependencies:
@@ -1585,7 +1620,7 @@ lru-cache:
   $: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==
   _: 'https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz'
 magic-string:
- _latest: 1.4.3
+ _latest: 1.4.5
  _:
   '^0.30.21,^0.30.3': 0.30.21
  0.30.21:
@@ -1737,43 +1772,43 @@ resolve-pkg-maps:
   $: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==
   _: 'https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz'
 rollup:
- _latest: 4.65.0
+ _latest: 4.65.1
  _:
-  ^4.64.5: 4.65.0
- 4.65.0:
+  ^4.64.5: 4.65.1
+ 4.65.1:
   top: 1
-  $: sha512-QVCvQUTGDN6JRwi3jVGCY3H4aTHvi9rX0LyoBMkGUvdh/Z6O51CzcLz85BWZaTCDGhl6ySGqYZs+xI1jmPqGcw==
-  _: 'https://registry.npmjs.org/rollup/-/rollup-4.65.0.tgz'
+  $: sha512-HzD4IdphaPMvuAacnL/vtoq5B8FwqewKvxTtqYibWvP6VDyZ+UsTtlw5F8HIOIIpLQAkN2NOP/0sM3puo9xN/A==
+  _: 'https://registry.npmjs.org/rollup/-/rollup-4.65.1.tgz'
   dependencies:
    '@types/estree': 1.0.9
   optionalDependencies:
    '@napi-rs/lzma-linux-x64-gnu': 1.5.1
    fsevents: ~2.3.2
-   '@rollup/rollup-darwin-arm64': 4.65.0
-   '@rollup/rollup-android-arm64': 4.65.0
-   '@rollup/rollup-win32-arm64-msvc': 4.65.0
-   '@rollup/rollup-freebsd-arm64': 4.65.0
-   '@rollup/rollup-linux-arm64-gnu': 4.65.0
-   '@rollup/rollup-linux-arm64-musl': 4.65.0
-   '@rollup/rollup-android-arm-eabi': 4.65.0
-   '@rollup/rollup-linux-arm-gnueabihf': 4.65.0
-   '@rollup/rollup-linux-arm-musleabihf': 4.65.0
-   '@rollup/rollup-win32-ia32-msvc': 4.65.0
-   '@rollup/rollup-linux-loong64-gnu': 4.65.0
-   '@rollup/rollup-linux-loong64-musl': 4.65.0
-   '@rollup/rollup-linux-riscv64-gnu': 4.65.0
-   '@rollup/rollup-linux-riscv64-musl': 4.65.0
-   '@rollup/rollup-linux-ppc64-gnu': 4.65.0
-   '@rollup/rollup-linux-ppc64-musl': 4.65.0
-   '@rollup/rollup-linux-s390x-gnu': 4.65.0
-   '@rollup/rollup-darwin-x64': 4.65.0
-   '@rollup/rollup-win32-x64-gnu': 4.65.0
-   '@rollup/rollup-win32-x64-msvc': 4.65.0
-   '@rollup/rollup-freebsd-x64': 4.65.0
-   '@rollup/rollup-linux-x64-gnu': 4.65.0
-   '@rollup/rollup-linux-x64-musl': 4.65.0
-   '@rollup/rollup-openbsd-x64': 4.65.0
-   '@rollup/rollup-openharmony-arm64': 4.65.0
+   '@rollup/rollup-darwin-arm64': 4.65.1
+   '@rollup/rollup-android-arm64': 4.65.1
+   '@rollup/rollup-win32-arm64-msvc': 4.65.1
+   '@rollup/rollup-freebsd-arm64': 4.65.1
+   '@rollup/rollup-linux-arm64-gnu': 4.65.1
+   '@rollup/rollup-linux-arm64-musl': 4.65.1
+   '@rollup/rollup-android-arm-eabi': 4.65.1
+   '@rollup/rollup-linux-arm-gnueabihf': 4.65.1
+   '@rollup/rollup-linux-arm-musleabihf': 4.65.1
+   '@rollup/rollup-win32-ia32-msvc': 4.65.1
+   '@rollup/rollup-linux-loong64-gnu': 4.65.1
+   '@rollup/rollup-linux-loong64-musl': 4.65.1
+   '@rollup/rollup-linux-riscv64-gnu': 4.65.1
+   '@rollup/rollup-linux-riscv64-musl': 4.65.1
+   '@rollup/rollup-linux-ppc64-gnu': 4.65.1
+   '@rollup/rollup-linux-ppc64-musl': 4.65.1
+   '@rollup/rollup-linux-s390x-gnu': 4.65.1
+   '@rollup/rollup-darwin-x64': 4.65.1
+   '@rollup/rollup-win32-x64-gnu': 4.65.1
+   '@rollup/rollup-win32-x64-msvc': 4.65.1
+   '@rollup/rollup-freebsd-x64': 4.65.1
+   '@rollup/rollup-linux-x64-gnu': 4.65.1
+   '@rollup/rollup-linux-x64-musl': 4.65.1
+   '@rollup/rollup-openbsd-x64': 4.65.1
+   '@rollup/rollup-openharmony-arm64': 4.65.1
 rollup-plugin-dts:
  _latest: 6.5.1
  _:
@@ -1989,6 +2024,14 @@ typescript:
    '@typescript/typescript-openbsd-arm64': 7.0.2
    '@typescript/typescript-openbsd-x64': 7.0.2
    '@typescript/typescript-sunos-x64': 7.0.2
+ui-kit:
+ _latest: 1.4.0-fynlocal_h
+ _:
+  ../ui-kit: 1.4.0-fynlocal_h
+ 1.4.0-fynlocal_h:
+  top: 1
+  $: local
+  _: ../ui-kit
 undici-types:
  _latest: 8.12.3
  _:

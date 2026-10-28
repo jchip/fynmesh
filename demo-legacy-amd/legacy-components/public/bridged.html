@@ -5,14 +5,14 @@
     <title>Bridged host</title>
   </head>
   <body>
-    <h1>Bridged host (RequireJS + React from FynMesh federation)</h1>
+    <h1>Bridged host via CWP 4 (RequireJS + React from FynMesh federation)</h1>
     <div id="widget-a"></div>
     <div id="widget-b"></div>
 
     <!-- legacy loader first, as an existing legacy page would have it -->
     <script src="libs/require.js"></script>
     <script>
-      // no react / react-dom paths: the AMD add-on gets them from the bridge
+      // no react / react-dom paths: the AMD add-on gets them from CWP 4
       requirejs.config({
         baseUrl: "../",
         paths: {
@@ -27,17 +27,16 @@
     <script src="/federation-js/dist/federation-js.min.js"></script>
     <script src="/kernel/dist/fynmesh-browser-kernel.min.js"></script>
     <script>
-      const dirs = {
-        "fynapp-amd-bridge": { dir: "/fynapp-amd-bridge/dist/", version: "1.0.0" },
-        "fynapp-react-lib@^18.0.0": { dir: "/fynapp-react-18/dist/", version: "18.3.0" },
-        "fynapp-react-lib@^19.0.0": { dir: "/fynapp-react-19/dist/", version: "19.2.8" },
-      };
-      fynMeshKernel.setRegistryResolver(async (name, range) => {
-        const hit = dirs[`${name}@${range}`] || dirs[name] || dirs[`${name}@^19.0.0`];
-        return { name, version: hit.version, url: `${hit.dir}fynapp.manifest.json`, distBase: hit.dir };
-      });
+      const cwp4 = "/fynapp-cwp-4/dist/";
+      fynMeshKernel.setRegistryResolver(async name => ({
+        name,
+        version: "4.0.0",
+        url: `${cwp4}fynapp.manifest.json`,
+        distBase: cwp4,
+      }));
     </script>
     <script src="/kernel-addon-amd/addon-amd.js"></script>
+    <script src="/fynapp-cwp-4/dist/amd-meta.js"></script>
 
     <!-- unchanged legacy code: no preload, no await -->
     <script>

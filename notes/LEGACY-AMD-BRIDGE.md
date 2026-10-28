@@ -1,31 +1,191 @@
 # Legacy AMD bridge: serving federation libs to RequireJS components
 
-Status: triage prototype, working. Code in `demo-legacy-amd/`.
+Status: prototype, working. Code in `demo-legacy-amd/`.
 
 ## Problem
 
 Older micro-frontends were built with webpack before Module Federation. Each
 component is an AMD bundle loaded by RequireJS. Common libs (React, a UI kit)
 are webpack `externals`, so every bundle starts with
-`define(["react", "react-dom", "ui-kit"], ...)` and the page supplies one copy of
-each lib from a common bundle. Every component is then locked to that one copy. A
-React major upgrade means rebuilding and retesting all components at once.
+`define(["react", "react-dom", "ui-kit"], ...)`. A platform team ships those libs
+in a common web package, the CWP. Its `package.json` pins exact lib versions, and
+its build turns them into AMD bundles. A page loads one CWP version, and every
+component on it is locked to that CWP. A React major upgrade means rebuilding and
+retesting all components at once.
 
 Module Federation fixes version negotiation but does not load AMD bundles. The
 question: can federation supply the libs that the legacy components already
 `define`-depend on, with no rebuild of those components?
 
-## Answer: yes, with a bridge FynApp and a kernel add-on
+## Answer: yes, with the CWP as a FynApp and a kernel add-on
 
 Two pieces:
 
-- **Bridge FynApp** (`fynapp-amd-bridge`). Built from a mapping file. It exposes
-  one module per AMD id, `./amd/<id>`, and each one re-exports a federation share.
+- **CWP FynApp** (`fynapp-cwp`). The CWP rebuilt as a FynApp. It installs the
+  libs from npm at the same pinned versions. It provides each lib as a federation
+  share and exposes one module per AMD id, `./amd/<id>`. Its build also emits
+  `amd-meta.js`, which tells RequireJS pages which ids it serves.
 - **AMD kernel add-on** (`kernel-addon-amd/addon-amd.js`). It wraps
   `requirejs.load`, the hook RequireJS calls for every dep it has not seen yet.
   RequireJS source marks it as meant to be overridden.
 
-Legacy code on a page sees one version of each lib, the one the bridge exposes.
+Legacy code on a page sees one version of each lib, the one its CWP release pins.
+
+### The contract: webpack externals
+
+The legacy build's webpack `externals` is the interface between the two worlds.
+Each external becomes an id in the bundle's `define([...])`, here `react`,
+`react-dom` and `ui-kit`. The old CWP bundle used to provide those ids.
+Federation has to provide the same ids, with the same export shape, and nothing
+more. Component files and anything else the page loads stay with RequireJS.
+
+The CWP's `cwp.json` is that list of externals. Each entry maps an AMD id to the
+npm specifier behind it:
+
+```json
+{
+  "externals": {
+    "react": "esm-react",
+    "react-dom": "esm-react-dom",
+    "react-dom/client": "esm-react-dom",
+    "ui-kit": "ui-kit"
+  }
+}
+```
+
+`kernel-addon-amd/tests/contract.test.ts` checks both sides of that contract:
+
+- It runs each built legacy bundle against a stub `define` and checks that every
+  dep is in each CWP's `cwp.json`. A new external in a legacy build fails that
+  test instead of failing at runtime.
+- It reads each CWP's built `amd-meta.js` and `fynapp-entry.js`. Every external
+  must have its expose, a subpath must use its package's share, and each expose
+  must have a chunk of its own (see [Subpath externals](#subpath-externals)).
+
+## The CWP FynApp
+
+The CWP keeps its shape. It is a package whose `package.json` pins the libs as
+npm deps. The FynApp's own version is the CWP release.
+
+| Dir                      | `version` | pins                                         |
+| ------------------------ | --------- | -------------------------------------------- |
+| `fynapp-cwp-3/`          | `3.2.0`   | `esm-react` and `esm-react-dom` `18.3.1`, `ui-kit` `1.4.0` |
+| `fynapp-cwp-4/`          | `4.0.0`   | `esm-react` and `esm-react-dom` `19.2.8`, `ui-kit` `1.4.0` |
+
+Both are named `fynapp-cwp`. They stand in for two releases of one package, so
+the demo can switch between them. `fynapp-cwp-4/rollup.config.ts` re-exports
+CWP 3's config, which reads `package.json` and `cwp.json` from the dir it runs in.
+The build derives four things from them:
+
+- **Shares.** Each package in `cwp.json` is a share, provided from
+  `node_modules` at its installed version. A subpath specifier shares its
+  package's share.
+- **Exposes.** `./amd/<id>` per external, each from a generated file in
+  `src/amd-gen/` that does `import * as ns from "<specifier>"; export { ns }`.
+- **Exact pin.** Each share is consumed with `semver` set to the installed
+  version, such as `18.3.1`.
+- **`amd-meta.js`** in `dist/`: the RequireJS config call the add-on reads.
+
+### Versions: exact pin
+
+federation-js only picks a provider whose version satisfies the consumer's
+`semver`. With the exact pin, legacy code gets the CWP's own copy, or another
+copy of the identical version. That keeps the guarantee the CWP gives today:
+legacy code runs on the exact versions the CWP was tested with.
+
+A modern FynApp asks for its own range, such as `^18.0.0`. When it finds the
+CWP's copy first, it shares that copy with legacy code. When it finds a newer
+18.x provider, it gets that one, and React has two instances on the page. That
+is the cost of the exact pin, and the same split a page has today.
+
+Verified on the demo page with CWP 3: `fynapp-react18-user` (`^18.0.0`) runs on
+the CWP's React 18.3.1. The `fynapp-react-18` provider's entry loads, but its
+React share file is never fetched. With CWP 4, `fynapp-react19-user` shares the
+CWP's 19.2.8 the same way.
+
+### Libs inside the CWP
+
+A lib that imports another lib must go through the share too. `ui-kit` imports
+`react`. The CWP build aliases `react` to `esm-react` (`setupReactAliasPlugins`),
+so that import resolves to the `esm-react` share at the exact pin. `ui-kit` then
+renders with the same React as the legacy widgets. Its share chunk is 2KB and
+holds no React.
+
+`ui-kit` is its own package in `demo-legacy-amd/ui-kit/`. Like an npm lib, it
+ships compiled ESM (`dist/index.js`, built with esbuild). The legacy webpack
+build bundles the same package into `dist/ui-kit.js`, the old CWP's AMD bundle.
+
+### Subpath externals
+
+An external such as `react-dom/client` is its own AMD id. It gets its own
+`cwp.json` entry and its own `./amd/<id>` expose. Its share is its package's
+share: the build takes the package name from the specifier (`@scope/pkg` for a
+scoped one) for the share key and the installed version.
+
+Where the subpath's code ends up depends on the package:
+
+- **The subpath is the main entry.** `esm-react-dom`'s main entry is the client
+  build, so `react-dom/client` maps to `esm-react-dom`. Both ids are served from
+  the one `esm-react-dom` share. Widget C imports `createRoot` from
+  `react-dom/client`. On its click, the page fetches `widget-c.js` and the 1.2KB
+  expose chunk, and reuses the shared react-dom.
+- **The subpath is its own file**, such as `preact/hooks`. A scratch build put
+  the hooks code in the expose chunk, which imports `options` from the shared
+  `preact` chunk. Legacy code gets one hooks copy, on the one shared preact. The
+  plugin only pulls modules from the same package dir into a share chunk, and
+  `preact/hooks` has its own `package.json`. So a modern FynApp that imports
+  `preact/hooks` bundles its own copy. That is fine for a subpath that only
+  re-exports from the main entry. It is a risk for one that keeps module state.
+
+Each expose needs a chunk of its own. Two exposes that import only the same
+share are code-free chunks, and Rollup merges code-free chunks by default. The
+container entry then imports the merged chunk with `.then(n => n.m1)` to pick
+one module's exports. The plugin's `_f` stub ignores that callback, and the
+container's `_E` keeps only the chunk id. So both exposes get the chunk's whole
+namespace, `{ m1, m2 }`. The CWP build sets `experimentalMinChunkSize: 0` to
+stop the merge. The federation bug affects any FynApp whose exposes share a
+chunk, and fixing it in rollup-federation is still open.
+
+On UMD pages there is no CWP. RequireJS `map` sends `react-dom/client` to the
+one UMD react-dom, which has the client API in React 18.
+
+### The AMD meta
+
+A legacy page tells RequireJS where the common bundle is with its config.
+`paths` maps an id to a file. `bundles` maps several ids to one bundle file, and
+r.js can write that config out for you. `map` rewrites an id per consumer before
+either one applies. The CWP works the same way. Its build emits `amd-meta.js`,
+a RequireJS config call that lists the externals it serves:
+
+```js
+requirejs.config({ config: { fynmesh: { modules: {
+  "react": {
+    "fynapp": "fynapp-cwp", "version": "3.2.0", "expose": "./amd/react",
+    "share": "esm-react", "shareVersion": "18.3.1"
+  },
+  ...
+} } } });
+```
+
+`version` tells the add-on which release to load. The add-on passes it to the
+kernel as the range, then finds the app by its `name@version` key, which the
+kernel registers for every FynApp. An entry without `version` loads the FynApp
+by name. `share` and `shareVersion` record what each external resolves to. The
+add-on does not read them, but they make the meta a full record of what a page
+runs.
+
+The meta sits in RequireJS module config (`config`) for two reasons. RequireJS
+deep-merges that key, so several meta files add up. Each RequireJS context also
+keeps its own copy. The add-on reads it on each `requirejs.load` call, with no
+wait.
+
+### One CWP per page
+
+A page loads one `amd-meta.js`, so it runs one CWP release. Upgrading a page
+means pointing it at another CWP's meta. No legacy component is rebuilt. The
+page's registry resolver maps `fynapp-cwp` and a version to that release's
+manifest. Because the add-on loads by `name@version`, two releases could load on
+one page through `map` or contexts. The tests cover that, and the demo does not.
 
 ### Loading on demand
 
@@ -33,17 +193,23 @@ The page preloads nothing and awaits nothing. It keeps its plain `require()`:
 
 1. Legacy code calls `require(["widget-a"])`. RequireJS fetches `widget-a.js`.
 2. Its `define(["react", "react-dom", "ui-kit"], ...)` names deps. RequireJS
-   calls `requirejs.load` for each one.
-3. On the first call, the add-on loads the bridge FynApp. That fetches only the
-   bridge entry and the provider entry, not the libs.
-4. If the bridge exposes `./amd/<id>`, the add-on loads that expose through
-   `hooks.loadExpose`. Federation fetches that one share. The add-on then calls
-   `define(id, ...)` and `context.completeLoad(id)`.
-5. Any other id, or any id when the bridge failed to load, goes to the original
-   `requirejs.load`, which follows the page's `paths`.
+   applies `map` and `packages`, then calls `requirejs.load` for each one.
+3. The add-on looks the id up in the meta. An id that is not listed goes
+   straight to the original `requirejs.load`, which follows the page's `paths`.
+   No federation code runs for it.
+4. A listed id loads its FynApp release, once per release. That fetches only
+   the FynApp entry, not the libs.
+5. The add-on loads the expose through `hooks.loadExpose`. Federation fetches
+   that one share. In a new task, the add-on then calls `define(id, ...)` and
+   `context.completeLoad(id)`.
+6. If the FynApp or the expose fails, the id goes to the original
+   `requirejs.load`. `paths` fallbacks and errbacks then work as usual.
 
-Verified: a page that requires only `ui-kit` fetches the `esm-react` share and
-never fetches `esm-react-dom`.
+Step 5 uses a new task because `completeLoad` binds any anonymous `define` still
+queued to its id. A legacy script's anonymous `define` waits in that queue until
+the script's load event. Microtasks can run between the two, so a `completeLoad`
+from a promise callback can take the widget's `define`. A browser runs a script
+and fires its load event in one task, so a `setTimeout` never lands in that gap.
 
 Page setup is script order only:
 
@@ -54,13 +220,31 @@ Page setup is script order only:
 <script src="/federation-js/dist/federation-js.min.js"></script>
 <script src="/kernel/dist/fynmesh-browser-kernel.min.js"></script>
 <script>fynMeshKernel.setRegistryResolver(...)</script>
-<script src="addon-amd.js" data-bridge="fynapp-amd-bridge"></script>
+<script src="addon-amd.js"></script>
+<script src="/fynapp-cwp-4/dist/amd-meta.js"></script>
 <script>require(["widget-a", "widget-b"], ...)</script>
 ```
 
-The add-on uses only the public add-on protocol: `kernel.use`,
-`kernel.loadFynAppsByName`, `hooks.findApp`, `hooks.loadExpose` and `hooks.tel`.
-It can stay a standalone script or move into `core/kernel` as a bundled add-on.
+### RequireJS scenarios
+
+`kernel-addon-amd/tests/` runs RequireJS 2.3.8 in jsdom, with real `<script>`
+loads from disk. `requirejs.test.ts` pins down how a page's config turns an
+external id into the common bundle file. `addon.test.ts` runs the add-on
+through the same scenarios, against a fake kernel that implements the add-on
+protocol. Run them with `fyn test` in `kernel-addon-amd`.
+
+| Scenario | RequireJS | The add-on |
+| --- | --- | --- |
+| `paths` | longest id prefix picks the path | meta wins over `paths`; ids not in the meta keep `paths` |
+| `bundles` | `load` runs once per bundle url, for the first id only | frees the url for listed ids, so each id of the bundle is served; the bundle file is never fetched |
+| `map` | rewrites ids per consumer before `load` | meta entries for `react@18` and `react@19` give each consumer its own version, from its own FynApp |
+| `version` | not involved | loads the release the meta names and finds it as `name@version` |
+| `paths` fallback array, errback, `undef` | retry on script error; errback gets `requireModules` | a failed FynApp or expose falls back to the file load, so all three still work |
+| `shim` | a global script is wrapped as a module | not involved: shimmed ids are not in the meta |
+| contexts | all contexts share the one global `requirejs.load` | each context reads its own meta |
+
+Without the url fix, a page whose legacy config lists the CWP's libs in a
+`bundles` entry times out on every id after the first.
 
 ### Metrics for preload meta
 
@@ -71,7 +255,7 @@ needs. Entries go to kernel telemetry, so they cost nothing until a page calls
 | Entry        | `value`                     | `data`                                    |
 | ------------ | --------------------------- | ----------------------------------------- |
 | `amd.module` | ms from request to defined  | `{ id, route, url, deps }`                |
-| `amd.bridge` | ms to load the bridge       | `{ name, ok }`                            |
+| `amd.bridge` | ms to load a FynApp         | `{ name, ok }`, `name` is `name@version`  |
 
 - **`deps`** comes from `requirejs.onResourceLoad`, which RequireJS calls for
   every defined module with its resolved deps. The entries together form the
@@ -81,70 +265,9 @@ needs. Entries go to kernel telemetry, so they cost nothing until a page calls
 - **`url`** is the absolute file URL for `legacy` modules.
 - The time includes waiting for deps, so a component's time covers its libs.
 
-A run of the demo page records:
-
-```
-amd.bridge  3ms  fynapp-amd-bridge ok
-amd.module  4ms  react      bridge  deps []
-amd.module  9ms  ui-kit     bridge  deps []
-amd.module 10ms  react-dom  bridge  deps []
-amd.module 16ms  widget-a   legacy  deps [react, react-dom, ui-kit]   .../dist/widget-a.js
-amd.module 16ms  widget-b   legacy  deps [react, react-dom, ui-kit]   .../dist/widget-b.js
-```
-
 Roots are the ids no recorded module depends on. Each entry also carries the
 telemetry `ts`. A generator can use it to separate startup loads from later
 `require()` calls made inside component code.
-
-## The mapping file
-
-`fynapp-amd-bridge/amd-bridge.json` plays the role of the legacy common-bundle
-build config. It is the one place that says which libs legacy code gets and at
-what version:
-
-```json
-{
-  "providers": {
-    "fynapp-react-lib": "^19.0.0",
-    "fynapp-ui-kit": "^1.4.0"
-  },
-  "modules": {
-    "react": { "share": "esm-react", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
-    "react-dom": { "share": "esm-react-dom", "semver": "^19.0.0", "provider": "fynapp-react-lib" },
-    "ui-kit": { "share": "ui-kit", "semver": "^1.4.0", "provider": "fynapp-ui-kit" }
-  }
-}
-```
-
-The bridge's `rollup.config.ts` reads it and derives three things:
-
-- **`exposes`**: `./amd/<id>` per module, each from a generated file in
-  `src/amd-gen/` that does `import * as ns from "<share>"; export { ns }`.
-- **`shared`**: one consume-only entry per share, with its semver.
-- **`shared-providers` in the manifest**: one entry per provider, listing the
-  shares it provides. The kernel uses it to load the provider FynApps. This
-  overrides create-fynapp's usual detection from `devDependencies`, so the
-  bridge has no lib packages installed.
-
-### A federated UI kit
-
-`fynapp-ui-kit` builds the same `legacy-components/src/ui-kit.jsx` the webpack
-build bundles, and shares it as `ui-kit`. Its `react` import is aliased to the
-`esm-react` share, so the UI kit renders with the same React as the widgets.
-Its `shared-providers` names the React provider for its build variant, the
-same way the bridge does. Its share chunk carries the version from its own
-`package.json`, 1.4.0.
-
-The UI kit has to run on the one React the legacy page runs. So it builds two
-variants, like the bridge: `dist/` on React `^19` and `dist-react18/` on `^18`
-(`UI_KIT_REACT=18`).
-
-A shared module that re-exports with `export * from` builds an empty share
-chunk with no error. `src/index.js` names its exports instead.
-
-To change what legacy code gets, edit the mapping and rebuild only the bridge.
-Verified: switching `^19.0.0` to `^18.0.0` moves the unchanged page from React
-19.2.8 (`fynapp-react-19`) to 18.3.1 (`fynapp-react-18`).
 
 ### Interop detail
 
@@ -161,51 +284,51 @@ On the site at `/legacy-amd`, listed on `/demos`. Under the dev server it is
 packages are served flat as `/<package>/`, like every other FynApp. Same webpack
 bundles throughout: `ui-kit` and three team widgets, built against React 18.3.1.
 
-- **Version switch.** `?source=umd` uses the UMD files through RequireJS
-  `paths`, with the webpack-built `ui-kit.js`. `?source=react18` and
-  `?source=react19` use the bridge built from `amd-bridge.react18.json` or
-  `amd-bridge.json`, and take `ui-kit` from the matching `fynapp-ui-kit`
-  variant. One version per page load.
+- **CWP switch.** `?source=umd` uses the UMD files through RequireJS `paths`,
+  with the webpack-built `ui-kit.js`. `?source=cwp3` and `?source=cwp4` load
+  that release's `amd-meta.js`, and the CWP serves React and `ui-kit`. One
+  release per page load.
 - **On-demand load.** Team C loads only on a button click, through
-  `require(["widget-c"])`. Only `widget-c.js` is fetched; React is reused.
+  `require(["widget-c"])`. Its new dep, `react-dom/client`, is served then. Only
+  `widget-c.js` and that one expose chunk are fetched; React is reused.
 - **FynApps alongside.** After the widgets mount, two ordinary FynApps load:
   `fynapp-react19-user` (`esm-react ^19`) and `fynapp-react18-user` (`^18`). The
-  one whose major matches the bridge gets the same React share as the legacy
-  widgets. The other gets its own React from the other provider. A table lists
-  each React instance, who uses it, and how many times its share file was
-  fetched. One fetch per instance shows the sharing.
-- **Files fetched.** Resource timings for legacy bundles, UMD libs, bridge,
+  one whose major matches the CWP gets the CWP's React. The other gets its own
+  React from a React provider FynApp. A table lists each React instance, who uses
+  it, and how many times its share file was fetched. One fetch per instance shows
+  the sharing.
+- **Files fetched.** Resource timings for legacy bundles, UMD libs, CWP,
   React provider and FynApp files, with a divider at the click.
 - **Metrics and graph.** The `amd.*` telemetry entries and a dependency graph
   drawn from their `deps`.
 
-The bridge's `build` script builds both variants: `dist/` from
-`amd-bridge.json` and `dist-react18/` from `amd-bridge.react18.json`
-(`AMD_BRIDGE=react18`). The variant exists only for the demo's switch. A real
-deployment has one mapping.
-
 Simpler test pages stay in `legacy-components/public/`: `legacy.html` (UMD
-baseline) and `bridged.html` (add-on, React 19).
+baseline) and `bridged.html` (add-on, CWP 4).
 
 ## Caveats and open items
 
-- **The bridge sits in front of the first load.** The add-on waits for the
-  bridge entry before it answers any `requirejs.load`, including legacy
-  components' own files. That costs one small fetch, once. Skipping ids that
-  have an explicit `paths` entry would remove it, but `paths` would then win
-  over the mapping.
+- **The meta must load before the first `require()`.** It is a plain script,
+  so script order does it. An id requested before the meta goes to `paths`.
+- **Subpath sharing with modern FynApps.** A subpath with its own file is
+  shared among legacy code but not with modern FynApps. Making a subpath a share
+  of its own is untested.
+- **Merged expose chunks.** federation drops the export pick for an expose in a
+  merged chunk. The CWP works around it, and the federation fix is open.
+- **Export shape.** `toAmdExports` makes each id look like the old UMD object. A
+  lib whose old CWP bundle had a different shape needs a small adapter in its
+  expose.
+- **CWP release flow.** A CWP release is a FynApp build plus its meta. The
+  page's registry resolver decides which release a name and version resolve to.
 - **React 19 removals.** `ReactDOM.render`, `findDOMNode`, string refs and
-  `propTypes` are gone in 19. A legacy component that uses them breaks when the
-  mapping moves to 19. The widgets here use `createRoot`, so they run on both.
+  `propTypes` are gone in 19. A legacy component that uses them breaks on CWP 4.
+  The widgets here use `createRoot`, so they run on both.
 - **Global `define`.** RequireJS sets a global `define.amd`. The kernel,
   federation-js and SystemJS bundles are IIFEs with no AMD detection, so they
   coexist. Any UMD script added after RequireJS would still hit "mismatched
   anonymous define". That hazard already exists on legacy pages.
-- **Only the default RequireJS context is hooked.** `requirejs.load` is global,
-  so other contexts would pass through it too, but none was tested.
-- **Not yet checked:** a FynApp and a legacy widget on one page sharing one React
-  instance and its context. It should hold, because both resolve the same share
-  module, but no test covers it yet.
+- **Not yet checked:** a FynApp and a legacy widget sharing React context,
+  such as one provider wrapping both. They run on one React module, so it should
+  hold, but no test covers it.
 - **Not explored:** the reverse direction, where FynApps consume legacy AMD libs.
 
 ## Layout
@@ -214,9 +337,10 @@ baseline) and `bridged.html` (add-on, React 19).
 | ------------------------------------- | -------------------------------------------------------- |
 | `demo/demo-server/templates/pages/legacy-amd.html` | the demo page, a site template              |
 | `demo-legacy-amd/legacy-components/`  | webpack 5 AMD build, UMD React 18 libs, test pages       |
-| `demo-legacy-amd/fynapp-amd-bridge/`  | bridge: `amd-bridge.json` and the generator in `rollup.config.ts` |
-| `demo-legacy-amd/fynapp-ui-kit/`      | the legacy ui-kit source built as a FynApp that shares `ui-kit` |
+| `demo-legacy-amd/ui-kit/`             | the UI kit package, compiled ESM                         |
+| `demo-legacy-amd/fynapp-cwp-3/`       | CWP 3.2.0: `cwp.json`, pinned deps, the CWP build in `rollup.config.ts` |
+| `demo-legacy-amd/fynapp-cwp-4/`       | CWP 4.0.0: same `cwp.json`, React 19 pins, CWP 3's config |
 | `demo-legacy-amd/fynapp-react1[89]-user/` | the two plain FynApps on the demo page               |
-| `demo-legacy-amd/kernel-addon-amd/`   | `addon-amd.js`: the `requirejs.load` hook and metrics    |
+| `demo-legacy-amd/kernel-addon-amd/`   | `addon-amd.js`: the `requirejs.load` hook and metrics; `tests/`: RequireJS, add-on and contract tests |
 | `demo/demo-server/src/dev-proxy.ts`   | flat `/<package>` routes into `demo-legacy-amd/`         |
 | `demo/demo-server/scripts/build-demo-site.mts` | copies the packages into the site, flat       |

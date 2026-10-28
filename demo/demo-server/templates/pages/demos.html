@@ -84,10 +84,10 @@
         </article>
 
         <article class="fm-demo-row">
-            <a href="{{pathPrefix}}legacy-amd{{ext}}" aria-label="Open the legacy RequireJS widgets demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-legacy-amd.png" alt="The demo intro: the legacy setup, the React lock-in problem, the bridge, and a before and after diagram" width="1280" height="800" loading="lazy"></a>
+            <a href="{{pathPrefix}}legacy-amd{{ext}}" aria-label="Open the legacy RequireJS widgets demo"><img class="fm-shot" src="{{pathPrefix}}images/demo-legacy-amd.png" alt="The demo intro: the legacy setup, the React lock-in problem, the CWP as a FynApp, and a before and after diagram" width="1280" height="800" loading="lazy"></a>
             <div class="fm-demo-text">
                 <h2>Legacy RequireJS widgets</h2>
-                <p>Micro frontends built with webpack before Module Federation often load as AMD bundles through RequireJS, with React and a UI kit as externals. Every component is locked to the one React the page supplies, so a React major means updating all of them. Here a bridge FynApp serves React and the UI kit from federation to the unchanged bundles, and switching the React major is a change to one mapping file. Ordinary FynApps on the same page share that React or bring another major.</p>
+                <p>Micro frontends built with webpack before Module Federation often load as AMD bundles through RequireJS, with React and a UI kit as externals. Every component is locked to the one React the page supplies, so a React major means updating all of them. Here the common web package is a FynApp that serves React and the UI kit from federation to the unchanged bundles. Switching the React major means loading a newer CWP release. Ordinary FynApps on the same page share that React or bring another major.</p>
                 <h3>What to try</h3>
                 <ul>
                     <li>Switch React's source between the UMD files, React 18 and React 19</li>

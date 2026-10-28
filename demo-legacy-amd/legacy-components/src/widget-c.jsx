@@ -1,5 +1,5 @@
 import React, { useReducer } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { Button, Card, UI_KIT_VERSION } from "ui-kit";
 
 function reducer(items, action) {
@@ -23,7 +23,7 @@ function Widget() {
 }
 
 export function mount(el) {
-  const root = ReactDOM.createRoot(el);
+  const root = createRoot(el);
   root.render(<Widget />);
   return root;
 }

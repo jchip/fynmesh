@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "ui-kit",
+  "version": "1.4.0",
+  "type": "module",
+  "description": "The UI kit legacy widgets use, shipped as compiled ESM like an npm lib",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "esbuild src/ui-kit.jsx --format=esm --jsx=transform --outfile=dist/index.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
