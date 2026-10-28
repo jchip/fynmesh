@@ -19,6 +19,8 @@ module.exports = {
   externals: [
     function ({ request, contextInfo }, callback) {
       if (request === "react" || request === "react-dom" || request === "react-dom/client") return callback(null, request);
+      // ui-kit imports the esm-react package; on the AMD page that is the "react" id
+      if (request === "esm-react") return callback(null, "react");
       if (request === "ui-kit" && contextInfo.issuer) return callback(null, request);
       callback();
     },

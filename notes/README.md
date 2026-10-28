@@ -44,6 +44,7 @@ manages shared dependencies (including multiple versions side-by-side), and runs
 | [`SITE-REDESIGN.md`](./SITE-REDESIGN.md)                   | fynmesh.fyi site map, design system, templates and docs sources (approved 2026-10-24) |
 | [`SHELL_LOAD_PERF.md`](./SHELL_LOAD_PERF.md)               | `/shell` load-perf analysis: measured federation waterfall + ranked fixes |
 | [`LEGACY-AMD-BRIDGE.md`](./LEGACY-AMD-BRIDGE.md)           | Prototype: the common web package (CWP) as a FynApp serves federation libs to legacy webpack/RequireJS AMD components through their externals |
+| [`PEER-SHARE-RESOLUTION-DESIGN.md`](./PEER-SHARE-RESOLUTION-DESIGN.md) | Not planned: a share that imports another share binds to its consumer's copy, so two federated CWPs could share a page |
 
 ### Archived (`notes/archive/`)
 

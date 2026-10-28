@@ -105,6 +105,38 @@ describe("AMD add-on", () => {
     expect([a.version, b.version]).toEqual(["18", "19"]);
   });
 
+  it("one release per page: a second version of a FynApp is refused and goes to paths", async () => {
+    const dir = fixtures({ "libs/react.js": `define([], () => ({ version: "umd" }));` });
+    const { win } = page(dir, meta({ react: ["cwp", "./amd/react", "3.2.0"] }));
+    const { fynapps, events } = bridge(win, { "cwp@3.2.0": react18, "cwp@4.0.0": react19 });
+    const req2 = win.requirejs.config({
+      context: "v4",
+      paths: { react: "libs/react" },
+      ...meta({ react: ["cwp", "./amd/react", "4.0.0"] }),
+    });
+    expect((await load(win, ["react"]))[0].version).toBe("18");
+    expect((await load(win, ["react"], req2))[0].version).toBe("umd");
+    expect(fynapps).toEqual(["cwp@3.2.0"]);
+    expect(events.filter((e) => e.name === "bridge").map((e) => e.data)).toEqual([
+      { name: "cwp@3.2.0", ok: true },
+      { name: "cwp@4.0.0", ok: false },
+    ]);
+  });
+
+  it("contexts: one bridged, one on paths, loading the same id at once", async () => {
+    const dir = fixtures({ "libs/react.js": `define([], () => ({ version: "umd" }));` });
+    const { win } = page(dir, meta({ react: ["bridge-18", "./amd/react"] }));
+    const { events } = bridge(win, { "bridge-18": react18 });
+    const req2 = win.requirejs.config({ context: "umd", paths: { react: "libs/react" } });
+    const [[a], [b]] = await Promise.all([load(win, ["react"]), load(win, ["react"], req2)]);
+    expect([a.version, b.version]).toEqual(["18", "umd"]);
+    const mods = events.filter((e) => e.name === "module").map((e) => [e.data.context, e.data.id, e.data.route]);
+    expect(mods.sort()).toEqual([
+      ["_", "react", "bridge"],
+      ["umd", "react", "legacy"],
+    ]);
+  });
+
   it("several meta files add up", async () => {
     const { win } = page(fixtures({}));
     bridge(win, { one: { "./amd/a": { a: 1 } }, two: { "./amd/b": { b: 2 } } });

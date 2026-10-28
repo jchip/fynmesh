@@ -104,15 +104,25 @@ CWP's 19.2.8 the same way.
 
 ### Libs inside the CWP
 
-A lib that imports another lib must go through the share too. `ui-kit` imports
-`react`. The CWP build aliases `react` to `esm-react` (`setupReactAliasPlugins`),
-so that import resolves to the `esm-react` share at the exact pin. `ui-kit` then
-renders with the same React as the legacy widgets. Its share chunk is 2KB and
-holds no React.
+A lib that imports another lib must go through the share too, with the range
+the lib itself declares. `ui-kit` imports `esm-react` and declares
+`peerDependencies: { "esm-react": "^18.0.0 || ^19.0.0" }`. The CWP's exact pin
+covers only the CWP's own code. rollup-plugin-federation records each
+importer's declared range, and the entry carries it per importer dir:
+
+```js
+_S("esm-react", { semver: "19.2.8" }, [[[surface, "19.2.8"],
+  ["src/amd-gen", "19.2.8"], ["%nm/ui-kit/dist", "^18.0.0 || ^19.0.0"]]]);
+```
+
+`ui-kit` then renders with the same React as the legacy widgets. Its share
+chunk is 2KB and holds no React.
 
 `ui-kit` is its own package in `demo-legacy-amd/ui-kit/`. Like an npm lib, it
 ships compiled ESM (`dist/index.js`, built with esbuild). The legacy webpack
-build bundles the same package into `dist/ui-kit.js`, the old CWP's AMD bundle.
+build bundles the same package into `dist/ui-kit.js`, the old CWP's AMD bundle. Its webpack
+externals map `esm-react` to the `react` id, so that bundle is still
+`define(["react"], ...)`.
 
 ### Subpath externals
 
@@ -154,7 +164,7 @@ either one applies. The CWP works the same way. Its build emits `amd-meta.js`,
 a RequireJS config call that lists the externals it serves:
 
 ```js
-requirejs.config({ config: { fynmesh: { modules: {
+requirejs.config({ context: "_", config: { fynmesh: { modules: {
   "react": {
     "fynapp": "fynapp-cwp", "version": "3.2.0", "expose": "./amd/react",
     "share": "esm-react", "shareVersion": "18.3.1"
@@ -173,15 +183,26 @@ runs.
 The meta sits in RequireJS module config (`config`) for two reasons. RequireJS
 deep-merges that key, so several meta files add up. Each RequireJS context also
 keeps its own copy. The add-on reads it on each `requirejs.load` call, with no
-wait.
+wait. A `data-context` attribute on the meta's script tag names the context it
+configures. Without one it configures the default context, `_`.
 
-### One CWP per page
+### One CWP per context
 
-A page loads one `amd-meta.js`, so it runs one CWP release. Upgrading a page
-means pointing it at another CWP's meta. No legacy component is rebuilt. The
-page's registry resolver maps `fynapp-cwp` and a version to that release's
-manifest. Because the add-on loads by `name@version`, two releases could load on
-one page through `map` or contexts. The tests cover that, and the demo does not.
+A RequireJS context loads one `amd-meta.js`, so it runs one CWP release.
+Upgrading means pointing it at another CWP's meta. No legacy component is
+rebuilt. The page's registry resolver maps `fynapp-cwp` and a version to that
+release's manifest. A page runs one release of the CWP. A context with no meta
+stays plain RequireJS on the legacy CWP, so contexts can move to the federated
+CWP one at a time. Two contexts on the release share one FynApp load and one
+copy of each lib. Each legacy context loads its own copy of every file it
+fetches, so two legacy contexts run two Reacts.
+
+The add-on refuses a second release of the same FynApp name. It logs an error
+naming both versions, records `amd.bridge` with `ok: false`, and sends the ids
+to the normal script load. Two releases ship the same libs. A lib that imports
+React binds to one copy of it, so a context on the second release could get the
+first release's instance. [`PEER-SHARE-RESOLUTION-DESIGN.md`](./PEER-SHARE-RESOLUTION-DESIGN.md)
+sets out what supporting it would take.
 
 ### Loading on demand
 
@@ -250,7 +271,7 @@ needs. Entries go to kernel telemetry, so they cost nothing until a page calls
 
 | Entry        | `value`                     | `data`                                    |
 | ------------ | --------------------------- | ----------------------------------------- |
-| `amd.module` | ms from request to defined  | `{ id, route, url, deps }`                |
+| `amd.module` | ms from request to defined  | `{ context, id, route, url, deps }`       |
 | `amd.bridge` | ms to load a FynApp         | `{ name, ok }`, `name` is `name@version`  |
 
 - **`deps`** comes from `requirejs.onResourceLoad`, which RequireJS calls for
@@ -280,29 +301,36 @@ On the site at `/legacy-amd`, listed on `/demos`. Under the dev server it is
 packages are served flat as `/<package>/`, like every other FynApp. Same webpack
 bundles throughout: `ui-kit` and three team widgets, built against React 18.3.1.
 
-- **CWP switch.** `?source=umd` uses the UMD files through RequireJS `paths`,
-  with the webpack-built `ui-kit.js`. `?source=cwp3` and `?source=cwp4` load
-  that release's `amd-meta.js`, and the CWP serves React and `ui-kit`. One
-  release per page load.
-- **On-demand load.** Team C loads only on a button click, through
-  `require(["widget-c"])`. Its new dep, `react-dom/client`, is served then. Only
-  `widget-c.js` is fetched; React is reused.
-- **FynApps alongside.** After the widgets mount, two ordinary FynApps load:
+- **Two sets.** The same widgets mount twice, each set in its own RequireJS
+  context, `set1` and `set2`. `?set1=` and `?set2=` each take `legacy` or
+  `federated`, and `?cwp=` takes `cwp3` or `cwp4`. The default is `legacy`,
+  `federated` and `cwp4`. A legacy set uses the UMD files through RequireJS
+  `paths`, with the webpack-built `ui-kit.js`. A federated set loads the page's
+  release's `amd-meta.js` into its context, and the CWP serves React and
+  `ui-kit`. Each context sets `urlArgs: "set=<name>"`, so every file it
+  fetches is tagged with its set.
+- **On-demand load.** Each set's Team C loads only on a button click, through
+  that context's `require(["widget-c"])`. Its new dep, `react-dom/client`, is
+  served then. Only `widget-c.js` is fetched; React is reused.
+- **FynApps alongside.** After both sets mount, two ordinary FynApps load:
   `fynapp-react19-user` (`esm-react ^19`) and `fynapp-react18-user` (`^18`). The
-  one whose major matches the CWP gets the CWP's React. The other gets its own
-  React from a React provider FynApp. A table lists each React instance, who uses
-  it, and how many times its share file was fetched. One fetch per instance shows
+  one whose major matches a set's CWP gets that CWP's React. The other gets its
+  own React from a React provider FynApp. A table lists each React instance, who
+  uses it, and how many times its file was fetched. One fetch per instance shows
   the sharing.
 - **Files fetched.** Resource timings for legacy bundles, UMD libs, CWP,
   React provider and FynApp files, with a divider at the click.
-- **Metrics and graph.** The `amd.*` telemetry entries and a dependency graph
-  drawn from their `deps`.
+- **Metrics and graph.** The `amd.*` telemetry entries, and one dependency graph
+  per set drawn from their `deps`. The add-on runs on every page load. A UMD set
+  has no meta, so all its modules show as `legacy`.
 
 Simpler test pages stay in `legacy-components/public/`: `legacy.html` (UMD
 baseline) and `bridged.html` (add-on, CWP 4).
 
 ## Caveats and open items
 
+- **One federated CWP release per page.** Not supported beyond that, and the
+  add-on refuses a second one. See "One CWP per context".
 - **The meta must load before the first `require()`.** It is a plain script,
   so script order does it. An id requested before the meta goes to `paths`.
 - **Subpath sharing with modern FynApps.** A subpath with its own file is

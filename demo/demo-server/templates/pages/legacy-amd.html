@@ -71,8 +71,8 @@
       button.load:disabled { opacity: 0.5; cursor: default; }
       .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
       @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-      #files code, #files .kind { white-space: nowrap; }
-      #graph svg { width: 100%; max-width: 520px; height: auto; }
+      #files code, #files .kind, td.set { white-space: nowrap; }
+      .graph svg { max-width: 100%; height: auto; }
       .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
       .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
       .slot-empty { border: 1px dashed var(--line); border-radius: 8px; padding: 16px; color: var(--muted); }
@@ -142,9 +142,10 @@
           <p>
             The common web package (CWP) becomes a FynApp. It installs React and the UI kit from npm
             at pinned versions. It serves them from federation, under the AMD ids the bundles already
-            ask for, and a kernel add-on routes RequireJS to it. A page loads one CWP release. Moving
-            to a new React major means pointing the page at a newer CWP, with no rebuild of the
-            bundles. New FynApps share the CWP's React when their range matches, or load their own.
+            ask for, and a kernel add-on routes RequireJS to it. Each RequireJS context loads one CWP
+            release. Moving to a new React major means pointing a context at a newer CWP, with no
+            rebuild of the bundles. New FynApps share the CWP's React when their range matches, or
+            load their own.
           </p>
         </section>
       </div>
@@ -172,34 +173,42 @@
 
       <h2 style="margin-top: 24px">Try it</h2>
       <ol class="try">
-        <li>Switch the CWP. "Legacy UMD files" is the old setup. CWP 3 and CWP 4 serve React 18 or React 19 from federation to the same bundles, which were built against React 18. With a CWP, ui-kit comes from the CWP, not <code>legacy-components/dist/ui-kit.js</code>, as the Files fetched table shows.</li>
-        <li>Load Team C. RequireJS fetches only <code>widget-c.js</code> and reuses the React already loaded.</li>
-        <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched.</li>
+        <li>Pick the federated CWP release, then pick Legacy CWP or Federated CWP for each set. Each set is its own RequireJS context with the same widget bundles, which were built against React 18. The legacy CWP is the old setup: UMD React 18 files and <code>legacy-components/dist/ui-kit.js</code>. CWP 3 and CWP 4 serve React 18 or React 19 and ui-kit from federation, as the Files fetched table shows.</li>
+        <li>Load Team C in a set. RequireJS fetches only <code>widget-c.js</code> and reuses the React that set already loaded.</li>
+        <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched. Two federated sets share one copy. Two legacy sets get one copy each.</li>
       </ol>
 
       <div class="bar">
-        <nav class="seg" id="source-switch">
-          <a href="?source=umd">Legacy UMD files</a>
-          <a href="?source=cwp3">CWP 3: React 18</a>
-          <a href="?source=cwp4">CWP 4: React 19</a>
+        <nav class="seg" id="cwp-switch">
+          <a data-cwp="cwp3">CWP 3: React 18</a>
+          <a data-cwp="cwp4">CWP 4: React 19</a>
         </nav>
-        <span class="source" id="source-text"></span>
+        <span class="source">The federated CWP release. A page runs one, and every federated set uses it.</span>
       </div>
 
       <div class="grid">
-        <section class="panel full">
-          <h2>Legacy widgets: unchanged webpack AMD bundles</h2>
+        {% for set in [1, 2] %}
+        <section class="panel">
+          <h2>Set {{set}}: unchanged webpack AMD bundles</h2>
+          <div class="bar">
+            <nav class="seg" id="set{{set}}-switch">
+              <a data-source="legacy">Legacy CWP</a>
+              <a data-source="federated">Federated CWP</a>
+            </nav>
+          </div>
+          <p class="source" id="set{{set}}-text"></p>
           <div class="widgets">
-            <div id="widget-a"></div>
-            <div id="widget-b"></div>
-            <div id="widget-c">
+            <div id="set{{set}}-widget-a"></div>
+            <div id="set{{set}}-widget-b"></div>
+            <div id="set{{set}}-widget-c">
               <div class="slot-empty">
                 <p>Team C is not loaded yet.</p>
-                <button class="load" id="load-c">require(["widget-c"])</button>
+                <button class="load" id="set{{set}}-load-c">require(["widget-c"])</button>
               </div>
             </div>
           </div>
         </section>
+        {% endfor %}
 
         <section class="panel full">
           <h2>FynApps on the same page</h2>
@@ -224,7 +233,7 @@
           <h2>Files fetched</h2>
           <div class="scroll">
             <table>
-              <thead><tr><th class="num">at</th><th>kind</th><th>file</th></tr></thead>
+              <thead><tr><th class="num">at</th><th>set</th><th>kind</th><th>file</th></tr></thead>
               <tbody id="files"></tbody>
             </table>
           </div>
@@ -232,7 +241,10 @@
 
         <section class="panel">
           <h2>Dependency graph</h2>
-          <div class="scroll" id="graph"></div>
+          <p class="note">Set 1</p>
+          <div class="scroll graph" id="set1-graph"></div>
+          <p class="note">Set 2</p>
+          <div class="scroll graph" id="set2-graph"></div>
           <p class="note" id="graph-note"></p>
         </section>
 
@@ -245,7 +257,7 @@
           <div class="scroll">
             <table>
               <thead>
-                <tr><th>entry</th><th>id</th><th>route</th><th>deps</th><th class="num">ms</th><th>url</th></tr>
+                <tr><th>entry</th><th>set</th><th>id</th><th>route</th><th>deps</th><th class="num">ms</th><th>url</th></tr>
               </thead>
               <tbody id="metrics"></tbody>
             </table>
@@ -259,38 +271,69 @@
     <script src="{{pathPrefix}}legacy-components/public/libs/require.js"></script>
     {% include "components/kernel-scripts.html" %}
     <script>
-      (function () {
+(function () {
         var SOURCES = {
-          umd: "The old setup: RequireJS loads React 18 from UMD files. No federation.",
+          umd: "The legacy CWP: RequireJS loads React 18 from UMD files, and the webpack-built ui-kit. No federation.",
           cwp3: "CWP 3.2.0 serves React 18.3.1 and ui-kit 1.4.0 from federation.",
           cwp4: "CWP 4.0.0 serves React 19.2.8 and ui-kit 1.4.0 from federation.",
         };
-        // the CWP release each mode loads: its dir and version
+        // the CWP release each source loads: its dir and version
         var CWPS = { cwp3: ["fynapp-cwp-3", "3.2.0"], cwp4: ["fynapp-cwp-4", "4.0.0"] };
-        var source = new URLSearchParams(location.search).get("source");
-        if (!SOURCES[source]) source = "cwp4";
-
-        document.querySelectorAll("#source-switch a").forEach(function (a) {
-          a.setAttribute("aria-current", a.getAttribute("href") === "?source=" + source ? "true" : "false");
+        var DEFAULTS = { cwp: "cwp4", set1: "legacy", set2: "federated" };
+        var SETS = ["set1", "set2"];
+        var params = new URLSearchParams(location.search);
+        var state = {};
+        Object.keys(DEFAULTS).forEach(function (k) { state[k] = params.get(k); });
+        if (!CWPS[state.cwp]) state.cwp = DEFAULTS.cwp;
+        // set name -> its source: umd for the legacy CWP, else the page's release
+        var sources = {};
+        SETS.forEach(function (set) {
+          if (state[set] !== "legacy" && state[set] !== "federated") state[set] = DEFAULTS[set];
+          sources[set] = state[set] === "legacy" ? "umd" : state.cwp;
         });
-        document.getElementById("source-text").textContent = SOURCES[source];
-
-        // The legacy page config. Only UMD mode tells RequireJS where React lives.
-        var paths = {
-          "ui-kit": "dist/ui-kit",
-          "widget-a": "dist/widget-a",
-          "widget-b": "dist/widget-b",
-          "widget-c": "dist/widget-c",
-        };
-        // The React 18 UMD react-dom also has the client API, so map sends
-        // react-dom/client to that one copy.
-        var map = {};
-        if (source === "umd") {
-          paths.react = "public/libs/react.development";
-          paths["react-dom"] = "public/libs/react-dom.development";
-          map["*"] = { "react-dom/client": "react-dom" };
+        function setsOn(source) {
+          return SETS.filter(function (set) { return sources[set] === source; });
         }
-        requirejs.config({ baseUrl: "{{pathPrefix}}legacy-components/", paths: paths, map: map });
+        function label(set) { return "Set " + set.slice(3); }
+        function link(a, key, value) {
+          var next = new URLSearchParams();
+          Object.keys(state).forEach(function (k) { next.set(k, k === key ? value : state[k]); });
+          a.href = "?" + next.toString();
+          a.setAttribute("aria-current", state[key] === value ? "true" : "false");
+        }
+
+        document.querySelectorAll("#cwp-switch a").forEach(function (a) { link(a, "cwp", a.dataset.cwp); });
+        SETS.forEach(function (set) {
+          document.querySelectorAll("#" + set + "-switch a").forEach(function (a) { link(a, set, a.dataset.source); });
+          document.getElementById(set + "-text").textContent = SOURCES[sources[set]];
+        });
+
+        // The legacy page config, one RequireJS context per set. Only a UMD set
+        // tells RequireJS where React lives. urlArgs tags each set's file fetches.
+        var reqs = {};
+        SETS.forEach(function (set) {
+          var paths = {
+            "ui-kit": "dist/ui-kit",
+            "widget-a": "dist/widget-a",
+            "widget-b": "dist/widget-b",
+            "widget-c": "dist/widget-c",
+          };
+          // The React 18 UMD react-dom also has the client API, so map sends
+          // react-dom/client to that one copy.
+          var map = {};
+          if (sources[set] === "umd") {
+            paths.react = "public/libs/react.development";
+            paths["react-dom"] = "public/libs/react-dom.development";
+            map["*"] = { "react-dom/client": "react-dom" };
+          }
+          reqs[set] = requirejs.config({
+            context: set,
+            baseUrl: "{{pathPrefix}}legacy-components/",
+            paths: paths,
+            map: map,
+            urlArgs: "set=" + set,
+          });
+        });
 
         // ---- files fetched ----
         var KINDS = [
@@ -301,24 +344,31 @@
           [/fynapp-react1[89]-user\//, "FynApp"],
         ];
 
-        // One row per React instance. "used by" follows from the source; the
+        // One row per React instance. "used by" follows from the sources; the
         // file count is measured, so one fetch per row means one shared copy.
-        // A production build may combine the share into the provider's startup-*.js.
-        var INSTANCES = [
-          { label: "18.3.1", from: "UMD file", file: /public\/libs\/react\.development\.js$/,
-            users: source === "umd" ? ["legacy widgets"] : [] },
+        // Each RequireJS context runs its own UMD React. A production build may
+        // combine the share into the provider's startup-*.js.
+        function widgets(sets) { return sets.map(function (set) { return label(set) + " widgets"; }); }
+        var cwp3 = setsOn("cwp3"), cwp4 = setsOn("cwp4");
+        var INSTANCES = setsOn("umd").map(function (set) {
+          return { label: "18.3.1", from: "legacy CWP UMD file, " + label(set) + " context",
+            file: new RegExp("public/libs/react\\.development\\.js\\?set=" + set + "$"), users: widgets([set]) };
+        }).concat([
           { label: "18.3.1", from: "fynapp-cwp 3.2.0 share", file: /fynapp-cwp-3\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: source === "cwp3" ? ["legacy widgets", "fynapp-react18-user"] : [] },
+            users: cwp3.length ? widgets(cwp3).concat("fynapp-react18-user") : [] },
           { label: "19.2.8", from: "fynapp-cwp 4.0.0 share", file: /fynapp-cwp-4\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: source === "cwp4" ? ["legacy widgets", "fynapp-react19-user"] : [] },
+            users: cwp4.length ? widgets(cwp4).concat("fynapp-react19-user") : [] },
           { label: "18.3.1", from: "fynapp-react-18 share", file: /fynapp-react-18\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: source === "cwp3" ? [] : ["fynapp-react18-user"] },
+            users: cwp3.length ? [] : ["fynapp-react18-user"] },
           { label: "19.2.8", from: "fynapp-react-19 share", file: /fynapp-react-19\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
-            users: source === "cwp4" ? [] : ["fynapp-react19-user"] },
-        ];
+            users: cwp4.length ? [] : ["fynapp-react19-user"] },
+        ]);
         var instancesEl = document.getElementById("instances");
         function renderInstances() {
-          var paths = performance.getEntriesByType("resource").map(function (e) { return new URL(e.name).pathname; });
+          var paths = performance.getEntriesByType("resource").map(function (e) {
+            var u = new URL(e.name);
+            return u.pathname + u.search;
+          });
           instancesEl.innerHTML = "";
           INSTANCES.forEach(function (inst) {
             if (!inst.users.length) return;
@@ -333,13 +383,15 @@
         var filesEl = document.getElementById("files");
         function addFile(entry) {
           renderInstances();
-          var path = new URL(entry.name).pathname;
-          var kind = KINDS.find(function (k) { return k[0].test(path); });
+          var url = new URL(entry.name);
+          var kind = KINDS.find(function (k) { return k[0].test(url.pathname); });
           if (!kind) return;
+          var set = url.searchParams.get("set");
           var tr = document.createElement("tr");
           if (clickedAt !== null) tr.className = "fresh";
-          tr.innerHTML = "<td class='num'>" + Math.round(entry.startTime) + " ms</td><td class='kind'>" + kind[1] + "</td><td><code></code></td>";
-          tr.querySelector("code").textContent = path.replace(/^\//, "");
+          tr.innerHTML = "<td class='num'>" + Math.round(entry.startTime) + " ms</td><td class='set'>" + (set ? label(set) : "") +
+            "</td><td class='kind'>" + kind[1] + "</td><td><code></code></td>";
+          tr.querySelector("code").textContent = url.pathname.replace(/^\//, "");
           filesEl.appendChild(tr);
         }
         var clickedAt = null;
@@ -347,7 +399,9 @@
         new PerformanceObserver(function (list) { list.getEntries().forEach(addFile); }).observe({ type: "resource" });
 
         // ---- metrics and graph ----
+        // context -> id -> amd.module data
         var modules = {};
+        SETS.forEach(function (set) { modules[set] = {}; });
         var metricsEl = document.getElementById("metrics");
         function tag(route) { return "<span class='tag " + route + "'>" + route + "</span>"; }
         // telemetry flushes in batches, so place each row by its own timestamp
@@ -358,28 +412,29 @@
           if (afterClick) tr.className = "fresh";
           var d = e.data || {};
           if (e.name === "amd.bridge") {
-            tr.innerHTML = "<td><code>amd.bridge</code></td><td><code></code></td><td></td><td></td><td class='num'>" + e.value + "</td><td>" + (d.ok ? "loaded" : "failed") + "</td>";
-            tr.children[1].firstChild.textContent = d.name;
+            tr.innerHTML = "<td><code>amd.bridge</code></td><td class='set'></td><td><code></code></td><td></td><td></td><td class='num'>" + e.value + "</td><td>" + (d.ok ? "loaded" : "failed") + "</td>";
+            tr.children[2].firstChild.textContent = d.name;
           } else {
-            modules[d.id] = d;
-            tr.innerHTML = "<td><code>amd.module</code></td><td><code></code></td><td>" + tag(d.route) + "</td><td><code></code></td><td class='num'>" + (e.value == null ? "" : e.value) + "</td><td><code></code></td>";
-            tr.children[1].firstChild.textContent = d.id;
-            tr.children[3].firstChild.textContent = d.deps.join(", ");
-            tr.children[5].firstChild.textContent = d.url ? new URL(d.url).pathname.replace(/^\//, "") : "";
+            if (modules[d.context]) modules[d.context][d.id] = d;
+            tr.innerHTML = "<td><code>amd.module</code></td><td class='set'>" + (modules[d.context] ? label(d.context) : "") + "</td><td><code></code></td><td>" + tag(d.route) + "</td><td><code></code></td><td class='num'>" + (e.value == null ? "" : e.value) + "</td><td><code></code></td>";
+            tr.children[2].firstChild.textContent = d.id;
+            tr.children[4].firstChild.textContent = d.deps.join(", ");
+            tr.children[6].firstChild.textContent = d.url ? new URL(d.url).pathname.replace(/^\//, "") : "";
           }
           if (metricsDivider && !afterClick) metricsEl.insertBefore(tr, metricsDivider);
           else metricsEl.appendChild(tr);
         }
 
-        function renderGraph() {
-          var ids = Object.keys(modules);
-          var el = document.getElementById("graph");
+        function renderGraph(set) {
+          var mods = modules[set];
+          var ids = Object.keys(mods);
+          var el = document.getElementById(set + "-graph");
           if (!ids.length) return;
           // column = longest path down to a module with no deps; libs land on the right
           var depth = {};
           function d(id) {
             if (depth[id] != null) return depth[id];
-            var deps = (modules[id] && modules[id].deps) || [];
+            var deps = (mods[id] && mods[id].deps) || [];
             depth[id] = 0;
             return (depth[id] = deps.length ? 1 + Math.max.apply(null, deps.map(d)) : 0);
           }
@@ -394,9 +449,9 @@
             cols[c].forEach(function (id, i) { pos[id] = { x: pad + c * colW, y: pad + i * rowH }; });
           });
           var w = pad * 2 + max * colW + nodeW, h = pad * 2 + (rows - 1) * rowH + nodeH;
-          var svg = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 " + w + " " + h + "' role='img' aria-label='AMD dependency graph'>";
+          var svg = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 " + w + " " + h + "' role='img' aria-label='" + label(set) + " AMD dependency graph'>";
           ids.forEach(function (id) {
-            modules[id].deps.forEach(function (dep) {
+            mods[id].deps.forEach(function (dep) {
               if (!pos[dep]) return;
               var a = pos[id], b = pos[dep];
               var x1 = a.x + nodeW, y1 = a.y + nodeH / 2, x2 = b.x, y2 = b.y + nodeH / 2, mx = (x1 + x2) / 2;
@@ -404,7 +459,7 @@
             });
           });
           ids.forEach(function (id) {
-            var p = pos[id], route = modules[id].route;
+            var p = pos[id], route = mods[id].route;
             svg += "<g><rect x='" + p.x + "' y='" + p.y + "' width='" + nodeW + "' height='" + nodeH + "' rx='6' fill='var(--" + route + "-bg)' stroke='var(--" + route + ")'/>" +
               "<text x='" + (p.x + nodeW / 2) + "' y='" + (p.y + 17) + "' text-anchor='middle'>" + id + "</text></g>";
           });
@@ -413,11 +468,11 @@
             "Built from the <code>deps</code> of each <code>amd.module</code> entry. " + tag("bridge") + " " + tag("legacy");
         }
 
-        function mount(names, then) {
-          require(names, function () {
+        function mount(set, names, then) {
+          reqs[set](names, function () {
             var mods = arguments;
             names.forEach(function (name, i) {
-              var el = document.getElementById(name);
+              var el = document.getElementById(set + "-" + name);
               el.innerHTML = "";
               mods[i].mount(el);
             });
@@ -438,57 +493,65 @@
           return { name: name, version: app[1], url: app[0] + "fynapp.manifest.json", distBase: app[0] };
         });
 
-        // legacy widgets first, then the FynApps join the same page
+        // legacy widgets of both sets first, then the FynApps join the same page
         function start() {
-          mount(["widget-a", "widget-b"], function () {
-            ["fynapp-react19-user", "fynapp-react18-user"].forEach(function (id) {
-              document.getElementById(id).innerHTML = "";
+          var left = SETS.length;
+          SETS.forEach(function (set) {
+            mount(set, ["widget-a", "widget-b"], function () {
+              if (--left) return;
+              ["fynapp-react19-user", "fynapp-react18-user"].forEach(function (id) {
+                document.getElementById(id).innerHTML = "";
+              });
+              fynMeshKernel.loadFynAppsByName([{ name: "fynapp-react19-user" }, { name: "fynapp-react18-user" }]);
             });
-            fynMeshKernel.loadFynAppsByName([{ name: "fynapp-react19-user" }, { name: "fynapp-react18-user" }]);
           });
         }
 
-        document.getElementById("load-c").addEventListener("click", function () {
-          this.disabled = true;
-          clickedAt = performance.now();
-          clickedAtTs = Date.now();
-          [filesEl, metricsEl].forEach(function (tbody) {
-            var tr = document.createElement("tr");
-            tr.className = "divider";
-            tr.innerHTML = "<td colspan='6'>require([\"widget-c\"]) at " + Math.round(clickedAt) + " ms</td>";
-            tbody.appendChild(tr);
-            if (tbody === metricsEl) metricsDivider = tr;
+        SETS.forEach(function (set) {
+          document.getElementById(set + "-load-c").addEventListener("click", function () {
+            this.disabled = true;
+            clickedAt = performance.now();
+            clickedAtTs = Date.now();
+            [filesEl, metricsEl].forEach(function (tbody) {
+              var tr = document.createElement("tr");
+              tr.className = "divider";
+              tr.innerHTML = "<td colspan='7'>" + label(set) + ": require([\"widget-c\"]) at " + Math.round(clickedAt) + " ms</td>";
+              tbody.appendChild(tr);
+              if (tbody === metricsEl) metricsDivider = tr;
+            });
+            mount(set, ["widget-c"]);
           });
-          mount(["widget-c"]);
         });
-
-        if (source === "umd") {
-          document.getElementById("metrics-note").textContent =
-            "The AMD add-on is not loaded in UMD mode, so there are no amd.* entries. Pick a CWP to see them.";
-          document.getElementById("graph-note").textContent = "The graph comes from the add-on metrics.";
-          start();
-          return;
-        }
 
         fynMeshKernel.setTelemetry({
           transport: {
             send: async function (batch) {
               // amd.module and amd.bridge only; a failed load also records an amd.load error
               batch.filter(function (e) { return e.name === "amd.module" || e.name === "amd.bridge"; }).forEach(addMetric);
-              renderGraph();
+              SETS.forEach(renderGraph);
             },
           },
         });
         setInterval(function () { fynMeshKernel.tel.flush(); }, 250);
 
-        // the add-on and the meta must both be in place before the first require()
+        // The add-on routes every context. A UMD set has no meta, so all its ids
+        // go to paths. Each CWP set loads its release's meta into its own context.
+        // The add-on and the metas must all be in place before the first require().
         var addon = document.createElement("script");
         addon.src = "{{pathPrefix}}kernel-addon-amd/addon-amd.js";
         addon.onload = function () {
-          var meta = document.createElement("script");
-          meta.src = "{{pathPrefix}}" + CWPS[source][0] + "/dist/amd-meta.js";
-          meta.onload = start;
-          document.body.appendChild(meta);
+          var cwpSets = SETS.filter(function (set) { return CWPS[sources[set]]; });
+          var left = cwpSets.length;
+          if (!left) return start();
+          cwpSets.forEach(function (set) {
+            var meta = document.createElement("script");
+            meta.src = "{{pathPrefix}}" + CWPS[sources[set]][0] + "/dist/amd-meta.js";
+            meta.dataset.context = set;
+            meta.onload = function () {
+              if (!--left) start();
+            };
+            document.body.appendChild(meta);
+          });
         };
         document.body.appendChild(addon);
       })();

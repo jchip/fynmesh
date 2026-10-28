@@ -10,7 +10,6 @@ import {
   fynappEntryFilename,
   fynmeshShareScope,
   setupDummyEntryPlugins,
-  setupReactAliasPlugins,
   setupMinifyPlugins,
   setupTypeScriptPlugins,
   createEnrichManifest,
@@ -70,8 +69,12 @@ const emitAmdMeta = {
       type: "asset",
       fileName: "amd-meta.js",
       source:
-        `// generated from cwp.json: the AMD ids ${name}@${version} serves\n` +
-        `requirejs.config({ config: { fynmesh: { modules: ${JSON.stringify(modules, null, 2)} } } });\n`,
+        `// generated from cwp.json: the AMD ids ${name}@${version} serves.\n` +
+        `// data-context on the script tag picks the RequireJS context; the default context is "_".\n` +
+        `(function () {\n` +
+        `var s = typeof document !== "undefined" && document.currentScript;\n` +
+        `requirejs.config({ context: (s && s.dataset.context) || "_", config: { fynmesh: { modules: ${JSON.stringify(modules, null, 2)} } } });\n` +
+        `})();\n`,
     });
   },
 };
@@ -99,8 +102,6 @@ export default [
         enrichManifest: createEnrichManifest(),
         emitFederationMeta: createEmitFederationMeta(),
       }),
-      // ui-kit's `react` import goes through the same share as the legacy widgets'.
-      ...setupReactAliasPlugins(),
       ...setupTypeScriptPlugins(),
       ...setupMinifyPlugins(),
       emitAmdMeta,

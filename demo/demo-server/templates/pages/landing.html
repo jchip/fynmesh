@@ -43,6 +43,10 @@
                     <h3 class="fm-card-title">See why a module resolved the way it did</h3>
                     <p>The Federation Inspector shows each shared module, which app supplied it and which ranges asked for it, on the live page.</p>
                 </div>
+                <div class="fm-card">
+                    <h3 class="fm-card-title">Federated libraries for legacy RequireJS bundles</h3>
+                    <p>Webpack AMD bundles get React and other shared libraries from federation, under the ids they already ask for. Nothing is rebuilt. Each RequireJS context stays on the old common bundle or moves to the federated one, so one set of widgets can take a new React major while another stays put.</p>
+                </div>
             </div>
         </div>
     </section>

@@ -1,4 +1,4 @@
-import React from "react";
+import React from "esm-react";
 
 export const UI_KIT_VERSION = "1.4.0";
 

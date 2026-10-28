@@ -20,13 +20,16 @@
  * expose. Every other id goes straight to the normal script load. Ids reach the
  * hook after RequireJS applies `map`, so `map` picks the version per consumer.
  *
+ * A page runs one release of each FynApp. A meta naming a second version of the
+ * same FynApp is refused, and its ids go to the normal script load.
+ *
  * Load order: require.js, the kernel, this script, then the meta, all before the
  * first `require()`.
  *
  * Metrics, for generating preload meta, go to kernel telemetry (recorded once
  * `kernel.setTelemetry` is called):
  * - `amd.module`: one per defined module. `value` is ms from request to defined.
- *   `data` is { id, route: "bridge" | "legacy" | "inline", url, deps }. The deps
+ *   `data` is { context, id, route: "bridge" | "legacy" | "inline", url, deps }. The deps
  *   give the graph, and route plus url say where each module comes from.
  * - `amd.bridge`: one per FynApp load. `value` is ms, `data` is { name, ok }.
  */
@@ -58,6 +61,10 @@
 
       // Each FynApp loads once, on its first id. A failed one resolves to null.
       var apps = {};
+      // One release per FynApp name per page. Two CWP releases ship the same
+      // libs, and a lib that imports React binds to one copy of it, so a second
+      // release's context could get the first release's instance.
+      var releases = {};
       function loadApp(name, version) {
         var key = version ? name + "@" + version : name;
         if (apps[key]) return apps[key];
@@ -66,6 +73,11 @@
           tel.capture({ type: "metric", name: "bridge", value: Date.now() - t0, data: { name: key, ok: !!app } });
           return app;
         };
+        if (version && releases[name] && releases[name] !== version) {
+          console.error("addon-amd: " + key + " refused, " + name + "@" + releases[name] + " already serves this page");
+          return (apps[key] = Promise.resolve(done(null)));
+        }
+        if (version) releases[name] = version;
         return (apps[key] = kernel.loadFynAppsByName([{ name: name, range: version }]).then(
           function () {
             return done(hooks.findApp(key) || null);
@@ -77,20 +89,23 @@
         ));
       }
 
-      // id -> { t0, route } for modules requested but not yet defined
+      // "context/id" -> { t0, route } for modules requested but not yet defined.
+      // Each context loads its own copy of an id.
       var pending = {};
 
       // RequireJS reports each defined module with its resolved deps.
       var origOnResourceLoad = req.onResourceLoad;
       req.onResourceLoad = function (context, map, depMaps) {
-        var p = pending[map.id];
-        delete pending[map.id];
+        var key = context.contextName + "/" + map.id;
+        var p = pending[key];
+        delete pending[key];
         var route = p ? p.route : "inline";
         tel.capture({
           type: "metric",
           name: "module",
           value: p ? Date.now() - p.t0 : undefined,
           data: {
+            context: context.contextName,
             id: map.id,
             route: route,
             url: route === "legacy" ? new URL(map.url, document.baseURI).href : undefined,
@@ -107,11 +122,12 @@
         var self = this;
         var args = arguments;
         var m = lookup(context, id);
+        var key = context.contextName + "/" + id;
         if (!m) {
-          pending[id] = { t0: Date.now(), route: "legacy" };
+          pending[key] = { t0: Date.now(), route: "legacy" };
           return origLoad.apply(self, args);
         }
-        pending[id] = { t0: Date.now(), route: "bridge" };
+        pending[key] = { t0: Date.now(), route: "bridge" };
         // A `bundles` entry gives its ids one url, and RequireJS calls load once
         // per url. Free it so the bundle's other ids reach this hook too.
         delete context.urlFetched[url];
@@ -137,7 +153,7 @@
           .catch(function (e) {
             // Fall back to the page's own config. paths fallbacks and errbacks then work as usual.
             tel.capErr("load", { id: id }, e);
-            pending[id].route = "legacy";
+            pending[key].route = "legacy";
             context.urlFetched[url] = true;
             origLoad.apply(self, args);
           });
