@@ -79,10 +79,7 @@ const emitAmdMeta = {
 export default [
   defineConfig({
     input: [fynappDummyEntryName, fynappEntryFilename],
-    // Keep each expose in its own chunk. Rollup otherwise merges code-free
-    // chunks, and two exposes of one share would land in one chunk. The
-    // container then hands both exposes that chunk's namespace.
-    output: { ...setupFynAppOutputConfig().output, experimentalMinChunkSize: 0 },
+    output: setupFynAppOutputConfig().output,
     plugins: [
       ...setupDummyEntryPlugins(),
       newRollupPlugin(resolve)({

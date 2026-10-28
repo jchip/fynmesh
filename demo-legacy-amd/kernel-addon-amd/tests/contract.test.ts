@@ -46,16 +46,5 @@ describe("CWP externals contract", () => {
         share: modules["react-dom"].share,
       });
     });
-
-    // The container drops rollup's `.then(n => n.<name>)` pick, so an expose that
-    // shares a chunk with another one would get that chunk's whole namespace.
-    it(`${cwp}: each expose has a chunk of its own`, () => {
-      const entry = readFileSync(new URL(`${cwp}/dist/fynapp-entry.js`, root), "utf-8");
-      // dev: `_E("./amd/x", _f('./m0.js'))`; minified: `_E("./amd/x",n("./m0.js"))`
-      const files = [...entry.matchAll(/_E\("(\.\/amd\/[^"]+)",\s*[\w$]+\(["']([^"']+)["']\)(\.then)?/g)];
-      expect(files.map((m) => m[1]).sort()).toEqual(Object.keys(externals).map((id) => `./amd/${id}`).sort());
-      expect(files.filter((m) => m[3])).toEqual([]);
-      expect(new Set(files.map((m) => m[2])).size).toBe(files.length);
-    });
   }
 });

@@ -58,9 +58,8 @@ npm specifier behind it:
 - It runs each built legacy bundle against a stub `define` and checks that every
   dep is in each CWP's `cwp.json`. A new external in a legacy build fails that
   test instead of failing at runtime.
-- It reads each CWP's built `amd-meta.js` and `fynapp-entry.js`. Every external
-  must have its expose, a subpath must use its package's share, and each expose
-  must have a chunk of its own (see [Subpath externals](#subpath-externals)).
+- It reads each CWP's built `amd-meta.js`. Every external must have its
+  expose, and a subpath must use its package's share.
 
 ## The CWP FynApp
 
@@ -127,8 +126,8 @@ Where the subpath's code ends up depends on the package:
 - **The subpath is the main entry.** `esm-react-dom`'s main entry is the client
   build, so `react-dom/client` maps to `esm-react-dom`. Both ids are served from
   the one `esm-react-dom` share. Widget C imports `createRoot` from
-  `react-dom/client`. On its click, the page fetches `widget-c.js` and the 1.2KB
-  expose chunk, and reuses the shared react-dom.
+  `react-dom/client`. On its click, the page fetches only `widget-c.js`. Both
+  exposes sit in one chunk, already loaded for `react-dom`.
 - **The subpath is its own file**, such as `preact/hooks`. A scratch build put
   the hooks code in the expose chunk, which imports `options` from the shared
   `preact` chunk. Legacy code gets one hooks copy, on the one shared preact. The
@@ -137,14 +136,11 @@ Where the subpath's code ends up depends on the package:
   `preact/hooks` bundles its own copy. That is fine for a subpath that only
   re-exports from the main entry. It is a risk for one that keeps module state.
 
-Each expose needs a chunk of its own. Two exposes that import only the same
-share are code-free chunks, and Rollup merges code-free chunks by default. The
-container entry then imports the merged chunk with `.then(n => n.m1)` to pick
-one module's exports. The plugin's `_f` stub ignores that callback, and the
-container's `_E` keeps only the chunk id. So both exposes get the chunk's whole
-namespace, `{ m1, m2 }`. The CWP build sets `experimentalMinChunkSize: 0` to
-stop the merge. The federation bug affects any FynApp whose exposes share a
-chunk, and fixing it in rollup-federation is still open.
+Two exposes that import only the same share are code-free modules, and Rollup
+merges them into one chunk. The container entry then loads that chunk with
+`.then(n => n.m1)` to pick one module's exports. federation keeps that pick:
+the entry's `_f` stub returns it to `_E`, and `get()` applies it to the chunk's
+namespace.
 
 On UMD pages there is no CWP. RequireJS `map` sends `react-dom/client` to the
 one UMD react-dom, which has the client API in React 18.
@@ -290,7 +286,7 @@ bundles throughout: `ui-kit` and three team widgets, built against React 18.3.1.
   release per page load.
 - **On-demand load.** Team C loads only on a button click, through
   `require(["widget-c"])`. Its new dep, `react-dom/client`, is served then. Only
-  `widget-c.js` and that one expose chunk are fetched; React is reused.
+  `widget-c.js` is fetched; React is reused.
 - **FynApps alongside.** After the widgets mount, two ordinary FynApps load:
   `fynapp-react19-user` (`esm-react ^19`) and `fynapp-react18-user` (`^18`). The
   one whose major matches the CWP gets the CWP's React. The other gets its own
@@ -312,8 +308,6 @@ baseline) and `bridged.html` (add-on, CWP 4).
 - **Subpath sharing with modern FynApps.** A subpath with its own file is
   shared among legacy code but not with modern FynApps. Making a subpath a share
   of its own is untested.
-- **Merged expose chunks.** federation drops the export pick for an expose in a
-  merged chunk. The CWP works around it, and the federation fix is open.
 - **Export shape.** `toAmdExports` makes each id look like the old UMD object. A
   lib whose old CWP bundle had a different shape needs a small adapter in its
   expose.
