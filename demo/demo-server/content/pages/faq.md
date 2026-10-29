@@ -78,6 +78,14 @@ No. An app joins the shared scope, named `fynmesh`, when it loads. Nobody keeps 
 
 An app that imports a module from another app, such as a middleware, does name that app. The kernel uses that to load the provider first.
 
+### Can legacy RequireJS bundles use federated React?
+
+Yes. Webpack AMD bundles that list React or a UI kit as externals can load them from federation, under the RequireJS ids they already ask for. The bundles are not rebuilt. A kernel add-on routes those ids to a FynApp that serves the libraries. The add-on is a working prototype in the repo. See the guide [Serve shared libraries to legacy RequireJS bundles](/guides/legacy-requirejs-on-module-federation).
+
+### Can legacy widgets move to a new React major without a rebuild?
+
+Yes, as long as their code runs on that major. Each RequireJS context chooses the old common bundle or the federated one, so one group of widgets can move to React 19 while another stays on React 18. The [legacy RequireJS demo](/legacy-amd) runs both on one page.
+
 ## Building FynApps
 
 ### How do I start a new FynApp?

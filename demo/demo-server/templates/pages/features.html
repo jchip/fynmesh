@@ -342,6 +342,44 @@
         </figure>
     </section>
 
+    <section class="fx-plate" id="requirejs">
+        <div>
+            <h2>Legacy RequireJS Bundles</h2>
+            <p>Federated modules serve legacy webpack AMD bundles as RequireJS modules. The bundles are not rebuilt, and they can move to a new React major in stages.</p>
+        </div>
+        <figure>
+            <div class="fx-fig">
+                <svg viewBox="0 0 760 262" role="img" aria-label="Three unchanged webpack AMD bundles ask RequireJS for react, react-dom and ui-kit. The AMD add-on serves those ids from a CWP FynApp through federation.">
+                    <defs>
+                        <marker id="r-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-acc" d="M0 0 L10 5 L0 10 z"/></marker>
+                    </defs>
+                    <rect class="box" x="20" y="16" width="220" height="64" rx="10"/>
+                    <text class="t" x="130" y="44" text-anchor="middle">Team A bundle</text>
+                    <text class="s m" x="130" y="64" text-anchor="middle" font-size="10">webpack AMD, not rebuilt</text>
+                    <rect class="box" x="270" y="16" width="220" height="64" rx="10"/>
+                    <text class="t" x="380" y="44" text-anchor="middle">Team B bundle</text>
+                    <text class="s m" x="380" y="64" text-anchor="middle" font-size="10">webpack AMD, not rebuilt</text>
+                    <rect class="box" x="520" y="16" width="220" height="64" rx="10"/>
+                    <text class="t" x="630" y="44" text-anchor="middle">Team C bundle</text>
+                    <text class="s m" x="630" y="64" text-anchor="middle" font-size="10">webpack AMD, not rebuilt</text>
+
+                    <line class="ln" x1="130" y1="80" x2="130" y2="112"/>
+                    <line class="ln" x1="380" y1="80" x2="380" y2="112"/>
+                    <line class="ln" x1="630" y1="80" x2="630" y2="112"/>
+
+                    <rect class="box" x="20" y="112" width="720" height="44" rx="12"/>
+                    <text class="s m" x="380" y="139" text-anchor="middle">RequireJS · define(["react", "react-dom", "ui-kit"])</text>
+
+                    <path class="ln-acc" d="M380 156 L380 190" marker-end="url(#r-arr)"/>
+
+                    <rect class="box-acc" x="20" y="192" width="720" height="52" rx="12"/>
+                    <text class="la" x="380" y="223" text-anchor="middle" font-size="14">AMD add-on · CWP FynApp serves the same ids from federation</text>
+                </svg>
+            </div>
+            <figcaption>One set of widgets runs on the old React 18 bundle and one on React 19 from federation in the <a href="{{pathPrefix}}legacy-amd{{ htmlExt | default(".html") }}">legacy RequireJS demo</a>.</figcaption>
+        </figure>
+    </section>
+
     <section class="fx-plate" id="boot">
         <div>
             <h2>Dependency-Ordered Boot</h2>

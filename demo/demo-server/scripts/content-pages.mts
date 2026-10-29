@@ -21,7 +21,7 @@ const RAW_URL = "https://raw.githubusercontent.com/jchip/fynmesh/main";
 
 /** Site pages a root-relative link may point at. */
 const SITE_SECTIONS = new Set([
-    "demo", "shell", "fynops", "demos", "features", "docs", "guides", "why-fynmesh", "how-it-works", "faq",
+    "demo", "shell", "fynops", "legacy-amd", "demos", "features", "docs", "guides", "why-fynmesh", "how-it-works", "faq",
 ]);
 
 /** Docs sidebar and index groups, in display order. */
@@ -128,7 +128,12 @@ export const DOCS: DocEntry[] = [
 export const GUIDE_GROUPS: { name: string; slugs: string[] }[] = [
     {
         name: "Versions and sharing",
-        slugs: ["run-multiple-react-versions", "share-dependencies-semver", "upgrade-react-incrementally"],
+        slugs: [
+            "run-multiple-react-versions",
+            "share-dependencies-semver",
+            "upgrade-react-incrementally",
+            "legacy-requirejs-on-module-federation",
+        ],
     },
     { name: "Building", slugs: ["micro-frontends-with-rollup", "module-federation-without-webpack"] },
 ];

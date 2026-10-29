@@ -127,7 +127,8 @@ export function buildLlmsTxt(contentPages: ContentPage[], opts: { apiUrl?: strin
         `> ${SITE_DEFINITION}`,
         ``,
         `FynMesh loads independently deployed apps, called FynApps, into one page and shares ` +
-            `their dependencies at runtime. The links below are the overview pages, docs, guides ` +
+            `their dependencies at runtime. Legacy webpack AMD bundles loaded by RequireJS can get ` +
+            `their shared libraries from it too, with no rebuild. The links below are the overview pages, docs, guides ` +
             `and live demos.`,
     ];
     for (const [name, items] of sections) {

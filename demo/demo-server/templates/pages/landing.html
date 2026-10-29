@@ -24,28 +24,28 @@
             </div>
             <div class="fm-grid">
                 <div class="fm-card">
-                    <h3 class="fm-card-title">No wiring between apps</h3>
+                    <h3 class="fm-card-title">A shared scope apps join by loading</h3>
                     <p>An app joins the page's shared scope when it loads. Nobody maintains a list of who shares with whom, so adding an app to a page means loading it.</p>
                 </div>
                 <div class="fm-card">
-                    <h3 class="fm-card-title">Version ranges for apps, not only libraries</h3>
+                    <h3 class="fm-card-title">Apps addressed by name and semver range</h3>
                     <p>A page asks for <code>fynapp-x1@^2</code> the way a package asks for a dependency. The old release can stay live under the same name while its consumers move over.</p>
                 </div>
                 <div class="fm-card">
-                    <h3 class="fm-card-title">Apps that cooperate, not just coexist</h3>
+                    <h3 class="fm-card-title">Dependency-ordered boot, middleware and messaging</h3>
                     <p>An app that provides a theme or a layout boots before the apps that use it. Middleware carries those cross-app concerns, and apps message each other over FynBus without importing one another.</p>
                 </div>
                 <div class="fm-card">
-                    <h3 class="fm-card-title">Mix frameworks without adapters</h3>
+                    <h3 class="fm-card-title">Any framework on one loader</h3>
                     <p>Each app ships the framework it was written in, React, Vue, Svelte or anything else. The loader never needs a per-framework bridge.</p>
                 </div>
                 <div class="fm-card">
-                    <h3 class="fm-card-title">See why a module resolved the way it did</h3>
+                    <h3 class="fm-card-title">A live inspector for shared modules</h3>
                     <p>The Federation Inspector shows each shared module, which app supplied it and which ranges asked for it, on the live page.</p>
                 </div>
                 <div class="fm-card">
-                    <h3 class="fm-card-title">Federated libraries for legacy RequireJS bundles</h3>
-                    <p>Webpack AMD bundles get React and other shared libraries from federation, under the ids they already ask for. Nothing is rebuilt. Each RequireJS context stays on the old common bundle or moves to the federated one, so one set of widgets can take a new React major while another stays put.</p>
+                    <h3 class="fm-card-title">A bridge from federation to RequireJS</h3>
+                    <p>Federated modules can be served to RequireJS under the ids legacy micro frontends already ask for. Bundles that list React or a UI kit as externals then load them from federation, with no rebuild.</p>
                 </div>
             </div>
         </div>

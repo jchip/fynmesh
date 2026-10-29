@@ -138,8 +138,8 @@ export const PAGE_SEO = {
         pageName: "Legacy RequireJS widgets",
         crumbs: [{ name: "Demos", path: "demos" }],
         metaDescription:
-            "Webpack AMD widgets loaded by RequireJS get React and their UI kit from Module " +
-            "Federation through a CWP FynApp, with no rebuild, and share React with FynApps.",
+            "Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module " +
+            "Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.",
     },
     docs: {
         canonicalPath: "docs",
@@ -211,7 +211,8 @@ export function buildJsonLd(seo: PageSeo): string {
             image: `${SITE_ORIGIN}/og-image.png`,
             keywords:
                 "micro frontend, microfrontend, module federation, rollup, multiple versions, " +
-                "shared dependencies, semver, react, vue, preact, solid, svelte, marko",
+                "shared dependencies, semver, react, vue, preact, solid, svelte, marko, " +
+                "requirejs, amd, webpack externals, legacy micro frontends",
         },
     ];
 

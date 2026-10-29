@@ -116,7 +116,9 @@
       <h1>Legacy RequireJS micro frontends on federated React</h1>
       <p class="lede">
         Micro frontends that load through RequireJS can get their shared libraries from Module
-        Federation, without being rebuilt.
+        Federation, without being rebuilt. The
+        <a href="{{pathPrefix}}guides/legacy-requirejs-on-module-federation{{ htmlExt | default(".html") }}">guide</a>
+        explains the setup.
       </p>
 
       <div class="intro">
@@ -142,10 +144,10 @@
           <p>
             The common web package (CWP) becomes a FynApp. It installs React and the UI kit from npm
             at pinned versions. It serves them from federation, under the AMD ids the bundles already
-            ask for, and a kernel add-on routes RequireJS to it. Each RequireJS context loads one CWP
-            release. Moving to a new React major means pointing a context at a newer CWP, with no
-            rebuild of the bundles. New FynApps share the CWP's React when their range matches, or
-            load their own.
+            ask for, and a kernel add-on routes RequireJS to it. Each RequireJS context stays on the
+            old common bundle or moves to the CWP, so widgets move to a new React major in stages,
+            with no rebuild. New FynApps share the CWP's React when their range matches, or load
+            their own.
           </p>
         </section>
       </div>
@@ -271,7 +273,7 @@
     <script src="{{pathPrefix}}legacy-components/public/libs/require.js"></script>
     {% include "components/kernel-scripts.html" %}
     <script>
-(function () {
+      (function () {
         var SOURCES = {
           umd: "The legacy CWP: RequireJS loads React 18 from UMD files, and the webpack-built ui-kit. No federation.",
           cwp3: "CWP 3.2.0 serves React 18.3.1 and ui-kit 1.4.0 from federation.",

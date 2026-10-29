@@ -75,6 +75,10 @@ import("fynapp-x1/main", { with: { type: "mf-expose", semver: "^2.0.0" } })
 
 In the demo, `fynapp-2-react18` asks for `^1.0.0`. The apps `fynapp-1` and `fynapp-1-b` ask for `^2.0.0`. A library team can ship 2.0.0 and let consumers move when they choose.
 
+## Legacy RequireJS bundles
+
+Older micro frontends built as webpack AMD bundles can follow the same plan. They get React from federation through a FynApp that serves their common libraries, with no rebuild, and move to a new major one RequireJS context at a time. See [Serve shared libraries to legacy RequireJS bundles](/guides/legacy-requirejs-on-module-federation).
+
 ## Pitfalls
 
 ### State and context do not cross versions
@@ -114,5 +118,6 @@ The `create-fynapp` scaffold for React uses singleton shares for `react`, `react
 
 - Open the [live demo](/demo) to see `fynapp-1` on React 19 and `fynapp-2-react18` on React 18.
 - Read [how multiple React versions run on one page](/guides/run-multiple-react-versions).
+- Read [how legacy RequireJS bundles get React from federation](/guides/legacy-requirejs-on-module-federation).
 - Read [how semver ranges choose a version](/guides/share-dependencies-semver).
 - Read the [FynApp contract](/docs/fynapp-contract) and the [kernel docs](/docs/kernel).

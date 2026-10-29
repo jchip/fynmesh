@@ -128,6 +128,7 @@ The core kernel resolves manifests, builds the graph, loads, bootstraps and mana
 - The bus add-on provides FynBus.
 - The telemetry add-on adds `kernel.setTelemetry`.
 - The dev-overlay add-on shows bootstrap failures on the page, in development only.
+- The AMD add-on serves federated modules to legacy RequireJS bundles under the ids they already ask for. It is a working prototype, shown in the [legacy RequireJS demo](/legacy-amd) and the [guide](/guides/legacy-requirejs-on-module-federation).
 
 Load core first, then any add-ons. Each add-on installs itself into `fynMeshKernel` and throws if core is missing. Without the middleware add-on, a unit runs as plain `initialize` then `execute`, and a unit that declares middleware gets a console warning. The README for the [kernel](/docs/kernel) lists the bundle files, and the [kernel API](/api/) covers the types.
 
