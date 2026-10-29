@@ -16,9 +16,9 @@ A legacy bundle lists its shared libraries as webpack externals. In the built fi
 define(["react", "react-dom", "ui-kit"], function (React, ReactDOM, UIKit) { ... });
 ```
 
-A platform team ships those libraries in one common bundle, often called the common web package (CWP). The page loads one CWP, so every bundle on it runs on the same React. A React major upgrade means updating, rebuilding and releasing every team's bundle at once.
+A platform team ships those libraries in one common bundle, often called the common web package (CWP). The page loads one CWP, so every bundle on it is locked to the library versions the CWP provides. Any upgrade needs every team that builds on the CWP to coordinate.
 
-Module Federation handles version sharing for new apps, but it does not load AMD bundles.
+Module Federation solves version sharing, but it does not load AMD bundles. A large codebase cannot drop its legacy code in one shot, so it has no path to federation. The bridge below gives it one: legacy bundles and FynApps run on the same page, and the codebase moves over one piece at a time.
 
 ## What changes
 

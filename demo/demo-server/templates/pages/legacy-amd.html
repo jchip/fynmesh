@@ -134,9 +134,10 @@
         <section class="panel">
           <h3>The problem</h3>
           <p>
-            Every component is tied to that one copy. Moving React to a new major means updating,
-            rebuilding and releasing every team's component at once. Module Federation handles
-            version sharing for new apps, but it cannot load these AMD bundles.
+            Every widget is locked to the library versions the legacy CWP provides. Any upgrade
+            needs every team that builds on the CWP to coordinate. Module Federation solves version
+            sharing, but it cannot load these AMD bundles. A large codebase cannot drop its legacy
+            code in one shot, so there is no path from here to federation.
           </p>
         </section>
         <section class="panel">
@@ -147,7 +148,8 @@
             ask for, and a kernel add-on routes RequireJS to it. Each RequireJS context stays on the
             old common bundle or moves to the CWP, so widgets move to a new React major in stages,
             with no rebuild. New FynApps share the CWP's React when their range matches, or load
-            their own.
+            their own. Legacy widgets and FynApps run on the same page, so the codebase moves to
+            federation one piece at a time.
           </p>
         </section>
       </div>
