@@ -8,7 +8,7 @@
   "exports": {
     ".": "./src/test-esm.js"
   },
-  "homepage": "",
+  "homepage": "https://www.fynmesh.fyi",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=24.0.0"

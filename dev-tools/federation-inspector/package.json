@@ -18,7 +18,7 @@
     },
     "./dist/*": "./dist/*"
   },
-  "homepage": "https://github.com/jchip/fynmesh",
+  "homepage": "https://www.fynmesh.fyi",
   "license": "Apache-2.0",
   "scripts": {
     "build": "xrun -s clean tsc rollup minify",
