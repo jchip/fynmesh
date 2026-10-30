@@ -115,41 +115,39 @@
     <main>
       <h1>Legacy RequireJS micro frontends on federated React</h1>
       <p class="lede">
-        Micro frontends that load through RequireJS can get their shared libraries from Module
-        Federation, without being rebuilt. The
+        RequireJS micro frontends get their shared libraries from a common web package (CWP). This
+        demo brings Module Federation to them progressively, with no rebuild of the widgets. The
         <a href="{{pathPrefix}}guides/legacy-requirejs-on-module-federation{{ htmlExt | default(".html") }}">guide</a>
         explains the setup.
       </p>
 
       <div class="intro">
         <section class="panel">
-          <h3>The setup</h3>
+          <h3>The setup: widgets and the CWP</h3>
           <p>
-            Before Module Federation, many teams built micro frontends with webpack as AMD bundles
-            loaded by RequireJS. Shared libraries like React and the UI kit are webpack externals.
-            The page loads one copy of each, and every bundle asks for them with
+            In a RequireJS micro frontend, each widget is built as an AMD bundle. Shared libraries
+            like React and the UI kit are built into a common web package (CWP). Widgets consume
+            the CWP through webpack externals, so every bundle asks for its libraries with
             <code>define(["react", "react-dom", "ui-kit"], ...)</code>.
           </p>
         </section>
         <section class="panel">
           <h3>The problem</h3>
           <p>
-            Every widget is locked to the library versions the legacy CWP provides. Any upgrade
-            needs every team that builds on the CWP to coordinate. Module Federation solves version
-            sharing, but it cannot load these AMD bundles. A large codebase cannot drop its legacy
-            code in one shot, so there is no path from here to federation.
+            A large enterprise builds up many widgets from many teams over time. They all depend on
+            the same CWP. Updating a library version or adding a variant means every team must move
+            together, which is near impossible. Module Federation solves this, but legacy widgets
+            cannot use it. They also cannot all migrate in one shot.
           </p>
         </section>
         <section class="panel">
-          <h3>The CWP as a FynApp</h3>
+          <h3>The fix: federation, one piece at a time</h3>
           <p>
-            The common web package (CWP) becomes a FynApp. It installs React and the UI kit from npm
-            at pinned versions. It serves them from federation, under the AMD ids the bundles already
-            ask for, and a kernel add-on routes RequireJS to it. Each RequireJS context stays on the
-            old common bundle or moves to the CWP, so widgets move to a new React major in stages,
-            with no rebuild. New FynApps share the CWP's React when their range matches, or load
-            their own. Legacy widgets and FynApps run on the same page, so the codebase moves to
-            federation one piece at a time.
+            The CWP becomes a FynApp. It installs React and the UI kit from npm at pinned versions,
+            and serves them from federation under the AMD ids the widgets already ask for. A kernel
+            add-on routes RequireJS to it. Each RequireJS context stays on the legacy CWP or moves to
+            the federated one, with no rebuild. New FynApps run on the same page and share the CWP's
+            React when their range matches.
           </p>
         </section>
       </div>
@@ -160,10 +158,10 @@
             <span class="flow-label">Before</span>
             <span class="node legacy">Team A, B, C bundles<small>webpack AMD</small></span>
             <span class="arrow">define("react", "ui-kit") →</span>
-            <span class="node legacy">Common bundle<small>React 18 and ui-kit, one copy for all</small></span>
+            <span class="node legacy">Legacy CWP<small>React 18 and ui-kit, one copy for all</small></span>
           </div>
           <div class="flow-row">
-            <span class="flow-label">With the CWP</span>
+            <span class="flow-label">Federated</span>
             <span class="node legacy">Team A, B, C bundles<small>same files, not rebuilt</small></span>
             <span class="arrow">→</span>
             <span class="node bridge">AMD add-on<small>reads the CWP's amd-meta.js</small></span>

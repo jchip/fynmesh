@@ -4,21 +4,23 @@ description: Legacy webpack AMD micro frontends loaded by RequireJS can get Reac
 pageName: Legacy RequireJS Bundles
 ---
 
-Many micro frontends were built with webpack before Module Federation existed. Each one is an AMD bundle that RequireJS loads. FynMesh can serve federated modules to those bundles as RequireJS modules, under the ids they already ask for. The bundles are not rebuilt. They get React and the UI kit from federation, and they can move to a new React major in stages.
+Before Module Federation, many micro frontends were built on RequireJS. Each widget is an AMD bundle. Shared libraries are built into a common web package (CWP), and widgets consume it through webpack externals. FynMesh can serve the CWP's libraries to those widgets from federation, under the ids they already ask for, with no rebuild. A codebase can then move to federation progressively.
 
 This guide explains the setup, what changes, and what you get. The working code is in the [live demo](/legacy-amd).
 
 ## The legacy setup
 
-A legacy bundle lists its shared libraries as webpack externals. In the built file, each external becomes a RequireJS dependency:
+In a RequireJS micro frontend, each widget is built with webpack as an AMD bundle. A platform team builds the shared libraries, like React and the UI kit, into a common web package (CWP). Widgets list those libraries as webpack externals. In the built file, each external becomes a RequireJS dependency that the CWP provides:
 
 ```js
 define(["react", "react-dom", "ui-kit"], function (React, ReactDOM, UIKit) { ... });
 ```
 
-A platform team ships those libraries in one common bundle, often called the common web package (CWP). The page loads one CWP, so every bundle on it is locked to the library versions the CWP provides. Any upgrade needs every team that builds on the CWP to coordinate.
+## The problem
 
-Module Federation solves version sharing, but it does not load AMD bundles. A large codebase cannot drop its legacy code in one shot, so it has no path to federation. The bridge below gives it one: legacy bundles and FynApps run on the same page, and the codebase moves over one piece at a time.
+A large enterprise builds up many widgets from many teams over time, and they all depend on the same CWP. Updating a library version or adding a variant means every team must move together. At that scale it is near impossible.
+
+Module Federation solves version sharing, but legacy AMD widgets cannot use it. A large codebase also cannot migrate all its widgets in one shot. It needs a way to introduce federation progressively. The bridge below gives it one: legacy widgets and FynApps run on the same page, and the codebase moves over one piece at a time.
 
 ## What changes
 
@@ -32,22 +34,22 @@ The legacy bundles and the page's RequireJS setup stay as they are. The add-on a
 ## What you get
 
 - **No rebuild.** The same bundle files run on the federated libraries.
-- **Upgrades in stages.** Each RequireJS context chooses the old common bundle or the federated CWP. One group of widgets can move to a CWP release with React 19 while another stays on the old React 18 bundle.
+- **Upgrades in stages.** Each RequireJS context chooses the legacy CWP or the federated one. One group of widgets can move to a CWP release with React 19 while another stays on the legacy CWP with React 18.
 - **One React for old and new apps.** New FynApps on the same page share the CWP's React when their version range matches. A FynApp that needs another major loads its own.
 - **On-demand loading.** A bundle loaded later reuses the libraries its context already has.
 
 ## Moving to a new React major
 
-1. Release a CWP FynApp that pins the libraries the old common bundle had. Point one RequireJS context at it and check that its widgets behave the same.
-2. Move the other contexts over one at a time. A context you have not moved stays on the old bundle.
+1. Release a CWP FynApp that pins the libraries the legacy CWP had. Point one RequireJS context at it and check that its widgets behave the same.
+2. Move the other contexts over one at a time. A context you have not moved stays on the legacy CWP.
 3. Release a CWP with the new React major, and point the federated contexts at it. The widgets are not rebuilt.
-4. Retire the old common bundle once no context uses it.
+4. Retire the legacy CWP once no context uses it.
 
 React 19 removed `ReactDOM.render`, `findDOMNode`, string refs and `propTypes`. A legacy widget that uses them needs a code change before it can run on React 19. Widgets that use `createRoot` run on both majors.
 
 ## Limits
 
-- A page runs one federated CWP release. Every federated context on the page uses it. Other contexts stay on the old common bundle.
+- A page runs one federated CWP release. Every federated context on the page uses it. Other contexts stay on the legacy CWP.
 - The CWP's id list must load before the first `require()`.
 - The AMD add-on is a working prototype in the FynMesh repo, in `demo-legacy-amd/`. It is not a published package yet.
 
