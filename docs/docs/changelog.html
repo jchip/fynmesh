@@ -1,0 +1,2783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Changelog and Release Notes</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/changelog">
+    <meta property="og:title" content="FynMesh Changelog and Release Notes">
+    <meta property="og:description" content="Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh Changelog and Release Notes">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/changelog">
+    <meta name="twitter:title" content="FynMesh Changelog and Release Notes">
+    <meta name="twitter:description" content="Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh Changelog and Release Notes">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/changelog">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/changelog#webpage",
+      "url": "https://www.fynmesh.fyi/docs/changelog",
+      "name": "FynMesh Changelog and Release Notes",
+      "description": "Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "FynMesh Changelog and Release Notes",
+      "dateModified": "2026-09-22T08:27:38-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Changelog",
+            "item": "https://www.fynmesh.fyi/docs/changelog"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel">Kernel</a>
+                
+                <a href="/docs/federation-js">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog" aria-current="page">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>Changelog
+            </nav>
+            <h1>FynMesh Changelog and Release Notes</h1>
+            <p class="fm-lead">Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Sep 22, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/blob/main/CHANGELOG.md">View the source on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <h2 id="9222026">9/22/2026</h2>
+<h3 id="packages">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.5</code> <code>(1.1.4 =&gt; 1.1.5)</code></li>
+<li><code>create-fynapp@1.1.7</code> <code>(1.1.6 =&gt; 1.1.7)</code></li>
+<li><code>rollup-wrap-plugin@1.0.3</code> <code>(1.0.2 =&gt; 1.0.3)</code></li>
+</ul>
+<h3 id="commits">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>chore: raise kernel vitest floor to ^3.2.7 to clear GHSA-5xrq-8626-4rwp <a href="https://github.com/jchip/fynmesh/commit/e8e278d8cb556ac9bce90b853d0c01e714f69e9b">commit</a></li>
+<li>docs: link the live demo site and packages from README, point npm homepage at the site <a href="https://github.com/jchip/fynmesh/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/bundle-esm-share</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+<li>docs: update create-fynapp test command <a href="https://github.com/jchip/fynmesh/commit/d640f4fd26b38d0a738b56af4cc6593852bade1f">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>docs: link the live demo site and packages from README, point npm homepage at the site <a href="https://github.com/jchip/fynmesh/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>fix: extend base from the shell page and give both builds one per-page SEO definition <a href="https://github.com/jchip/fynmesh/commit/6acfc7ec99d063d10ac5e47dcadb3b2026a23299">commit</a></li>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>seo: per-page canonical and social tags, generated sitemap, real OG image <a href="https://github.com/jchip/fynmesh/commit/76a425d1b270df321d91ec87cf07510a827e610e">commit</a></li>
+<li>demo: add second Google verification token and copy all of them <a href="https://github.com/jchip/fynmesh/commit/ca850d6278a85ac8c912b6f7ded9ad95b970c521">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid-react</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-dom-18</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: clear stale optFailed markers from lockfiles <a href="https://github.com/jchip/fynmesh/commit/471772694b6544c78c4bb1ba39e80c345b15ee97">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/middleware-consumer</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>include create-fynapp examples in fynpo graph as private packages <a href="https://github.com/jchip/fynmesh/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/middleware-provider</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>include create-fynapp examples in fynpo graph as private packages <a href="https://github.com/jchip/fynmesh/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/react-minimal</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>include create-fynapp examples in fynpo graph as private packages <a href="https://github.com/jchip/fynmesh/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/vanilla</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>include create-fynapp examples in fynpo graph as private packages <a href="https://github.com/jchip/fynmesh/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/federation-inspector</code></p>
+<ul>
+<li>Fix informational diagnostic styling in inspector Shares view <a href="https://github.com/jchip/fynmesh/commit/e5616383067bc4fce13508797c2adbcbdaf4c4e7">commit</a></li>
+<li>Fix federation inspector filters to remember each tab <a href="https://github.com/jchip/fynmesh/commit/38e5086ca2ce85a3b168447f139568933e3a44b9">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: clear stale optFailed markers from lockfiles <a href="https://github.com/jchip/fynmesh/commit/471772694b6544c78c4bb1ba39e80c345b15ee97">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-bundled</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-mw-mismatch</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/regular-react-app</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/rollup-wrap-plugin</code></p>
+<ul>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>update deps <a href="https://github.com/jchip/fynmesh/commit/fee10b54d4617c91230417c7e0197032c7942c62">commit</a></li>
+<li>[Publish] <a href="https://github.com/jchip/fynmesh/commit/8b51a35dca19e12d24d0c6b997e3da08bd17dfd3">commit</a></li>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>notes</code></p>
+<ul>
+<li>balance scope-isolation, strategy and reach claims in comparison <a href="https://github.com/jchip/fynmesh/commit/cfb6997627332bd5bd96676687beab2fb65afa24">commit</a></li>
+<li>docs: compare core federation strengths of FynMesh and MF <a href="https://github.com/jchip/fynmesh/commit/874b866d8d97af5303c4795222a1978d34fe2dc7">commit</a></li>
+<li>add share-scope membership section, fix tree-shaking wording <a href="https://github.com/jchip/fynmesh/commit/58ee63a760ed5899ea8ef63f1bbbe62fee626b20">commit</a></li>
+<li>refresh federation comparison with source and container tests <a href="https://github.com/jchip/fynmesh/commit/b881d12aa0d464c4826ff6cb1d7b3809e70c9598">commit</a></li>
+<li>docs: clarify federation-js module-boundary model <a href="https://github.com/jchip/fynmesh/commit/72e4d365d9b482e3b53209da82c1bbb31bddb3ad">commit</a></li>
+<li>docs: re-sync federation-inspector design with what actually shipped <a href="https://github.com/jchip/fynmesh/commit/78c417dab04f9d48fcb611785f7870a673c3af0d">commit</a></li>
+<li>docs: refresh roadmap against the source and record known gaps <a href="https://github.com/jchip/fynmesh/commit/129823d6328aee6f86db692128641c849d0c63b3">commit</a></li>
+<li>docs: explicit federation initialization is a design stance, not a tax <a href="https://github.com/jchip/fynmesh/commit/fdd4ab39a399ceda181ad13786e5982bbb1ca0b6">commit</a></li>
+<li>docs: measure runtime delivery cost, embedded per artifact vs loaded once <a href="https://github.com/jchip/fynmesh/commit/30fe01d388f41757f6be6f34d3fb0e6578b9f4a0">commit</a></li>
+<li>docs: declarative resolution is fynmeshs thesis, not a missing registerRemotes <a href="https://github.com/jchip/fynmesh/commit/44c37d338206a1c69accdfa1f25dbf4e68ae821c">commit</a></li>
+<li>docs: add Module Federation comparison and refresh build-artifact notes <a href="https://github.com/jchip/fynmesh/commit/42bfdcf1a63edcb7e5846e272ac8fec43e97ca05">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>fix the dead combine-group ref and fail the build when a group does not form <a href="https://github.com/jchip/fynmesh/commit/94502702bc048fdf1e16f94d4c42bb2b252f91bb">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>update fyn and fynpo <a href="https://github.com/jchip/fynmesh/commit/77b494dfac551bc261d94f51f331bbe4f91ec936">commit</a></li>
+<li>fix: run demo-server xrun tasks with its local runner and approve esbuild 0.27 <a href="https://github.com/jchip/fynmesh/commit/427327471a5ceb46f749fb00a6dfa0ae8d7eadd1">commit</a></li>
+<li>rely on auto-search with explicit example includes <a href="https://github.com/jchip/fynmesh/commit/30b5a4209fe3d68aea68ef9dd32f48b9b58cadbb">commit</a></li>
+<li>include create-fynapp examples in fynpo discovery <a href="https://github.com/jchip/fynmesh/commit/ab3a9371e0d7353e4574df1143dbd4bd4ee34486">commit</a></li>
+<li>Update changelog <a href="https://github.com/jchip/fynmesh/commit/99d3ac6c098a79918c175e89cbbd205827c5ed96">commit</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="9202026">9/20/2026</h2>
+<h3 id="packages-1">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.4</code> <code>(1.1.3 =&gt; 1.1.4)</code></li>
+<li><code>create-fynapp@1.1.6</code> <code>(1.1.5 =&gt; 1.1.6)</code></li>
+<li><code>rollup-wrap-plugin@1.0.2</code> <code>(1.0.1 =&gt; 1.0.2)</code></li>
+</ul>
+<h3 id="commits-1">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>chore: raise kernel vitest floor to ^3.2.7 to clear GHSA-5xrq-8626-4rwp <a href="https://github.com/jchip/fynmesh/commit/e8e278d8cb556ac9bce90b853d0c01e714f69e9b">commit</a></li>
+<li>docs: link the live demo site and packages from README, point npm homepage at the site <a href="https://github.com/jchip/fynmesh/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/bundle-esm-share</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+<li>docs: update create-fynapp test command <a href="https://github.com/jchip/fynmesh/commit/d640f4fd26b38d0a738b56af4cc6593852bade1f">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>docs: link the live demo site and packages from README, point npm homepage at the site <a href="https://github.com/jchip/fynmesh/commit/40e548dd89f11b2348af031b77ad34124c2e4ef8">commit</a></li>
+<li>include create-fynapp examples in fynpo graph as private packages <a href="https://github.com/jchip/fynmesh/commit/6169ccc60cbcb10be6ec42fd743e6f121cf660f7">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+<li>fix: extend base from the shell page and give both builds one per-page SEO definition <a href="https://github.com/jchip/fynmesh/commit/6acfc7ec99d063d10ac5e47dcadb3b2026a23299">commit</a></li>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>seo: per-page canonical and social tags, generated sitemap, real OG image <a href="https://github.com/jchip/fynmesh/commit/76a425d1b270df321d91ec87cf07510a827e610e">commit</a></li>
+<li>demo: add second Google verification token and copy all of them <a href="https://github.com/jchip/fynmesh/commit/ca850d6278a85ac8c912b6f7ded9ad95b970c521">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid-react</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-dom-18</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: clear stale optFailed markers from lockfiles <a href="https://github.com/jchip/fynmesh/commit/471772694b6544c78c4bb1ba39e80c345b15ee97">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/federation-inspector</code></p>
+<ul>
+<li>Fix informational diagnostic styling in inspector Shares view <a href="https://github.com/jchip/fynmesh/commit/e5616383067bc4fce13508797c2adbcbdaf4c4e7">commit</a></li>
+<li>Fix federation inspector filters to remember each tab <a href="https://github.com/jchip/fynmesh/commit/38e5086ca2ce85a3b168447f139568933e3a44b9">commit</a></li>
+<li>Update Vitest to 5.0.1 <a href="https://github.com/jchip/fynmesh/commit/870f74996c07243292dc6b20b503e2f8a5610a74">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: clear stale optFailed markers from lockfiles <a href="https://github.com/jchip/fynmesh/commit/471772694b6544c78c4bb1ba39e80c345b15ee97">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+<li>chore: upgrade AG Grid to 35.3.1 and move the demo to the modern row-selection API <a href="https://github.com/jchip/fynmesh/commit/bea8a729baddb2d1e5d0f9f725af93ff14203f4d">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-bundled</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-mw-mismatch</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>fix: clear remaining audit vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/c4a7f388f867e759db4aff4efeaee32a690dd773">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/regular-react-app</code></p>
+<ul>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/rollup-wrap-plugin</code></p>
+<ul>
+<li>add demo links to package READMEs <a href="https://github.com/jchip/fynmesh/commit/e5705f126eaa61745c6f126091be072b2fb43661">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>update lockfiles <a href="https://github.com/jchip/fynmesh/commit/b7022c3dde3cde90b7e427e17c07066f50c6a294">commit</a></li>
+<li>Fix high and critical dependency vulnerabilities <a href="https://github.com/jchip/fynmesh/commit/5551f17849f3413b01d8b5f991b0d767f2c68258">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>notes</code></p>
+<ul>
+<li>balance scope-isolation, strategy and reach claims in comparison <a href="https://github.com/jchip/fynmesh/commit/cfb6997627332bd5bd96676687beab2fb65afa24">commit</a></li>
+<li>docs: compare core federation strengths of FynMesh and MF <a href="https://github.com/jchip/fynmesh/commit/874b866d8d97af5303c4795222a1978d34fe2dc7">commit</a></li>
+<li>add share-scope membership section, fix tree-shaking wording <a href="https://github.com/jchip/fynmesh/commit/58ee63a760ed5899ea8ef63f1bbbe62fee626b20">commit</a></li>
+<li>refresh federation comparison with source and container tests <a href="https://github.com/jchip/fynmesh/commit/b881d12aa0d464c4826ff6cb1d7b3809e70c9598">commit</a></li>
+<li>docs: clarify federation-js module-boundary model <a href="https://github.com/jchip/fynmesh/commit/72e4d365d9b482e3b53209da82c1bbb31bddb3ad">commit</a></li>
+<li>docs: re-sync federation-inspector design with what actually shipped <a href="https://github.com/jchip/fynmesh/commit/78c417dab04f9d48fcb611785f7870a673c3af0d">commit</a></li>
+<li>docs: refresh roadmap against the source and record known gaps <a href="https://github.com/jchip/fynmesh/commit/129823d6328aee6f86db692128641c849d0c63b3">commit</a></li>
+<li>docs: explicit federation initialization is a design stance, not a tax <a href="https://github.com/jchip/fynmesh/commit/fdd4ab39a399ceda181ad13786e5982bbb1ca0b6">commit</a></li>
+<li>docs: measure runtime delivery cost, embedded per artifact vs loaded once <a href="https://github.com/jchip/fynmesh/commit/30fe01d388f41757f6be6f34d3fb0e6578b9f4a0">commit</a></li>
+<li>docs: declarative resolution is fynmeshs thesis, not a missing registerRemotes <a href="https://github.com/jchip/fynmesh/commit/44c37d338206a1c69accdfa1f25dbf4e68ae821c">commit</a></li>
+<li>docs: add Module Federation comparison and refresh build-artifact notes <a href="https://github.com/jchip/fynmesh/commit/42bfdcf1a63edcb7e5846e272ac8fec43e97ca05">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>fix: repair stale site-url tests, correct the AG Grid footer version label, and explain the combine re-run <a href="https://github.com/jchip/fynmesh/commit/d0f7d53b8aaff624455b4433481271dc1d7a0ecd">commit</a></li>
+<li>fix the dead combine-group ref and fail the build when a group does not form <a href="https://github.com/jchip/fynmesh/commit/94502702bc048fdf1e16f94d4c42bb2b252f91bb">commit</a></li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>update fyn and fynpo <a href="https://github.com/jchip/fynmesh/commit/77b494dfac551bc261d94f51f331bbe4f91ec936">commit</a></li>
+<li>fix: run demo-server xrun tasks with its local runner and approve esbuild 0.27 <a href="https://github.com/jchip/fynmesh/commit/427327471a5ceb46f749fb00a6dfa0ae8d7eadd1">commit</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="982026">9/8/2026</h2>
+<h3 id="packages-2">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.3</code> <code>(1.1.2 =&gt; 1.1.3)</code></li>
+<li><code>create-fynapp@1.1.5</code> <code>(1.1.4 =&gt; 1.1.5)</code></li>
+</ul>
+<h3 id="commits-2">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>approve esbuild 0.25.x install scripts and pin tsx to the 0.25 line</li>
+<li>clear dist in build-dist so an earlier build cannot linger</li>
+<li>gate kernel sourcemaps on the build env so production ships no dangling refs</li>
+<li>read production builds through the federation and kernel debug hatches</li>
+<li>the provider fallback scan reports when more than one provider matched the name it took</li>
+<li>default stays the first version registered, and says so once when a second one arrives</li>
+<li>getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches</li>
+<li>failing tests for getMiddleware resolving default instead of the requested semver range</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>stop emitting sourcemaps in production builds, FYNMESH_SOURCEMAP overrides</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>serve the inspectors minified build from the dev proxy</li>
+<li>key react roots by container so a fynapp can render in two regions</li>
+<li>restore the sidebar after Clear All and offer it as a loadable fynapp</li>
+<li>never mark a chunk immutable when bytes were appended after its hash</li>
+<li>ship a 404.html so cloudflare stops answering unknown paths with the landing page</li>
+<li>fail the build when a federation chunk did not ship</li>
+<li>point sitemap and canonical urls at the extensionless paths cloudflare serves</li>
+<li>split the demo site build out of the live publish chain</li>
+<li>clean the demo site output dir before building, never the source public dir</li>
+<li>include fynapp-notes in demo site build and styles</li>
+<li>the diagnostics lab is a dev-build affordance, so the switch is absent from the published page rather than broken on it</li>
+<li>a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch</li>
+<li>one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page</li>
+<li>federation-inspector lives in dev-tools, dependency-free</li>
+<li>document the PORT override and that whoever binds 3000 first wins it</li>
+<li>demo loads the federation inspector at idle after paint, served from its own dist</li>
+</ul>
+</li>
+<li>
+<p><code>packages/federation-inspector</code></p>
+<ul>
+<li>soften the inspectors light theme off pure white and name the header</li>
+<li>stop flagging the __I debug hatches as a limited capability</li>
+<li>match federations own scope fallback when joining __I rows</li>
+<li>read production builds through the federation and kernel debug hatches</li>
+<li>the overlay drops its opening class when the enter animation ends, so a dock change no longer replays it</li>
+<li>dock, theme, text size and copy move into a settings menu that stays reachable at every panel width</li>
+<li>cover the tab strips reveal-on-view-change and its overflow controls</li>
+<li>the tab strip has its own row, reveals the active tab on every view change, and shows scroll controls when it overflows</li>
+<li>preserve Enter activation on focused controls</li>
+<li>refresh live diagnostics when module failures change</li>
+<li>drop the registered-only list nobody read; the nodes registered stage is the packages one spelling of it</li>
+<li>a registration-only module whose id is a url carries it, through the one predicate pass 1 already used</li>
+<li>a combined member registered under both its specifier and its url is one module, keyed by the url it already has</li>
+<li>a bundle group header says how many of its modules loaded, keyed on the file rather than its basename</li>
+<li>a container scope nobody could read is absent rather than invented, and says so where it used to say default</li>
+<li>the reach check withholds its verdict while a FynApp is still bootstrapping, and says which one it is waiting on</li>
+<li>the FynApp chip says bare name, leaving default to mean one thing on the row</li>
+<li>an inlined expose has no chunk to go and find, and the FynApps view now says so from the same derivation the Containers tab reads</li>
+<li>a bundle member is counted loaded by its own stage, not by a lookup that could not find it</li>
+<li>the FynApps view names the branch a middleware resolved through, toned from the same table the Middleware view reads</li>
+<li>report an auto-applying middleware that reached nothing, and say so rather than go quiet where a name collision makes reach unknowable</li>
+<li>three names for the three expose levels, each derived in one place, so two views stop printing different counts for one app</li>
+<li>one spelling for the auto-apply scopes, so the row and its version chip stop disagreeing</li>
+<li>tone a consumer chip by its resolution branch, so a fallback stops rendering green</li>
+<li>a middlewares consumers include the FynApps it was delivered to without declaring it, tagged by route</li>
+<li>a bootstrap queue panel on the FynApps view, absent rather than idle where the coordinator is mangled</li>
+<li>FynMesh diagnostics derived from the kernel registries, for the conditions the production kernel is silent about</li>
+<li>middleware view reads the registry from the providers side, one row per provider::name</li>
+<li>the containers view renders every manifest key, and names the ones the build never declared</li>
+<li>a FynApps tab, read entirely off reserved kernel surfaces, absent rather than empty when there is no kernel</li>
+<li>a store-only container counts its provisions as shares, and an inferred row stops calling itself unresolved</li>
+<li>a share source is an announcement, not a copy, so the views say declares where nothing was supplied</li>
+<li>rebuild container provides from the share store, since $SC.versions is mangled</li>
+<li>depth buttons count the nodes the cap lets them draw, so two capped depths close instead of advertising different graphs</li>
+<li>the graph names a selection it has no node for instead of claiming to be focused on it</li>
+<li>federation-inspector lives in dev-tools, dependency-free</li>
+<li>the disabled-depth title counts nodes with plural, not a hardcoded s</li>
+<li>hovering a graph node lights its incident edges and dims the rest</li>
+<li>each graph depth says how many nodes it reaches, and a depth that reaches no further is disabled</li>
+<li>graph nodes carry container@version where two versions of a container are live</li>
+<li>every view counts with the filter it renders with</li>
+<li>id: and url: match alike, so a partial id narrows instead of returning nothing</li>
+<li>stop stealing the pages keys, and stop the filter and the graph answering questions nobody asked</li>
+<li>the module detail url is a link out to the file</li>
+<li>animate the overlay open and closed, and keep it mounted until the exit plays</li>
+<li>share rows line up on a shrinkable basis, not a min-width that clipped the range mark</li>
+<li>graph arrowheads, wider layer gap, fit-to-window</li>
+<li>let a small viewport override the panel minimum, and keep the live api on a duplicate load</li>
+<li>graph drag-to-pan, wheel zoom, and ELK layered layout with orthogonal routing</li>
+<li>copy-button feedback, dock caps on both axes, strict cell shrink order, container: facet in shares, validated persisted state</li>
+<li>fix id overflowing onto chips, theme restore, off-left drag trap, indistinguishable container versions</li>
+<li>fix phantom container versions from entry chunks, cache analysis, avoid per-scroll layout rebuild</li>
+<li>federation-inspector modules, containers, shares, graph, issues and raw views</li>
+<li>federation-inspector shadow-DOM shell, adapters, resizable overlay and virtual table</li>
+<li>federation-inspector dependency graph, semver, share resolution and diagnostics</li>
+<li>federation-inspector snapshot model, capability probing and collectors</li>
+<li>scaffold federation-inspector package with rollup/terser/tsc build</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>demo React fynapps share esm-react non-singleton so 18 and 19 coexist</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>document markos unprovided share as a deliberate negative demo</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-bundled</code></p>
+<ul>
+<li>one demo FynApp ships a combined dist, behind a lab switch, so the bundle collector finally reads a real page</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-mw-mismatch</code></p>
+<ul>
+<li>a lab FynApp that asks for a middleware version nobody has, so fallback and unresolved are page state instead of a console patch</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>demo React fynapps share esm-react non-singleton so 18 and 19 coexist</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>key react roots by container so a fynapp can render in two regions</li>
+<li>restore the sidebar after Clear All and offer it as a loadable fynapp</li>
+<li>getMiddleware resolves the requested semver range, warning and falling back to default when nothing matches</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>demo React fynapps share esm-react non-singleton so 18 and 19 coexist</li>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>Refresh lockfiles and kernel version stamp after the 1.1.2 release</li>
+</ul>
+</li>
+<li>
+<p><code>notes</code></p>
+<ul>
+<li>document markos unprovided share as a deliberate negative demo</li>
+<li>rebuild container provides from the share store, since $SC.versions is mangled</li>
+<li>the design doc records the answers to its own open questions</li>
+<li>federation-inspector lives in dev-tools, dependency-free</li>
+<li>scaffold federation-inspector package with rollup/terser/tsc build</li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>chore: upgrade fyn and fynpo to 3.1.2 and approve esbuild install scripts</li>
+<li>document the build-only demo site path and the publish blast radius</li>
+<li>AGENTS.md documents the PORT override, and drops the CRLF endings no other file in the repo uses</li>
+<li>gitignore .local safesh state dir</li>
+</ul>
+</li>
+</ul>
+<h2 id="912026">9/1/2026</h2>
+<h3 id="packages-3">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.2</code> <code>(1.1.1 =&gt; 1.1.2)</code></li>
+<li><code>create-fynapp@1.1.4</code> <code>(1.1.3 =&gt; 1.1.4)</code></li>
+<li><code>rollup-wrap-plugin@1.0.1</code> <code>(1.0.0 =&gt; 1.0.1)</code></li>
+</ul>
+<h3 id="commits-3">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/bundle-esm-share</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>drop the dead root templates, scaffold the create-fynapp version from a placeholder</li>
+<li>create-fynapp templates take the kernel version from a placeholder</li>
+<li>Pin create-fynapp templates and examples to kernel ^1.1.1</li>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>react and react18 templates bundle and provide their own React</li>
+<li>docs and gates for the open-framework model</li>
+<li>..279: templates for vanilla, react18, preact, solid, svelte, marko</li>
+<li>create-fynapp accepts any --framework, generic scaffold + agent brief</li>
+<li>create-fynapp scaffolds vue - complete template, allowlist, and framework-generic gates</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>revert create-fynapp to the nix-clap 2.0.0 pin, cli-args drops defaultCommand</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid-react</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-pkg</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-18</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-dom-18</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>preserve fynapp-middleware import attributes, and stop failing silently when a declaration is unreadable</li>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>point kernel types at lib, add federation.d.ts ambient shim</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/pkg-esm-react-18</code></p>
+<ul>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/regular-react-app</code></p>
+<ul>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/rollup-wrap-plugin</code></p>
+<ul>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>type-check every package - alias type paths, shell-mw contract types, real type fixes</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>create-fynapp back on @fynjs/cli-args, lockfiles onto the 2026-08-31 fynjs patch wave</li>
+<li>rollup-plugin-esbuild replaces plugin-typescript, no package needs tslib</li>
+<li>drop @xarc/module-dev, create-fynapp on vitest, type module and node &gt;=24 across the repo</li>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>adopt the 2026-08-30 fynjs release wave</li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>Version lock @fynmesh/kernel and create-fynapp so they release together</li>
+<li>Update fyn and fynpo to 3.0.5</li>
+<li>Update fyn and fynpo to 3.0.2</li>
+</ul>
+</li>
+</ul>
+<h2 id="8302026">8/30/2026</h2>
+<h3 id="packages-4">Packages</h3>
+<ul>
+<li><code>create-fynapp@1.1.3</code> <code>(1.1.2 =&gt; 1.1.3)</code></li>
+</ul>
+<h3 id="commits-4">Commits</h3>
+<ul>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>create in the current directory outside the fynmesh monorepo</li>
+</ul>
+</li>
+</ul>
+<h2 id="8302026-1">8/30/2026</h2>
+<h3 id="packages-5">Packages</h3>
+<ul>
+<li><code>create-fynapp@1.1.2</code> <code>(1.1.1 =&gt; 1.1.2)</code></li>
+</ul>
+<h3 id="commits-5">Commits</h3>
+<ul>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>pin nix-clap to 2.0.0 so published bins match the exec API they use</li>
+</ul>
+</li>
+</ul>
+<h2 id="8302026-2">8/30/2026</h2>
+<h3 id="packages-6">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.1</code> <code>(1.1.0 =&gt; 1.1.1)</code></li>
+<li><code>create-fynapp@1.1.1</code> <code>(1.1.0 =&gt; 1.1.1)</code></li>
+</ul>
+<h3 id="commits-6">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>derive the kernel version from package.json instead of hardcoding it</li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>repo-level publish gate for fyn overrides, release-gate test cleanups</li>
+<li>harden release gate: whole fyn key, framework publish check, portable scan</li>
+<li>remove local fyn dependency overrides from published create-fynapp and templates</li>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>match only exact or versioned dist ids for shell-initiated FynApps</li>
+<li>clear stale pending shell region after a failed FynApp load</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>resync demo fyn-lock.yaml files after verification build</li>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>resync demo fyn-lock.yaml files after verification build</li>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>resync demo fyn-lock.yaml files after verification build</li>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>match only exact or versioned dist ids for shell-initiated FynApps</li>
+<li>clear stale pending shell region after a failed FynApp load</li>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+<li>derive the kernel version from package.json instead of hardcoding it</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>resync fyn-lock.yaml files after the 1.1.0 release</li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>repo-level publish gate for fyn overrides, release-gate test cleanups</li>
+</ul>
+</li>
+</ul>
+<h2 id="8282026">8/28/2026</h2>
+<h3 id="packages-7">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.1.0</code> <code>(1.0.0 =&gt; 1.1.0)</code></li>
+<li><code>create-fynapp@1.1.0</code> <code>(1.0.0 =&gt; 1.1.0)</code></li>
+</ul>
+<h3 id="commits-7">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>skip federation container init when the share scope already exists</li>
+<li>stop the preload-hints design reading as shipped</li>
+<li>type the manifests exposes as what the build emits</li>
+<li>preload the file a combined module will really be fetched as</li>
+<li>docs: make the dist JSON artifacts and their uses explicit</li>
+<li>Trim remaining kernel code; fix waitFor waiter leak (26,663 -&gt; 26,316)</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+<li>correct license in kernel and create-fynapp READMEs</li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>read the map an app offers, not a file it may not emit</li>
+<li>docs: make the dist JSON artifacts and their uses explicit</li>
+<li>Migrate FynApp authoring docs to the renamed kernel contract</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+<li>correct license in kernel and create-fynapp READMEs</li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>route shell unload through the kernel shutdown lifecycle</li>
+<li>eliminate shell middleware TypeScript warnings</li>
+<li>defer React 18 provider and fynapp-x1-v1 to browser idle</li>
+<li>preload only the chunks this build actually produced</li>
+<li>read the map an app offers, not a file it may not emit</li>
+<li>declare the combined-bundle maps in the shell page</li>
+<li>demo: preload the shell chunks as scripts, not as modules</li>
+<li>demo: preload the file the runtime will actually request</li>
+<li>demo: pick the loader variant in the site build too, not just dev-proxy</li>
+<li>demo: switch the loader pair with FEDERATION, frozen standard vs live fork</li>
+<li>demo: serve systemjs and federation-js from the live rollup-federation build</li>
+<li>keep landing page buttons white after they are visited</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+<li>replace dead jest scaffolding with vitest and test findMissingLocalRefs</li>
+<li>ship lazy-loader.js and fail build on missing asset refs</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-pkg</code></p>
+<ul>
+<li>normalize package.json formatting from fynpo prepare</li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-rollup-externals</code></p>
+<ul>
+<li>normalize package.json formatting from fynpo prepare</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>Migrate FynApp authoring docs to the renamed kernel contract</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>route shell unload through the kernel shutdown lifecycle</li>
+<li>eliminate shell middleware TypeScript warnings</li>
+<li>defer React 18 provider and fynapp-x1-v1 to browser idle</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>notes</code></p>
+<ul>
+<li>read the map an app offers, not a file it may not emit</li>
+<li>docs: record the second reader of federation.json bundles</li>
+<li>docs: make the dist JSON artifacts and their uses explicit</li>
+<li>Migrate FynApp authoring docs to the renamed kernel contract</li>
+<li>Trim remaining kernel code; fix waitFor waiter leak (26,663 -&gt; 26,316)</li>
+<li>Shrink browser kernel bundle by 10 KB (36,716 -&gt; 26,663, -27.4%)</li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>read the map an app offers, not a file it may not emit</li>
+<li>demo: combine each FynApps tiny chunks in the production build</li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>update fyn/fynpo to 2.1.6 and drop local fynpo link</li>
+</ul>
+</li>
+</ul>
+<h2 id="8122026">8/12/2026</h2>
+<h3 id="packages-8">Packages</h3>
+<ul>
+<li><code>@fynmesh/kernel@1.0.0</code> <code>(0.0.0 =&gt; 1.0.0)</code></li>
+<li><code>create-fynapp@1.0.0</code> <code>(0.0.0 =&gt; 1.0.0)</code></li>
+<li><code>rollup-wrap-plugin@1.0.0</code> <code>(0.0.0 =&gt; 1.0.0)</code></li>
+</ul>
+<h3 id="commits-8">Commits</h3>
+<ul>
+<li>
+<p><code>packages/kernel</code></p>
+<ul>
+<li>[major] declare packages patterns and reset versions to 0.0.0 for initial publish</li>
+<li>add Apache-2.0 license and publish metadata to kernel, create-fynapp, rollup-wrap-plugin</li>
+<li>use classic script preload for fynapp entry files</li>
+<li>convert 9 more members to #private (37,065 -&gt; 36,722 B)</li>
+<li>fix two redundant computations in the middleware executor</li>
+<li>shrink the browser kernel by 9% (40,780 -&gt; 37,128 B)</li>
+<li>reconcile authoritative tracker references</li>
+<li>add development bootstrap error overlay</li>
+<li>bundle the kernel public entrypoint</li>
+<li>remove false CommonJS kernel export</li>
+<li>install kernel declaration dependency</li>
+<li>add AbortSignal to bus request and reject in-flight waits on requester dispose</li>
+<li>remove abort hook from caller signal on unsubscribe</li>
+<li>add suspend/resume FynUnit hooks and kernel suspend/resumeFynApp</li>
+<li>record failed bootstrap as observable per-FynApp state (error boundary)</li>
+<li>add kernel-side FynApp lifecycle-state tracking (mount tracking)</li>
+<li>harden FynBus dispose semantics, kernel facade, tracking, and telemetry</li>
+<li>run FynUnit initialize once per runtime across defer and resume</li>
+<li>apply middleware on first pass when setup signals ready</li>
+<li>add FynBus kernel-flow, composition, stress, and type-contract tests</li>
+<li>freeze FynBus meta so subscribers cannot tamper platform-stamped identity</li>
+<li>add 107 FynBus edge-case, RPC, and lifecycle tests</li>
+<li>fix FynBus telemetry double prefix by using unprefixed capture names</li>
+<li>implement FynBus request/response with late-handler wait and timeout</li>
+<li>implement FynBus pub/sub with channels and per-app facades</li>
+<li>document loadFynApp/loadFynAppsByName hybrid error contract (null + throw)</li>
+<li>core/kernel: fix telemetry flush/error-capture and registry review findings, add regression tests</li>
+<li>Refactor core/kernel for DRY and clean code</li>
+<li>Add telemetry capture point integration tests</li>
+<li>Add KernelTelemetry system with capture points</li>
+<li>Decompose callMiddlewares method</li>
+<li>Extract shared middleware override context creation and execution</li>
+<li>Decompose bootstrapFynApp method</li>
+<li>Extract middleware context factory function</li>
+<li>Extract shared findExecutionOverride to util.ts</li>
+<li>Extract checkAlreadyLoaded to KernelCore base class</li>
+<li>Extract middleware target selection helper</li>
+<li>Extract removeFromRegistry helper in KernelCore</li>
+<li>Reuse noOpFynUnit from use-middleware.ts</li>
+<li>Remove redundant type cast in middleware-manager.ts</li>
+<li>Define middleware magic string constants</li>
+<li>Fix FynApp initialization with empty middleware array</li>
+<li>Fix consumer-first loading by sharing middlewareContext across runtimes</li>
+<li>Implement shared state architecture with registry pattern</li>
+<li>Remove string-indexed private field access in kernel</li>
+<li>Remove outdated tests and fix remaining failures</li>
+<li>Fix 32 broken kernel test fixtures after module refactoring</li>
+<li>Fix ModuleLoader execution override context kernel being null</li>
+<li>Allow FynApp degraded execution with deferOk flag</li>
+<li>Resume deferred bootstraps on failure</li>
+<li>fix multi-version FynApp loading by using name@version key</li>
+<li>prevent duplicate FynApp loading by returning existing instance</li>
+<li>consolidate middleware scanning into MiddlewareManager</li>
+<li>add shutdown lifecycle hook to FynUnit and kernel</li>
+<li>fix kernel error isolation and middleware consumer deferral</li>
+<li>preload design doc</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>Add structured error reporting with KernelError class hierarchy</li>
+<li>warn cyclic dependencies only</li>
+<li>shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>Add kernel design documentation and update preloading status</li>
+<li>Add Phase 2 preload depth control to kernel</li>
+<li>Add zero-kernel routing architecture design</li>
+<li>Add route-based preloading design document</li>
+<li>Add Phase 1 preloading optimization for FynApp entry files</li>
+<li>Add debug logging for shared-providers dependency resolution</li>
+<li>Strip console.debug and console.log from minified kernel</li>
+<li>Add lazy loading for FynApp 2</li>
+<li>continue kernel refactoring</li>
+<li>kernel refactoring</li>
+<li>kernel tests</li>
+<li>6</li>
+<li>5</li>
+<li>4</li>
+<li>3</li>
+<li>automatic fynapp dependencies resolving</li>
+<li>2</li>
+<li>1</li>
+<li>1</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+<li>test: add comprehensive tests for universal middleware support</li>
+<li>feat: implement universal middleware support with autoApplyScope</li>
+<li>tests for kernel</li>
+<li>update docs</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>wip middleware architecture</li>
+<li>dynamic fynapp dependency fallback design</li>
+<li>more work on design, architecture, and kernel</li>
+<li>7</li>
+<li>6</li>
+<li>5</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/bundle-esm-share</code></p>
+<ul>
+<li>mark demo-rollup-externals packages private</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>5</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/create-fynapp</code></p>
+<ul>
+<li>fix create-fynapp prepublish gate - aveazul typings and lint scope</li>
+<li>[major] declare packages patterns and reset versions to 0.0.0 for initial publish</li>
+<li>add Apache-2.0 license and publish metadata to kernel, create-fynapp, rollup-wrap-plugin</li>
+<li>replace private artifactory urls with public npm in create-fynapp lockfile</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>fix packaged example references</li>
+<li>drop demo dependency from React template</li>
+<li>use fyn for global CLI install</li>
+<li>publish only supported React templates</li>
+<li>exercise the renamed built check command</li>
+<li>use inspection terms for create inputs</li>
+<li>remove inert component prompts</li>
+<li>validate create inputs and target paths</li>
+<li>expose only complete framework templates</li>
+<li>make CLI execution guards URL safe</li>
+<li>deliver parsed CLI options to handlers</li>
+<li>make ESM CLI artifacts executable</li>
+<li>port output checks to the renamed API</li>
+<li>align release CLI documentation</li>
+<li>rename local artifact checks</li>
+<li>sync FynApp agent contract</li>
+<li>declare middleware example provider</li>
+<li>reject stale or mismatched FynApp output</li>
+<li>run app commands through streaming fyn processes</li>
+<li>make API documentation warning-free</li>
+<li>enforce lint in the prepublish gate</li>
+<li>exclude development examples from package</li>
+<li>retarget create-fynapp for LLM coding agents</li>
+<li>Fix test/source drift in create-fynapp plugin-wrapper test</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>Fix React template to use create-fynapp helpers and FynUnit pattern</li>
+<li>Replace debug console.logs with conditional logging</li>
+<li>shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>5</li>
+<li>3</li>
+<li>update demo fynapps federation config</li>
+<li>2</li>
+<li>1</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>wip create-fynapp 3</li>
+<li>wip create-fynapp 2</li>
+<li>starting to implement rollup config management in create-fynapp</li>
+<li>6</li>
+<li>4</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/demo-server</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>stop registering the no-op unregister service worker</li>
+<li>use minified spectre css on shell page in production</li>
+<li>generate _headers marking content-hashed chunks immutable</li>
+<li>preload shell startup fynapp chunks to collapse load waterfall</li>
+<li>document NODE_ENV=production deploy via fyn publish-demo</li>
+<li>include ag-grid, ag-grid-lib, and notes fynapps in demo deploy</li>
+<li>switch demo deploy to cloudflare pages via force-pushed gh-pages</li>
+<li>Add fynapp-notes demo and update HOWTO guide</li>
+<li>add AG Grid federation demo with shared library provider</li>
+<li>add docs and READMEs for demo</li>
+<li>add meta to demo</li>
+<li>removing sw</li>
+<li>convert shell.html to template for production builds</li>
+<li>remove html output files</li>
+<li>add Google verification file to build output</li>
+<li>improve button colors and visibility in landing page and shell demo</li>
+<li>improve landing page: real framework logos, fixed github icon, cleaner feature section</li>
+<li>update description to progressive scalable enterprise applications</li>
+<li>always render SEO meta tags in demo pages</li>
+<li>add marketing landing page and framework roadmap</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>shell demo</li>
+<li>test missing static shared import error</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>Improve layout spacing and button alignment</li>
+<li>Add lazy loading for FynApp 2</li>
+<li>add demo/fynapp-8-svelte</li>
+<li>4</li>
+<li>remove explicit loading middleware fynapps</li>
+<li>automatic fynapp dependencies resolving</li>
+<li>1</li>
+<li>demo: fix gh pages publish</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+<li>update gh-publish</li>
+<li>fix demo site service worker base path</li>
+<li>dev tools for service worker</li>
+<li>github repo link in demo site</li>
+<li>add service worker to demo site</li>
+<li>support building demo to a github pages site</li>
+<li>update docs</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>add systemjs runtime to demo-server</li>
+<li>serve federation-js bundle according to env</li>
+<li>Update fynapp-2-react18 to use federated components from fynapp-x1 using React 18</li>
+<li>add styling for components in fynapp-x1</li>
+<li>make the two react providing fynapp use the same name</li>
+<li>add another major version of fynapp-x1 demo</li>
+<li>7</li>
+<li>5</li>
+<li>4</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>fix AG Grid checkbox column showing duplicate order ID text</li>
+<li>add AG Grid federation demo with shared library provider</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-ag-grid-react</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>fix AG Grid checkbox column showing duplicate order ID text</li>
+<li>add AG Grid federation demo with shared library provider</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-pkg</code></p>
+<ul>
+<li>mark demo-rollup-externals packages private</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-18</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>fix modal dialog from fynapp-x1 components</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/esm-react-dom-18</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>fix demo</li>
+<li>add AG Grid federation demo with shared library provider</li>
+<li>more middleware design and implementation</li>
+<li>fix modal dialog from fynapp-x1 components</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>key demo get-status handler guard by bus facade so re-bootstrap re-registers</li>
+<li>add FynBus demo to fynapp-1 and fynapp-2-react18</li>
+<li>Consolidate fynapp-1 and fynapp-1-b into config-driven variants</li>
+<li>Extract shared demo utilities package for middleware patterns</li>
+<li>Add consumer-first loading auto-sync for shared counter</li>
+<li>add docs and READMEs for demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>Improve layout spacing and button alignment</li>
+<li>some fynapp-1 layout changes</li>
+<li>6</li>
+<li>5</li>
+<li>3</li>
+<li>update demo fynapps federation config</li>
+<li>1</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+<li>design tokens theme selection demo</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>fix fynapp-1 react-dom import</li>
+<li>misc types update for demo/fynapp-1</li>
+<li>Fix Modal transparency and add configurable overlay</li>
+<li>add styling for components in fynapp-x1</li>
+<li>make the two react providing fynapp use the same name</li>
+<li>add another major version of fynapp-x1 demo</li>
+<li>7</li>
+<li>6</li>
+<li>5</li>
+<li>4</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-1-b</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>Consolidate fynapp-1 and fynapp-1-b into config-driven variants</li>
+<li>Extract shared demo utilities package for middleware patterns</li>
+<li>Add consumer-first loading auto-sync for shared counter</li>
+<li>allow fynapp-2 and fynapp-1-b to render without counter provider</li>
+<li>add docs and READMEs for demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>6</li>
+<li>5</li>
+<li>3</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+<li>design tokens theme selection demo</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-2-react18</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add FynBus demo to fynapp-1 and fynapp-2-react18</li>
+<li>Extract shared demo utilities package for middleware patterns</li>
+<li>Add consumer-first loading auto-sync for shared counter</li>
+<li>Fix fynapp-2-react18 shared counter connection</li>
+<li>allow fynapp-2 and fynapp-1-b to render without counter provider</li>
+<li>add docs and READMEs for demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>5</li>
+<li>3</li>
+<li>update demo fynapps federation config</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+<li>design tokens theme selection demo</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>demo/fynapp-2-react18 types cleanup</li>
+<li>Update fynapp-2-react18 to use federated components from fynapp-x1 using React 18</li>
+<li>6</li>
+<li>5</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-3-marko</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add missing typescript devDependency to fynapp-3-marko so dist build works</li>
+<li>add docs and READMEs for demo</li>
+<li>update shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>update demo fynapps federation config</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>6</li>
+<li>3</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-4-vue</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>update shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>update demo fynapps federation config</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>6</li>
+<li>3</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-5-preact</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>update shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>update demo fynapps federation config</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>6</li>
+<li>3</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-6-react</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>Fix late join state synchronization in consumer FynApps</li>
+<li>Allow FynApp degraded execution with deferOk flag</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>update shell demo</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>6</li>
+<li>3</li>
+<li>1</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>demo/fynapp-6-react types cleanup</li>
+<li>6</li>
+<li>5</li>
+<li>3</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-7-solid</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>update shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>update demo fynapps federation config</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>use dummy virtual module to get rollup build going</li>
+<li>7</li>
+<li>6</li>
+<li>3</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-8-svelte</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>update shell demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>add demo/fynapp-8-svelte</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>fix demo</li>
+<li>fix AG Grid checkbox column showing duplicate order ID text</li>
+<li>add AG Grid federation demo with shared library provider</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-ag-grid-lib</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>bind ag-grid-lib react to shared React 19 to fix React #525</li>
+<li>fix AG Grid checkbox column showing duplicate order ID text</li>
+<li>add AG Grid federation demo with shared library provider</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-design-tokens</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>5</li>
+<li>2</li>
+<li>more middleware design and implementation</li>
+<li>design tokens theme selection demo</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-notes</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>Fix FynApp initialization with empty middleware array</li>
+<li>Add fynapp-notes demo and update HOWTO guide</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-18</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>3</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>make the two react providing fynapp use the same name</li>
+<li>6</li>
+<li>5</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-react-middleware</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>Add createUseSharedCounter hook factory for production use</li>
+<li>Implement shared state architecture with registry pattern</li>
+<li>fix kernel error isolation and middleware consumer deferral</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>3</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-shell-mw</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>rename shadowed container local that broke component render path</li>
+<li>check declared exposes before probing ./component to avoid 404 console noise</li>
+<li>reuse tracked React root in shell tryRenderComponent to avoid double createRoot</li>
+<li>fix demo</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>Add fynapp-notes to shell demo dropdown</li>
+<li>Fix fynapp-2-react18 shared counter connection</li>
+<li>fix shell demo header text contrast</li>
+<li>Implement shell region visibility toggle</li>
+<li>fix shell demo FynApp re-rendering when switching back</li>
+<li>add AG Grid federation demo with shared library provider</li>
+<li>fix shell container ID to match design-tokens CSS scoping</li>
+<li>add docs and READMEs for demo</li>
+<li>improve button colors and visibility in landing page and shell demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>update shell demo</li>
+<li>shell demo</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>more middleware design and implementation</li>
+<li>demo: fynapp-shell-mw demo auto apply middleware</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-sidebar</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>keep demo React adapters out of public scaffolds</li>
+<li>Create shared rollup config factory for demo apps</li>
+<li>add docs and READMEs for demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>update shell demo</li>
+<li>shell demo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-test-shared</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add docs and READMEs for demo</li>
+<li>redesign execution and middleware lifecycle</li>
+<li>shell demo</li>
+<li>test missing static shared import error</li>
+</ul>
+</li>
+<li>
+<p><code>packages/fynapp-x1-v1</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>bump fynapp-react-lib container version to 19.2.8</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>Consolidate fynapp-x1-v1 and fynapp-x1-v2 component libraries</li>
+<li>add docs and READMEs for demo</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>setupFynAppOutputConfig from create-fynapp</li>
+<li>Improve layout spacing and button alignment</li>
+<li>3</li>
+<li>update demo fynapps federation config</li>
+<li>2</li>
+<li>more middleware design and implementation</li>
+<li>fix modal dialog from fynapp-x1 components</li>
+<li>design tokens theme selection demo</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>update fynlock</li>
+<li>Fix Modal transparency and add configurable overlay</li>
+<li>add styling for components in fynapp-x1</li>
+<li>make the two react providing fynapp use the same name</li>
+<li>add another major version of fynapp-x1 demo</li>
+</ul>
+</li>
+<li>
+<p><code>packages/pkg-esm-react-18</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>5</li>
+<li>2</li>
+</ul>
+</li>
+<li>
+<p><code>packages/regular-react-app</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>5</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>packages/rollup-wrap-plugin</code></p>
+<ul>
+<li>doc: rollup-wrap-plugin README</li>
+<li>[major] declare packages patterns and reset versions to 0.0.0 for initial publish</li>
+<li>add Apache-2.0 license and publish metadata to kernel, create-fynapp, rollup-wrap-plugin</li>
+<li>update dev tools and middleware system</li>
+</ul>
+</li>
+<li>
+<p><code>packages/shared-demo-utils</code></p>
+<ul>
+<li>resync fyn-lock.yaml files with current dependencies</li>
+<li>add FynBus demo to fynapp-1 and fynapp-2-react18</li>
+<li>make shared-demo-utils a package so @fynmesh/kernel resolves (fixes cross-app shared counter)</li>
+<li>Consolidate fynapp-1 and fynapp-1-b into config-driven variants</li>
+<li>Consolidate fynapp-x1-v1 and fynapp-x1-v2 component libraries</li>
+<li>Extract shared demo utilities package for middleware patterns</li>
+</ul>
+</li>
+<li>
+<p><code>packages/test-nested-deps</code></p>
+<ul>
+<li>mark non-publishable packages private so only the five release</li>
+<li>update esm-react-19 and esm-react-dom-19 to React 19.2.8</li>
+<li>Rename requireVersion to semver across codebase</li>
+<li>more middleware design and implementation</li>
+<li>continue middleware system and more demos - design tokens middleware</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>3</li>
+<li>2</li>
+</ul>
+</li>
+<li>
+<p><code>.cursor</code></p>
+<ul>
+<li>more middleware design and implementation</li>
+<li>update dev tools and middleware system</li>
+</ul>
+</li>
+<li>
+<p><code>demo</code></p>
+<ul>
+<li>add docs and READMEs for demo</li>
+<li>update dev tools and middleware system</li>
+<li>chore: rename fynapp-x1 to fynapp-x1-v1</li>
+<li>update dependencies</li>
+<li>add a newRollupPlugin wrapper to be able to track rollup plugin config</li>
+<li>update fynlock</li>
+<li>Update fynapp-2-react18 to use federated components from fynapp-x1 using React 18</li>
+<li>Fix Modal transparency and add configurable overlay</li>
+<li>add styling for components in fynapp-x1</li>
+<li>make the two react providing fynapp use the same name</li>
+<li>7</li>
+</ul>
+</li>
+<li>
+<p><code>misc</code></p>
+<ul>
+<li>5</li>
+<li>3</li>
+<li>3</li>
+<li>1</li>
+</ul>
+</li>
+<li>
+<p><code>notes</code></p>
+<ul>
+<li>correct stale provenance in create-fynapp release handoff</li>
+<li>record live post-deploy measurements for shell load perf</li>
+<li>record shell load perf outcomes and dual-react decision in notes</li>
+<li>preload shell startup fynapp chunks to collapse load waterfall</li>
+<li>reconcile authoritative tracker references</li>
+<li>add development bootstrap error overlay</li>
+<li>record local main integration</li>
+<li>narrow handoff to core package releases</li>
+<li>refresh public release handoff</li>
+<li>document create-fynapp release handoff</li>
+<li>add AbortSignal to bus request and reject in-flight waits on requester dispose</li>
+<li>rename local artifact checks</li>
+<li>mark FynApp lifecycle (mount tracking, error boundary, suspend/resume) shipped in roadmap</li>
+<li>refresh notes to reflect shipped FynBus/telemetry, archive shared-state design</li>
+<li>retarget create-fynapp for LLM coding agents</li>
+<li>harden FynBus dispose semantics, kernel facade, tracking, and telemetry</li>
+<li>add FynBus design doc</li>
+<li>add kernel telemetry design note and notes/README index</li>
+<li>Fix FynApp initialization with empty middleware array</li>
+<li>Add fynapp-notes demo and update HOWTO guide</li>
+<li>Enhance FynApp HOW-TO for AI consumption</li>
+<li>Add FynApp HOW-TO documentation</li>
+<li>Add shared state architecture documentation</li>
+<li>Remove string-indexed private field access in kernel</li>
+<li>update roadmap with project stats and formatting</li>
+<li>update roadmap docs with implemented features</li>
+<li>add docs and READMEs for demo</li>
+<li>update TODO.md to align with framework roadmap</li>
+<li>move TODO.md to notes and update middleware status</li>
+<li>add marketing landing page and framework roadmap</li>
+</ul>
+</li>
+<li>
+<p><code>scripts</code></p>
+<ul>
+<li>initial xrun tasks setup</li>
+</ul>
+</li>
+<li>
+<p><code>MISC</code></p>
+<ul>
+<li>chore: fynpo</li>
+<li>use released fynpo 2.1.5 with publish package filter</li>
+<li>update fynpo, fyn to v2</li>
+<li>update fynpo version</li>
+<li>drop stale @xarc/run local path override</li>
+<li>scope fynpo publish to fynmesh-repo packages</li>
+<li>ignore local .npmrc</li>
+<li>Add .config/ to .gitignore (safesh local tooling state)</li>
+<li>update readme</li>
+<li>update README</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/federation-inspector"><small>Previous</small><span>Federation Inspector</span></a>
+                
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#9222026">9/22/2026</a>
+            
+            <a href="#9202026">9/20/2026</a>
+            
+            <a href="#982026">9/8/2026</a>
+            
+            <a href="#912026">9/1/2026</a>
+            
+            <a href="#8302026">8/30/2026</a>
+            
+            <a href="#8302026-1">8/30/2026</a>
+            
+            <a href="#8302026-2">8/30/2026</a>
+            
+            <a href="#8282026">8/28/2026</a>
+            
+            <a href="#8122026">8/12/2026</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

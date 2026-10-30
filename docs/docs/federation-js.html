@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>federation-js: Runtime Module Federation</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/federation-js">
+    <meta property="og:title" content="federation-js: Runtime Module Federation">
+    <meta property="og:description" content="federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="federation-js: Runtime Module Federation">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/federation-js">
+    <meta name="twitter:title" content="federation-js: Runtime Module Federation">
+    <meta name="twitter:description" content="federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="federation-js: Runtime Module Federation">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/federation-js">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/federation-js#webpage",
+      "url": "https://www.fynmesh.fyi/docs/federation-js",
+      "name": "federation-js: Runtime Module Federation",
+      "description": "federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "federation-js: Runtime Module Federation",
+      "dateModified": "2026-10-24T20:23:56-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "federation-js",
+            "item": "https://www.fynmesh.fyi/docs/federation-js"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel">Kernel</a>
+                
+                <a href="/docs/federation-js" aria-current="page">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>federation-js
+            </nav>
+            <h1>federation-js: Runtime Module Federation</h1>
+            <p class="fm-lead">federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/rollup-federation/federation-js/README.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>Runtime for JavaScript module federation, built on a SystemJS-style module registry.</p>
+<p><strong>FynMesh:</strong> <a href="https://www.fynmesh.fyi">Website</a> · <a href="https://www.fynmesh.fyi/demo">Demo</a> · <a href="https://www.fynmesh.fyi/shell">Shell demo</a></p>
+<p>This is the piece that runs in the browser. It resolves shared modules across independently
+built and deployed bundles, keeps a single instance of a shared dependency when asked to, and
+lets one bundle load modules exposed by another.</p>
+<p>Containers are normally generated for you by
+<a href="/docs/rollup-plugin-federation"><code>rollup-plugin-federation</code></a> — you rarely construct one by hand.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-sh">npm install federation-js
+</code></pre>
+<h2 id="the-module-loader">The module loader</h2>
+<p>federation-js is half of a pair. It does not carry a module registry of its own — it expects a
+<code>System</code> global, and it must be the fork of SystemJS this package ships, not stock SystemJS.
+The fork keeps the module registry, name→url, url→module and per-version qualifiers in
+<code>System.registrations</code>; stock SystemJS has no such thing, and a crossed pair fails in ways that
+look like federation bugs.</p>
+<p>Both loader builds are in this package's <code>dist</code>, so load one before the runtime:</p>
+<pre><code class="language-html">&lt;!-- development: readable, keeps the long-form diagnostics --&gt;
+&lt;script src=&quot;/node_modules/federation-js/dist/system.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/node_modules/federation-js/dist/federation-js.dev.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<pre><code class="language-html">&lt;!-- production --&gt;
+&lt;script src=&quot;/node_modules/federation-js/dist/system.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/node_modules/federation-js/dist/federation-js.min.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>Keep the two halves on the same build: <code>system.js</code> with <code>federation-js.dev.js</code>, <code>system.min.js</code>
+with <code>federation-js.min.js</code>.</p>
+<h2 id="runtime">Runtime</h2>
+<p>Importing the runtime installs a <code>Federation</code> instance on the global object:</p>
+<pre><code class="language-js">import &quot;federation-js/runtime&quot;;
+
+// load a container and pull an exposed module out of it
+Federation.import(&quot;__mf_container_plugin_1&quot;)
+  .then((container) =&gt; container.get(&quot;./bootstrap&quot;))
+  .then((getModule) =&gt; console.log(&quot;module&quot;, getModule()));
+</code></pre>
+<p>A shared module is retrieved the same way, by the name it was shared under:</p>
+<pre><code class="language-js">Federation.import(&quot;__mf_container_plugin_1&quot;)
+  .then((container) =&gt; container.get(&quot;react&quot;))
+  .then((getModule) =&gt; console.log(&quot;module&quot;, getModule()));
+</code></pre>
+<p>A container that only <em>consumes</em> a shared module can still resolve it, provided some container
+that shares it has already loaded.</p>
+<h3 id="debugging-a-minified-page">Debugging a minified page</h3>
+<p><code>Federation.__I()</code> returns a snapshot of what the runtime decided about shared-module
+resolution: for every chunk and share key, the importer-declared ranges, the ranges
+resolution actually applied, and the versions this runtime's own semver accepts. It is in
+the minified build too — that is the build it exists for, since the same information is
+readable off <code>$SS</code> and <code>$SC</code> in a development one. The result is a versioned envelope,
+<code>{ v: 1, r: [...] }</code>; check <code>v</code> before reading the rest.</p>
+<p>The name is <code>__I</code> because nobody guesses it, which is the intent: it is a debugging hatch,
+not part of the API a container or the loader talks to.</p>
+<h3 id="combined-module-files">Combined module files</h3>
+<p>Several modules can be shipped in one physical file. Each still registers itself under its own
+filename, so nothing about importing it changes — the file it arrived in is not part of its
+identity. A module built into a combined file carries <code>b</code> (the physical file) alongside <code>f</code>
+(itself); when they differ, the runtime derives the module's own url from <code>f</code> rather than from
+<code>document.currentScript</code>, which would otherwise be the same for every module in the file.</p>
+<p>Two ways a combined file gets used:</p>
+<ul>
+<li><strong>Already loaded</strong> — a plain <code>&lt;script&gt;</code> tag is enough. Every module in it registers, and a
+later import of any of them resolves without a request.</li>
+<li><strong>Not loaded yet</strong> — the container entry declares which file carries which modules
+(<code>Federation._B(map, container, version)</code>), and the first import of any member pulls that file
+once, however many members ask at the same time. If the file turns out not to carry the module
+it claimed, the runtime warns and loads that module's own file instead.</li>
+</ul>
+<p>Pulling a file registers its modules; it does not execute them. A module's body still runs on
+first import, exactly once.</p>
+<p>Producing these files is a build concern — see <code>rollup-plugin-federation</code>'s
+<code>federation-combine</code>.</p>
+<h2 id="entry-points">Entry points</h2>
+<table>
+<thead>
+<tr>
+<th>Import</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>federation-js</code></td>
+<td><code>Container</code> class and the public types</td>
+</tr>
+<tr>
+<td><code>federation-js/runtime</code></td>
+<td>the runtime; installs the global <code>Federation</code></td>
+</tr>
+<tr>
+<td><code>federation-js/container</code></td>
+<td><code>Container</code> on its own</td>
+</tr>
+<tr>
+<td><code>federation-js/types</code></td>
+<td>types on their own</td>
+</tr>
+</tbody>
+</table>
+<p>Shared-module resolution is semver aware: a container declares the range it accepts, and the
+runtime picks a loaded version that satisfies it, falling back to loading its own copy when
+nothing matches.</p>
+<h2 id="license">License</h2>
+<p>Apache-2.0</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/kernel"><small>Previous</small><span>Kernel</span></a>
+                <a class="fm-pager-next" href="/docs/rollup-plugin-federation"><small>Next</small><span>rollup-plugin-federation</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#install">Install</a>
+            
+            <a href="#the-module-loader">The module loader</a>
+            
+            <a href="#runtime">Runtime</a>
+            
+            <a href="#entry-points">Entry points</a>
+            
+            <a href="#license">License</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

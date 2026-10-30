@@ -1,0 +1,13 @@
+{
+  "name": "FynMesh",
+  "short_name": "FynMesh",
+  "description": "An open source micro frontend framework that can run several versions of the same app on one page.",
+  "start_url": "/",
+  "display": "browser",
+  "theme_color": "#3b82f6",
+  "background_color": "#0f172a",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

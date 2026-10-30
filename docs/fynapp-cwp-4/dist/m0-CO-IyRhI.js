@@ -1,0 +1,1 @@
+globalThis.Federation._mfBind({n:"m0",f:"m0-CO-IyRhI.js",c:"fynapp-cwp",s:"fynmesh",e:!1,v:"4.0.0",b:"m0-CO-IyRhI.js"},["src/amd-gen"]).register(["./_mf-share-surface_esm-react-C4RohLTD.js"],function(e){"use strict";return{setters:[function(s){e("ns",s.reactEsm19_production)}],execute:function(){}}});

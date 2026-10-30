@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Multiple React Versions on One Page</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/run-multiple-react-versions">
+    <meta property="og:title" content="Run Multiple React Versions on One Page">
+    <meta property="og:description" content="Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Run Multiple React Versions on One Page">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/run-multiple-react-versions">
+    <meta name="twitter:title" content="Run Multiple React Versions on One Page">
+    <meta name="twitter:description" content="Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Run Multiple React Versions on One Page">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/run-multiple-react-versions">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/run-multiple-react-versions#webpage",
+      "url": "https://www.fynmesh.fyi/guides/run-multiple-react-versions",
+      "name": "Run Multiple React Versions on One Page",
+      "description": "Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Run Multiple React Versions on One Page",
+      "dateModified": "2026-10-24T20:23:42-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Multiple React Versions",
+            "item": "https://www.fynmesh.fyi/guides/run-multiple-react-versions"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions" aria-current="page">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Multiple React Versions
+            </nav>
+            <h1>Run Multiple React Versions on One Page</h1>
+            <p class="fm-lead">Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/run-multiple-react-versions.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>Yes, you can run React 18 and React 19 micro frontends on the same page. In FynMesh each FynApp declares the React range it accepts. The federation runtime shares one copy per compatible range, so apps that agree share a copy and a new major gets its own.</p>
+<p>This is the main thing FynMesh does differently. Most setups force one React for the whole page. FynMesh lets each app keep the version it was built for.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>A FynApp is an independently built and deployed micro frontend. Its build writes a manifest that lists what it provides and what it consumes. The kernel reads that manifest before it runs the app.</p>
+<p>Two pieces do the sharing:</p>
+<ul>
+<li><code>rollup-plugin-federation</code> builds a container for each FynApp. The container declares each shared module and the semver range it accepts.</li>
+<li><code>federation-js</code> runs in the browser. It picks a loaded version that satisfies the range, and loads another copy when nothing fits.</li>
+</ul>
+<p>All FynApps on a page join one share scope named <code>fynmesh</code>. Nobody lists their peers. Apps that land on the page together share code automatically.</p>
+<h2 id="the-provider-side">The provider side</h2>
+<p>A provider is a FynApp that ships a shared module. The demo has two React providers. Both are named <code>fynapp-react-lib</code>. They differ only in version and range.</p>
+<p>The React 19 provider, from <code>demo/fynapp-react-19/rollup.config.ts</code>:</p>
+<pre><code class="language-ts">...setupFederationPlugins({
+  name: &quot;fynapp-react-lib&quot;,
+  exposes: {},
+  shared: {
+    &quot;esm-react&quot;: { singleton: false, semver: &quot;^19.0.0&quot; },
+    &quot;esm-react-dom&quot;: { singleton: false, semver: &quot;^19.0.0&quot; },
+  },
+}),
+</code></pre>
+<p>The React 18 provider in <code>demo/fynapp-react-18</code> is the same file with <code>^18.0.0</code>. The demo uses the <code>esm-react</code> and <code>esm-react-dom</code> packages, which are ESM builds of React. A project of your own uses the standard <code>react</code> and <code>react-dom</code> packages instead.</p>
+<p><code>setupFederationPlugins</code> comes from the <code>create-fynapp</code> package. It wraps <code>rollup-plugin-federation</code> and sets the share scope, entry file name and manifest hooks for you.</p>
+<h2 id="the-consumer-side">The consumer side</h2>
+<p>A consumer is a FynApp that uses React but does not bundle it. The app <code>fynapp-1</code> runs React 19. Its <code>package.json</code> depends on the provider range:</p>
+<pre><code class="language-json">&quot;dependencies&quot;: {
+  &quot;fynapp-react-lib&quot;: &quot;^19.0.0&quot;
+}
+</code></pre>
+<p>Its build then records the need in <code>dist/fynapp.manifest.json</code>:</p>
+<pre><code class="language-json">&quot;consume-shared&quot;: {
+  &quot;esm-react&quot;: { &quot;semver&quot;: &quot;^19.0.0&quot; },
+  &quot;esm-react-dom&quot;: { &quot;semver&quot;: &quot;^19.0.0&quot; }
+},
+&quot;shared-providers&quot;: {
+  &quot;fynapp-react-lib&quot;: {
+    &quot;semver&quot;: &quot;^19.0.0&quot;,
+    &quot;provides&quot;: [&quot;esm-react&quot;, &quot;esm-react-dom&quot;]
+  }
+}
+</code></pre>
+<p>The kernel reads <code>shared-providers</code> to know which provider to load first. The consumer then resolves <code>esm-react</code> against the range <code>^19.0.0</code>.</p>
+<p>The app <code>fynapp-2-react18</code> is different. It provides its own React 18 through the shared config, with <code>semver: &quot;^18.0.0&quot;</code>. So the page ends up with a React 18 copy from that app and a React 19 copy from <code>fynapp-react-lib</code>.</p>
+<h2 id="what-is-shared-and-what-is-not">What is shared and what is not</h2>
+<p>The share scope holds one module instance per resolved copy. That has clear consequences.</p>
+<p>Shared, when ranges agree:</p>
+<ul>
+<li>Three React 19 apps load one <code>react</code> 19 copy. They share its hooks dispatcher and its context.</li>
+<li>The download happens once.</li>
+</ul>
+<p>Not shared, across versions:</p>
+<ul>
+<li>React 18 and React 19 are separate module instances. They do not see each other's state.</li>
+<li>A React context created in a 19 app is invisible to a component rendered by 18.</li>
+<li>A component tree must not mix elements from the two copies.</li>
+</ul>
+<p>Treat each version as a separate island. Pass data between islands as plain values, through the kernel's middleware or through a small store that does not depend on React.</p>
+<h2 id="why-singleton-is-false">Why <code>singleton</code> is false</h2>
+<p>Look again at the provider config. Both providers set <code>singleton: false</code>. This matters.</p>
+<p>A singleton share means one copy for the whole scope. Once any version is in play, every consumer resolves to it, even a consumer whose range excludes it. The runtime only prints a warning. That is the right choice for libraries that must be unique. It is the wrong choice when you want React 18 and React 19 side by side.</p>
+<p>So for React, <code>singleton: false</code> is what allows two majors to coexist. The next guide, <a href="/guides/share-dependencies-semver">share dependencies by semver range</a>, covers the rules in more detail.</p>
+<h2 id="two-versions-of-the-same-app">Two versions of the same app</h2>
+<p>The same idea works for your own FynApps, not only for React. The demo has <code>fynapp-x1</code> in two versions, built from <code>demo/fynapp-x1-v1</code> and <code>demo/fynapp-x1-v2</code>. Both have the name <code>fynapp-x1</code>. They have versions 1.0.0 and 2.0.0.</p>
+<p>The v1 build shares React 18 and does not bundle it:</p>
+<pre><code class="language-ts">shared: {
+  &quot;esm-react&quot;: { import: false, singleton: false, semver: &quot;^18.3.0&quot; },
+  &quot;esm-react-dom&quot;: { import: false, singleton: false, semver: &quot;^18.3.0&quot; },
+},
+</code></pre>
+<p>The v2 build uses the React 19 helper. Consumers pick a version with a range in the import:</p>
+<pre><code class="language-ts">import(&quot;fynapp-x1/main&quot;, { with: { type: &quot;mf-expose&quot;, semver: &quot;^2.0.0&quot; } })
+</code></pre>
+<p>In the demo, <code>fynapp-2-react18</code> asks for <code>^1.0.0</code>. The apps <code>fynapp-1</code> and <code>fynapp-1-b</code> ask for <code>^2.0.0</code>. All three run on one page. Each gets the version that fits its range. The same page loads one name at two majors.</p>
+<h2 id="check-what-the-page-decided">Check what the page decided</h2>
+<p>The federation inspector shows which copy each app got. Open its Shares tab and look for the two <code>esm-react</code> entries. The Issues tab flags two copies of a singleton. See the <a href="/docs/federation-inspector">federation inspector docs</a> for setup.</p>
+<h2 id="try-it">Try it</h2>
+<ul>
+<li>Open the <a href="/demo">live demo</a> and find <code>fynapp-1</code> (React 19) and <code>fynapp-2-react18</code> (React 18) on the same page.</li>
+<li>Read the <a href="/features#versions">same app, multiple versions section</a> and the <a href="/features#shared">semver sharing section</a> on the features page.</li>
+<li>Read how the loader resolves ranges in the <a href="/docs/federation-js">federation-js docs</a>.</li>
+<li>Read <a href="/guides/upgrade-react-incrementally">how to upgrade React one micro frontend at a time</a>.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                
+                <a class="fm-pager-next" href="/guides/share-dependencies-semver"><small>Next</small><span>Share Dependencies by Semver</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#how-it-works">How it works</a>
+            
+            <a href="#the-provider-side">The provider side</a>
+            
+            <a href="#the-consumer-side">The consumer side</a>
+            
+            <a href="#what-is-shared-and-what-is-not">What is shared and what is not</a>
+            
+            <a href="#why-singleton-is-false">Why singleton is false</a>
+            
+            <a href="#two-versions-of-the-same-app">Two versions of the same app</a>
+            
+            <a href="#check-what-the-page-decided">Check what the page decided</a>
+            
+            <a href="#try-it">Try it</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

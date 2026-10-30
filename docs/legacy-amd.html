@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Demo: Legacy RequireJS Widgets on Federated React</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/legacy-amd">
+    <meta property="og:title" content="FynMesh Demo: Legacy RequireJS Widgets on Federated React">
+    <meta property="og:description" content="Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh Demo: Legacy RequireJS Widgets on Federated React">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/legacy-amd">
+    <meta name="twitter:title" content="FynMesh Demo: Legacy RequireJS Widgets on Federated React">
+    <meta name="twitter:description" content="Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh Demo: Legacy RequireJS Widgets on Federated React">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/legacy-amd">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.fynmesh.fyi/legacy-amd#webpage",
+      "url": "https://www.fynmesh.fyi/legacy-amd",
+      "name": "FynMesh Demo: Legacy RequireJS Widgets on Federated React",
+      "description": "Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Demos",
+            "item": "https://www.fynmesh.fyi/demos"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Legacy RequireJS widgets",
+            "item": "https://www.fynmesh.fyi/legacy-amd"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    <style>
+      :root {
+        --bg: #f7f7f5;
+        --panel: #ffffff;
+        --ink: #1d1d1b;
+        --muted: #6b6b66;
+        --line: #e2e2dc;
+        --accent: #2f6fde;
+        --bridge: #2f6fde;
+        --bridge-bg: #e6eefc;
+        --legacy: #b26a00;
+        --legacy-bg: #fbf0dd;
+        --inline: #6b6b66;
+        --inline-bg: #efefeb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #161615;
+          --panel: #1f1f1d;
+          --ink: #ececea;
+          --muted: #a2a29c;
+          --line: #34342f;
+          --accent: #7aa7ff;
+          --bridge: #7aa7ff;
+          --bridge-bg: #1e2a44;
+          --legacy: #f0b45a;
+          --legacy-bg: #3a2c14;
+          --inline: #a2a29c;
+          --inline-bg: #2a2a27;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      /* top padding clears the home chip */
+      main { max-width: 1160px; margin: 0 auto; padding: 72px 16px 48px; }
+      h1 { font-size: 24px; margin: 0 0 6px; }
+      h2 { font-size: 15px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+      p { margin: 0 0 10px; }
+      code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .lede { color: var(--muted); max-width: 760px; }
+      .bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 18px 0; }
+      .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+      .seg a { padding: 7px 12px; color: var(--ink); text-decoration: none; border-right: 1px solid var(--line); }
+      .seg a:last-child { border-right: 0; }
+      .seg a[aria-current="true"] { background: var(--accent); color: #fff; }
+      .source { color: var(--muted); }
+      button.load {
+        padding: 7px 14px; border-radius: 8px; border: 1px solid var(--accent);
+        background: var(--panel); color: var(--accent); font: inherit; cursor: pointer;
+      }
+      button.load:disabled { opacity: 0.5; cursor: default; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+      #files code, #files .kind, td.set { white-space: nowrap; }
+      .graph svg { max-width: 100%; height: auto; }
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+      .widgets { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+      .slot-empty { border: 1px dashed var(--line); border-radius: 8px; padding: 16px; color: var(--muted); }
+      .scroll { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; }
+      td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      tr.divider td { color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--accent); }
+      tr.fresh td { background: var(--bridge-bg); }
+      .tag { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+      .tag.bridge { color: var(--bridge); background: var(--bridge-bg); }
+      .tag.legacy { color: var(--legacy); background: var(--legacy-bg); }
+      .tag.inline { color: var(--inline); background: var(--inline-bg); }
+      .note { color: var(--muted); font-size: 13px; }
+      svg text { fill: var(--ink); font: 12px ui-monospace, Menlo, monospace; }
+      svg .edge { stroke: var(--line); stroke-width: 1.5; fill: none; }
+      .full { grid-column: 1 / -1; }
+      .lede { font-size: 17px; }
+      .intro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0 16px; }
+      @media (max-width: 860px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+      .intro h3 { font-size: 15px; margin: 0 0 6px; }
+      .intro p { color: var(--muted); }
+      .flow { display: grid; gap: 12px; }
+      .flow-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .flow-label { width: 130px; font-size: 13px; font-weight: 600; color: var(--muted); }
+      @media (max-width: 600px) { .flow-label { width: 100%; } }
+      .node { border: 1px solid; border-radius: 8px; padding: 6px 10px; font-size: 13px; line-height: 1.35; }
+      .node small { display: block; color: var(--muted); font-size: 12px; }
+      .node.legacy { border-color: var(--legacy); background: var(--legacy-bg); }
+      .node.bridge { border-color: var(--bridge); background: var(--bridge-bg); }
+      .node.inline { border-color: var(--inline); background: var(--inline-bg); }
+      .arrow { color: var(--muted); font-size: 13px; }
+      ol.try { margin: 0; padding-left: 20px; }
+      ol.try li { margin-bottom: 4px; }
+    </style>
+
+    
+</head>
+<body class="">
+    
+    
+<a class="fm-home-chip" href="/" aria-label="FynMesh home">FynMesh</a>
+
+    
+    <main>
+      <h1>Legacy RequireJS micro frontends on federated React</h1>
+      <p class="lede">
+        RequireJS micro frontends get their shared libraries from a common web package (CWP). This
+        demo brings Module Federation to them progressively, with no rebuild of the widgets. The
+        <a href="/guides/legacy-requirejs-on-module-federation">guide</a>
+        explains the setup.
+      </p>
+
+      <div class="intro">
+        <section class="panel">
+          <h3>The setup: widgets and the CWP</h3>
+          <p>
+            In a RequireJS micro frontend, each widget is built as an AMD bundle. Shared libraries
+            like React and the UI kit are built into a common web package (CWP). Widgets consume
+            the CWP through webpack externals, so every bundle asks for its libraries with
+            <code>define(["react", "react-dom", "ui-kit"], ...)</code>.
+          </p>
+        </section>
+        <section class="panel">
+          <h3>The problem</h3>
+          <p>
+            A large enterprise builds up many widgets from many teams over time. They all depend on
+            the same CWP. Updating a library version or adding a variant means every team must move
+            together, which is near impossible. Module Federation solves this, but legacy widgets
+            cannot use it. They also cannot all migrate in one shot.
+          </p>
+        </section>
+        <section class="panel">
+          <h3>The fix: federation, one piece at a time</h3>
+          <p>
+            The CWP becomes a FynApp. It installs React and the UI kit from npm at pinned versions,
+            and serves them from federation under the AMD ids the widgets already ask for. A kernel
+            add-on routes RequireJS to it. Each RequireJS context stays on the legacy CWP or moves to
+            the federated one, with no rebuild. New FynApps run on the same page and share the CWP's
+            React when their range matches.
+          </p>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="flow">
+          <div class="flow-row">
+            <span class="flow-label">Before</span>
+            <span class="node legacy">Team A, B, C bundles<small>webpack AMD</small></span>
+            <span class="arrow">define("react", "ui-kit") →</span>
+            <span class="node legacy">Legacy CWP<small>React 18 and ui-kit, one copy for all</small></span>
+          </div>
+          <div class="flow-row">
+            <span class="flow-label">Federated</span>
+            <span class="node legacy">Team A, B, C bundles<small>same files, not rebuilt</small></span>
+            <span class="arrow">→</span>
+            <span class="node bridge">AMD add-on<small>reads the CWP's amd-meta.js</small></span>
+            <span class="arrow">→</span>
+            <span class="node bridge">CWP FynApp<small>CWP 3: React 18.3.1, CWP 4: React 19.2.8, ui-kit 1.4.0</small></span>
+            <span class="arrow">←</span>
+            <span class="node inline">New FynApps<small>share it, or bring another major</small></span>
+          </div>
+        </div>
+      </section>
+
+      <h2 style="margin-top: 24px">Try it</h2>
+      <ol class="try">
+        <li>Pick the federated CWP release, then pick Legacy CWP or Federated CWP for each set. Each set is its own RequireJS context with the same widget bundles, which were built against React 18. The legacy CWP is the old setup: UMD React 18 files and <code>legacy-components/dist/ui-kit.js</code>. CWP 3 and CWP 4 serve React 18 or React 19 and ui-kit from federation, as the Files fetched table shows.</li>
+        <li>Load Team C in a set. RequireJS fetches only <code>widget-c.js</code> and reuses the React that set already loaded.</li>
+        <li>Check the React instances table. Each row is one copy of React, the apps that use it, and how many times its file was fetched. Two federated sets share one copy. Two legacy sets get one copy each.</li>
+      </ol>
+
+      <div class="bar">
+        <nav class="seg" id="cwp-switch">
+          <a data-cwp="cwp3">CWP 3: React 18</a>
+          <a data-cwp="cwp4">CWP 4: React 19</a>
+        </nav>
+        <span class="source">The federated CWP release. A page runs one, and every federated set uses it.</span>
+      </div>
+
+      <div class="grid">
+        
+        <section class="panel">
+          <h2>Set 1: unchanged webpack AMD bundles</h2>
+          <div class="bar">
+            <nav class="seg" id="set1-switch">
+              <a data-source="legacy">Legacy CWP</a>
+              <a data-source="federated">Federated CWP</a>
+            </nav>
+          </div>
+          <p class="source" id="set1-text"></p>
+          <div class="widgets">
+            <div id="set1-widget-a"></div>
+            <div id="set1-widget-b"></div>
+            <div id="set1-widget-c">
+              <div class="slot-empty">
+                <p>Team C is not loaded yet.</p>
+                <button class="load" id="set1-load-c">require(["widget-c"])</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section class="panel">
+          <h2>Set 2: unchanged webpack AMD bundles</h2>
+          <div class="bar">
+            <nav class="seg" id="set2-switch">
+              <a data-source="legacy">Legacy CWP</a>
+              <a data-source="federated">Federated CWP</a>
+            </nav>
+          </div>
+          <p class="source" id="set2-text"></p>
+          <div class="widgets">
+            <div id="set2-widget-a"></div>
+            <div id="set2-widget-b"></div>
+            <div id="set2-widget-c">
+              <div class="slot-empty">
+                <p>Team C is not loaded yet.</p>
+                <button class="load" id="set2-load-c">require(["widget-c"])</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+
+        <section class="panel full">
+          <h2>FynApps on the same page</h2>
+          <p class="note">
+            Two ordinary FynApps that import <code>esm-react</code> through federation. They know
+            nothing about RequireJS or the legacy widgets.
+          </p>
+          <div class="widgets">
+            <div id="fynapp-react19-user"><div class="slot-empty">Loads after the legacy widgets.</div></div>
+            <div id="fynapp-react18-user"><div class="slot-empty">Loads after the legacy widgets.</div></div>
+          </div>
+          <h2 style="margin-top: 16px">React instances on this page</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>React</th><th>loaded from</th><th>used by</th><th class="num">files fetched</th></tr></thead>
+              <tbody id="instances"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Files fetched</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th class="num">at</th><th>set</th><th>kind</th><th>file</th></tr></thead>
+              <tbody id="files"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Dependency graph</h2>
+          <p class="note">Set 1</p>
+          <div class="scroll graph" id="set1-graph"></div>
+          <p class="note">Set 2</p>
+          <div class="scroll graph" id="set2-graph"></div>
+          <p class="note" id="graph-note"></p>
+        </section>
+
+        <section class="panel full">
+          <h2>AMD add-on metrics</h2>
+          <p class="note" id="metrics-note">
+            <code>amd.*</code> entries from kernel telemetry. They are the input for generating
+            preload meta later.
+          </p>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr><th>entry</th><th>set</th><th>id</th><th>route</th><th>deps</th><th class="num">ms</th><th>url</th></tr>
+              </thead>
+              <tbody id="metrics"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    
+    
+    <script src="/legacy-components/public/libs/require.js"></script>
+    
+
+    <script src="/system.min.js"></script>
+    <script src="/federation-js/dist/federation-js.min.js"></script>
+    <script src="/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+
+
+    <script>
+      (function () {
+        var SOURCES = {
+          umd: "The legacy CWP: RequireJS loads React 18 from UMD files, and the webpack-built ui-kit. No federation.",
+          cwp3: "CWP 3.2.0 serves React 18.3.1 and ui-kit 1.4.0 from federation.",
+          cwp4: "CWP 4.0.0 serves React 19.2.8 and ui-kit 1.4.0 from federation.",
+        };
+        // the CWP release each source loads: its dir and version
+        var CWPS = { cwp3: ["fynapp-cwp-3", "3.2.0"], cwp4: ["fynapp-cwp-4", "4.0.0"] };
+        var DEFAULTS = { cwp: "cwp4", set1: "legacy", set2: "federated" };
+        var SETS = ["set1", "set2"];
+        var params = new URLSearchParams(location.search);
+        var state = {};
+        Object.keys(DEFAULTS).forEach(function (k) { state[k] = params.get(k); });
+        if (!CWPS[state.cwp]) state.cwp = DEFAULTS.cwp;
+        // set name -> its source: umd for the legacy CWP, else the page's release
+        var sources = {};
+        SETS.forEach(function (set) {
+          if (state[set] !== "legacy" && state[set] !== "federated") state[set] = DEFAULTS[set];
+          sources[set] = state[set] === "legacy" ? "umd" : state.cwp;
+        });
+        function setsOn(source) {
+          return SETS.filter(function (set) { return sources[set] === source; });
+        }
+        function label(set) { return "Set " + set.slice(3); }
+        function link(a, key, value) {
+          var next = new URLSearchParams();
+          Object.keys(state).forEach(function (k) { next.set(k, k === key ? value : state[k]); });
+          a.href = "?" + next.toString();
+          a.setAttribute("aria-current", state[key] === value ? "true" : "false");
+        }
+
+        document.querySelectorAll("#cwp-switch a").forEach(function (a) { link(a, "cwp", a.dataset.cwp); });
+        SETS.forEach(function (set) {
+          document.querySelectorAll("#" + set + "-switch a").forEach(function (a) { link(a, set, a.dataset.source); });
+          document.getElementById(set + "-text").textContent = SOURCES[sources[set]];
+        });
+
+        // The legacy page config, one RequireJS context per set. Only a UMD set
+        // tells RequireJS where React lives. urlArgs tags each set's file fetches.
+        var reqs = {};
+        SETS.forEach(function (set) {
+          var paths = {
+            "ui-kit": "dist/ui-kit",
+            "widget-a": "dist/widget-a",
+            "widget-b": "dist/widget-b",
+            "widget-c": "dist/widget-c",
+          };
+          // The React 18 UMD react-dom also has the client API, so map sends
+          // react-dom/client to that one copy.
+          var map = {};
+          if (sources[set] === "umd") {
+            paths.react = "public/libs/react.development";
+            paths["react-dom"] = "public/libs/react-dom.development";
+            map["*"] = { "react-dom/client": "react-dom" };
+          }
+          reqs[set] = requirejs.config({
+            context: set,
+            baseUrl: "/legacy-components/",
+            paths: paths,
+            map: map,
+            urlArgs: "set=" + set,
+          });
+        });
+
+        // ---- files fetched ----
+        var KINDS = [
+          [/legacy-components\/dist\//, "legacy bundle"],
+          [/legacy-components\/public\/libs\/react/, "UMD lib"],
+          [/fynapp-cwp-[34]\//, "CWP"],
+          [/fynapp-react-1[89]\//, "React provider"],
+          [/fynapp-react1[89]-user\//, "FynApp"],
+        ];
+
+        // One row per React instance. "used by" follows from the sources; the
+        // file count is measured, so one fetch per row means one shared copy.
+        // Each RequireJS context runs its own UMD React. A production build may
+        // combine the share into the provider's startup-*.js.
+        function widgets(sets) { return sets.map(function (set) { return label(set) + " widgets"; }); }
+        var cwp3 = setsOn("cwp3"), cwp4 = setsOn("cwp4");
+        var INSTANCES = setsOn("umd").map(function (set) {
+          return { label: "18.3.1", from: "legacy CWP UMD file, " + label(set) + " context",
+            file: new RegExp("public/libs/react\\.development\\.js\\?set=" + set + "$"), users: widgets([set]) };
+        }).concat([
+          { label: "18.3.1", from: "fynapp-cwp 3.2.0 share", file: /fynapp-cwp-3\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: cwp3.length ? widgets(cwp3).concat("fynapp-react18-user") : [] },
+          { label: "19.2.8", from: "fynapp-cwp 4.0.0 share", file: /fynapp-cwp-4\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: cwp4.length ? widgets(cwp4).concat("fynapp-react19-user") : [] },
+          { label: "18.3.1", from: "fynapp-react-18 share", file: /fynapp-react-18\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: cwp3.length ? [] : ["fynapp-react18-user"] },
+          { label: "19.2.8", from: "fynapp-react-19 share", file: /fynapp-react-19\/dist\/(_mf-share-surface_esm-react-(?!dom)|startup-)/,
+            users: cwp4.length ? [] : ["fynapp-react19-user"] },
+        ]);
+        var instancesEl = document.getElementById("instances");
+        function renderInstances() {
+          var paths = performance.getEntriesByType("resource").map(function (e) {
+            var u = new URL(e.name);
+            return u.pathname + u.search;
+          });
+          instancesEl.innerHTML = "";
+          INSTANCES.forEach(function (inst) {
+            if (!inst.users.length) return;
+            var n = paths.filter(function (p) { return inst.file.test(p); }).length;
+            var tr = document.createElement("tr");
+            tr.innerHTML = "<td>" + inst.label + "</td><td>" + inst.from + "</td><td></td><td class='num'>" + n + "</td>";
+            tr.children[2].textContent = inst.users.join(", ");
+            instancesEl.appendChild(tr);
+          });
+        }
+
+        var filesEl = document.getElementById("files");
+        function addFile(entry) {
+          renderInstances();
+          var url = new URL(entry.name);
+          var kind = KINDS.find(function (k) { return k[0].test(url.pathname); });
+          if (!kind) return;
+          var set = url.searchParams.get("set");
+          var tr = document.createElement("tr");
+          if (clickedAt !== null) tr.className = "fresh";
+          tr.innerHTML = "<td class='num'>" + Math.round(entry.startTime) + " ms</td><td class='set'>" + (set ? label(set) : "") +
+            "</td><td class='kind'>" + kind[1] + "</td><td><code></code></td>";
+          tr.querySelector("code").textContent = url.pathname.replace(/^\//, "");
+          filesEl.appendChild(tr);
+        }
+        var clickedAt = null;
+        performance.getEntriesByType("resource").forEach(addFile);
+        new PerformanceObserver(function (list) { list.getEntries().forEach(addFile); }).observe({ type: "resource" });
+
+        // ---- metrics and graph ----
+        // context -> id -> amd.module data
+        var modules = {};
+        SETS.forEach(function (set) { modules[set] = {}; });
+        var metricsEl = document.getElementById("metrics");
+        function tag(route) { return "<span class='tag " + route + "'>" + route + "</span>"; }
+        // telemetry flushes in batches, so place each row by its own timestamp
+        var clickedAtTs = null, metricsDivider = null;
+        function addMetric(e) {
+          var tr = document.createElement("tr");
+          var afterClick = clickedAtTs !== null && e.ts >= clickedAtTs;
+          if (afterClick) tr.className = "fresh";
+          var d = e.data || {};
+          if (e.name === "amd.bridge") {
+            tr.innerHTML = "<td><code>amd.bridge</code></td><td class='set'></td><td><code></code></td><td></td><td></td><td class='num'>" + e.value + "</td><td>" + (d.ok ? "loaded" : "failed") + "</td>";
+            tr.children[2].firstChild.textContent = d.name;
+          } else {
+            if (modules[d.context]) modules[d.context][d.id] = d;
+            tr.innerHTML = "<td><code>amd.module</code></td><td class='set'>" + (modules[d.context] ? label(d.context) : "") + "</td><td><code></code></td><td>" + tag(d.route) + "</td><td><code></code></td><td class='num'>" + (e.value == null ? "" : e.value) + "</td><td><code></code></td>";
+            tr.children[2].firstChild.textContent = d.id;
+            tr.children[4].firstChild.textContent = d.deps.join(", ");
+            tr.children[6].firstChild.textContent = d.url ? new URL(d.url).pathname.replace(/^\//, "") : "";
+          }
+          if (metricsDivider && !afterClick) metricsEl.insertBefore(tr, metricsDivider);
+          else metricsEl.appendChild(tr);
+        }
+
+        function renderGraph(set) {
+          var mods = modules[set];
+          var ids = Object.keys(mods);
+          var el = document.getElementById(set + "-graph");
+          if (!ids.length) return;
+          // column = longest path down to a module with no deps; libs land on the right
+          var depth = {};
+          function d(id) {
+            if (depth[id] != null) return depth[id];
+            var deps = (mods[id] && mods[id].deps) || [];
+            depth[id] = 0;
+            return (depth[id] = deps.length ? 1 + Math.max.apply(null, deps.map(d)) : 0);
+          }
+          ids.forEach(d);
+          var max = Math.max.apply(null, ids.map(function (id) { return depth[id]; }));
+          var cols = {};
+          ids.sort().forEach(function (id) { (cols[max - depth[id]] = cols[max - depth[id]] || []).push(id); });
+          var colW = 130, rowH = 40, nodeW = 104, nodeH = 26, pad = 8;
+          var rows = Math.max.apply(null, Object.keys(cols).map(function (c) { return cols[c].length; }));
+          var pos = {};
+          Object.keys(cols).forEach(function (c) {
+            cols[c].forEach(function (id, i) { pos[id] = { x: pad + c * colW, y: pad + i * rowH }; });
+          });
+          var w = pad * 2 + max * colW + nodeW, h = pad * 2 + (rows - 1) * rowH + nodeH;
+          var svg = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 " + w + " " + h + "' role='img' aria-label='" + label(set) + " AMD dependency graph'>";
+          ids.forEach(function (id) {
+            mods[id].deps.forEach(function (dep) {
+              if (!pos[dep]) return;
+              var a = pos[id], b = pos[dep];
+              var x1 = a.x + nodeW, y1 = a.y + nodeH / 2, x2 = b.x, y2 = b.y + nodeH / 2, mx = (x1 + x2) / 2;
+              svg += "<path class='edge' d='M" + x1 + "," + y1 + " C" + mx + "," + y1 + " " + mx + "," + y2 + " " + x2 + "," + y2 + "'/>";
+            });
+          });
+          ids.forEach(function (id) {
+            var p = pos[id], route = mods[id].route;
+            svg += "<g><rect x='" + p.x + "' y='" + p.y + "' width='" + nodeW + "' height='" + nodeH + "' rx='6' fill='var(--" + route + "-bg)' stroke='var(--" + route + ")'/>" +
+              "<text x='" + (p.x + nodeW / 2) + "' y='" + (p.y + 17) + "' text-anchor='middle'>" + id + "</text></g>";
+          });
+          el.innerHTML = svg + "</svg>";
+          document.getElementById("graph-note").innerHTML =
+            "Built from the <code>deps</code> of each <code>amd.module</code> entry. " + tag("bridge") + " " + tag("legacy");
+        }
+
+        function mount(set, names, then) {
+          reqs[set](names, function () {
+            var mods = arguments;
+            names.forEach(function (name, i) {
+              var el = document.getElementById(set + "-" + name);
+              el.innerHTML = "";
+              mods[i].mount(el);
+            });
+            if (then) then();
+          });
+        }
+
+        var apps = {
+          "fynapp-cwp@3.2.0": ["/fynapp-cwp-3/dist/", "3.2.0"],
+          "fynapp-cwp@4.0.0": ["/fynapp-cwp-4/dist/", "4.0.0"],
+          "fynapp-react19-user": ["/fynapp-react19-user/dist/", "1.0.0"],
+          "fynapp-react18-user": ["/fynapp-react18-user/dist/", "1.0.0"],
+          "fynapp-react-lib@^18.0.0": ["/fynapp-react-18/dist/", "18.3.0"],
+          "fynapp-react-lib@^19.0.0": ["/fynapp-react-19/dist/", "19.2.8"],
+        };
+        fynMeshKernel.setRegistryResolver(async function (name, range) {
+          var app = apps[name + "@" + range] || apps[name];
+          return { name: name, version: app[1], url: app[0] + "fynapp.manifest.json", distBase: app[0] };
+        });
+
+        // legacy widgets of both sets first, then the FynApps join the same page
+        function start() {
+          var left = SETS.length;
+          SETS.forEach(function (set) {
+            mount(set, ["widget-a", "widget-b"], function () {
+              if (--left) return;
+              ["fynapp-react19-user", "fynapp-react18-user"].forEach(function (id) {
+                document.getElementById(id).innerHTML = "";
+              });
+              fynMeshKernel.loadFynAppsByName([{ name: "fynapp-react19-user" }, { name: "fynapp-react18-user" }]);
+            });
+          });
+        }
+
+        SETS.forEach(function (set) {
+          document.getElementById(set + "-load-c").addEventListener("click", function () {
+            this.disabled = true;
+            clickedAt = performance.now();
+            clickedAtTs = Date.now();
+            [filesEl, metricsEl].forEach(function (tbody) {
+              var tr = document.createElement("tr");
+              tr.className = "divider";
+              tr.innerHTML = "<td colspan='7'>" + label(set) + ": require([\"widget-c\"]) at " + Math.round(clickedAt) + " ms</td>";
+              tbody.appendChild(tr);
+              if (tbody === metricsEl) metricsDivider = tr;
+            });
+            mount(set, ["widget-c"]);
+          });
+        });
+
+        fynMeshKernel.setTelemetry({
+          transport: {
+            send: async function (batch) {
+              // amd.module and amd.bridge only; a failed load also records an amd.load error
+              batch.filter(function (e) { return e.name === "amd.module" || e.name === "amd.bridge"; }).forEach(addMetric);
+              SETS.forEach(renderGraph);
+            },
+          },
+        });
+        setInterval(function () { fynMeshKernel.tel.flush(); }, 250);
+
+        // The add-on routes every context. A UMD set has no meta, so all its ids
+        // go to paths. Each CWP set loads its release's meta into its own context.
+        // The add-on and the metas must all be in place before the first require().
+        var addon = document.createElement("script");
+        addon.src = "/kernel-addon-amd/addon-amd.js";
+        addon.onload = function () {
+          var cwpSets = SETS.filter(function (set) { return CWPS[sources[set]]; });
+          var left = cwpSets.length;
+          if (!left) return start();
+          cwpSets.forEach(function (set) {
+            var meta = document.createElement("script");
+            meta.src = "/" + CWPS[sources[set]][0] + "/dist/amd-meta.js";
+            meta.dataset.context = set;
+            meta.onload = function () {
+              if (!--left) start();
+            };
+            document.body.appendChild(meta);
+          });
+        };
+        document.body.appendChild(addon);
+      })();
+    </script>
+    <!--
+    The federation inspector, loaded last on purpose.
+
+    It is an observer: it reports on how this page loaded, so it must not be
+    part of what it loaded. Fetching it with the rest of the scripts would put
+    a megabyte of devtool ahead of the fynapps in the network queue and put its
+    own parse and mount inside the measurements it is there to show.
+
+    So it waits for the load event, then two frames (the first is the paint the
+    load event preceded, the second is the one after it), then for the browser
+    to be idle -- by which time the fynapps have rendered. The fetch itself is
+    async and fetchPriority="low", so even the request is queued behind
+    anything the page still wants.
+
+    The badge appears in the corner when it is ready; Ctrl+Shift+M opens it.
+-->
+<script>
+    (function () {
+        var src = "/federation-inspector.min.js";
+
+        function load() {
+            var s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            if ("fetchPriority" in s) {
+                s.fetchPriority = "low";
+            }
+            document.head.appendChild(s);
+        }
+
+        function whenIdle() {
+            if (window.requestIdleCallback) {
+                // the timeout is a backstop, not a target: a page that never
+                // goes idle should still end up with the badge
+                requestIdleCallback(load, { timeout: 10000 });
+            } else {
+                setTimeout(load, 2000);
+            }
+        }
+
+        function afterPaint() {
+            var waiting = true;
+            function go() {
+                if (waiting) {
+                    waiting = false;
+                    whenIdle();
+                }
+            }
+            // two frames: the first is the paint the load event preceded, the
+            // second is the one after it
+            requestAnimationFrame(function () {
+                requestAnimationFrame(go);
+            });
+            // ...but a page in a background tab is never given a frame, and
+            // waiting for one there means waiting forever. Measured: a tab
+            // that had not painted yet sat with the script element created and
+            // nothing behind it.
+            setTimeout(go, 3000);
+        }
+
+        if (document.readyState === "complete") {
+            afterPaint();
+        } else {
+            addEventListener("load", afterPaint, { once: true });
+        }
+    })();
+</script>
+
+
+</body>
+</html>

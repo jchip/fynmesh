@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The FynApp Contract</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/fynapp-contract">
+    <meta property="og:title" content="The FynApp Contract">
+    <meta property="og:description" content="The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="The FynApp Contract">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/fynapp-contract">
+    <meta name="twitter:title" content="The FynApp Contract">
+    <meta name="twitter:description" content="The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="The FynApp Contract">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/fynapp-contract">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/fynapp-contract#webpage",
+      "url": "https://www.fynmesh.fyi/docs/fynapp-contract",
+      "name": "The FynApp Contract",
+      "description": "The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "The FynApp Contract",
+      "dateModified": "2026-09-22T08:41:53-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "FynApp Contract",
+            "item": "https://www.fynmesh.fyi/docs/fynapp-contract"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract" aria-current="page">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel">Kernel</a>
+                
+                <a href="/docs/federation-js">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>FynApp Contract
+            </nav>
+            <h1>The FynApp Contract</h1>
+            <p class="fm-lead">The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Sep 22, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/dev-tools/create-fynapp/agent/CONTRACT.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p><strong>Audience: LLM coding agents modifying an existing FynApp.</strong> This is the
+authoritative, type-anchored contract for what a FynApp <em>is</em>. The kernel types and
+selected lifecycle/runtime members described here are anchored by
+<code>../src/fynapp-contract.ts</code>, which is compiled on every build. Additive and
+behavioral changes still require a kernel API review. When you change a FynApp,
+conform to this contract and then run <code>cfa check</code> (see §8).</p>
+<blockquote>
+<p>Scope note: creating a <em>new</em> FynApp is a static, mechanical operation — run the
+<code>create-fynapp</code> CLI (see <code>GUIDE.md</code>). This document is for <em>modifying</em> an
+existing app, which requires understanding the code. <code>--framework</code> accepts any
+name: one without a template scaffolds a generic skeleton that already
+conforms to this contract, plus an <code>AGENT-TODO.md</code>. Finishing that conversion
+is a <em>modify</em> task, so it is governed by this document.</p>
+</blockquote>
+<hr>
+<h2 id="1-anatomy">1. Anatomy</h2>
+<pre><code>&lt;fynapp&gt;/
+├── package.json          # &quot;type&quot;:&quot;module&quot;; build script &quot;rollup -c&quot;; deps below
+├── rollup.config.ts      # THE defining file — federation name, exposes, framework
+├── tsconfig.json
+├── src/
+│   ├── main.ts | main.tsx   # exports `const main` = a FynUnit  (the entry)
+│   └── ...                   # App.tsx, middleware/, hooks/, styles.css, …
+└── dist/                 # build output
+    ├── fynapp-entry.js       # the federation entry the kernel loads (fixed name);
+    │                         #   also carries the manifest as `__FYNAPP_MANIFEST__`
+    ├── fynapp.manifest.json  # generated manifest (name/version/exposes/…)
+    └── federation.json       # build plumbing: expose→chunk map, share config
+</code></pre>
+<p>The two manifest copies hold identical content and both matter — see
+<a href="https://github.com/jchip/fynmesh/blob/main/notes/BUILD-ARTIFACTS.md">build artifacts</a>.</p>
+<p>Two invariants hold for <strong>every</strong> FynApp:</p>
+<ol>
+<li><code>rollup.config.ts</code> declares a federation <code>name</code> and exposes <code>./main</code>. For
+<code>framework: &quot;react&quot;</code> the helper injects <code>./main</code> automatically; for
+non-React frameworks you must list it explicitly (see §3).</li>
+<li><code>src/main.ts</code> (or <code>.tsx</code>) exports <code>const main</code> implementing <code>FynUnit</code>.</li>
+</ol>
+<p>There is <strong>no</strong> <code>&quot;fynapp&quot;</code> field in <code>package.json</code>; identity lives in
+<code>rollup.config.ts</code> (<code>name</code>) and the generated <code>dist/fynapp.manifest.json</code>.</p>
+<hr>
+<h2 id="2-the-fynunit-contract-what-srcmaints-exports">2. The <code>FynUnit</code> contract — what <code>src/main.ts</code> exports</h2>
+<p>Source: <code>@fynmesh/kernel</code> → <code>core/kernel/src/types.ts:121</code>.</p>
+<pre><code class="language-ts">export interface FynUnit {
+  __middlewareMeta?: MiddlewareUseMeta&lt;unknown&gt;[];
+  initialize?(runtime: FynUnitRuntime):
+    | Promise&lt;{ status: string; mode?: string }&gt;
+    | { status: string; mode?: string };
+  execute(runtime: FynUnitRuntime): Promise&lt;any&gt; | any;   // ONLY required method
+  shutdown?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void;
+  suspend?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void;
+  resume?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void;
+  [key: string]: any;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>When</th>
+<th>Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>initialize(runtime)</code></td>
+<td>first, before middleware applies</td>
+<td><code>{ status: &quot;ready&quot; | &quot;defer&quot;, mode?, deferOk? }</code></td>
+</tr>
+<tr>
+<td><code>execute(runtime)</code></td>
+<td>after middleware is ready</td>
+<td>a render result (see §5)</td>
+</tr>
+<tr>
+<td><code>shutdown(runtime)</code></td>
+<td>on unload</td>
+<td><code>void</code> — clean up (unmount, remove listeners)</td>
+</tr>
+<tr>
+<td><code>suspend(runtime)</code></td>
+<td>when a mounted app is paused</td>
+<td><code>void</code> — pause timers/subscriptions</td>
+</tr>
+<tr>
+<td><code>resume(runtime)</code></td>
+<td>when a suspended app is restored</td>
+<td><code>void</code> — resume paused work</td>
+</tr>
+</tbody>
+</table>
+<p><code>main</code> may be a <strong>class instance</strong> implementing <code>FynUnit</code>, a <strong>plain object</strong>
+with at least <code>execute</code>, or the return value of <strong><code>useMiddleware([...], unit)</code></strong>.
+A bare function export is also accepted (kernel wraps it as <code>{ execute: fn }</code>).</p>
+<p><code>FynModule</code> / <code>FynModuleRuntime</code> are <strong>deprecated aliases</strong> of <code>FynUnit</code> /
+<code>FynUnitRuntime</code> — do not introduce them in new code.</p>
+<h3 id="fynunitruntime-the-runtime-argument"><code>FynUnitRuntime</code> — the <code>runtime</code> argument</h3>
+<p><code>core/kernel/src/types.ts:82</code>:</p>
+<pre><code class="language-ts">export type FynUnitRuntime = {
+  fynApp: FynApp;                                     // { name, version, packageName, entry, exposes, … }
+  middlewareContext: Map&lt;string, Record&lt;string, any&gt;&gt;; // read consumed middleware here
+  bus?: FynBus;                                       // inter-FynApp messaging
+  [key: string]: any;
+};
+</code></pre>
+<p><code>runtime.bus</code> is the optional per-app messaging facade. It supports ephemeral
+<code>emit</code>/<code>on</code>/<code>once</code>, request-response with <code>request</code>/<code>handle</code>, and isolated named
+channels. Subscriptions return an unsubscribe function; release it from
+<code>shutdown</code> or <code>suspend</code> as appropriate. State that late-loading apps must observe
+belongs in the middleware state registry, not the bus.</p>
+<p>There is <strong>no <code>runtime.kernel</code></strong>. To reach the kernel from a FynUnit, use
+<code>globalThis.fynMeshKernel</code>.</p>
+<hr>
+<h2 id="3-the-rollupconfigts-contract">3. The <code>rollup.config.ts</code> contract</h2>
+<p>The <strong>default and preferred</strong> form is the high-level factory (this is what
+current demo apps use — e.g. <code>demo/fynapp-6-react/rollup.config.ts</code>):</p>
+<pre><code class="language-ts">import { createFynAppRollupConfig } from &quot;create-fynapp&quot;;
+
+export default createFynAppRollupConfig({
+  name: &quot;my-fynapp&quot;,           // federation identity — REQUIRED
+  framework: &quot;react&quot;,          // &quot;react&quot; | &quot;vanilla&quot; | &quot;vue&quot; | … (drives aliases/externals)
+  typescript: true,
+  exposes: {},                 // &quot;./main&quot; is added automatically
+  // extraPlugins: [ newRollupPlugin(postcss)() ],  // for CSS, etc.
+});
+</code></pre>
+<p><code>createFynAppRollupConfig</code> (<code>../src/rollup-config-factory.ts</code>) assembles, in
+fixed order: dummy-entry → node-resolve → <code>extraPlugins</code> → federation → react
+demo alias (only with <code>reactPackages: &quot;esm-adapters&quot;</code>) → <code>extraPluginsAfter</code> →
+typescript → minify (prod).
+It always emits SystemJS output to <code>dist/</code> with share scope <code>fynmesh</code>, input
+<code>[fynappDummyEntryName, fynappEntryFilename]</code>.</p>
+<p><strong>What the federation configuration guarantees</strong> (<code>../src/index.ts</code>):</p>
+<ul>
+<li>For React, the preferred factory always includes <code>&quot;./main&quot;: &quot;./src/main.ts&quot;</code>.
+The generic low-level <code>setupFederationPlugins</code> does <strong>not</strong> inject it — add
+<code>&quot;./main&quot;: &quot;./src/main.ts&quot;</code> to <code>exposes</code> yourself.</li>
+<li>React frameworks consume <code>react</code>, <code>react-dom</code>, and <code>react-dom/client</code> as
+singleton shared packages. Source and <code>package.json</code> use those standard public
+packages directly.</li>
+<li>Repository demos that intentionally use the local ESM adapters opt in with
+<code>reactPackages: &quot;esm-adapters&quot;</code>. The low-level <code>setupReactFederationPlugins</code>
+and <code>setupReactAliasPlugins</code> helpers exist for that demo mode.</li>
+<li><code>renderDynamicImport</code> enables the <code>import(..., { with: { type: &quot;fynapp-middleware&quot; } })</code>
+syntax used by consumers (§4).</li>
+<li><code>enrichManifest</code> + <code>emitFederationMeta</code> produce the manifest — both the copy
+embedded in <code>fynapp-entry.js</code> and <code>dist/fynapp.manifest.json</code>. <code>enrichManifest</code>
+is what computes <code>import-exposed</code> and <code>shared-providers</code>, the fields the kernel
+resolves dependencies from.</li>
+</ul>
+<p><strong>Escape hatch (advanced):</strong> the low-level form — call
+<code>setupDummyEntryPlugins</code>, <code>setupReactFederationPlugins</code>/<code>setupFederationPlugins</code>,
+<code>setupReactAliasPlugins</code>, <code>setupMinifyPlugins</code> yourself and assemble the
+<code>defineConfig([...])</code> array (see <code>demo/fynapp-react-middleware/rollup.config.ts</code>).
+Use only when the factory's ordering/options are insufficient.</p>
+<p>To expose extra modules (e.g. a middleware), add to <code>exposes</code>:</p>
+<pre><code class="language-ts">exposes: { &quot;./middleware/greeting&quot;: &quot;./src/middleware/greeting.ts&quot; },
+</code></pre>
+<hr>
+<h2 id="4-consuming-middleware">4. Consuming middleware</h2>
+<p>Declare needs with <code>useMiddleware</code> (<code>core/kernel/src/use-middleware.ts:22</code>),
+then read the provider's published API from <code>runtime.middlewareContext</code>:</p>
+<pre><code class="language-ts">import { useMiddleware } from &quot;@fynmesh/kernel&quot;;
+
+export const main = useMiddleware(
+  {
+    // @ts-ignore — TS can't type module-federation remote containers
+    mw: import(&quot;fynapp-design-tokens/middleware/design-tokens/design-tokens&quot;,
+      { with: { type: &quot;fynapp-middleware&quot; } }),
+    config: { theme: &quot;fynmesh-default&quot;, cssCustomProperties: true },
+  },
+  new MyUnit(),
+);
+</code></pre>
+<ul>
+<li>The import specifier is <code>&lt;package&gt;/&lt;exposeModule&gt;/&lt;middlewareName&gt;</code> — e.g.
+<code>fynapp-design-tokens</code> + expose <code>middleware/design-tokens</code> + middleware
+<code>design-tokens</code>.</li>
+<li><code>config</code> is passed to the provider verbatim as <code>cc.meta.config</code>. The string
+<code>&quot;consume-only&quot;</code> is a common convention meaning &quot;consumer, don't provide&quot;.</li>
+<li>Pass an <strong>array</strong> to use several middlewares.</li>
+<li>In <code>execute</code>, read the API: <code>const dt = runtime.middlewareContext.get(&quot;design-tokens&quot;); dt?.api?.setTheme(...)</code>.</li>
+<li>If the provider may load later, return <code>{ status: &quot;ready&quot;, deferOk: true }</code> from
+<code>initialize</code> and handle a missing entry gracefully (re-render on the
+<code>MIDDLEWARE_READY</code> kernel event — see §6).</li>
+</ul>
+<hr>
+<h2 id="5-render-results-returned-from-execute">5. Render results (returned from <code>execute</code>)</h2>
+<p>The shell-layout middleware defines the result contract
+(<code>demo/fynapp-shell-mw/src/middleware/shell-layout.ts</code>). The common cases:</p>
+<pre><code class="language-ts">// FynApp renders itself into a DOM node it owns:
+{ type: &quot;self-managed&quot;, target: HTMLElement, cleanup?: () =&gt; void }
+
+// The shell renders the FynApp (when shell-managed):
+{ type: &quot;component-factory&quot;, componentFactory: (React) =&gt; ({ component, props }) }
+
+// Cannot render:
+{ type: &quot;no-render&quot;, message: string }
+</code></pre>
+<p>A FynApp that supports both modes branches on
+<code>runtime.middlewareContext.get(&quot;shell-layout&quot;)?.isShellManaged</code> inside <code>execute</code>.</p>
+<hr>
+<h2 id="6-authoring-a-middleware-provider">6. Authoring a middleware (provider)</h2>
+<p>A <strong>provider</strong> is a FynApp that exposes one or more <code>./middleware/*</code> modules. The
+kernel discovers a middleware by finding, in an exposed module, an export whose
+name starts with <code>__middleware__</code> (marker <code>MIDDLEWARE_EXPORT_PREFIX</code>,
+<code>core/kernel/src/util.ts</code>).</p>
+<p>The exported instance implements <code>FynAppMiddleware</code>
+(<code>core/kernel/src/types.ts:177</code>):</p>
+<pre><code class="language-ts">export type FynAppMiddleware = {
+  name: string;
+  autoApplyScope?: (&quot;all&quot; | &quot;fynapp&quot; | &quot;middleware&quot;)[];   // auto-apply w/o useMiddleware
+  shouldApply?(fynApp: FynApp): boolean;
+  setup?(cc: FynAppMiddlewareCallContext): Promise&lt;{ status: string; share?: any } | void&gt;;
+  apply?(cc: FynAppMiddlewareCallContext): Promise&lt;void&gt; | void;
+  // execution-override hooks (used by shell-layout):
+  canOverrideExecution?(fynApp: FynApp, fynUnit: FynUnit): boolean;   // note arg order
+  overrideInitialize?(cc: FynAppMiddlewareCallContext): Promise&lt;{ status: string; mode?: string }&gt;;
+  overrideExecute?(cc: FynAppMiddlewareCallContext): Promise&lt;void&gt;;
+};
+</code></pre>
+<p>Phases:</p>
+<ol>
+<li><strong><code>setup(cc)</code></strong> — one-time per consuming FynApp. Check <code>cc.meta.config</code>.
+Return <code>{ status: &quot;ready&quot; }</code>, or <code>{ status: &quot;defer&quot; }</code> to postpone the
+consumer's <code>execute</code> until readiness is signalled. Signal readiness for
+deferred flows with <code>await cc.kernel.signalMiddlewareReady(cc, { name, status: &quot;ready&quot; })</code>.</li>
+<li><strong><code>apply(cc)</code></strong> — integrate. Publish your API for consumers:
+<code>cc.runtime.middlewareContext.set(this.name, api)</code>.</li>
+</ol>
+<p><code>FynAppMiddlewareCallContext</code> (<code>core/kernel/src/types.ts:162</code>) gives you
+<code>{ meta, fynUnit, fynApp, reg, runtime, kernel, status }</code>.</p>
+<p>Minimal shape:</p>
+<pre><code class="language-ts">import type { FynAppMiddleware, FynAppMiddlewareCallContext } from &quot;@fynmesh/kernel&quot;;
+
+class GreetingMiddleware implements FynAppMiddleware {
+  readonly name = &quot;greeting&quot;;
+  async setup(cc: FynAppMiddlewareCallContext) {
+    await cc.kernel.signalMiddlewareReady(cc, { name: this.name, status: &quot;ready&quot; });
+    return { status: &quot;ready&quot; };
+  }
+  apply(cc: FynAppMiddlewareCallContext) {
+    cc.runtime.middlewareContext.set(this.name, { greet: (n: string) =&gt; `Hello, ${n}!` });
+  }
+}
+export const __middleware__Greeting = new GreetingMiddleware();
+</code></pre>
+<p><strong>Cross-FynApp shared state</strong>: use the reactive registry
+<code>cc.kernel.getMiddlewareRegistry(&quot;global&quot;)</code> → <code>provide(key, data)</code> /
+<code>lookup(key)</code> / <code>waitFor(key, timeoutMs)</code> (backed by <code>ObservableState</code>). See
+<code>demo/fynapp-react-middleware</code> (<code>basic-counter</code>) for the provider/consumer
+dual-mode pattern.</p>
+<p>A provider still needs <code>src/main.ts</code>; if it <em>only</em> provides middleware, that file
+is just <code>export {};</code> (because <code>./main</code> is always exposed).</p>
+<hr>
+<h2 id="7-packagejson-tsconfig-contract">7. package.json / tsconfig contract</h2>
+<p><code>package.json</code> essentials:</p>
+<pre><code class="language-jsonc">{
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;scripts&quot;: { &quot;build&quot;: &quot;rm -rf dist &amp;&amp; rollup -c&quot;, &quot;dev&quot;: &quot;rollup -c -w&quot; },
+  &quot;devDependencies&quot;: {
+    &quot;@fynmesh/kernel&quot;: &quot;^1.1.5&quot;, &quot;create-fynapp&quot;: &quot;^1.1.7&quot;,
+    &quot;rollup&quot;: &quot;^4.9.1&quot;, &quot;rollup-plugin-federation&quot;: &quot;^1.0.0&quot;,
+    &quot;rollup-wrap-plugin&quot;: &quot;^1.0.0&quot;, &quot;typescript&quot;: &quot;^5.2.2&quot;
+    // React apps also: react, react-dom, @rollup/plugin-*, @types/react, rollup-plugin-postcss
+  }
+}
+</code></pre>
+<p>React apps depend on the standard public <code>react</code>/<code>react-dom</code> packages.</p>
+<p><code>tsconfig.json</code>: ESNext/ES2020 module, <code>moduleResolution: &quot;bundler&quot;</code>,
+<code>jsx: &quot;react&quot;</code>, <code>declaration: true</code>,
+<code>include: [&quot;src/**/*&quot;]</code>. Copy an existing app's <code>tsconfig.json</code>.</p>
+<hr>
+<h2 id="8-check-always-after-any-change">8. Check (always, after any change)</h2>
+<pre><code class="language-bash">cd &lt;fynapp&gt; &amp;&amp; cfa check      # builds via rollup + checks the federation output
+</code></pre>
+<p><code>cfa check</code> (implemented in <code>../src/check-fynapp.ts</code>) builds the app and
+asserts <code>dist/fynapp-entry.js</code> and a parseable <code>dist/fynapp.manifest.json</code> with
+<code>name</code>, <code>version</code>, and the <code>./main</code> expose. Use <code>cfa check --no-build</code> to check
+an existing <code>dist/</code>. A change is not done until this passes.</p>
+<hr>
+<h2 id="sources-of-truth-and-stale-sources-to-ignore">Sources of truth — and stale sources to IGNORE</h2>
+<p><strong>Trust:</strong> <code>@fynmesh/kernel</code> (types re-exported via <code>core/kernel/src/index.ts</code>),
+<code>../src/fynapp-contract.ts</code> (the compiled anchor), and the working demo apps
+<code>demo/fynapp-6-react</code> (consumer) and <code>demo/fynapp-design-tokens</code> (provider).</p>
+<p><strong>Do NOT trust (stale/aspirational):</strong></p>
+<ul>
+<li><code>core/kernel/examples/simple-usage.ts</code> — references a non-existent
+<code>new Kernel(...)</code> / <code>loadFynapp</code> / <code>getModule</code> API.</li>
+<li>Any claim that <code>runtime.kernel</code> exists — it does not (use <code>globalThis.fynMeshKernel</code>).</li>
+<li><code>canOverrideExecution</code> argument order in <code>execution-override-architecture.md</code>
+(doc shows <code>(fynUnit, fynApp)</code>); the real signature is <code>(fynApp, fynUnit)</code>.</li>
+<li>The <code>{ info: MiddlewareInfo }</code> form of a consumer declaration — the runtime uses
+the <code>{ mw: import(...), config }</code> form shown in §4.</li>
+<li>Any <code>{ middleware: import(...) }</code> consumer declaration, or <code>cc.reg.middleware</code> /
+<code>cc.fynMod</code> — the key is <code>mw</code>, and <code>fynMod</code> was removed (see MIGRATION.md).</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/fynapp-guide"><small>Previous</small><span>FynApp Guide</span></a>
+                <a class="fm-pager-next" href="/docs/kernel"><small>Next</small><span>Kernel</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#1-anatomy">1. Anatomy</a>
+            
+            <a href="#2-the-fynunit-contract-what-srcmaints-exports">2. The FynUnit contract — what src/main.ts exports</a>
+            
+            <a href="#3-the-rollupconfigts-contract">3. The rollup.config.ts contract</a>
+            
+            <a href="#4-consuming-middleware">4. Consuming middleware</a>
+            
+            <a href="#5-render-results-returned-from-execute">5. Render results (returned from execute)</a>
+            
+            <a href="#6-authoring-a-middleware-provider">6. Authoring a middleware (provider)</a>
+            
+            <a href="#7-packagejson-tsconfig-contract">7. package.json / tsconfig contract</a>
+            
+            <a href="#8-check-always-after-any-change">8. Check (always, after any change)</a>
+            
+            <a href="#sources-of-truth-and-stale-sources-to-ignore">Sources of truth — and stale sources to IGNORE</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

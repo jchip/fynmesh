@@ -1,0 +1,119 @@
+{
+  "name": "fynapp-cwp",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./amd/react": {
+      "path": "./src/amd-gen/m0.ts",
+      "chunks": [
+        "m0-RnrQTZ4_.js"
+      ]
+    },
+    "./amd/react-dom": {
+      "path": "./src/amd-gen/m1.ts",
+      "chunks": [
+        "m2-DwpWH14P.js"
+      ]
+    },
+    "./amd/react-dom/client": {
+      "path": "./src/amd-gen/m2.ts",
+      "chunks": [
+        "m2-DwpWH14P.js"
+      ]
+    },
+    "./amd/ui-kit": {
+      "path": "./src/amd-gen/m3.ts",
+      "chunks": [
+        "m3-oExJRjxw.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "node_modules/esm-react/src/react-esm-18.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-Ce-2eX1N.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "18.3.1"
+      },
+      "importers": [
+        {
+          "from": "src/amd-gen/m0.ts",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        },
+        {
+          "from": "node_modules/ui-kit/dist/index.js",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react/src/react-esm-18.production.js"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_esm-react-dom-BGTEktNL.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "18.3.1"
+      },
+      "importers": [
+        {
+          "from": "src/amd-gen/m2.ts",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        },
+        {
+          "from": "src/amd-gen/m1.ts",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "18.3.1",
+          "path": "node_modules/esm-react-dom/dist/react-dom-esm-18-client.production.js"
+        }
+      ]
+    },
+    "ui-kit": {
+      "moduleIds": [
+        "node_modules/ui-kit/dist/index.js"
+      ],
+      "chunks": [
+        "_mf-share-surface_ui-kit-B9Kvu2k8.js"
+      ],
+      "config": {
+        "singleton": false,
+        "semver": "1.4.0"
+      },
+      "importers": [
+        {
+          "from": "src/amd-gen/m3.ts",
+          "path": "node_modules/ui-kit/dist/index.js"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.4.0",
+          "path": "node_modules/ui-kit/dist/index.js"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-30T06:05:17.868Z",
+  "version": "3.2.0"
+}

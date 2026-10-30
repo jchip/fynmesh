@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh FAQ</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/faq">
+    <meta property="og:title" content="FynMesh FAQ">
+    <meta property="og:description" content="Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh FAQ">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/faq">
+    <meta name="twitter:title" content="FynMesh FAQ">
+    <meta name="twitter:description" content="Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh FAQ">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/faq">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://www.fynmesh.fyi/faq#webpage",
+      "url": "https://www.fynmesh.fyi/faq",
+      "name": "FynMesh FAQ",
+      "description": "Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "dateModified": "2026-10-29T01:02:59-07:00",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is FynMesh?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup. It lets you build one page from several apps that are built and deployed on their own. It provides a build plugin, a loader that shares dependencies by semver range, and a kernel that boots apps in dependency order. See Why FynMesh and How FynMesh works."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a FynApp?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A FynApp is one independently built and deployed app. It is a Rollup project that produces a federated container and a manifest. Its main export is a FynUnit, which the kernel runs. The FynApp contract describes what the kernel expects."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does FynMesh need webpack?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. FynMesh builds with Rollup and rollup-plugin-federation, and the runtime loads SystemJS modules. The guide Module Federation without webpack shows the setup."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which frameworks work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "React 18 and 19, Vue, Preact, Solid, Svelte and Marko all run in the demo. Each app is a plain federated container, so no bridge or adapter is needed. create-fynapp has templates for eight frameworks: react, react18, preact, vue, solid, svelte, marko and vanilla. Any other name gets a generic skeleton that builds as is."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is FynMesh free and open source?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The code is on GitHub under the Apache-2.0 license, and the packages are on npm. You can use, modify and ship it under the terms of that license."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need a shell app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The kernel can load FynApps on any page. A shell is one pattern, built with middleware, and the shell demo shows it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does FynMesh handle routing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The kernel has no routing. A shell app owns routing, if you need it. The shell demo shows a layout built that way."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can two React versions run on one page?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. An app that asks for ^18.0.0 gets React 18, and an app that asks for ^19.0.0 gets React 19. The loader keeps each loaded version as a separate provider. The live demo runs both. The guide Run multiple React versions explains the setup."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How are shared dependencies resolved?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Each app declares what it shares and the semver range it accepts. At runtime the loader picks a loaded version that satisfies the ranges that apply to the import and reuses it. If no loaded version fits, the app loads its own copy. The guide Share dependencies with semver goes through examples."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does singleton do?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "singleton: true asks for one instance of a module across all containers. Use it for libraries that break when two copies exist. When the ranges conflict, federation-js warns instead of throwing. The Federation Inspector reports a singleton that loaded in several copies."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does every app have to use the same version of a shared library?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Each app lists a semver range. Apps whose ranges agree share one copy, and a range that needs a different major gets its own."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can two versions of the same app run together?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. A page can ask for fynapp-x1@^1.0.0 and fynapp-x1@^2.0.0, and each request gets a matching release. The resolver must return a distinct version for each one. This needs a registry resolver that reads the range. The default resolver that comes with the kernel ignores it. See the host code in How FynMesh works, and the guide Upgrade React incrementally."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do apps need to know about each other to share?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. An app joins the shared scope, named fynmesh, when it loads. Nobody keeps a list of who shares with whom. An app that imports a module from another app, such as a middleware, does name that app. The kernel uses that to load the provider first."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can legacy RequireJS bundles use federated React?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Webpack AMD bundles that list React or a UI kit as externals can load them from federation, under the RequireJS ids they already ask for. The bundles are not rebuilt. A kernel add-on routes those ids to a FynApp that serves the libraries. The add-on is a working prototype in the repo. See the guide Serve shared libraries to legacy RequireJS bundles."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can legacy widgets move to a new React major without a rebuild?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, as long as their code runs on that major. Each RequireJS context chooses the old common bundle or the federated one, so one group of widgets can move to React 19 while another stays on React 18. The legacy RequireJS demo runs both on one page."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I start a new FynApp?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Install the scaffolding tool with fyn global add create-fynapp, then run create-fynapp --name my-app --framework react. It creates package.json, tsconfig.json, rollup.config.ts and starter source files. The getting started guide covers the rest."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does a build produce?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A build produces fynapp-entry.js and fynapp.manifest.json in dist/. The manifest is also embedded in the entry file. The kernel reads the embedded copy first, because it has to fetch the entry anyway. The JSON file is a fallback."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do apps talk to each other?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Through middleware APIs and FynBus. FynBus lets apps publish and subscribe to events and send requests to handlers. The platform stamps the sender of each message. A request waits for a handler that has not loaded yet. An app's subscriptions are dropped when it shuts down."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is middleware?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Middleware is code that one FynApp provides and other apps use. It handles cross-app concerns such as a shared theme or a page layout. A consumer declares it with useMiddleware. The kernel runs the middleware's setup and apply steps before the app's execute, and apply puts an API into runtime.middlewareContext. A middleware can also take over how an app executes, which the shell demo uses for its layout."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use FynMesh without the middleware or the bus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Both are add-on bundles. Load fynmesh-kernel-core alone and a unit runs as plain initialize then execute. A unit that declares middleware gets a console warning when the middleware add-on is missing. The kernel docs list the bundles."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does FynMesh share TypeScript types across apps?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. There is no federated type generation today. A consuming app types its remote imports with one declare module \"fynapp-design-tokens/*\"; line per provider, which gives them the type any. You can write precise declarations by hand, or share a contract package between teams. The kernel exports its own types from @fynmesh/kernel, including FynUnit and FynUnitRuntime."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I see which version an app got?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Call Federation.__I() in the console or open the in-page Federation Inspector. Both list each shared module, its providers and the ranges that asked for it. For FynApps, kernel.listFynAppStates() returns the name, version and status of each. The inspector docs describe the panels."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens when a FynApp fails to load?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The rest of the batch carries on. loadFynAppsByName does not abort when one app fails, and the kernel emits FYNAPPLOADED with detail.ok set to false. A failure while running an app emits FYNAPPBOOTSTRAPFAILED and leaves the other apps running. An app that waits for a dependency that never arrives emits FYNAPPBOOTSTRAP_TIMEOUT after 30 seconds. The dev-overlay add-on shows bootstrap failures on the page in development."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does FynMesh support server-side rendering?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. There is no server-side rendering integration today. FynApps render in the browser. If you need server rendering, plan for that before you pick FynMesh. The kernel has a Node stub, but it does not run federation, so it is not a path to server rendering."
+          }
+        }
+      ],
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "FAQ",
+            "item": "https://www.fynmesh.fyi/faq"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq" aria-current="page">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Learn">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Learn</span>
+                
+                <a href="/why-fynmesh">Why FynMesh</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+                <a href="/features">Features</a>
+                
+                <a href="/faq" aria-current="page">FAQ</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span>FAQ
+            </nav>
+            <h1>FynMesh FAQ</h1>
+            <p class="fm-lead">Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 29, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/pages/faq.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup. These answers cover what it is, how versions and sharing work, how to build an app and how to debug a page. Each answer links to a longer page when there is one.</p>
+<h2 id="basics">Basics</h2>
+<h3 id="what-is-fynmesh">What is FynMesh?</h3>
+<p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup. It lets you build one page from several apps that are built and deployed on their own.</p>
+<p>It provides a build plugin, a loader that shares dependencies by semver range, and a kernel that boots apps in dependency order. See <a href="/why-fynmesh">Why FynMesh</a> and <a href="/how-it-works">How FynMesh works</a>.</p>
+<h3 id="what-is-a-fynapp">What is a FynApp?</h3>
+<p>A FynApp is one independently built and deployed app. It is a Rollup project that produces a federated container and a manifest.</p>
+<p>Its <code>main</code> export is a FynUnit, which the kernel runs. The <a href="/docs/fynapp-contract">FynApp contract</a> describes what the kernel expects.</p>
+<h3 id="does-fynmesh-need-webpack">Does FynMesh need webpack?</h3>
+<p>No. FynMesh builds with Rollup and <code>rollup-plugin-federation</code>, and the runtime loads SystemJS modules. The guide <a href="/guides/module-federation-without-webpack">Module Federation without webpack</a> shows the setup.</p>
+<h3 id="which-frameworks-work">Which frameworks work?</h3>
+<p>React 18 and 19, Vue, Preact, Solid, Svelte and Marko all run in the demo. Each app is a plain federated container, so no bridge or adapter is needed.</p>
+<p><code>create-fynapp</code> has templates for eight frameworks: <code>react</code>, <code>react18</code>, <code>preact</code>, <code>vue</code>, <code>solid</code>, <code>svelte</code>, <code>marko</code> and <code>vanilla</code>. Any other name gets a generic skeleton that builds as is.</p>
+<h3 id="is-fynmesh-free-and-open-source">Is FynMesh free and open source?</h3>
+<p>Yes. The code is on GitHub under the Apache-2.0 license, and the packages are on npm. You can use, modify and ship it under the terms of that license.</p>
+<h3 id="do-i-need-a-shell-app">Do I need a shell app?</h3>
+<p>No. The kernel can load FynApps on any page. A shell is one pattern, built with middleware, and the <a href="/shell">shell demo</a> shows it.</p>
+<h3 id="does-fynmesh-handle-routing">Does FynMesh handle routing?</h3>
+<p>No. The kernel has no routing. A shell app owns routing, if you need it. The <a href="/shell">shell demo</a> shows a layout built that way.</p>
+<h2 id="versions-and-sharing">Versions and sharing</h2>
+<h3 id="can-two-react-versions-run-on-one-page">Can two React versions run on one page?</h3>
+<p>Yes. An app that asks for <code>^18.0.0</code> gets React 18, and an app that asks for <code>^19.0.0</code> gets React 19. The loader keeps each loaded version as a separate provider.</p>
+<p>The <a href="/demo">live demo</a> runs both. The guide <a href="/guides/run-multiple-react-versions">Run multiple React versions</a> explains the setup.</p>
+<h3 id="how-are-shared-dependencies-resolved">How are shared dependencies resolved?</h3>
+<p>Each app declares what it shares and the semver range it accepts. At runtime the loader picks a loaded version that satisfies the ranges that apply to the import and reuses it.</p>
+<p>If no loaded version fits, the app loads its own copy. The guide <a href="/guides/share-dependencies-semver">Share dependencies with semver</a> goes through examples.</p>
+<h3 id="what-does-singleton-do">What does singleton do?</h3>
+<p><code>singleton: true</code> asks for one instance of a module across all containers. Use it for libraries that break when two copies exist.</p>
+<p>When the ranges conflict, <code>federation-js</code> warns instead of throwing. The Federation Inspector reports a singleton that loaded in several copies.</p>
+<h3 id="does-every-app-have-to-use-the-same-version-of-a-shared-library">Does every app have to use the same version of a shared library?</h3>
+<p>No. Each app lists a semver range. Apps whose ranges agree share one copy, and a range that needs a different major gets its own.</p>
+<h3 id="can-two-versions-of-the-same-app-run-together">Can two versions of the same app run together?</h3>
+<p>Yes. A page can ask for <code>fynapp-x1@^1.0.0</code> and <code>fynapp-x1@^2.0.0</code>, and each request gets a matching release. The resolver must return a distinct <code>version</code> for each one.</p>
+<p>This needs a registry resolver that reads the range. The default resolver that comes with the kernel ignores it. See the host code in <a href="/how-it-works">How FynMesh works</a>, and the guide <a href="/guides/upgrade-react-incrementally">Upgrade React incrementally</a>.</p>
+<h3 id="do-apps-need-to-know-about-each-other-to-share">Do apps need to know about each other to share?</h3>
+<p>No. An app joins the shared scope, named <code>fynmesh</code>, when it loads. Nobody keeps a list of who shares with whom.</p>
+<p>An app that imports a module from another app, such as a middleware, does name that app. The kernel uses that to load the provider first.</p>
+<h3 id="can-legacy-requirejs-bundles-use-federated-react">Can legacy RequireJS bundles use federated React?</h3>
+<p>Yes. Webpack AMD bundles that list React or a UI kit as externals can load them from federation, under the RequireJS ids they already ask for. The bundles are not rebuilt. A kernel add-on routes those ids to a FynApp that serves the libraries. The add-on is a working prototype in the repo. See the guide <a href="/guides/legacy-requirejs-on-module-federation">Serve shared libraries to legacy RequireJS bundles</a>.</p>
+<h3 id="can-legacy-widgets-move-to-a-new-react-major-without-a-rebuild">Can legacy widgets move to a new React major without a rebuild?</h3>
+<p>Yes, as long as their code runs on that major. Each RequireJS context chooses the old common bundle or the federated one, so one group of widgets can move to React 19 while another stays on React 18. The <a href="/legacy-amd">legacy RequireJS demo</a> runs both on one page.</p>
+<h2 id="building-fynapps">Building FynApps</h2>
+<h3 id="how-do-i-start-a-new-fynapp">How do I start a new FynApp?</h3>
+<p>Install the scaffolding tool with <code>fyn global add create-fynapp</code>, then run <code>create-fynapp --name my-app --framework react</code>. It creates <code>package.json</code>, <code>tsconfig.json</code>, <code>rollup.config.ts</code> and starter source files.</p>
+<p>The <a href="/docs/getting-started">getting started guide</a> covers the rest.</p>
+<h3 id="what-does-a-build-produce">What does a build produce?</h3>
+<p>A build produces <code>fynapp-entry.js</code> and <code>fynapp.manifest.json</code> in <code>dist/</code>. The manifest is also embedded in the entry file.</p>
+<p>The kernel reads the embedded copy first, because it has to fetch the entry anyway. The JSON file is a fallback.</p>
+<h3 id="how-do-apps-talk-to-each-other">How do apps talk to each other?</h3>
+<p>Through middleware APIs and FynBus. FynBus lets apps publish and subscribe to events and send requests to handlers. The platform stamps the sender of each message.</p>
+<p>A request waits for a handler that has not loaded yet. An app's subscriptions are dropped when it shuts down.</p>
+<h3 id="what-is-middleware">What is middleware?</h3>
+<p>Middleware is code that one FynApp provides and other apps use. It handles cross-app concerns such as a shared theme or a page layout.</p>
+<p>A consumer declares it with <code>useMiddleware</code>. The kernel runs the middleware's <code>setup</code> and <code>apply</code> steps before the app's <code>execute</code>, and <code>apply</code> puts an API into <code>runtime.middlewareContext</code>. A middleware can also take over how an app executes, which the shell demo uses for its layout.</p>
+<h3 id="can-i-use-fynmesh-without-the-middleware-or-the-bus">Can I use FynMesh without the middleware or the bus?</h3>
+<p>Yes. Both are add-on bundles. Load <code>fynmesh-kernel-core</code> alone and a unit runs as plain <code>initialize</code> then <code>execute</code>.</p>
+<p>A unit that declares middleware gets a console warning when the middleware add-on is missing. The <a href="/docs/kernel">kernel docs</a> list the bundles.</p>
+<h3 id="does-fynmesh-share-typescript-types-across-apps">Does FynMesh share TypeScript types across apps?</h3>
+<p>No. There is no federated type generation today. A consuming app types its remote imports with one <code>declare module &quot;fynapp-design-tokens/*&quot;;</code> line per provider, which gives them the type <code>any</code>.</p>
+<p>You can write precise declarations by hand, or share a contract package between teams. The kernel exports its own types from <code>@fynmesh/kernel</code>, including <code>FynUnit</code> and <code>FynUnitRuntime</code>.</p>
+<h2 id="running-and-debugging">Running and debugging</h2>
+<h3 id="how-do-i-see-which-version-an-app-got">How do I see which version an app got?</h3>
+<p>Call <code>Federation.__I()</code> in the console or open the in-page Federation Inspector. Both list each shared module, its providers and the ranges that asked for it.</p>
+<p>For FynApps, <code>kernel.listFynAppStates()</code> returns the name, version and status of each. The <a href="/docs/federation-inspector">inspector docs</a> describe the panels.</p>
+<h3 id="what-happens-when-a-fynapp-fails-to-load">What happens when a FynApp fails to load?</h3>
+<p>The rest of the batch carries on. <code>loadFynAppsByName</code> does not abort when one app fails, and the kernel emits <code>FYNAPP_LOADED</code> with <code>detail.ok</code> set to false.</p>
+<p>A failure while running an app emits <code>FYNAPP_BOOTSTRAP_FAILED</code> and leaves the other apps running. An app that waits for a dependency that never arrives emits <code>FYNAPP_BOOTSTRAP_TIMEOUT</code> after 30 seconds. The dev-overlay add-on shows bootstrap failures on the page in development.</p>
+<h3 id="does-fynmesh-support-server-side-rendering">Does FynMesh support server-side rendering?</h3>
+<p>No. There is no server-side rendering integration today. FynApps render in the browser.</p>
+<p>If you need server rendering, plan for that before you pick FynMesh. The kernel has a Node stub, but it does not run federation, so it is not a path to server rendering.</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/how-it-works"><small>Previous</small><span>How it works</span></a>
+                
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#basics">Basics</a>
+            
+            <a href="#versions-and-sharing">Versions and sharing</a>
+            
+            <a href="#building-fynapps">Building FynApps</a>
+            
+            <a href="#running-and-debugging">Running and debugging</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

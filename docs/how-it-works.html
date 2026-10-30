@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How FynMesh Works</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/how-it-works">
+    <meta property="og:title" content="How FynMesh Works">
+    <meta property="og:description" content="A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="How FynMesh Works">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/how-it-works">
+    <meta name="twitter:title" content="How FynMesh Works">
+    <meta name="twitter:description" content="A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="How FynMesh Works">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/how-it-works">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/how-it-works#webpage",
+      "url": "https://www.fynmesh.fyi/how-it-works",
+      "name": "How FynMesh Works",
+      "description": "A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "How FynMesh Works",
+      "dateModified": "2026-10-29T01:02:59-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "How it works",
+            "item": "https://www.fynmesh.fyi/how-it-works"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works" aria-current="page">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Learn">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Learn</span>
+                
+                <a href="/why-fynmesh">Why FynMesh</a>
+                
+                <a href="/how-it-works" aria-current="page">How it works</a>
+                
+                <a href="/features">Features</a>
+                
+                <a href="/faq">FAQ</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span>How it works
+            </nav>
+            <h1>How FynMesh Works</h1>
+            <p class="fm-lead">A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 29, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/pages/how-it-works.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup. Each app is built on its own into a federated container. A small kernel in the browser finds those containers by name and version range, loads them in dependency order and runs them.</p>
+<p>The sections below follow one app from build to runtime.</p>
+<h2 id="1-build">1. Build</h2>
+<p>A FynApp is a normal Rollup project with one extra plugin, <code>rollup-plugin-federation</code>. You give the plugin a <code>name</code>, the modules the app <code>exposes</code> and the modules it lists under <code>shared</code>.</p>
+<pre><code class="language-js">federation({
+  name: &quot;fynapp-1&quot;,
+  filename: &quot;fynapp-entry.js&quot;,
+  exposes: { &quot;./main&quot;: &quot;./src/main.ts&quot; },
+  shared: { react: { singleton: true, semver: &quot;^19.0.0&quot; } },
+});
+</code></pre>
+<p>The plugin generates a container entry. It collects the shared modules and who imports them, then writes metadata about what the build exposes and shares. The output is ES module code in the SystemJS register format. See the <a href="/docs/rollup-plugin-federation">rollup-plugin-federation docs</a>.</p>
+<p>The build also emits a manifest. It is written twice with the same content: embedded in <code>fynapp-entry.js</code> as <code>__FYNAPP_MANIFEST__</code>, and as <code>dist/fynapp.manifest.json</code>. The kernel has to fetch the entry anyway, so reading the embedded copy costs no extra request. The JSON file is a fallback.</p>
+<p>The manifest lists the app's name and version, its exposes, what it provides and consumes as shared, and which other apps it imports from.</p>
+<h2 id="2-the-registry-resolver">2. The registry resolver</h2>
+<p>The host page loads the kernel as a script and gets a global, <code>fynMeshKernel</code>. There is no class to construct. The host then sets a registry resolver. The resolver takes an app name and an optional semver range and returns the manifest URL.</p>
+<pre><code class="language-ts">const kernel = globalThis.fynMeshKernel;
+
+kernel.setRegistryResolver(async (name, range) =&gt; ({
+  name,
+  version: range ?? &quot;latest&quot;,
+  url: `https://cdn.example.com/${name}/dist/fynapp.manifest.json`,
+  distBase: `https://cdn.example.com/${name}/dist/`,
+}));
+
+await kernel.loadFynAppsByName(
+  [
+    { name: &quot;fynapp-1&quot; },
+    { name: &quot;fynapp-x1&quot;, range: &quot;^1.0.0&quot; },
+    { name: &quot;fynapp-x1&quot;, range: &quot;^2.0.0&quot; },
+  ],
+  { concurrency: 4, preload: 1 },
+);
+</code></pre>
+<p>This host asks for two ranges of <code>fynapp-x1</code>. The resolver returns a distinct <code>version</code> for each, which keys the dependency graph. A real resolver would query a registry. The kernel ships a demo resolver that ignores the range.</p>
+<p><code>loadFynAppsByName</code> rejects if the batch cannot be planned, for example when no resolver is set. One app that fails to load does not abort the batch.</p>
+<h2 id="3-dependency-graph-and-boot-order">3. Dependency graph and boot order</h2>
+<p>The kernel reads each manifest and builds a graph. Edges come from the manifest fields <code>requires</code>, <code>import-exposed</code> and <code>shared-providers</code>. It detects cycles, then loads apps in topological batches. <code>concurrency</code> caps how many load at once, and <code>preload</code> sets how deep to preload dependencies.</p>
+<p>An app that needs a middleware or a shared module from another app waits until that provider is ready. If a provider never arrives, the wait ends after 30 seconds with a <code>FYNAPP_BOOTSTRAP_TIMEOUT</code> event.</p>
+<h2 id="4-shared-modules-and-semver-ranges">4. Shared modules and semver ranges</h2>
+<p>All containers on the page join one named share scope, <code>fynmesh</code>. Loading and initializing a container registers what it provides. No container passes a scope to another one.</p>
+<p>Each importer declares the range it accepts. When an app imports <code>react</code>, the runtime, <code>federation-js</code>, looks for a loaded version that satisfies every range that applies. If one fits, the app reuses it. If none fits, the app loads its own copy.</p>
+<p><code>singleton: true</code> asks for one instance across all containers. When the constraints conflict, <code>federation-js</code> warns instead of throwing.</p>
+<p>This is how React 18 and React 19 coexist. An app asking for <code>^18.0.0</code> and an app asking for <code>^19.0.0</code> each get a matching copy. Read <a href="/guides/share-dependencies-semver">Share dependencies with semver</a> and the <a href="/docs/federation-js">federation-js docs</a> for more.</p>
+<h2 id="5-the-fynunit-lifecycle">5. The FynUnit lifecycle</h2>
+<p>An app's <code>main</code> export is a FynUnit. It can be a plain function, an object with <code>execute</code>, or a class instance with <code>initialize</code> and <code>execute</code>. The kernel validates the shape and throws if there is no <code>execute</code>.</p>
+<pre><code class="language-ts">import { useMiddleware, type FynUnit, type FynUnitRuntime } from &quot;@fynmesh/kernel&quot;;
+
+const unit: FynUnit = {
+  initialize(runtime: FynUnitRuntime) {
+    return { status: &quot;ready&quot; };
+  },
+  execute(runtime: FynUnitRuntime) {
+    const tokens = runtime.middlewareContext.get(&quot;design-tokens&quot;);
+    console.log(`${runtime.fynApp.name} theme:`, tokens?.theme);
+  },
+  shutdown(runtime: FynUnitRuntime) {
+    console.log(`${runtime.fynApp.name} shutting down`);
+  },
+};
+
+export const main = useMiddleware(
+  {
+    mw: import(&quot;fynapp-design-tokens/middleware/design-tokens/design-tokens&quot;, {
+      with: { type: &quot;fynapp-middleware&quot; },
+    }),
+    config: { theme: &quot;fynmesh-default&quot;, cssCustomProperties: true },
+  },
+  unit,
+);
+</code></pre>
+<p>The kernel calls <code>initialize</code>, then <code>execute</code>, then signals <code>FYNAPP_BOOTSTRAPPED</code>. A mounted app can also implement <code>suspend</code>, <code>resume</code> and <code>shutdown</code>. The kernel calls them from <code>suspendFynApp</code>, <code>resumeFynApp</code> and <code>shutdownFynApp</code>.</p>
+<p>Each app has a state you can read with <code>getFynAppState</code> or <code>listFynAppStates</code>. A failure in one app emits <code>FYNAPP_BOOTSTRAP_FAILED</code> and does not stop the others.</p>
+<h2 id="6-middleware">6. Middleware</h2>
+<p>Middleware covers concerns that cross apps. A provider is a FynApp that exposes a <code>./middleware*</code> module and exports objects whose names start with <code>__middleware__</code>. A consumer declares what it needs with <code>useMiddleware</code>, as in the sample above.</p>
+<p>For each middleware the kernel runs <code>setup</code>, then <code>apply</code>. <code>apply</code> puts an API into <code>runtime.middlewareContext</code>. A middleware marked for auto-apply can also override how a unit executes. The first one that says yes wins.</p>
+<p>The build turns the <code>import()</code> in a declaration into an id string, so the middleware is resolved through the same manifest and graph as everything else.</p>
+<h2 id="7-fynbus">7. FynBus</h2>
+<p>FynBus is the messaging layer. Apps emit and subscribe to events, and they can send a request to a handler. The platform stamps the sender of each message. A request waits for a handler that has not loaded yet. An app's subscriptions are cleaned up when the app shuts down.</p>
+<p>An app reaches the bus as <code>runtime.bus</code>, and the host reaches it as <code>kernel.bus</code>.</p>
+<h2 id="8-kernel-add-ons">8. Kernel add-ons</h2>
+<p>The core kernel resolves manifests, builds the graph, loads, bootstraps and manages lifecycle and events. Everything else is an add-on bundle.</p>
+<ul>
+<li>The middleware add-on holds the middleware registry, auto-apply and overrides.</li>
+<li>The bus add-on provides FynBus.</li>
+<li>The telemetry add-on adds <code>kernel.setTelemetry</code>.</li>
+<li>The dev-overlay add-on shows bootstrap failures on the page, in development only.</li>
+<li>The AMD add-on serves federated modules to legacy RequireJS bundles under the ids they already ask for. It is a working prototype, shown in the <a href="/legacy-amd">legacy RequireJS demo</a> and the <a href="/guides/legacy-requirejs-on-module-federation">guide</a>.</li>
+</ul>
+<p>Load core first, then any add-ons. Each add-on installs itself into <code>fynMeshKernel</code> and throws if core is missing. Without the middleware add-on, a unit runs as plain <code>initialize</code> then <code>execute</code>, and a unit that declares middleware gets a console warning. The README for the <a href="/docs/kernel">kernel</a> lists the bundle files, and the <a href="/api/">kernel API</a> covers the types.</p>
+<h2 id="9-inspection">9. Inspection</h2>
+<p><code>Federation.__I()</code> returns a snapshot of shared-module resolution. For each chunk and share key it shows the ranges the importers declared, the ranges resolution applied and the versions available. The Federation Inspector draws this in a panel on the page, with modules, graph, shares, issues, middleware and FynApps views. See the <a href="/docs/federation-inspector">inspector docs</a>.</p>
+<h2 id="next-steps">Next steps</h2>
+<p>Follow <a href="/docs/getting-started">Getting started</a> to build a first app. The <a href="/docs/fynapp-contract">FynApp contract</a> describes what the kernel expects from one. The <a href="/demo">live demo</a> shows the pieces running together.</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/why-fynmesh"><small>Previous</small><span>Why FynMesh</span></a>
+                <a class="fm-pager-next" href="/faq"><small>Next</small><span>FAQ</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#1-build">1. Build</a>
+            
+            <a href="#2-the-registry-resolver">2. The registry resolver</a>
+            
+            <a href="#3-dependency-graph-and-boot-order">3. Dependency graph and boot order</a>
+            
+            <a href="#4-shared-modules-and-semver-ranges">4. Shared modules and semver ranges</a>
+            
+            <a href="#5-the-fynunit-lifecycle">5. The FynUnit lifecycle</a>
+            
+            <a href="#6-middleware">6. Middleware</a>
+            
+            <a href="#7-fynbus">7. FynBus</a>
+            
+            <a href="#8-kernel-add-ons">8. Kernel add-ons</a>
+            
+            <a href="#9-inspection">9. Inspection</a>
+            
+            <a href="#next-steps">Next steps</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

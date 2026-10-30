@@ -1,0 +1,13 @@
+{
+  "name": "fynops-data",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts"
+  },
+  "provide-shared": {
+    "fynops-data-core": {
+      "singleton": true,
+      "semver": "^1.0.0"
+    }
+  }
+}

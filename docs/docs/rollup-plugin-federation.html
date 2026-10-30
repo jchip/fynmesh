@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rollup-plugin-federation: Module Federation for Rollup</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/rollup-plugin-federation">
+    <meta property="og:title" content="rollup-plugin-federation: Module Federation for Rollup">
+    <meta property="og:description" content="Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="rollup-plugin-federation: Module Federation for Rollup">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/rollup-plugin-federation">
+    <meta name="twitter:title" content="rollup-plugin-federation: Module Federation for Rollup">
+    <meta name="twitter:description" content="Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="rollup-plugin-federation: Module Federation for Rollup">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/rollup-plugin-federation">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/rollup-plugin-federation#webpage",
+      "url": "https://www.fynmesh.fyi/docs/rollup-plugin-federation",
+      "name": "rollup-plugin-federation: Module Federation for Rollup",
+      "description": "Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "rollup-plugin-federation: Module Federation for Rollup",
+      "dateModified": "2026-10-24T20:23:56-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "rollup-plugin-federation",
+            "item": "https://www.fynmesh.fyi/docs/rollup-plugin-federation"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel">Kernel</a>
+                
+                <a href="/docs/federation-js">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation" aria-current="page">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>rollup-plugin-federation
+            </nav>
+            <h1>rollup-plugin-federation: Module Federation for Rollup</h1>
+            <p class="fm-lead">Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/rollup-federation/rollup-plugin-federation/README.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>Module federation for <a href="https://rollupjs.org">Rollup</a>. Build a bundle that shares modules with,
+and exposes modules to, other independently built and deployed bundles.</p>
+<p><strong>FynMesh:</strong> <a href="https://www.fynmesh.fyi">Website</a> · <a href="https://www.fynmesh.fyi/demo">Demo</a> · <a href="https://www.fynmesh.fyi/shell">Shell demo</a></p>
+<p>The plugin generates a <em>container</em> entry for your build: it collects the shared modules and
+their importers, emits the container runtime code, and writes federation metadata describing
+what the bundle exposes and shares. At runtime those containers are wired together by
+<a href="/docs/federation-js"><code>federation-js</code></a>.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-sh">npm install --save-dev rollup-plugin-federation
+</code></pre>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-js">import federation from &quot;rollup-plugin-federation&quot;;
+
+export default {
+  input: [&quot;src/index.js&quot;, &quot;federation-entry.js&quot;],
+  output: { dir: &quot;dist&quot;, format: &quot;esm&quot; },
+  plugins: [
+    federation({
+      name: &quot;plugin_1&quot;,
+      // must also appear in the input array above
+      filename: &quot;federation-entry.js&quot;,
+      exposes: {
+        &quot;./bootstrap&quot;: &quot;./src/bootstrap.js&quot;,
+      },
+      shared: {
+        react: { singleton: true, semver: &quot;^19.0.0&quot; },
+      },
+    }),
+  ],
+};
+</code></pre>
+<p><code>filename</code> names the container entry the plugin generates — <strong>it has to be listed in Rollup's
+<code>input</code> as well</strong>, or the entry is never emitted.</p>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>string</code></td>
+<td><strong>Required.</strong> Name of this container.</td>
+</tr>
+<tr>
+<td><code>filename</code></td>
+<td><code>string</code></td>
+<td><strong>Required.</strong> Output filename for the container entry. Also add it to <code>input</code>.</td>
+</tr>
+<tr>
+<td><code>exposes</code></td>
+<td><code>Record&lt;string, string&gt;</code></td>
+<td>Modules this container exposes to others.</td>
+</tr>
+<tr>
+<td><code>shared</code></td>
+<td><code>Record&lt;string, SharedConfig&gt;</code></td>
+<td>Modules shared with other containers.</td>
+</tr>
+<tr>
+<td><code>shareScope</code></td>
+<td><code>string</code></td>
+<td>Namespace for sharing. Defaults to the built-in scope.</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td><code>string</code></td>
+<td>Version of this container. Defaults to the host package's version.</td>
+</tr>
+<tr>
+<td><code>emitFederationJson</code></td>
+<td><code>boolean</code></td>
+<td>Emit federation info as JSON. Defaults to <code>true</code>.</td>
+</tr>
+<tr>
+<td><code>debugging</code></td>
+<td><code>boolean</code></td>
+<td>Enable debug logging and output.</td>
+</tr>
+<tr>
+<td><code>renderDynamicImport</code></td>
+<td><code>object</code></td>
+<td>Dynamic import rendering per import type.</td>
+</tr>
+<tr>
+<td><code>entry.header</code> / <code>entry.footer</code></td>
+<td><code>string</code></td>
+<td>Code inserted at the start/end of the entry file.</td>
+</tr>
+<tr>
+<td><code>emitMeta</code>, <code>emitFederationMeta</code>, <code>enrichManifest</code></td>
+<td><code>function</code></td>
+<td>Hooks to emit or enrich metadata.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="shared-modules">Shared modules</h3>
+<pre><code class="language-js">shared: {
+  react: {
+    singleton: true,     // only one instance across all containers
+    semver: &quot;^19.0.0&quot;,   // range this container accepts
+    eager: false,        // load at startup rather than lazily
+    import: true,        // bundle a copy, or treat as external
+  },
+}
+</code></pre>
+<p>A dependency consumed only <em>transitively</em> still has to appear in <code>shared</code> with its semver range
+— listing it as an external alone is not enough, and a mismatch shows up at runtime as a
+duplicate-instance error rather than a build failure.</p>
+<h2 id="metadata-the-build-emits">Metadata the build emits</h2>
+<p>Alongside the container entry and its chunks, the plugin writes metadata describing the
+build. Two files, plus one copy embedded in the entry itself.</p>
+<p><strong><code>federation.json</code></strong> — a record of what this build produced: <code>name</code>, <code>filename</code>,
+<code>shareScope</code>, each expose mapped to <code>{ path, chunks }</code>, each shared module's config, and a
+timestamp. Emitted unless <code>emitFederationJson: false</code>, in which case the same info object is
+still handed to <code>emitFederationMeta</code>.</p>
+<p>Nothing requires it. It is build and serving metadata for your own tooling — the runtime
+never needs it, since the entry file carries the container, its exposes and its shares.
+<code>federation-combine</code> keeps its <code>bundles</code> record current when the file is there, but works
+without it.</p>
+<p><strong>An embedded manifest</strong>, if you supply <code>enrichManifest</code>. Because dynamic imports are not
+discovered until every module has been processed, the manifest cannot exist when the
+container code is generated — so the entry gets a <code>{ __placeholder: true }</code> stub, and
+<code>generateBundle</code> splices the enriched manifest into the emitted code afterwards, matching
+both the development and minified forms. The result is exported as <code>__FYNAPP_MANIFEST__</code> and
+assigned onto the container, which lets a runtime read a bundle's metadata without a second
+request.</p>
+<p>That substitution is a text patch over generated code, and a build where it fails to match
+still succeeds — it warns and ships the placeholder. If a consumer of yours reads the
+embedded manifest without a fallback, check for it in CI.</p>
+<p><strong>Whatever <code>emitFederationMeta</code> emits.</strong> The hook receives the federation info, the runtime,
+the plugin context and the bundle, so it can emit metadata in whatever shape its consumers
+want. In the <a href="https://github.com/jchip/fynmesh">fynmesh</a> colorepo, this pair of hooks is what
+produces a FynApp's <code>fynapp.manifest.json</code>; see
+<a href="https://github.com/jchip/fynmesh/blob/main/notes/BUILD-ARTIFACTS.md">notes/BUILD-ARTIFACTS.md</a>
+there for a worked example of both hooks and how a runtime consumes their output.</p>
+<h2 id="combining-small-chunks-federation-combine">Combining small chunks — <code>federation-combine</code></h2>
+<p>One chunk is emitted per expose, so a container with many small exposes ships many tiny files
+whose cost is almost entirely request overhead. <code>federation-combine</code> folds them into one
+physical file per group, while each module keeps its own identity and stays importable by its
+own filename.</p>
+<p>It is a <strong>post-build step over a finished dist directory</strong>, not part of the plugin's pipeline —
+so it can be re-run with a different policy, or applied at deploy time to artifacts someone
+else built.</p>
+<pre><code class="language-bash">federation-combine demo/fynapp-1/dist --dry-run
+federation-combine demo/*/dist
+</code></pre>
+<pre><code>--max-module &lt;bytes&gt;   only chunks at or below this size are candidates (2048)
+--max-bundle &lt;bytes&gt;   stop adding to a group at this size (32768)
+--min-group &lt;count&gt;    a group needs at least this many chunks (2)
+--exclude &lt;a,b&gt;        fileNames or stems to leave in their own file
+--group &lt;name=a,b&gt;     an explicit group, bypassing the size rules; repeatable
+--drop-individual      delete the members' own files (removes the fallback)
+--dry-run              report what would change, write nothing
+</code></pre>
+<h3 id="what-combining-leaves-behind">What combining leaves behind</h3>
+<p>The runtime is told which file carries which module by one statement appended to the
+container entry, so an ordinary import works with no further help — a member's url resolves
+to its carrier and the carrier is fetched once, however many of its members are asked for.</p>
+<p>That statement runs when the entry runs, which is too late for anything that has to decide
+<em>what to fetch</em> — a preload hint naming a member url names a file the runtime will never
+request. So the map is also written out as <strong><code>federation.bundles.json</code></strong>, the map on its own:</p>
+<pre><code class="language-json">{ &quot;combo-R7IaSAnm.js&quot;: [&quot;hello-B9dQ6FmL.js&quot;, &quot;getInfo-CH7m3ozA.js&quot;] }
+</code></pre>
+<p>A host can read that without executing anything, and hand it to the runtime up front with
+<code>Federation.declareBundles(map, distBase)</code> — which is what makes carriers known before the
+first entry loads. Present only when a run actually combined something, and removed again
+when one does not, so its presence is itself the signal that a dist has bundles to offer.</p>
+<p>Nothing here needs <code>federation.json</code>: the container entry is the one file that calls
+<code>_mfContainer</code>, and that call names the container and its version. An app that builds with
+<code>emitFederationJson: false</code> combines exactly the same.</p>
+<p>Or from a build script:</p>
+<pre><code class="language-js">import { combineDist } from &quot;rollup-plugin-federation&quot;;
+
+combineDist(&quot;dist&quot;, { groups: { startup: [&quot;index&quot;, &quot;react-esm-19.production&quot;] } });
+</code></pre>
+<p>Explicit groups are taken exactly as given, which is how a known startup set is kept together
+and a cold chunk is kept out of a hot one. Everything else is packed smallest-first.</p>
+<p>The members' individual files are kept by default: if the map and the files ever disagree, the
+runtime says so and loads the module's own file, so a stale map costs one request rather than a
+broken page. <code>--drop-individual</code> removes that fallback, and makes the step non-repeatable.</p>
+<p>Requires chunks built by this plugin version or newer — each chunk records the physical file it
+lives in, which is what lets a combined module tell its own url apart from the file it arrived
+in. Chunks without it are reported and left alone. Combined files carry no sourcemap; the
+individual files keep theirs, so debug builds should simply not be combined.</p>
+<h2 id="also-exported">Also exported</h2>
+<p><code>DependencyAnalyzer</code> and <code>DependencyUtils</code> for inspecting a build's dependency graph,
+<code>combineDist</code> (above), plus the plugin's TypeScript types.</p>
+<h2 id="license">License</h2>
+<p>Apache-2.0</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/federation-js"><small>Previous</small><span>federation-js</span></a>
+                <a class="fm-pager-next" href="/docs/federation-inspector"><small>Next</small><span>Federation Inspector</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#install">Install</a>
+            
+            <a href="#usage">Usage</a>
+            
+            <a href="#options">Options</a>
+            
+            <a href="#metadata-the-build-emits">Metadata the build emits</a>
+            
+            <a href="#combining-small-chunks-federation-combine">Combining small chunks — federation-combine</a>
+            
+            <a href="#also-exported">Also exported</a>
+            
+            <a href="#license">License</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

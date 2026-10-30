@@ -1,0 +1,63 @@
+{
+  "name": "fynapp-react18-user",
+  "filename": "fynapp-entry.js",
+  "shareScope": "fynmesh",
+  "exposes": {
+    "./main": {
+      "path": "./src/main.ts",
+      "chunks": [
+        "main-B-znxRCB.js"
+      ]
+    }
+  },
+  "shared": {
+    "esm-react": {
+      "moduleIds": [
+        "esm-react"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/main.ts",
+          "path": "esm-react"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "esm-react"
+        }
+      ]
+    },
+    "esm-react-dom": {
+      "moduleIds": [
+        "esm-react-dom"
+      ],
+      "chunks": [],
+      "config": {
+        "import": false,
+        "singleton": false,
+        "semver": "^18.0.0"
+      },
+      "importers": [
+        {
+          "from": "src/main.ts",
+          "path": "esm-react-dom"
+        }
+      ],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "path": "esm-react-dom"
+        }
+      ]
+    }
+  },
+  "timestamp": "2026-10-30T06:05:20.827Z",
+  "version": "1.0.0"
+}

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynOps: A Logistics Console Built from FynApps</title>
+    
+    
+    
+    
+    <script>
+        (function () {
+            try {
+                if (!localStorage.getItem("fynops.session")) return;
+            } catch (e) {
+                return;
+            }
+            var route = location.hash.replace(/^#/, "").split("?")[0] || "/shipments";
+            ({"/shipments":[{"href":"/ops-shipments/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-shipments/dist/main-BpS-F7wz.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"},{"href":"/fynops-grid-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-grid-lib/dist/_mf-share-surface_esm-ag-grid-enterprise-DtL7NZrL.js","priority":"low"},{"href":"/fynops-charts-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-B3xw7xCE.js","priority":"low"},{"href":"/fynapp-ag-grid-lib/dist/_mf-share-surface_esm-ag-grid-react-DCRh04rR.js","priority":"low"}],"/map":[{"href":"/ops-map/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-map/dist/main-DYLrzETS.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"}],"/analytics":[{"href":"/ops-analytics/dist/fynapp-entry.js","priority":"low"},{"href":"/ops-analytics/dist/main-BNm_Dd-y.js","priority":"low"},{"href":"/fynops-ui/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-ui/dist/_mf-share-surface_fynops-ui-kit-DNezUToj.js","priority":"low"},{"href":"/fynops-data/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-data/dist/combo-DYiZRjrP.js","priority":"low"},{"href":"/fynops-charts-lib/dist/fynapp-entry.js","priority":"low"},{"href":"/fynops-charts-lib/dist/_mf-share-surface_esm-echarts--_-c3NjY.js","priority":"low"}]}[route] || []).forEach(function (hint) {
+                var link = document.createElement("link");
+                link.rel = "preload";
+                link.as = "script";
+                link.href = hint.href;
+                if (hint.priority) link.fetchPriority = hint.priority;
+                document.head.appendChild(link);
+            });
+        })();
+    </script>
+    
+
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load per route and share React, AG Grid and ECharts at runtime.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/fynops">
+    <meta property="og:title" content="FynOps: A Logistics Console Built from FynApps">
+    <meta property="og:description" content="FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load per route and share React, AG Grid and ECharts at runtime.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynOps: A Logistics Console Built from FynApps">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/fynops">
+    <meta name="twitter:title" content="FynOps: A Logistics Console Built from FynApps">
+    <meta name="twitter:description" content="FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load per route and share React, AG Grid and ECharts at runtime.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynOps: A Logistics Console Built from FynApps">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/fynops">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.fynmesh.fyi/fynops#webpage",
+      "url": "https://www.fynmesh.fyi/fynops",
+      "name": "FynOps: A Logistics Console Built from FynApps",
+      "description": "FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load per route and share React, AG Grid and ECharts at runtime.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Demos",
+            "item": "https://www.fynmesh.fyi/demos"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "FynOps",
+            "item": "https://www.fynmesh.fyi/fynops"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/spectre.css/dist/spectre.min.css">
+<link rel="stylesheet" href="/spectre.css/dist/spectre-exp.min.css">
+<link rel="stylesheet" href="/spectre.css/dist/spectre-icons.min.css">
+
+
+    <link rel="stylesheet" href="/site.css">
+    
+    
+    
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/fynapp-entry.js">
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/startup-nBIAwtiE.js">
+    <link rel="preload" as="script" href="/fynapp-react-19/dist/_mf-share-surface_esm-react-dom-Bn8NSrK6.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/fynapp-entry.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/fynops-shell-ChDRMU2A.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/main-DPorE3if.js">
+    <link rel="preload" as="script" href="/fynops-shell/dist/shell-state-290Hxv29.js">
+    
+
+    
+
+    <script src="/system.min.js"></script>
+    <script src="/federation-js/dist/federation-js.min.js"></script>
+    <script src="/kernel/dist/fynmesh-browser-kernel.min.js"></script>
+
+
+
+    
+    <script>
+        if (Federation.declareBundles) {
+            Federation.declareBundles({"startup-nBIAwtiE.js":["index.js","_mf-share-surface_esm-react-BiJXemGR.js"]}, "/fynapp-react-19/dist/");
+            Federation.declareBundles({"combo-DYiZRjrP.js":["index.js","main-DEwuPOOW.js","_mf-share-surface_fynops-data-core-CTLcAdnq.js"]}, "/fynops-data/dist/");
+            }
+    </script>
+    
+
+</head>
+<body class="">
+    
+    
+    
+    <div id="fynops-root">Loading FynOps, a demo app for FynMesh...</div>
+
+    
+    
+    <script>
+        (async () => {
+            try {
+                /*
+                  Every FynApp resolves by name to /<name>/dist/. The React
+                  provider shows range-based resolution on purpose: one package
+                  name, fynapp-react-lib, ships as two versions, and the major in
+                  the consumer's range picks which one loads. Keep it that way.
+                */
+                fynMeshKernel.setRegistryResolver(async (name, range) => {
+                    const dir = name === "fynapp-react-lib"
+                        ? (/^[~^]?18(\.|$)/.test(range || "") ? "fynapp-react-18" : "fynapp-react-19")
+                        : name;
+                    const distBase = `/${dir}/dist/`;
+                    return { name, version: "0.0.0", url: `${distBase}fynapp.manifest.json`, distBase };
+                });
+
+                // Only the shell is named here. The kernel reads its manifest and
+                // loads React first; the shell then loads each feature by name.
+                await fynMeshKernel.loadFynAppsByName([{ name: "fynops-shell" }]);
+
+                // Phase 0 spikes: ?load=a,b,c loads each /<name>/dist in order.
+                const load = new URLSearchParams(location.search).get("load");
+                for (const name of load ? load.split(",") : []) {
+                    await fynMeshKernel.loadFynApp(`/${name}/dist`);
+                }
+            } catch (error) {
+                console.error("❌ Failed to load FynOps:", error);
+                document.getElementById("fynops-root").textContent =
+                    `FynOps failed to load: ${error.message}`;
+            }
+        })();
+    </script>
+    <!--
+    The federation inspector, loaded last on purpose.
+
+    It is an observer: it reports on how this page loaded, so it must not be
+    part of what it loaded. Fetching it with the rest of the scripts would put
+    a megabyte of devtool ahead of the fynapps in the network queue and put its
+    own parse and mount inside the measurements it is there to show.
+
+    So it waits for the load event, then two frames (the first is the paint the
+    load event preceded, the second is the one after it), then for the browser
+    to be idle -- by which time the fynapps have rendered. The fetch itself is
+    async and fetchPriority="low", so even the request is queued behind
+    anything the page still wants.
+
+    The badge appears in the corner when it is ready; Ctrl+Shift+M opens it.
+-->
+<script>
+    (function () {
+        var src = "/federation-inspector.min.js";
+
+        function load() {
+            var s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            if ("fetchPriority" in s) {
+                s.fetchPriority = "low";
+            }
+            document.head.appendChild(s);
+        }
+
+        function whenIdle() {
+            if (window.requestIdleCallback) {
+                // the timeout is a backstop, not a target: a page that never
+                // goes idle should still end up with the badge
+                requestIdleCallback(load, { timeout: 10000 });
+            } else {
+                setTimeout(load, 2000);
+            }
+        }
+
+        function afterPaint() {
+            var waiting = true;
+            function go() {
+                if (waiting) {
+                    waiting = false;
+                    whenIdle();
+                }
+            }
+            // two frames: the first is the paint the load event preceded, the
+            // second is the one after it
+            requestAnimationFrame(function () {
+                requestAnimationFrame(go);
+            });
+            // ...but a page in a background tab is never given a frame, and
+            // waiting for one there means waiting forever. Measured: a tab
+            // that had not painted yet sat with the script element created and
+            // nothing behind it.
+            setTimeout(go, 3000);
+        }
+
+        if (document.readyState === "complete") {
+            afterPaint();
+        } else {
+            addEventListener("load", afterPaint, { once: true });
+        }
+    })();
+</script>
+
+
+</body>
+</html>

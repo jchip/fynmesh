@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Micro Frontends with Rollup</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/micro-frontends-with-rollup">
+    <meta property="og:title" content="Build Micro Frontends with Rollup">
+    <meta property="og:description" content="Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Build Micro Frontends with Rollup">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/micro-frontends-with-rollup">
+    <meta name="twitter:title" content="Build Micro Frontends with Rollup">
+    <meta name="twitter:description" content="Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Build Micro Frontends with Rollup">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/micro-frontends-with-rollup">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/micro-frontends-with-rollup#webpage",
+      "url": "https://www.fynmesh.fyi/guides/micro-frontends-with-rollup",
+      "name": "Build Micro Frontends with Rollup",
+      "description": "Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Build Micro Frontends with Rollup",
+      "dateModified": "2026-10-24T20:23:42-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Micro Frontends with Rollup",
+            "item": "https://www.fynmesh.fyi/guides/micro-frontends-with-rollup"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup" aria-current="page">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Micro Frontends with Rollup
+            </nav>
+            <h1>Build Micro Frontends with Rollup</h1>
+            <p class="fm-lead">Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/micro-frontends-with-rollup.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>FynMesh builds each micro frontend with Rollup. We call one a FynApp. The <code>rollup-plugin-federation</code> plugin turns a Rollup build into a federated container, and the FynMesh kernel loads that container in the browser by name.</p>
+<p>You do not need webpack. A FynApp is a normal Rollup project with one extra plugin and one exported object.</p>
+<h2 id="what-you-build">What you build</h2>
+<p>A FynApp has three parts.</p>
+<ul>
+<li><code>rollup.config.ts</code> names the app, lists what it exposes and what it shares.</li>
+<li><code>src/main.ts</code> exports <code>main</code>, the entry the kernel runs.</li>
+<li><code>dist/</code> holds the build: <code>fynapp-entry.js</code> and <code>fynapp.manifest.json</code>.</li>
+</ul>
+<p>Each FynApp is built and deployed on its own. The host page only needs the kernel and the app's name.</p>
+<h2 id="scaffold-a-fynapp">Scaffold a FynApp</h2>
+<p>Install the CLI with fyn, then create an app.</p>
+<pre><code class="language-bash">fyn global add create-fynapp
+create-fynapp --name my-app --framework react
+</code></pre>
+<p>The <code>--framework</code> flag accepts <code>react</code>, <code>react18</code>, <code>preact</code>, <code>vue</code>, <code>solid</code>, <code>svelte</code>, <code>marko</code> and <code>vanilla</code>. These eight have full templates. Any other name gets a generic skeleton that builds as is and comes with an <code>AGENT-TODO.md</code> checklist.</p>
+<p>The command writes <code>package.json</code>, <code>tsconfig.json</code>, <code>rollup.config.ts</code> and starter sources. Use <code>--skip-install</code> if you want the files without the install step.</p>
+<h2 id="the-rollup-config">The Rollup config</h2>
+<p>Most apps use the <code>createFynAppRollupConfig</code> factory from <code>create-fynapp</code>.</p>
+<pre><code class="language-ts">import { createFynAppRollupConfig } from &quot;create-fynapp&quot;;
+
+export default createFynAppRollupConfig({
+  name: &quot;example-vanilla&quot;,
+  framework: &quot;vanilla&quot;,
+  typescript: true,
+  exposes: {
+    &quot;./main&quot;: &quot;./src/main.ts&quot;,
+  },
+});
+</code></pre>
+<p>For <code>framework: &quot;react&quot;</code> the factory adds the <code>./main</code> expose for you. Every other framework must list it. The factory emits SystemJS output into <code>dist/</code> and assembles the Rollup plugins in a fixed order, with the federation plugin among them.</p>
+<p>Under the hood this calls <code>rollup-plugin-federation</code>. Its main options are:</p>
+<ul>
+<li><code>name</code>: the container name. Required.</li>
+<li><code>filename</code>: the container entry file. It must also appear in Rollup's <code>input</code>.</li>
+<li><code>exposes</code>: modules other apps can load, as <code>{ &quot;./main&quot;: &quot;./src/main.ts&quot; }</code>.</li>
+<li><code>shared</code>: modules shared at runtime, each with <code>singleton</code> and a <code>semver</code> range.</li>
+</ul>
+<p>The Vue demo app shows the lower-level form. It exposes <code>./main</code> and shares <code>vue</code> as a singleton.</p>
+<pre><code class="language-ts">...setupFederationPlugins({
+  name: &quot;fynapp-4-vue&quot;,
+  exposes: {
+    &quot;./main&quot;: &quot;./src/main.js&quot;,
+  },
+  shared: {
+    vue: {
+      singleton: true,
+      semver: &quot;^3.3.4&quot;,
+    },
+  },
+}),
+</code></pre>
+<p>See the <a href="/docs/rollup-plugin-federation">rollup-plugin-federation docs</a> for every option.</p>
+<h2 id="build-it">Build it</h2>
+<p>Inside a FynApp, run Rollup through the <code>cfa</code> command or the package script.</p>
+<pre><code class="language-bash">cfa build
+cfa build --watch
+cfa check
+</code></pre>
+<p><code>cfa check</code> builds the app and confirms that <code>dist/fynapp-entry.js</code> and a valid <code>dist/fynapp.manifest.json</code> exist. The manifest lists the app's name, exposes and shared modules. The same manifest is embedded in <code>fynapp-entry.js</code>, so the kernel reads it without an extra request.</p>
+<p>Build order matters when apps depend on each other. An app that consumes a shared module reads its provider's manifest from disk at build time. Build the provider first.</p>
+<h2 id="write-the-fynunit">Write the FynUnit</h2>
+<p><code>src/main.ts</code> exports <code>main</code>. This object is a FynUnit. Only <code>execute</code> is required. <code>initialize</code> is optional and runs first.</p>
+<pre><code class="language-ts">import { useMiddleware } from &quot;@fynmesh/kernel&quot;;
+import type { FynUnit, FynUnitRuntime } from &quot;@fynmesh/kernel&quot;;
+
+class VanillaUnit implements FynUnit {
+  initialize(_runtime: FynUnitRuntime) {
+    return { status: &quot;ready&quot;, mode: &quot;standalone&quot; };
+  }
+
+  execute(runtime: FynUnitRuntime) {
+    const target = document.createElement(&quot;div&quot;);
+    target.textContent = `Hello from ${runtime.fynApp.name}`;
+    document.body.appendChild(target);
+  }
+}
+
+export const main = useMiddleware([], new VanillaUnit());
+</code></pre>
+<p><code>main</code> can also be a plain object with <code>execute</code>, or a bare function. The kernel wraps a function as <code>{ execute: fn }</code>. The <a href="/docs/fynapp-contract">FynApp contract</a> lists the other lifecycle methods: <code>shutdown</code>, <code>suspend</code> and <code>resume</code>.</p>
+<h2 id="load-it-in-a-host-page">Load it in a host page</h2>
+<p>The host page loads three scripts: SystemJS, <code>federation-js</code> and the browser kernel. The kernel then loads apps by name.</p>
+<pre><code class="language-html">&lt;script src=&quot;/system.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/federation-js/dist/federation-js.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/kernel/dist/fynmesh-browser-kernel.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+  fynMeshKernel.loadFynAppsByName([
+    { name: &quot;fynapp-1&quot; },
+    { name: &quot;fynapp-4-vue&quot; },
+  ]);
+&lt;/script&gt;
+</code></pre>
+<p>The kernel resolves each name through a registry resolver. The demo maps a name to <code>/&lt;name&gt;/dist/fynapp.manifest.json</code>. You set your own mapping with <code>fynMeshKernel.setRegistryResolver(async (name, range) =&gt; ({ name, version, url, distBase }))</code>.</p>
+<p><code>loadFynAppsByName</code> reads the manifests, builds a dependency graph, and loads apps in dependency order. Independent apps load in parallel, four at a time by default. A failed app does not stop the others.</p>
+<h2 id="react-vue-preact-solid-svelte-and-marko">React, Vue, Preact, Solid, Svelte and Marko</h2>
+<p>The Rollup setup is the same for every framework. Only the framework plugin and the shared package change.</p>
+<ul>
+<li>React: <code>createFynAppRollupConfig</code> with <code>framework: &quot;react&quot;</code>. React, React DOM and <code>react-dom/client</code> are shared singletons.</li>
+<li>Vue: <code>vue</code> shared with <code>^3.3.4</code>.</li>
+<li>Preact: <code>fynapp-5-preact</code> shares Preact as a singleton.</li>
+<li>Solid: <code>solid-js</code> shared with <code>^1.9.15</code>.</li>
+<li>Svelte: <code>fynapp-8-svelte</code> shares Svelte as a singleton.</li>
+<li>Marko: <code>fynapp-3-marko</code> shares Marko as a singleton.</li>
+</ul>
+<p>The <a href="/demo">live demo</a> loads all six on one page. Each app is built and loaded on its own. The source for each is under <code>demo/</code> in the repository.</p>
+<h2 id="why-rollup">Why Rollup</h2>
+<p>Production builds run through terser and emit no sourcemaps by default. Many small chunks can be folded into fewer files with <code>federation-combine</code>, a post-build step in <code>rollup-plugin-federation</code>. The federation output format here is SystemJS, which <code>federation-js</code> loads at runtime.</p>
+<h2 id="try-it">Try it</h2>
+<ul>
+<li>Open the <a href="/demo">live demo</a> to see six frameworks on one page.</li>
+<li>Try the <a href="/shell">shell demo</a> to see apps composed through middleware.</li>
+<li>Read <a href="/docs/getting-started">Getting Started</a> for the full scaffolder reference.</li>
+<li>Learn how loading works in the <a href="/docs/kernel">kernel docs</a>.</li>
+<li>See how federation works without webpack in <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>.</li>
+<li>Run two versions of one library in <a href="/guides/run-multiple-react-versions">Run Multiple React Versions on One Page</a>.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/guides/legacy-requirejs-on-module-federation"><small>Previous</small><span>Legacy RequireJS Bundles</span></a>
+                <a class="fm-pager-next" href="/guides/module-federation-without-webpack"><small>Next</small><span>Module Federation Without Webpack</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#what-you-build">What you build</a>
+            
+            <a href="#scaffold-a-fynapp">Scaffold a FynApp</a>
+            
+            <a href="#the-rollup-config">The Rollup config</a>
+            
+            <a href="#build-it">Build it</a>
+            
+            <a href="#write-the-fynunit">Write the FynUnit</a>
+            
+            <a href="#load-it-in-a-host-page">Load it in a host page</a>
+            
+            <a href="#react-vue-preact-solid-svelte-and-marko">React, Vue, Preact, Solid, Svelte and Marko</a>
+            
+            <a href="#why-rollup">Why Rollup</a>
+            
+            <a href="#try-it">Try it</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

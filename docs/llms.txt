@@ -1,0 +1,46 @@
+# FynMesh
+
+> FynMesh is an open source micro frontend framework built on Module Federation and Rollup.
+
+FynMesh loads independently deployed apps, called FynApps, into one page and shares their dependencies at runtime. Legacy webpack AMD bundles loaded by RequireJS can get their shared libraries from it too, with no rebuild. The links below are the overview pages, docs, guides and live demos.
+
+## Overview
+
+- [Why FynMesh](https://www.fynmesh.fyi/why-fynmesh): Why pick FynMesh for micro frontends: apps join a page without wiring, ask for other apps by version range, cooperate through the kernel, and show up in an inspector.
+- [How FynMesh Works](https://www.fynmesh.fyi/how-it-works): A walk through FynMesh from build to runtime: Rollup build, registry resolver, dependency-ordered boot, semver shared modules, lifecycle, middleware, FynBus.
+- [FynMesh FAQ](https://www.fynmesh.fyi/faq): Answers about FynMesh: what a FynApp is, how React versions and shared dependencies resolve, how apps talk, how to debug a page, and what is not supported yet.
+
+## Docs
+
+- [Getting Started: Create a FynApp](https://www.fynmesh.fyi/docs/getting-started): Scaffold a FynApp with create-fynapp, run it next to other apps, and ship it. The quickest path from an empty folder to a working micro frontend.
+- [FynApp Guide: Create or Modify an App](https://www.fynmesh.fyi/docs/fynapp-guide): A step by step guide to create a new FynApp or change an existing one. It is written for developers and for coding agents that follow the FynApp contract.
+- [The FynApp Contract](https://www.fynmesh.fyi/docs/fynapp-contract): The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.
+- [FynMesh Kernel API and Concepts](https://www.fynmesh.fyi/docs/kernel): How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.
+- [federation-js: Runtime Module Federation](https://www.fynmesh.fyi/docs/federation-js): federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.
+- [rollup-plugin-federation: Module Federation for Rollup](https://www.fynmesh.fyi/docs/rollup-plugin-federation): Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.
+- [Federation Inspector: Debug Shared Modules](https://www.fynmesh.fyi/docs/federation-inspector): A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.
+
+## Guides
+
+- [Run Multiple React Versions on One Page](https://www.fynmesh.fyi/guides/run-multiple-react-versions): Yes, React 18 and React 19 micro frontends can share one page. In FynMesh each app declares its React range and gets a copy that fits it.
+- [Share Dependencies Across Micro Frontends by Semver](https://www.fynmesh.fyi/guides/share-dependencies-semver): Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.
+- [Upgrade React One Micro Frontend at a Time](https://www.fynmesh.fyi/guides/upgrade-react-incrementally): Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.
+- [Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation](https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation): Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.
+- [Build Micro Frontends with Rollup](https://www.fynmesh.fyi/guides/micro-frontends-with-rollup): Build each micro frontend with Rollup and rollup-plugin-federation, then load it by name with the FynMesh kernel. Works for React, Vue, Preact, Solid, Svelte and Marko.
+- [Module Federation Without Webpack](https://www.fynmesh.fyi/guides/module-federation-without-webpack): FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.
+
+## Demos
+
+- [FynMesh Demos: Live Micro Frontend Examples](https://www.fynmesh.fyi/demos): Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.
+- [FynMesh Demo: Six Frameworks on One Page](https://www.fynmesh.fyi/demo): Live FynMesh demo: thirteen FynApps written in React, Vue, Preact, Solid, Svelte and Marko load into one page and share dependencies at runtime.
+- [FynMesh Shell Demo: Middleware-Driven Micro Frontend Layout](https://www.fynmesh.fyi/shell): FynMesh shell demo: a micro frontend layout composed at runtime from independently deployed FynApps, using FynMesh middleware and Module Federation.
+- [FynOps: A Logistics Console Built from FynApps](https://www.fynmesh.fyi/fynops): FynOps is a FynMesh demo app: a logistics console built from ten FynApps that load per route and share React, AG Grid and ECharts at runtime.
+- [FynMesh Demo: Legacy RequireJS Widgets on Federated React](https://www.fynmesh.fyi/legacy-amd): Legacy webpack AMD widgets loaded by RequireJS get React and their UI kit from Module Federation with no rebuild, and move from React 18 to 19 one RequireJS context at a time.
+
+## Optional
+
+- [FynMesh Features: Module Federation for Micro Frontends](https://www.fynmesh.fyi/features): What FynMesh does: apps that join by loading, version-range addressing, semver sharing, ordered boot, lifecycle, middleware, FynBus and the Federation Inspector.
+- [API reference](https://www.fynmesh.fyi/api/): TypeDoc reference for the kernel, federation-js and the Rollup plugin.
+- [FynMesh Changelog and Release Notes](https://www.fynmesh.fyi/docs/changelog): Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.
+- [Source code](https://github.com/jchip/fynmesh): The FynMesh repository on GitHub.
+- [npm package](https://www.npmjs.com/package/@fynmesh/kernel): The @fynmesh/kernel package on npm.

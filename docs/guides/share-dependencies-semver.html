@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Dependencies Across Micro Frontends by Semver</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/share-dependencies-semver">
+    <meta property="og:title" content="Share Dependencies Across Micro Frontends by Semver">
+    <meta property="og:description" content="Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Share Dependencies Across Micro Frontends by Semver">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/share-dependencies-semver">
+    <meta name="twitter:title" content="Share Dependencies Across Micro Frontends by Semver">
+    <meta name="twitter:description" content="Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Share Dependencies Across Micro Frontends by Semver">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/share-dependencies-semver">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/share-dependencies-semver#webpage",
+      "url": "https://www.fynmesh.fyi/guides/share-dependencies-semver",
+      "name": "Share Dependencies Across Micro Frontends by Semver",
+      "description": "Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Share Dependencies Across Micro Frontends by Semver",
+      "dateModified": "2026-10-24T20:23:42-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Share Dependencies by Semver",
+            "item": "https://www.fynmesh.fyi/guides/share-dependencies-semver"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver" aria-current="page">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Share Dependencies by Semver
+            </nav>
+            <h1>Share Dependencies Across Micro Frontends by Semver</h1>
+            <p class="fm-lead">Declare shared modules with a semver range in each FynApp. The runtime picks a loaded version that fits, or loads its own copy when none does.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/share-dependencies-semver.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>Each FynApp declares the shared modules it uses and the semver range it accepts. At runtime <code>federation-js</code> picks a loaded version that satisfies that range. If none fits, it falls back to loading a copy of its own.</p>
+<p>This guide covers the config, how a range picks a version, what <code>singleton</code> changes, and how to see the result.</p>
+<h2 id="declare-a-shared-module">Declare a shared module</h2>
+<p>Sharing is configured in the Rollup build through <code>rollup-plugin-federation</code>. The <code>shared</code> option maps a module name to its config:</p>
+<pre><code class="language-js">import federation from &quot;rollup-plugin-federation&quot;;
+
+federation({
+  name: &quot;plugin_1&quot;,
+  filename: &quot;federation-entry.js&quot;,
+  exposes: { &quot;./bootstrap&quot;: &quot;./src/bootstrap.js&quot; },
+  shared: {
+    react: { singleton: true, semver: &quot;^19.0.0&quot; },
+  },
+});
+</code></pre>
+<p>The fields that matter:</p>
+<ul>
+<li><code>semver</code> is the range this container accepts.</li>
+<li><code>singleton</code> asks for one instance across all containers.</li>
+<li><code>import</code> says whether to bundle a copy, or treat the module as external.</li>
+</ul>
+<p>A module used only through another package still has to appear in <code>shared</code> with its range. Listing it as an external is not enough. The failure shows up at runtime as a duplicate instance, not as a build error.</p>
+<p>In a FynApp you rarely call the plugin directly. The <code>create-fynapp</code> helpers wrap it. This is the React 18 config of <code>fynapp-2-react18</code> in the demo:</p>
+<pre><code class="language-ts">...setupFederationPlugins({
+  name: &quot;fynapp-2-react18&quot;,
+  exposes: {
+    &quot;./main&quot;: &quot;./src/main.ts&quot;,
+    &quot;./App&quot;: &quot;./src/App.tsx&quot;,
+    &quot;./component&quot;: &quot;./src/component.ts&quot;,
+  },
+  shared: {
+    &quot;esm-react&quot;: { singleton: false, semver: &quot;^18.0.0&quot; },
+    &quot;esm-react-dom&quot;: { singleton: false, semver: &quot;^18.0.0&quot; },
+  },
+}),
+</code></pre>
+<h2 id="what-the-build-records">What the build records</h2>
+<p>The build writes <code>dist/fynapp.manifest.json</code>. It is embedded in the entry file too, so the kernel reads it without an extra request. Two fields describe sharing.</p>
+<p>An app that provides a module lists it under <code>provide-shared</code>:</p>
+<pre><code class="language-json">&quot;provide-shared&quot;: {
+  &quot;esm-react&quot;: { &quot;singleton&quot;: false, &quot;semver&quot;: &quot;^18.0.0&quot; }
+}
+</code></pre>
+<p>An app that needs a module lists it under <code>consume-shared</code>, and names which FynApp provides it under <code>shared-providers</code>:</p>
+<pre><code class="language-json">&quot;consume-shared&quot;: { &quot;esm-react&quot;: { &quot;semver&quot;: &quot;^19.0.0&quot; } },
+&quot;shared-providers&quot;: {
+  &quot;fynapp-react-lib&quot;: { &quot;semver&quot;: &quot;^19.0.0&quot;, &quot;provides&quot;: [&quot;esm-react&quot;, &quot;esm-react-dom&quot;] }
+}
+</code></pre>
+<p>The provider comes from the consumer's <code>package.json</code> dependency. In <code>fynapp-1</code>, that is <code>&quot;fynapp-react-lib&quot;: &quot;^19.0.0&quot;</code>. Build order matters here. The consumer's build reads the provider's manifest off disk, so build providers first.</p>
+<h2 id="how-a-range-picks-a-version">How a range picks a version</h2>
+<p>When code imports a shared module, the runtime resolves it in this order:</p>
+<ol>
+<li>Look for a version that is already loaded and satisfies the consumer's range.</li>
+<li>If none is loaded, look for a registered but not yet loaded version that satisfies it.</li>
+<li>If nothing in the share scope fits, resolve the import the ordinary way, which loads the copy the consumer ships.</li>
+</ol>
+<p>Take three apps in one scope. Two ask for <code>^19.0.0</code> and one asks for <code>^18.0.0</code>. The first two get one shared React 19 copy. The third gets a React 18 copy. Nobody had to coordinate.</p>
+<p>You can also pick a version of an exposed module. A consumer writes the range in the import itself:</p>
+<pre><code class="language-ts">import(&quot;fynapp-x1/main&quot;, { with: { type: &quot;mf-expose&quot;, semver: &quot;^2.0.0&quot; } })
+</code></pre>
+<p>The page then picks the loaded <code>fynapp-x1</code> version that fits. This is how <code>fynapp-x1</code> 1.0.0 and 2.0.0 live on one demo page.</p>
+<h2 id="singleton-and-non-singleton">Singleton and non-singleton</h2>
+<p>The two modes answer different needs.</p>
+<p>A non-singleton share (<code>singleton: false</code>) follows the rules above. Different ranges can produce different copies. Use it when two majors must coexist, such as React 18 and 19.</p>
+<p>A singleton share means one copy for the whole scope. Once any version is in play, every consumer gets that version. A consumer whose range excludes it still gets it, and the runtime logs a warning that names the container. It does not throw. Refusing the import would break a page that otherwise works, and the fix belongs in the app's declared range.</p>
+<p>Use a singleton when two copies would be a bug. Libraries that keep global state or a registry fit here. Two copies of a library like that cause failures such as an invalid hook call.</p>
+<p>Pick by asking one question. Can two versions of this module safely run side by side? If yes, use <code>false</code>. If no, use <code>true</code>.</p>
+<p>The scaffold for a new React FynApp from <code>create-fynapp</code> uses singleton shares for <code>react</code>, <code>react-dom</code> and <code>react-dom/client</code>. That suits a page with one React major. For two majors, set <code>singleton: false</code> as the demo providers do.</p>
+<h2 id="when-no-compatible-version-exists">When no compatible version exists</h2>
+<p>For a non-singleton share, the consumer falls back to its own copy. That keeps the page working. The cost is a second copy of the module.</p>
+<p>For a singleton share, there is no second copy once a version has loaded. The loaded version wins, and you get the warning. Watch the browser console for the line that says the module &quot;is declared singleton&quot;.</p>
+<p>Both outcomes are visible in the inspector. Fix them by widening the consumer's range, or by upgrading the app that is behind.</p>
+<h2 id="see-it-in-the-federation-inspector">See it in the federation inspector</h2>
+<p>The federation inspector is a script tag that adds a badge to the page. Click it to open a panel. It answers the questions that browser devtools cannot:</p>
+<ul>
+<li>Who shares <code>esm-react</code>, at which versions, and from where?</li>
+<li>Which copy did each app get, and does its range allow that copy?</li>
+<li>Are there two copies of a singleton in play?</li>
+</ul>
+<p>Use the Shares tab to see each share key with its versions. Use the Issues tab to find duplicate singletons and failed loads. Setup is in the <a href="/docs/federation-inspector">federation inspector docs</a>.</p>
+<p>For a minified page, <code>Federation.__I()</code> returns a snapshot of the resolution decisions. It lists the declared ranges and the ranges that were applied. The <a href="/docs/federation-js">federation-js docs</a> describe it.</p>
+<h2 id="next-steps">Next steps</h2>
+<ul>
+<li>Watch semver sharing on the <a href="/demo">live demo</a> and read the <a href="/features#shared">features page</a>.</li>
+<li>Read how <a href="/guides/run-multiple-react-versions">two React versions share a page</a>.</li>
+<li>Read <a href="/guides/upgrade-react-incrementally">how to upgrade React one micro frontend at a time</a>.</li>
+<li>Read the options table in the <a href="/docs/rollup-plugin-federation">rollup-plugin-federation docs</a>.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/guides/run-multiple-react-versions"><small>Previous</small><span>Multiple React Versions</span></a>
+                <a class="fm-pager-next" href="/guides/upgrade-react-incrementally"><small>Next</small><span>Upgrade React Incrementally</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#declare-a-shared-module">Declare a shared module</a>
+            
+            <a href="#what-the-build-records">What the build records</a>
+            
+            <a href="#how-a-range-picks-a-version">How a range picks a version</a>
+            
+            <a href="#singleton-and-non-singleton">Singleton and non-singleton</a>
+            
+            <a href="#when-no-compatible-version-exists">When no compatible version exists</a>
+            
+            <a href="#see-it-in-the-federation-inspector">See it in the federation inspector</a>
+            
+            <a href="#next-steps">Next steps</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>
