@@ -4,9 +4,40 @@
 // monorepo's. Packages must be built first: TypeDoc reads their declarations.
 import Fs from "node:fs";
 import Path from "node:path";
-import { Application } from "typedoc";
+import { Application, KindRouter } from "typedoc";
 
 const HERE = import.meta.dirname;
+
+/**
+ * TypeDoc's "kind" router with extensionless links. Files are still written as
+ * `modules/x.html`, but every href, the search index and the navigation data
+ * say `modules/x`, and `index.html` becomes the directory. Cloudflare Pages
+ * serves `modules/x` from `modules/x.html` directly, whereas a link to
+ * `modules/x.html` is a 308 to the extensionless url first. With the stock
+ * router every API page was reached through that redirect, which Search
+ * Console reported as "Page with redirect" (33 pages, Nov 2026).
+ *
+ * The output file name is `page.url` from `buildPages`, which the overrides
+ * below do not touch; the built-in `KindDirRouter` relies on the same split.
+ */
+class CleanKindRouter extends KindRouter {
+  fixLink(link) {
+    return link
+      .replace(/(^|\/)index\.html(#|$)/, "$1$2")
+      .replace(/\.html(#|$)/, "$1");
+  }
+  getFullUrl(refl) {
+    return this.fixLink(super.getFullUrl(refl));
+  }
+  relativeUrl(from, to) {
+    return this.fixLink(super.relativeUrl(from, to));
+  }
+  baseRelativeUrl(from, target) {
+    // "./" rather than "" for the root page's own link to itself
+    return this.fixLink(super.baseRelativeUrl(from, target)) || "./";
+  }
+}
+export const ROUTER_NAME = "clean-kind";
 
 /** Published packages with types, repo-relative. Each needs a `types` entry in package.json. */
 export const API_PACKAGES = [
@@ -33,6 +64,8 @@ export async function buildApiDocs({ outDir, repoRoot }) {
     options: Path.join(HERE, "typedoc.json"),
     entryPoints: dirs,
   });
+  // typedoc.json names this router; the name is only resolved at render time
+  app.renderer.defineRouter(ROUTER_NAME, CleanKindRouter);
   const project = await app.convert();
   if (!project) throw new Error("TypeDoc failed to convert the packages");
   const apiDir = Path.join(outDir, "api");

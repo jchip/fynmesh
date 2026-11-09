@@ -20,6 +20,7 @@
     "readme": "none"
   },
   "githubPages": false,
+  "router": "clean-kind",
   "customCss": "./typedoc-site.css",
   "navigationLinks": {
     "FynMesh": "/",
