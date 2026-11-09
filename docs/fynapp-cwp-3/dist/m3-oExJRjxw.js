@@ -1,0 +1,1 @@
+globalThis.Federation._mfBind({n:"m3",f:"m3-oExJRjxw.js",c:"fynapp-cwp",s:"fynmesh",e:!1,v:"3.2.0",b:"m3-oExJRjxw.js"},["src/amd-gen"]).register(["./_mf-share-surface_ui-kit-B9Kvu2k8.js","./_mf-share-surface_esm-react-Ce-2eX1N.js"],function(e){"use strict";return{setters:[function(s){e("ns",s.index)},null],execute:function(){}}});

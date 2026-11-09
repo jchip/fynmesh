@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Kernel API and Concepts</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/kernel">
+    <meta property="og:title" content="FynMesh Kernel API and Concepts">
+    <meta property="og:description" content="How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh Kernel API and Concepts">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/kernel">
+    <meta name="twitter:title" content="FynMesh Kernel API and Concepts">
+    <meta name="twitter:description" content="How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh Kernel API and Concepts">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/kernel">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/kernel#webpage",
+      "url": "https://www.fynmesh.fyi/docs/kernel",
+      "name": "FynMesh Kernel API and Concepts",
+      "description": "How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "FynMesh Kernel API and Concepts",
+      "dateModified": "2026-10-24T22:01:18-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Kernel",
+            "item": "https://www.fynmesh.fyi/docs/kernel"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel" aria-current="page">Kernel</a>
+                
+                <a href="/docs/federation-js">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>Kernel
+            </nav>
+            <h1>FynMesh Kernel API and Concepts</h1>
+            <p class="fm-lead">How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/core/kernel/README.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>The FynMesh kernel is a generic lifecycle engine for micro-frontend orchestration. It manages FynApp loading, middleware coordination, and bootstrap dependencies while remaining agnostic to specific frameworks or rendering strategies.</p>
+<p><strong>FynMesh:</strong> <a href="https://www.fynmesh.fyi">Website</a> · <a href="https://www.fynmesh.fyi/demo">Demo</a> · <a href="https://www.fynmesh.fyi/shell">Shell demo</a></p>
+<h2 id="overview">Overview</h2>
+<p>The kernel provides:</p>
+<ol>
+<li><strong>FynApp Loading</strong>: Load and initialize FynApps via Module Federation</li>
+<li><strong>Middleware System</strong>: Extensible middleware for cross-cutting concerns</li>
+<li><strong>Bootstrap Coordination</strong>: Dependency resolution between FynApps</li>
+<li><strong>Lifecycle Management</strong>: Setup, apply, execute phases for FynUnits</li>
+</ol>
+<h3 id="what-the-kernel-reads-about-a-fynapp">What the kernel reads about a FynApp</h3>
+<p>Everything the kernel knows before running a FynApp comes from that FynApp's <strong>manifest</strong>,
+which the build emits in two copies with identical content: embedded in <code>fynapp-entry.js</code> as
+<code>__FYNAPP_MANIFEST__</code>, and as <code>dist/fynapp.manifest.json</code>. The embedded copy is preferred
+because the entry file is fetched regardless, so reading it costs no extra request.</p>
+<p>The manifest fields that drive loading are <code>requires</code>, <code>import-exposed</code>, and
+<code>shared-providers</code> — <code>manifest-resolver.ts</code> walks them to build the dependency graph, and
+<code>module-loader.ts</code> re-reads <code>import-exposed</code> off the container to register middleware from
+provider FynApps. That second read has <strong>no fallback</strong>; the rest of the chain does.</p>
+<p><strong>→ <a href="https://github.com/jchip/fynmesh/blob/main/notes/BUILD-ARTIFACTS.md">Build artifacts reference</a></strong> for the exact shapes, the
+four-tier resolution chain, and what each fallback does and does not recover.</p>
+<h2 id="installation">Installation</h2>
+<pre><code class="language-bash">fyn add @fynmesh/kernel
+</code></pre>
+<h2 id="core-concepts">Core Concepts</h2>
+<h3 id="fynunit">FynUnit</h3>
+<p>A <code>FynUnit</code> is the execution contract for a FynApp's main module. It can be:</p>
+<ul>
+<li>A simple function</li>
+<li>An object with <code>execute</code> method</li>
+<li>A class instance with <code>initialize</code> and <code>execute</code> methods</li>
+<li>Any of the above wrapped with <code>useMiddleware()</code></li>
+</ul>
+<pre><code class="language-typescript">// Simple function
+export const main = (runtime: FynUnitRuntime) =&gt; {
+  // execution logic
+};
+
+// Object with execute
+export const main = {
+  initialize(runtime: FynUnitRuntime) {
+    return { status: &quot;ready&quot; };
+  },
+  execute(runtime: FynUnitRuntime) {
+    return { type: &quot;component-factory&quot;, componentFactory: () =&gt; MyComponent };
+  }
+};
+
+// With middleware (see &quot;Using Middleware&quot; for the full declaration)
+export const main = useMiddleware(
+  {
+    mw: import(&quot;fynapp-design-tokens/middleware/design-tokens/design-tokens&quot;,
+      { with: { type: &quot;fynapp-middleware&quot; } }),
+    config: {}
+  },
+  {
+    execute(runtime) {
+      return { type: &quot;react-component&quot;, component: MyApp };
+    }
+  }
+);
+</code></pre>
+<h3 id="fynunitruntime">FynUnitRuntime</h3>
+<p>The runtime context provided to FynUnits during execution:</p>
+<pre><code class="language-typescript">type FynUnitRuntime = {
+  fynApp: FynApp;
+  middlewareContext: Map&lt;string, Record&lt;string, any&gt;&gt;;
+  bus?: FynBus; // present when the bus add-on is installed
+  [key: string]: any; // middleware may add more fields
+};
+</code></pre>
+<p>The kernel itself is the global <code>fynMeshKernel</code>. It is not a field of the runtime.</p>
+<h3 id="middleware">Middleware</h3>
+<p>Middleware intercept and extend FynUnit execution:</p>
+<pre><code class="language-typescript">type FynAppMiddleware = {
+  name: string;
+
+  // Auto-apply without useMiddleware(); explicit useMiddleware() always works
+  autoApplyScope?: (&quot;all&quot; | &quot;fynapp&quot; | &quot;middleware&quot;)[];
+  shouldApply?(fynApp: FynApp): boolean;
+
+  // Setup phase - initialize middleware state
+  setup?(context: FynAppMiddlewareCallContext): Promise&lt;{ status: string; share?: any } | void&gt;;
+
+  // Apply phase - provide APIs to FynUnit
+  apply?(context: FynAppMiddlewareCallContext): Promise&lt;void&gt; | void;
+
+  // Override execution - take control of FynUnit execution
+  canOverrideExecution?(fynApp: FynApp, fynUnit: FynUnit): boolean;
+  overrideInitialize?(context: FynAppMiddlewareCallContext): Promise&lt;{ status: string; mode?: string }&gt;;
+  overrideExecute?(context: FynAppMiddlewareCallContext): Promise&lt;void&gt;;
+};
+</code></pre>
+<h3 id="execution-paths">Execution Paths</h3>
+<p>The kernel supports 2 execution paths:</p>
+<p><strong>Path 1: Simple Function</strong></p>
+<pre><code class="language-typescript">export const main = (runtime: FynUnitRuntime) =&gt; {
+  // Kernel wraps as { execute: fn }
+};
+</code></pre>
+<p><strong>Path 2: FynUnit Object (with or without middleware)</strong></p>
+<pre><code class="language-typescript">// Without middleware - auto-apply middleware only
+export const main = {
+  execute(runtime) { /* ... */ }
+};
+
+// With middleware - full middleware coordination
+export const main = useMiddleware({ mw: import(/* ... */), config: {} }, {
+  execute(runtime) { /* ... */ }
+});
+</code></pre>
+<h3 id="execution-flow">Execution Flow</h3>
+<pre><code>1. Load FynApp entry module
+2. Validate FynUnit (check for execute method or function)
+3. Load middleware dependencies (from __middlewareMeta)
+4. For each middleware:
+   a. setup() - Initialize middleware
+   b. apply() - Inject APIs into middlewareContext
+5. Call FynUnit.initialize() (or middleware override)
+6. Call FynUnit.execute() (or middleware override)
+7. Signal bootstrap complete (FYNAPP_BOOTSTRAPPED)
+</code></pre>
+<h3 id="runtime-validation">Runtime Validation</h3>
+<p>The kernel validates FynUnit shape at runtime:</p>
+<pre><code class="language-typescript">// Valid FynUnits:
+export const main = (runtime) =&gt; {};           // Function
+export const main = { execute(runtime) {} };   // Object with execute
+export const main = new MyClass();             // Class instance with execute
+
+// Invalid - will throw error:
+export const main = {};                        // No execute method
+export const main = { run() {} };              // Wrong method name
+</code></pre>
+<h2 id="bundles-and-add-ons">Bundles and Add-ons</h2>
+<p>The core kernel loads, orders and bootstraps FynApps. Everything else is an add-on.</p>
+<table>
+<thead>
+<tr>
+<th>Add-on</th>
+<th>Adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>middleware</td>
+<td><code>registerMiddleware</code>, <code>getMiddleware</code>, <code>getMiddlewareRegistry</code>, <code>signalMiddlewareReady</code>, auto-apply, execution overrides</td>
+</tr>
+<tr>
+<td>bus</td>
+<td><code>kernel.bus</code> and per-app <code>runtime.bus</code></td>
+</tr>
+<tr>
+<td>telemetry</td>
+<td><code>kernel.setTelemetry(config)</code></td>
+</tr>
+<tr>
+<td>dev-overlay</td>
+<td>an on-page panel for bootstrap failures (dev only)</td>
+</tr>
+</tbody>
+</table>
+<p>Browser bundles in <code>dist/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fynmesh-browser-kernel.{dev,min}.js</code></td>
+<td>core and every add-on; the dev one also has the overlay</td>
+</tr>
+<tr>
+<td><code>fynmesh-kernel-core.{dev,min}.js</code></td>
+<td>core only</td>
+</tr>
+<tr>
+<td><code>fynmesh-kernel-middleware.{dev,min}.js</code></td>
+<td>middleware add-on</td>
+</tr>
+<tr>
+<td><code>fynmesh-kernel-bus.{dev,min}.js</code></td>
+<td>bus add-on</td>
+</tr>
+<tr>
+<td><code>fynmesh-kernel-telemetry.{dev,min}.js</code></td>
+<td>telemetry add-on</td>
+</tr>
+<tr>
+<td><code>fynmesh-kernel-dev-overlay.dev.js</code></td>
+<td>dev overlay add-on</td>
+</tr>
+</tbody>
+</table>
+<p>Load core first. Each add-on installs itself into <code>globalThis.fynMeshKernel</code> when it runs, and throws if core is missing.
+Order among add-ons does not matter, and loading one twice is harmless.</p>
+<pre><code class="language-html">&lt;script src=&quot;fynmesh-kernel-core.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;fynmesh-kernel-middleware.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;fynmesh-kernel-bus.min.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>To ship one file, concatenate them with core first:</p>
+<pre><code class="language-sh">cat fynmesh-kernel-core.min.js fynmesh-kernel-middleware.min.js fynmesh-kernel-bus.min.js &gt; kernel.js
+</code></pre>
+<p>Without the middleware add-on, a FynUnit runs as plain <code>initialize</code> then <code>execute</code>.
+A unit that declares middleware gets a console warning.</p>
+<h2 id="usage">Usage</h2>
+<h3 id="basic-kernel-setup">Basic Kernel Setup</h3>
+<p>A host page loads the kernel as a script. The browser bundle creates the global <code>fynMeshKernel</code>. There is no class to construct.</p>
+<p>Load order matters. SystemJS comes first, then federation-js, then the kernel bundle. Each one reads the global the previous one defines. Script paths depend on your deployment.</p>
+<pre><code class="language-html">&lt;script src=&quot;/path/to/system.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/path/to/federation-js.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/path/to/fynmesh-browser-kernel.min.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p><code>fynmesh-browser-kernel.{dev,min}.js</code> includes core and every add-on, so it is the simplest choice. For a smaller page, load <code>fynmesh-kernel-core.min.js</code> plus only the add-ons you need. See <a href="#bundles-and-add-ons">Bundles and Add-ons</a>.</p>
+<p>The kernel ships with a demo resolver that maps a name to <code>/&lt;name&gt;/dist/fynapp.manifest.json</code>. A real host sets its own resolver, then asks for FynApps by name and optional semver range.</p>
+<pre><code class="language-html">&lt;script&gt;
+  (async () =&gt; {
+    fynMeshKernel.setRegistryResolver(async (name, range) =&gt; ({
+      name,
+      version: &quot;1.0.0&quot;, // resolved version; keys the dependency graph
+      url: `https://cdn.example.com/${name}/dist/fynapp.manifest.json`,
+      distBase: `https://cdn.example.com/${name}/dist/` // optional
+    }));
+
+    await fynMeshKernel.loadFynAppsByName(
+      [{ name: &quot;fynapp-1&quot; }, { name: &quot;fynapp-x1&quot;, range: &quot;^2.0.0&quot; }],
+      { concurrency: 4, preload: 1 }
+    );
+  })();
+&lt;/script&gt;
+</code></pre>
+<p>The resolver returns a <code>RegistryResolverResult</code>: <code>name</code>, <code>version</code>, <code>url</code> (manifest), and optional <code>distBase</code>. Give each distinct version its own <code>version</code> so the dependency graph can tell them apart.</p>
+<p><code>loadFynAppsByName</code> takes <code>LoadFynAppsOptions</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>concurrency</code></td>
+<td>Max FynApps loaded in parallel. Default 4.</td>
+</tr>
+<tr>
+<td><code>preload</code></td>
+<td>A number (dependency depth to preload, default 1) or a <code>PreloadStrategy</code> object: <code>depth</code>, <code>priority</code>, <code>priorityByDepth</code>, <code>disabled</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>It rejects when the batch cannot be planned, for example when no resolver is set. A single FynApp that fails to load does not abort the batch.</p>
+<h3 id="using-middleware">Using Middleware</h3>
+<p>A FynApp declares the middleware it needs with <code>useMiddleware(meta, unit)</code>. Each declaration has an <code>mw</code> import and a <code>config</code>. The import must carry the <code>fynapp-middleware</code> attribute, and the specifier is <code>&lt;package&gt;/&lt;exposeModule&gt;/&lt;middlewareName&gt;</code>. The build turns it into an id string the kernel can read.</p>
+<pre><code class="language-typescript">import { useMiddleware } from &quot;@fynmesh/kernel&quot;;
+
+const unit = {
+  initialize(runtime) {
+    return { status: &quot;ready&quot; };
+  },
+  execute(runtime) {
+    const tokens = runtime.middlewareContext.get(&quot;design-tokens&quot;);
+    return { type: &quot;react-component&quot;, component: MyComponent };
+  }
+};
+
+export const main = useMiddleware(
+  {
+    mw: import(&quot;fynapp-design-tokens/middleware/design-tokens/design-tokens&quot;,
+      { with: { type: &quot;fynapp-middleware&quot; } }),
+    config: { theme: &quot;fynmesh-default&quot;, cssCustomProperties: true }
+  },
+  unit
+);
+</code></pre>
+<p><code>config</code> is passed to the provider as <code>context.meta.config</code>. Pass an array to use several middleware.</p>
+<p>The provider is a remote FynApp, so TypeScript has no types for its modules. Declare each provider once in a <code>.d.ts</code> file of the consumer, and every import from it type-checks:</p>
+<pre><code class="language-typescript">// src/remotes.d.ts
+declare module &quot;fynapp-design-tokens/*&quot;;
+</code></pre>
+<p>Each declaration is a <code>MiddlewareDeclaration</code>. Besides <code>{ mw, config }</code>, the kernel accepts a bare <code>mw</code> import, and <code>{ info: { name, provider, version? }, config }</code>, which looks up a middleware that is already registered by name and provider.</p>
+<h3 id="creating-middleware">Creating Middleware</h3>
+<p>A middleware provider is a FynApp that exposes a <code>./middleware*</code> module. The kernel scans every expose whose key starts with <code>./middleware</code>. It registers each export whose name starts with <code>__middleware__</code>.</p>
+<pre><code class="language-typescript">import type { FynAppMiddleware, FynAppMiddlewareCallContext } from &quot;@fynmesh/kernel&quot;;
+
+class GreetingMiddleware implements FynAppMiddleware {
+  name = &quot;greeting&quot;;
+
+  async setup(context: FynAppMiddlewareCallContext) {
+    return { status: &quot;ready&quot; };
+  }
+
+  apply(context: FynAppMiddlewareCallContext) {
+    // Provide an API to the FynUnit
+    context.runtime.middlewareContext.set(this.name, {
+      greet: (who: string) =&gt; `Hello, ${who}!`
+    });
+  }
+}
+
+export const __middleware__Greeting = new GreetingMiddleware();
+</code></pre>
+<p>Expose the module in the provider's federation config, for example <code>exposes: { &quot;./middleware/greeting&quot;: &quot;./src/middleware/greeting.ts&quot; }</code>. A consumer then imports <code>&lt;package&gt;/middleware/greeting/greeting</code>. A provider still needs its own <code>src/main.ts</code>.</p>
+<h3 id="middleware-override-priority">Middleware Override Priority</h3>
+<p>A middleware can take over execution of a FynUnit. Only auto-applied middleware are asked, so set <code>autoApplyScope</code> on the middleware. <strong>First-come-first-serve</strong> applies:</p>
+<ul>
+<li>The first middleware with <code>canOverrideExecution(fynApp, fynUnit) === true</code> wins</li>
+<li>That middleware's <code>overrideInitialize()</code> and <code>overrideExecute()</code> are called</li>
+<li>Other middleware still run setup/apply phases</li>
+</ul>
+<pre><code class="language-typescript">// Shell middleware overrides every FynApp it applies to
+autoApplyScope = [&quot;fynapp&quot;, &quot;middleware&quot;];
+
+canOverrideExecution(fynApp, fynUnit) {
+  return true; // Takes control of rendering
+}
+</code></pre>
+<h2 id="api-reference">API Reference</h2>
+<p>The full reference, generated from the types, is at <a href="https://www.fynmesh.fyi/api/modules/_fynmesh_kernel">www.fynmesh.fyi/api</a>. The summary below covers what most hosts and FynApps use.</p>
+<h3 id="fynmeshkernel">FynMeshKernel</h3>
+<p>The global <code>fynMeshKernel</code> implements this interface. <code>@fynmesh/kernel</code> exports it as a type.</p>
+<pre><code class="language-typescript">interface FynMeshKernel {
+  events: FynAppEventTarget;   // emitter of kernel events, has on() and once()
+  version: string;             // kernel version
+  shareScopeName: string;      // federation share scope name
+
+  use(addon: KernelAddon): void;                                  // install an add-on, no-op if already installed
+  initRunTime(data: FynMeshRuntimeData): FynMeshRuntimeData;      // set the kernel runtime data
+  setRegistryResolver(resolver: RegistryResolver): void;          // map name and range to a manifest URL
+
+  loadFynAppsByName(                                              // load FynApps and their dependencies
+    requests: Array&lt;{ name: string; range?: string }&gt;,
+    options?: LoadFynAppsOptions
+  ): Promise&lt;void&gt;;
+  loadFynApp(baseUrl: string, loadId?: string): Promise&lt;FynApp | null&gt;; // load and bootstrap one FynApp, null on failure
+  loadFynAppBasics(fynAppEntry: FynAppEntry): Promise&lt;FynApp&gt;;    // load entry, config and main, run nothing
+  bootstrapFynApp(fynApp: FynApp): Promise&lt;void&gt;;                 // run a loaded FynApp
+
+  shutdownFynApp(name: string): Promise&lt;boolean&gt;;                 // call shutdown() and remove the FynApp
+  suspendFynApp(name: string): Promise&lt;boolean&gt;;                  // call suspend() on a mounted FynApp
+  resumeFynApp(name: string): Promise&lt;boolean&gt;;                   // call resume() on a suspended FynApp
+  getFynAppState(name: string): FynAppState | undefined;          // &quot;name&quot; or &quot;name@version&quot;
+  listFynAppStates(): FynAppState[];                              // state of every tracked FynApp
+
+  emitAsync(event: CustomEvent): Promise&lt;boolean&gt;;                // dispatch an event on the kernel
+}
+</code></pre>
+<p>Each add-on adds its own API to <code>fynMeshKernel</code> once installed:</p>
+<ul>
+<li><code>MiddlewareKernelApi</code>: <code>registerMiddleware</code>, <code>getMiddleware</code>, <code>getMiddlewareRegistry</code>, <code>signalMiddlewareReady</code></li>
+<li><code>BusKernelApi</code>: <code>bus</code></li>
+<li><code>TelemetryKernelApi</code>: <code>setTelemetry(config?)</code></li>
+</ul>
+<h3 id="kernel-configuration">Kernel Configuration</h3>
+<p>The kernel has no constructor config. The browser bundle creates it for you.</p>
+<ul>
+<li>Registry: <code>setRegistryResolver(resolver)</code></li>
+<li>Batch loading: <code>LoadFynAppsOptions</code> on <code>loadFynAppsByName</code></li>
+<li>Telemetry: <code>setTelemetry({ transport?, maxBufferSize? })</code> from the telemetry add-on</li>
+<li>Bootstrap timeout: fixed at 30 seconds</li>
+</ul>
+<h3 id="fynunit-1">FynUnit</h3>
+<pre><code class="language-typescript">interface FynUnit {
+  __middlewareMeta?: MiddlewareUseMeta&lt;unknown&gt;[];
+  initialize?(runtime: FynUnitRuntime): Promise&lt;{ status: string; mode?: string }&gt; | { status: string; mode?: string };
+  execute(runtime: FynUnitRuntime): Promise&lt;any&gt; | any;
+  shutdown?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void; // on shutdownFynApp
+  suspend?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void;  // on suspendFynApp
+  resume?(runtime: FynUnitRuntime): Promise&lt;void&gt; | void;   // on resumeFynApp
+}
+
+// Deprecated aliases (for backwards compatibility)
+type FynModule = FynUnit;
+type FynModuleRuntime = FynUnitRuntime;
+</code></pre>
+<h3 id="usemiddleware">useMiddleware</h3>
+<pre><code class="language-typescript">function useMiddleware&lt;T extends FynUnit = FynUnit&gt;(
+  meta: MiddlewareUseMeta&lt;unknown&gt; | MiddlewareUseMeta&lt;unknown&gt;[],
+  unit: T
+): T;
+
+// For middleware that don't need a FynUnit
+const noOpFynUnit: FynUnit;
+</code></pre>
+<h2 id="kernel-events">Kernel Events</h2>
+<p>The kernel emits events for monitoring:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FYNAPP_LOADING</code></td>
+<td>FynApp load started (from <code>loadFynAppsByName</code>)</td>
+</tr>
+<tr>
+<td><code>FYNAPP_LOADED</code></td>
+<td>FynApp load attempt ended, <code>detail.ok</code> is false on failure</td>
+</tr>
+<tr>
+<td><code>FYNAPP_BOOTSTRAPPED</code></td>
+<td>Bootstrap completed</td>
+</tr>
+<tr>
+<td><code>FYNAPP_BOOTSTRAP_FAILED</code></td>
+<td>Bootstrap failed (error isolated)</td>
+</tr>
+<tr>
+<td><code>FYNAPP_BOOTSTRAP_TIMEOUT</code></td>
+<td>A deferred bootstrap waited too long for its dependencies</td>
+</tr>
+<tr>
+<td><code>FYNAPP_SUSPENDED</code></td>
+<td>FynApp suspended</td>
+</tr>
+<tr>
+<td><code>FYNAPP_RESUMED</code></td>
+<td>FynApp resumed</td>
+</tr>
+<tr>
+<td><code>FYNAPP_SHUTDOWN</code></td>
+<td>FynApp shut down</td>
+</tr>
+<tr>
+<td><code>MIDDLEWARE_READY</code></td>
+<td>A middleware signaled readiness (middleware add-on)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-handling">Error Handling</h2>
+<p>The kernel isolates errors to prevent one FynApp from crashing others:</p>
+<ul>
+<li>Failed FynApps emit <code>FYNAPP_BOOTSTRAP_FAILED</code> event but don't crash</li>
+<li>Bootstrap timeouts emit <code>FYNAPP_BOOTSTRAP_TIMEOUT</code> after 30s</li>
+<li>Middleware failures are logged but don't block other FynApps</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│                      FynMesh Kernel                         │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────┐  │
+│  │   Module    │  │  Middleware  │  │    Bootstrap      │  │
+│  │   Loader    │  │  Executor    │  │   Coordinator     │  │
+│  └─────────────┘  └──────────────┘  └───────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│                    Middleware Layer                         │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────┐  │
+│  │   Shell     │  │   Design     │  │      React        │  │
+│  │   Layout    │  │   Tokens     │  │     Context       │  │
+│  └─────────────┘  └──────────────┘  └───────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│                      FynApps (FynUnits)                     │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │
+│  │ React   │ │  Vue    │ │ Svelte  │ │ Marko   │  ...     │
+│  │ 18/19   │ │  3.x    │ │  4.x    │ │  5.x    │          │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘          │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="design-principles">Design Principles</h2>
+<ol>
+<li><strong>Generic Lifecycle Engine</strong>: The kernel orchestrates lifecycle, middleware define contracts</li>
+<li><strong>Framework Agnostic</strong>: No React, Vue, or UI concepts in kernel core</li>
+<li><strong>Code-First Configuration</strong>: <code>useMiddleware()</code> provides type safety and IDE support</li>
+<li><strong>Error Isolation</strong>: Failed FynApps don't crash the system (&quot;party goes on&quot;)</li>
+<li><strong>Timeout Enforcement</strong>: Bootstrap dependencies time out after 30s</li>
+</ol>
+<h2 id="ui-types-in-middleware-not-kernel">UI Types in Middleware (Not Kernel)</h2>
+<p>The kernel returns <code>any</code> from <code>execute()</code> - it has no knowledge of UI rendering. Middleware packages define their own result contracts:</p>
+<pre><code class="language-typescript">// Shell middleware defines its result types (NOT in kernel)
+// fynapp-shell-mw/src/middleware/shell-layout.ts
+export type ShellExecutionResult =
+  | { type: 'component-factory', componentFactory: (React: any) =&gt; any }
+  | { type: 'rendered-content', content: string | HTMLElement }
+  | { type: 'self-managed', container: HTMLElement }
+  | { type: 'react-component', component: any, props?: any }
+  | { type: 'render-function', render: (container: HTMLElement) =&gt; void };
+</code></pre>
+<p>FynApps can optionally import these types for compile-time safety:</p>
+<pre><code class="language-typescript">import type { ShellExecutionResult } from 'fynapp-shell-mw';
+
+export const main = {
+  execute(runtime): ShellExecutionResult {
+    return { type: 'react-component', component: MyApp };
+  }
+};
+</code></pre>
+<h2 id="extensibility-patterns">Extensibility Patterns</h2>
+<p>Middleware can define their own conventions for discovering additional FynUnits beyond <code>main</code>:</p>
+<pre><code class="language-typescript">// Shell middleware might look for routes
+export const __routes__ = [
+  { path: '/dashboard', component: Dashboard },
+  { path: '/settings', component: Settings }
+];
+
+// Test middleware might look for test exports
+export const __test__counter = { /* test config */ };
+
+// Worker middleware might look for worker exports
+export const __worker__processor = { /* worker config */ };
+</code></pre>
+<p>Each middleware becomes a mini-kernel for its domain, processing its own FynUnit conventions.</p>
+<h2 id="see-also">See Also</h2>
+<ul>
+<li><a href="https://www.fynmesh.fyi/demo">Live demos</a> and <a href="https://www.fynmesh.fyi/guides">guides</a></li>
+<li><a href="https://github.com/jchip/fynmesh/blob/main/core/kernel/design/execution-override-architecture.md">Execution Override Architecture</a></li>
+<li><a href="https://github.com/jchip/fynmesh/blob/main/core/kernel/design/fynapp-middleware-architecture.md">FynApp Middleware Architecture</a></li>
+<li><a href="https://github.com/jchip/fynmesh/blob/main/notes/KERNEL-ADDONS-DESIGN.md">Kernel Add-ons Design</a></li>
+</ul>
+<h2 id="license">License</h2>
+<p>Apache-2.0</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/fynapp-contract"><small>Previous</small><span>FynApp Contract</span></a>
+                <a class="fm-pager-next" href="/docs/federation-js"><small>Next</small><span>federation-js</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#overview">Overview</a>
+            
+            <a href="#installation">Installation</a>
+            
+            <a href="#core-concepts">Core Concepts</a>
+            
+            <a href="#bundles-and-add-ons">Bundles and Add-ons</a>
+            
+            <a href="#usage">Usage</a>
+            
+            <a href="#api-reference">API Reference</a>
+            
+            <a href="#kernel-events">Kernel Events</a>
+            
+            <a href="#error-handling">Error Handling</a>
+            
+            <a href="#architecture">Architecture</a>
+            
+            <a href="#design-principles">Design Principles</a>
+            
+            <a href="#ui-types-in-middleware-not-kernel">UI Types in Middleware (Not Kernel)</a>
+            
+            <a href="#extensibility-patterns">Extensibility Patterns</a>
+            
+            <a href="#see-also">See Also</a>
+            
+            <a href="#license">License</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

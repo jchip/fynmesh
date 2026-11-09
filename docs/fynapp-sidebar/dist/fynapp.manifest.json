@@ -1,0 +1,25 @@
+{
+  "name": "fynapp-sidebar",
+  "version": "1.0.0",
+  "exposes": {
+    "./main": "./src/main.ts",
+    "./component": "./src/component.ts"
+  },
+  "consume-shared": {
+    "esm-react": {
+      "semver": "^19.0.0"
+    },
+    "esm-react-dom": {
+      "semver": "^19.0.0"
+    }
+  },
+  "shared-providers": {
+    "fynapp-react-lib": {
+      "semver": "^19.0.0",
+      "provides": [
+        "esm-react",
+        "esm-react-dom"
+      ]
+    }
+  }
+}

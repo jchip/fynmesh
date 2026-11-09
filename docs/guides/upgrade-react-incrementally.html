@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade React One Micro Frontend at a Time</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/upgrade-react-incrementally">
+    <meta property="og:title" content="Upgrade React One Micro Frontend at a Time">
+    <meta property="og:description" content="Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Upgrade React One Micro Frontend at a Time">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/upgrade-react-incrementally">
+    <meta name="twitter:title" content="Upgrade React One Micro Frontend at a Time">
+    <meta name="twitter:description" content="Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Upgrade React One Micro Frontend at a Time">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/upgrade-react-incrementally">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/upgrade-react-incrementally#webpage",
+      "url": "https://www.fynmesh.fyi/guides/upgrade-react-incrementally",
+      "name": "Upgrade React One Micro Frontend at a Time",
+      "description": "Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Upgrade React One Micro Frontend at a Time",
+      "dateModified": "2026-10-29T01:02:59-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Upgrade React Incrementally",
+            "item": "https://www.fynmesh.fyi/guides/upgrade-react-incrementally"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally" aria-current="page">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Upgrade React Incrementally
+            </nav>
+            <h1>Upgrade React One Micro Frontend at a Time</h1>
+            <p class="fm-lead">Move micro frontends from React 18 to 19 one at a time. FynMesh runs both versions side by side, so each team ships its own upgrade.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 29, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/upgrade-react-incrementally.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>You can upgrade React one micro frontend at a time. FynMesh runs React 18 and React 19 apps on the same page, so old apps stay on 18 while new ones move to 19. Each team changes its own app and ships when it is ready. There is no big-bang upgrade day.</p>
+<p>This guide gives a step-by-step plan and the pitfalls to watch for.</p>
+<h2 id="why-a-big-bang-upgrade-hurts">Why a big-bang upgrade hurts</h2>
+<p>With one shared React, every app on the page must move together. One blocked team blocks everyone. A rollback means reverting every app.</p>
+<p>FynMesh removes that coupling. Each FynApp declares the React range it accepts. The runtime shares one copy per compatible range. The <a href="/guides/run-multiple-react-versions">first guide</a> explains how that works.</p>
+<h2 id="the-plan">The plan</h2>
+<h3 id="1-set-a-baseline">1. Set a baseline</h3>
+<p>List your FynApps and note the React range each one uses. Open the page with the <a href="/docs/federation-inspector">federation inspector</a> and look at the Shares tab. You should see one <code>react</code> entry per major.</p>
+<h3 id="2-add-a-react-19-provider">2. Add a React 19 provider</h3>
+<p>A provider is a FynApp that ships React for others to consume. The demo has one per major, both named <code>fynapp-react-lib</code>. The React 19 one declares:</p>
+<pre><code class="language-ts">shared: {
+  &quot;esm-react&quot;: { singleton: false, semver: &quot;^19.0.0&quot; },
+  &quot;esm-react-dom&quot;: { singleton: false, semver: &quot;^19.0.0&quot; },
+},
+</code></pre>
+<p>Your existing React 18 provider stays as it is. Both providers can be live on the page at once. The demo uses <code>esm-react</code> packages. In your own project the names are <code>react</code> and <code>react-dom</code>.</p>
+<h3 id="3-keep-the-shares-non-singleton">3. Keep the shares non-singleton</h3>
+<p>Set <code>singleton: false</code> on React in every provider. A singleton React forces every consumer onto one copy and only warns when a range does not fit. That defeats the point. The <a href="/guides/share-dependencies-semver">semver guide</a> covers the rules.</p>
+<h3 id="4-upgrade-the-leaf-apps-first">4. Upgrade the leaf apps first</h3>
+<p>Pick an app that nobody else imports from. Change its dependency to the new provider:</p>
+<pre><code class="language-json">&quot;dependencies&quot;: {
+  &quot;fynapp-react-lib&quot;: &quot;^19.0.0&quot;
+}
+</code></pre>
+<p>Update its React types and code, then build it. Its manifest now says <code>consume-shared</code> with <code>^19.0.0</code>, and <code>shared-providers</code> points at the 19 provider. The other apps do not change.</p>
+<p>In the demo, <code>fynapp-1</code> is a React 19 app next to <code>fynapp-2-react18</code>, which stays on React 18. They share a page and ship separately.</p>
+<h3 id="5-check-the-page">5. Check the page</h3>
+<p>Load the page and open the inspector. You should see two React copies, one per major. The Issues tab should show no duplicate singletons. Watch the console for singleton warnings.</p>
+<h3 id="6-deploy-that-one-app">6. Deploy that one app</h3>
+<p>Ship the upgraded app on its own. The other apps are untouched. If something breaks, roll back that one app.</p>
+<h3 id="7-repeat-then-retire-the-old-provider">7. Repeat, then retire the old provider</h3>
+<p>Move the next app. When no app consumes the React 18 provider, remove it. The page then loads one React copy again, and nothing else changed.</p>
+<h2 id="shared-fynapps-need-versions-too">Shared FynApps need versions too</h2>
+<p>Some FynApps are shared between apps, like a component library. Upgrading them is a two version job. The demo's <code>fynapp-x1</code> ships 1.0.0 on React 18 and 2.0.0 on React 19. Both are live.</p>
+<p>Consumers pick with a range:</p>
+<pre><code class="language-ts">import(&quot;fynapp-x1/main&quot;, { with: { type: &quot;mf-expose&quot;, semver: &quot;^2.0.0&quot; } })
+</code></pre>
+<p>In the demo, <code>fynapp-2-react18</code> asks for <code>^1.0.0</code>. The apps <code>fynapp-1</code> and <code>fynapp-1-b</code> ask for <code>^2.0.0</code>. A library team can ship 2.0.0 and let consumers move when they choose.</p>
+<h2 id="legacy-requirejs-bundles">Legacy RequireJS bundles</h2>
+<p>Older micro frontends built as webpack AMD bundles can follow the same plan. They get React from federation through a FynApp that serves their common libraries, with no rebuild, and move to a new major one RequireJS context at a time. See <a href="/guides/legacy-requirejs-on-module-federation">Serve shared libraries to legacy RequireJS bundles</a>.</p>
+<h2 id="pitfalls">Pitfalls</h2>
+<h3 id="state-and-context-do-not-cross-versions">State and context do not cross versions</h3>
+<p>React 18 and 19 are separate module instances. A context made in a 19 app is invisible to an 18 component. Hooks from one copy do not work in a tree rendered by the other.</p>
+<p>Do not pass React elements or hooks across the boundary. Pass plain data. Use middleware or a store that does not depend on React for cross-app state.</p>
+<h3 id="singleton-libraries">Singleton libraries</h3>
+<p>A library that must be unique, such as a store or a router with global state, should be a singleton share. If two apps on different React majors both use it, the singleton keeps one copy. Check that this one copy works with both React versions. If it does not, upgrade or isolate it first.</p>
+<h3 id="ranges-that-do-not-match">Ranges that do not match</h3>
+<p>If a consumer's range excludes every loaded version and the share is a singleton, the loaded version wins and the runtime logs a warning. The app may then run against a React it was not built for. Fix the range, not the warning.</p>
+<h3 id="build-order">Build order</h3>
+<p>A consumer's build reads its provider's manifest from disk. Build providers before consumers. If you build in the wrong order, the consumer's <code>shared-providers</code> field comes out empty.</p>
+<h3 id="the-scaffold-defaults">The scaffold defaults</h3>
+<p>The <code>create-fynapp</code> scaffold for React uses singleton shares for <code>react</code>, <code>react-dom</code> and <code>react-dom/client</code>. That suits a page with one React major. Set <code>singleton: false</code> on the providers when you want two majors during a migration.</p>
+<h2 id="rollout-summary">Rollout summary</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Who</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add React 19 provider</td>
+<td>Platform team</td>
+<td>Two providers live</td>
+</tr>
+<tr>
+<td>Upgrade one leaf app</td>
+<td>App team</td>
+<td>One app on 19</td>
+</tr>
+<tr>
+<td>Check in inspector</td>
+<td>App team</td>
+<td>Two copies, no issues</td>
+</tr>
+<tr>
+<td>Deploy that app</td>
+<td>App team</td>
+<td>Others untouched</td>
+</tr>
+<tr>
+<td>Repeat</td>
+<td>Each team</td>
+<td>Old provider unused</td>
+</tr>
+<tr>
+<td>Remove React 18 provider</td>
+<td>Platform team</td>
+<td>One copy again</td>
+</tr>
+</tbody>
+</table>
+<h2 id="try-it">Try it</h2>
+<ul>
+<li>Open the <a href="/demo">live demo</a> to see <code>fynapp-1</code> on React 19 and <code>fynapp-2-react18</code> on React 18.</li>
+<li>Read <a href="/guides/run-multiple-react-versions">how multiple React versions run on one page</a>.</li>
+<li>Read <a href="/guides/legacy-requirejs-on-module-federation">how legacy RequireJS bundles get React from federation</a>.</li>
+<li>Read <a href="/guides/share-dependencies-semver">how semver ranges choose a version</a>.</li>
+<li>Read the <a href="/docs/fynapp-contract">FynApp contract</a> and the <a href="/docs/kernel">kernel docs</a>.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/guides/share-dependencies-semver"><small>Previous</small><span>Share Dependencies by Semver</span></a>
+                <a class="fm-pager-next" href="/guides/legacy-requirejs-on-module-federation"><small>Next</small><span>Legacy RequireJS Bundles</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#why-a-big-bang-upgrade-hurts">Why a big-bang upgrade hurts</a>
+            
+            <a href="#the-plan">The plan</a>
+            
+            <a href="#shared-fynapps-need-versions-too">Shared FynApps need versions too</a>
+            
+            <a href="#legacy-requirejs-bundles">Legacy RequireJS bundles</a>
+            
+            <a href="#pitfalls">Pitfalls</a>
+            
+            <a href="#rollout-summary">Rollout summary</a>
+            
+            <a href="#try-it">Try it</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

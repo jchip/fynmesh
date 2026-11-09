@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation">
+    <meta property="og:title" content="Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation">
+    <meta property="og:description" content="Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation">
+    <meta name="twitter:title" content="Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation">
+    <meta name="twitter:description" content="Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation#webpage",
+      "url": "https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation",
+      "name": "Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation",
+      "description": "Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation",
+      "dateModified": "2026-10-29T23:04:55-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Legacy RequireJS Bundles",
+            "item": "https://www.fynmesh.fyi/guides/legacy-requirejs-on-module-federation"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation" aria-current="page">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Legacy RequireJS Bundles
+            </nav>
+            <h1>Serve Shared Libraries to Legacy RequireJS Bundles from Module Federation</h1>
+            <p class="fm-lead">Legacy webpack AMD micro frontends loaded by RequireJS can get React and other shared libraries from Module Federation with no rebuild, and move to a new React major in stages.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 30, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/legacy-requirejs-on-module-federation.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>Before Module Federation, many micro frontends were built on RequireJS. Each widget is an AMD bundle. Shared libraries are built into a common web package (CWP), and widgets consume it through webpack externals. FynMesh can serve the CWP's libraries to those widgets from federation, under the ids they already ask for, with no rebuild. A codebase can then move to federation progressively.</p>
+<p>This guide explains the setup, what changes, and what you get. The working code is in the <a href="/legacy-amd">live demo</a>.</p>
+<h2 id="the-legacy-setup">The legacy setup</h2>
+<p>In a RequireJS micro frontend, each widget is built with webpack as an AMD bundle. A platform team builds the shared libraries, like React and the UI kit, into a common web package (CWP). Widgets list those libraries as webpack externals. In the built file, each external becomes a RequireJS dependency that the CWP provides:</p>
+<pre><code class="language-js">define([&quot;react&quot;, &quot;react-dom&quot;, &quot;ui-kit&quot;], function (React, ReactDOM, UIKit) { ... });
+</code></pre>
+<h2 id="the-problem">The problem</h2>
+<p>A large enterprise builds up many widgets from many teams over time, and they all depend on the same CWP. Updating a library version or adding a variant means every team must move together. At that scale it is near impossible.</p>
+<p>Module Federation solves version sharing, but legacy AMD widgets cannot use it. A large codebase also cannot migrate all its widgets in one shot. It needs a way to introduce federation progressively. The bridge below gives it one: legacy widgets and FynApps run on the same page, and the codebase moves over one piece at a time.</p>
+<h2 id="what-changes">What changes</h2>
+<p>Two pieces connect the legacy bundles to federation:</p>
+<ul>
+<li><strong>The CWP becomes a FynApp.</strong> It installs the same libraries at the same pinned versions. It shares them through federation, and it publishes which RequireJS ids it serves.</li>
+<li><strong>A kernel add-on routes RequireJS to it.</strong> When a bundle asks for <code>react</code> or <code>ui-kit</code>, the add-on loads it from the CWP FynApp. Every other id, such as the bundles themselves, loads through RequireJS as before.</li>
+</ul>
+<p>The legacy bundles and the page's RequireJS setup stay as they are. The add-on and the CWP's id list are added to the page before the first <code>require()</code>.</p>
+<h2 id="what-you-get">What you get</h2>
+<ul>
+<li><strong>No rebuild.</strong> The same bundle files run on the federated libraries.</li>
+<li><strong>Upgrades in stages.</strong> Each RequireJS context chooses the legacy CWP or the federated one. One group of widgets can move to a CWP release with React 19 while another stays on the legacy CWP with React 18.</li>
+<li><strong>One React for old and new apps.</strong> New FynApps on the same page share the CWP's React when their version range matches. A FynApp that needs another major loads its own.</li>
+<li><strong>On-demand loading.</strong> A bundle loaded later reuses the libraries its context already has.</li>
+</ul>
+<h2 id="moving-to-a-new-react-major">Moving to a new React major</h2>
+<ol>
+<li>Release a CWP FynApp that pins the libraries the legacy CWP had. Point one RequireJS context at it and check that its widgets behave the same.</li>
+<li>Move the other contexts over one at a time. A context you have not moved stays on the legacy CWP.</li>
+<li>Release a CWP with the new React major, and point the federated contexts at it. The widgets are not rebuilt.</li>
+<li>Retire the legacy CWP once no context uses it.</li>
+</ol>
+<p>React 19 removed <code>ReactDOM.render</code>, <code>findDOMNode</code>, string refs and <code>propTypes</code>. A legacy widget that uses them needs a code change before it can run on React 19. Widgets that use <code>createRoot</code> run on both majors.</p>
+<h2 id="limits">Limits</h2>
+<ul>
+<li>A page runs one federated CWP release. Every federated context on the page uses it. Other contexts stay on the legacy CWP.</li>
+<li>The CWP's id list must load before the first <code>require()</code>.</li>
+<li>The AMD add-on is a working prototype in the FynMesh repo, in <code>demo-legacy-amd/</code>. It is not a published package yet.</li>
+</ul>
+<h2 id="try-it">Try it</h2>
+<ul>
+<li>Open the <a href="/legacy-amd">legacy RequireJS demo</a>. Put each set of widgets on the legacy or the federated CWP, with React 18 or React 19.</li>
+<li>Read <a href="/guides/upgrade-react-incrementally">Upgrade React one micro frontend at a time</a> for the same plan with FynApps.</li>
+<li>Read <a href="/how-it-works#8-kernel-add-ons">how kernel add-ons work</a>.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/guides/upgrade-react-incrementally"><small>Previous</small><span>Upgrade React Incrementally</span></a>
+                <a class="fm-pager-next" href="/guides/micro-frontends-with-rollup"><small>Next</small><span>Micro Frontends with Rollup</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#the-legacy-setup">The legacy setup</a>
+            
+            <a href="#the-problem">The problem</a>
+            
+            <a href="#what-changes">What changes</a>
+            
+            <a href="#what-you-get">What you get</a>
+            
+            <a href="#moving-to-a-new-react-major">Moving to a new React major</a>
+            
+            <a href="#limits">Limits</a>
+            
+            <a href="#try-it">Try it</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

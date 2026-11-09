@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Federation Without Webpack</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/guides/module-federation-without-webpack">
+    <meta property="og:title" content="Module Federation Without Webpack">
+    <meta property="og:description" content="FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Module Federation Without Webpack">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/guides/module-federation-without-webpack">
+    <meta name="twitter:title" content="Module Federation Without Webpack">
+    <meta name="twitter:description" content="FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Module Federation Without Webpack">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/guides/module-federation-without-webpack">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/guides/module-federation-without-webpack#webpage",
+      "url": "https://www.fynmesh.fyi/guides/module-federation-without-webpack",
+      "name": "Module Federation Without Webpack",
+      "description": "FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Module Federation Without Webpack",
+      "dateModified": "2026-10-24T20:23:42-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Guides",
+            "item": "https://www.fynmesh.fyi/guides"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Module Federation Without Webpack",
+            "item": "https://www.fynmesh.fyi/guides/module-federation-without-webpack"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides" aria-current="page">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Guides">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Versions and sharing</span>
+                
+                <a href="/guides/run-multiple-react-versions">Multiple React Versions</a>
+                
+                <a href="/guides/share-dependencies-semver">Share Dependencies by Semver</a>
+                
+                <a href="/guides/upgrade-react-incrementally">Upgrade React Incrementally</a>
+                
+                <a href="/guides/legacy-requirejs-on-module-federation">Legacy RequireJS Bundles</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Building</span>
+                
+                <a href="/guides/micro-frontends-with-rollup">Micro Frontends with Rollup</a>
+                
+                <a href="/guides/module-federation-without-webpack" aria-current="page">Module Federation Without Webpack</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/guides">Guides</a><span aria-hidden="true">/</span>Module Federation Without Webpack
+            </nav>
+            <h1>Module Federation Without Webpack</h1>
+            <p class="fm-lead">FynMesh brings Module Federation to Rollup with rollup-plugin-federation and a SystemJS based runtime, so you can share code between apps without webpack.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Oct 25, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/demo/demo-server/content/guides/module-federation-without-webpack.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>FynMesh provides Module Federation for Rollup builds. The <code>rollup-plugin-federation</code> plugin builds the containers, and the <code>federation-js</code> runtime wires them together in the browser. It is based on SystemJS, so you do not need webpack.</p>
+<p>On top of that, the FynMesh kernel loads apps by name and version, boots them in dependency order, and can run several versions of the same app on one page.</p>
+<h2 id="the-pieces">The pieces</h2>
+<p>There are four pieces. Each has one job.</p>
+<ul>
+<li>Build plugin: <code>rollup-plugin-federation</code> generates a container for your build.</li>
+<li>Container entry: the file the plugin emits. It lists what the build exposes and shares.</li>
+<li>Runtime: <code>federation-js</code> loads containers and resolves shared modules in the browser.</li>
+<li>Share scope: a named namespace where containers register what they share.</li>
+</ul>
+<p>The build and the runtime are separate packages. Build output does not need the build tool at runtime.</p>
+<h2 id="the-build-plugin">The build plugin</h2>
+<p>Add the plugin to a Rollup config. <code>filename</code> names the container entry, and it must also be listed in <code>input</code>.</p>
+<pre><code class="language-js">import federation from &quot;rollup-plugin-federation&quot;;
+
+export default {
+  input: [&quot;src/index.js&quot;, &quot;federation-entry.js&quot;],
+  output: { dir: &quot;dist&quot;, format: &quot;esm&quot; },
+  plugins: [
+    federation({
+      name: &quot;plugin_1&quot;,
+      filename: &quot;federation-entry.js&quot;,
+      exposes: {
+        &quot;./bootstrap&quot;: &quot;./src/bootstrap.js&quot;,
+      },
+      shared: {
+        react: { singleton: true, semver: &quot;^19.0.0&quot; },
+      },
+    }),
+  ],
+};
+</code></pre>
+<p>The plugin collects shared modules and their importers. It emits the container code and a <code>federation.json</code> file that records exposes, chunks and share config. The runtime does not need <code>federation.json</code>, because the entry file carries the container.</p>
+<p>Each <code>shared</code> entry takes a semver range and a few flags: <code>singleton</code>, <code>eager</code> and <code>import</code>. A dependency used only through another package still needs a <code>shared</code> entry with its range. Otherwise a mismatch shows up at runtime as a duplicate instance, not as a build error.</p>
+<p>When a build has many small exposes, <code>federation-combine</code> folds the small chunks into fewer files after the build.</p>
+<h2 id="the-runtime">The runtime</h2>
+<p><code>federation-js</code> expects a <code>System</code> global. It must be the SystemJS fork that ships in the same package, not stock SystemJS. Load the loader first, then the runtime.</p>
+<pre><code class="language-html">&lt;script src=&quot;/node_modules/federation-js/dist/system.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/node_modules/federation-js/dist/federation-js.min.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>Importing the runtime installs a global <code>Federation</code> object. You can load a container and ask it for an exposed module.</p>
+<pre><code class="language-js">Federation.import(&quot;__mf_container_plugin_1&quot;)
+  .then((container) =&gt; container.get(&quot;./bootstrap&quot;))
+  .then((getModule) =&gt; console.log(&quot;module&quot;, getModule()));
+</code></pre>
+<p>A shared module is fetched the same way, by the name it was shared under.</p>
+<pre><code class="language-js">Federation.import(&quot;__mf_container_plugin_1&quot;)
+  .then((container) =&gt; container.get(&quot;react&quot;));
+</code></pre>
+<h2 id="output-format">Output format</h2>
+<p>The plugin example above uses ESM output to stay short. FynApps built with <code>create-fynapp</code> emit SystemJS output instead, because <code>federation-js</code> registers modules through the SystemJS loader. The <code>createFynAppRollupConfig</code> factory sets this for you, along with the share scope name <code>fynmesh</code>.</p>
+<h2 id="how-a-container-is-loaded">How a container is loaded</h2>
+<p>A container is a script. When it runs, it registers its name, its version, its exposes and its shared modules with the runtime. Asking for an expose runs the module's code once, on first import.</p>
+<p>Several modules can also ship in one physical file. Each still registers under its own name, so importing it looks the same. The runtime fetches the file once, however many members ask for it.</p>
+<h2 id="how-sharing-works-at-runtime">How sharing works at runtime</h2>
+<p>Each container declares the semver range it accepts for every shared module. The runtime looks at the versions already loaded in the share scope and picks one that satisfies the range. If nothing matches, the container loads its own copy.</p>
+<p>A container that only consumes a shared module can still resolve it, as long as a container that shares it has already loaded. Singletons keep one instance across containers.</p>
+<p><code>Federation.__I()</code> returns a snapshot of what the runtime decided for each share key. It is the main tool for debugging a minified page. The <a href="/docs/federation-inspector">federation inspector</a> reads this kind of information for you.</p>
+<h2 id="what-fynmesh-adds-on-top">What FynMesh adds on top</h2>
+<p>The plugin and runtime are the Module Federation layer. The kernel is the layer above it.</p>
+<ul>
+<li>Load by name and semver. <code>fynMeshKernel.loadFynAppsByName([{ name: &quot;fynapp-x1&quot;, range: &quot;^2.0.0&quot; }])</code> resolves the name through a registry resolver you provide.</li>
+<li>Dependency ordered boot. The kernel reads each app's manifest, builds a graph from <code>requires</code>, <code>import-exposed</code> and <code>shared-providers</code>, and loads providers before their consumers.</li>
+<li>Middleware. An app can use middleware published by another app, such as a shared layout or design tokens.</li>
+<li>Several versions of the same app. The demo ships <code>fynapp-react-lib</code> as both a React 18 and a React 19 app. It also ships <code>fynapp-x1</code> in two versions. The kernel keeps them apart and gives each consumer the one its range asks for.</li>
+<li>Error isolation. A failed app emits an event and does not crash the others.</li>
+</ul>
+<p>Here is a host page that loads two apps by name.</p>
+<pre><code class="language-html">&lt;script src=&quot;/system.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/federation-js/dist/federation-js.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;/kernel/dist/fynmesh-browser-kernel.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+  fynMeshKernel.loadFynAppsByName([
+    { name: &quot;fynapp-1&quot; },
+    { name: &quot;fynapp-4-vue&quot; },
+  ]);
+&lt;/script&gt;
+</code></pre>
+<h2 id="compared-with-webpack">Compared with webpack</h2>
+<p>Webpack ships its own Module Federation plugin and its own runtime, tied to the webpack build. FynMesh keeps the same idea but moves it to Rollup. The runtime is <code>federation-js</code> on a SystemJS style registry, not the webpack runtime. Pick based on the bundler your apps already use.</p>
+<h2 id="try-it">Try it</h2>
+<ul>
+<li>Watch the <a href="/demo">live demo</a> load six frameworks on one page.</li>
+<li>Read the <a href="/docs/rollup-plugin-federation">rollup-plugin-federation docs</a> for all plugin options.</li>
+<li>Read the <a href="/docs/federation-js">federation-js docs</a> for the runtime.</li>
+<li>Read the <a href="/docs/kernel">kernel docs</a> for loading, middleware and lifecycle.</li>
+<li>Follow <a href="/guides/micro-frontends-with-rollup">Build Micro Frontends with Rollup</a> to build your first app.</li>
+<li>See <a href="/guides/share-dependencies-semver">Share Dependencies with Semver</a> for share rules in depth.</li>
+<li>See <a href="/guides/run-multiple-react-versions">Run Multiple React Versions on One Page</a> for the multi-version case.</li>
+</ul>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/guides/micro-frontends-with-rollup"><small>Previous</small><span>Micro Frontends with Rollup</span></a>
+                
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#the-pieces">The pieces</a>
+            
+            <a href="#the-build-plugin">The build plugin</a>
+            
+            <a href="#the-runtime">The runtime</a>
+            
+            <a href="#output-format">Output format</a>
+            
+            <a href="#how-a-container-is-loaded">How a container is loaded</a>
+            
+            <a href="#how-sharing-works-at-runtime">How sharing works at runtime</a>
+            
+            <a href="#what-fynmesh-adds-on-top">What FynMesh adds on top</a>
+            
+            <a href="#compared-with-webpack">Compared with webpack</a>
+            
+            <a href="#try-it">Try it</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

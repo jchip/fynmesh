@@ -1,0 +1,24 @@
+{
+  "name": "fynapp-cwp",
+  "version": "3.2.0",
+  "exposes": {
+    "./amd/react": "./src/amd-gen/m0.ts",
+    "./amd/react-dom": "./src/amd-gen/m1.ts",
+    "./amd/react-dom/client": "./src/amd-gen/m2.ts",
+    "./amd/ui-kit": "./src/amd-gen/m3.ts"
+  },
+  "provide-shared": {
+    "esm-react": {
+      "singleton": false,
+      "semver": "18.3.1"
+    },
+    "esm-react-dom": {
+      "singleton": false,
+      "semver": "18.3.1"
+    },
+    "ui-kit": {
+      "singleton": false,
+      "semver": "1.4.0"
+    }
+  }
+}

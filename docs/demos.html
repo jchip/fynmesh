@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Demos: Live Micro Frontend Examples</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/demos">
+    <meta property="og:title" content="FynMesh Demos: Live Micro Frontend Examples">
+    <meta property="og:description" content="Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh Demos: Live Micro Frontend Examples">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/demos">
+    <meta name="twitter:title" content="FynMesh Demos: Live Micro Frontend Examples">
+    <meta name="twitter:description" content="Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh Demos: Live Micro Frontend Examples">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/demos">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://www.fynmesh.fyi/demos#webpage",
+      "url": "https://www.fynmesh.fyi/demos",
+      "name": "FynMesh Demos: Live Micro Frontend Examples",
+      "description": "Live FynMesh demos: six frameworks on one page, a middleware-driven shell, the FynOps logistics console, the Perf Lab load analysis and legacy RequireJS widgets.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Demos",
+            "item": "https://www.fynmesh.fyi/demos"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos" aria-current="page">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-container fm-index">
+        <div class="fm-index-head">
+            <nav class="fm-crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span>Demos</nav>
+            <h1>Demos</h1>
+            <p class="fm-lead">Each demo is a real page built from independently deployed FynApps. Open the Federation Inspector from its corner badge to see which app supplied each shared module.</p>
+        </div>
+
+        <article class="fm-demo-row">
+            <a href="/demo" aria-label="Open the six frameworks demo"><img class="fm-shot" src="/images/demo-six-frameworks.png" alt="The demo page with React, Vue, Preact, Solid, Svelte and Marko FynApps side by side" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Six frameworks on one page</h2>
+                <p>Thirteen FynApps load into one page. React 18 and React 19 apps run next to Vue, Preact, Solid, Svelte and Marko, and each gets the React copy it was built for.</p>
+                <h3>What to look at</h3>
+                <ul>
+                    <li>The two React majors, each in its own apps</li>
+                    <li>Two releases of fynapp-x1 loaded under one name</li>
+                    <li>Two apps chatting over FynBus</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="/demo">Launch demo</a>
+                    <a href="/guides/run-multiple-react-versions">Guide: multiple React versions</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="/shell" aria-label="Open the shell layout demo"><img class="fm-shot" src="/images/demo-shell.png" alt="The shell demo with a sidebar of FynApps and a main region" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Shell layout</h2>
+                <p>A layout middleware builds the page from FynApps. Pick an app and a region, and the shell places it there while the page runs.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Load a FynApp into Main, then another into the sidebar</li>
+                    <li>Clear all and load them again without a page reload</li>
+                    <li>Watch the status bar count the loaded middleware</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="/shell">Launch demo</a>
+                    <a href="/how-it-works#6-middleware">How middleware works</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="/fynops" aria-label="Open the FynOps demo"><img class="fm-shot" src="/images/demo-fynops.png" alt="The FynOps logistics console" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>FynOps logistics console</h2>
+                <p>A larger app built from ten FynApps. A shipments grid, a live fleet map and analytics each load on their own route, and they share React, AG Grid and ECharts at runtime.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Sign in as any user. It is simulated and needs no password.</li>
+                    <li>Move between routes and watch each FynApp load on its first visit</li>
+                    <li>Open a shipment while the map keeps updating</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="/fynops">Launch demo</a>
+                    <a href="/guides/share-dependencies-semver">Guide: share dependencies by semver</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="/shell?perf=combined" aria-label="Open the Perf Lab"><img class="fm-shot" src="/images/demo-perf-lab.png" alt="The Perf Lab analytics suite inside the shell, with its mode panel" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Perf Lab</h2>
+                <p>An analytics suite of four FynApps that runs inside the shell. A mode switch reloads it raw, with combined chunks, or with combined chunks plus preload hints, and a panel shows what each mode costs.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Switch between raw, combined and hints, and compare the request counts</li>
+                    <li>Reload warm to see the cache at work</li>
+                    <li>Throttle the network in DevTools to make the differences clear</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="/shell?perf=combined">Launch the Perf Lab</a>
+                    <a href="/guides/micro-frontends-with-rollup">Guide: micro frontends with Rollup</a>
+                </div>
+            </div>
+        </article>
+
+        <article class="fm-demo-row">
+            <a href="/legacy-amd" aria-label="Open the legacy RequireJS widgets demo"><img class="fm-shot" src="/images/demo-legacy-amd.png" alt="The demo intro: the legacy setup, the React lock-in problem, the CWP as a FynApp, and a before and after diagram" width="1280" height="800" loading="lazy"></a>
+            <div class="fm-demo-text">
+                <h2>Legacy RequireJS widgets</h2>
+                <p>RequireJS micro frontends build each widget as an AMD bundle. Shared libraries like React and a UI kit are built into a common web package (CWP), and widgets consume it through webpack externals. Many widgets from many teams depend on the same CWP, so updating its versions is near impossible, and the codebase is too large to move to federation in one shot. Here the CWP is a FynApp that serves React and the UI kit from federation to the unchanged bundles. Two sets of the same widgets run side by side, each on the legacy CWP or the federated one. Ordinary FynApps on the same page share that React or bring another major.</p>
+                <h3>What to try</h3>
+                <ul>
+                    <li>Put each set of widgets on the legacy CWP or the federated one, with React 18 or React 19</li>
+                    <li>Load Team C on demand and see which files it fetches</li>
+                    <li>Check the React instances table to see which app uses which copy</li>
+                </ul>
+                <div class="fm-btns">
+                    <a class="fm-btn fm-btn-primary" href="/legacy-amd">Launch demo</a>
+                    <a href="/guides/legacy-requirejs-on-module-federation">Guide: legacy RequireJS bundles</a>
+                </div>
+            </div>
+        </article>
+
+        <section class="fm-index-group">
+            <h2>How the demos are built</h2>
+            <p class="fm-lead">Every FynApp in these demos is a separate Rollup build with its own manifest. The page loads only the kernel, which resolves each app by name and range, boots its dependencies first, and shares one copy of each library that fits.</p>
+            <p><a href="/how-it-works">How FynMesh works</a></p>
+        </section>
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

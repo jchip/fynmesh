@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federation Inspector: Debug Shared Modules</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs/federation-inspector">
+    <meta property="og:title" content="Federation Inspector: Debug Shared Modules">
+    <meta property="og:description" content="A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Federation Inspector: Debug Shared Modules">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs/federation-inspector">
+    <meta name="twitter:title" content="Federation Inspector: Debug Shared Modules">
+    <meta name="twitter:description" content="A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="Federation Inspector: Debug Shared Modules">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs/federation-inspector">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "TechArticle",
+      "@id": "https://www.fynmesh.fyi/docs/federation-inspector#webpage",
+      "url": "https://www.fynmesh.fyi/docs/federation-inspector",
+      "name": "Federation Inspector: Debug Shared Modules",
+      "description": "A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "headline": "Federation Inspector: Debug Shared Modules",
+      "dateModified": "2026-09-06T10:19:09-07:00",
+      "author": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "FynMesh",
+        "url": "https://www.fynmesh.fyi/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Federation Inspector",
+            "item": "https://www.fynmesh.fyi/docs/federation-inspector"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-doc">
+        <nav class="fm-doc-side" aria-label="Docs">
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Start here</span>
+                
+                <a href="/docs/getting-started">Getting Started</a>
+                
+                <a href="/docs/fynapp-guide">FynApp Guide</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Concepts</span>
+                
+                <a href="/docs/fynapp-contract">FynApp Contract</a>
+                
+                <a href="/how-it-works">How it works</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Reference</span>
+                
+                <a href="/docs/kernel">Kernel</a>
+                
+                <a href="/docs/federation-js">federation-js</a>
+                
+                <a href="/docs/rollup-plugin-federation">rollup-plugin-federation</a>
+                
+                <a href="/docs/federation-inspector" aria-current="page">Federation Inspector</a>
+                
+                <a href="/api/">API reference</a>
+                
+            </div>
+            
+            <div class="fm-doc-side-group">
+                <span class="fm-eyebrow">Releases</span>
+                
+                <a href="/docs/changelog">Changelog</a>
+                
+            </div>
+            
+        </nav>
+
+        <article class="fm-doc-main">
+            <nav class="fm-crumbs" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">/</span><a href="/docs">Docs</a><span aria-hidden="true">/</span>Federation Inspector
+            </nav>
+            <h1>Federation Inspector: Debug Shared Modules</h1>
+            <p class="fm-lead">A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.</p>
+            <div class="fm-doc-meta">
+                <span>Updated Sep 6, 2026</span>
+                <a href="https://github.com/jchip/fynmesh/edit/main/dev-tools/federation-inspector/README.md">Edit this page on GitHub</a>
+            </div>
+            <div class="fm-body">
+                <p>A visual module browser for pages running <a href="https://github.com/jchip/rollup-federation/tree/main/systemjs"><code>@fynmesh/systemjs</code></a> and
+<a href="https://github.com/jchip/rollup-federation/tree/main/federation-js"><code>federation-js</code></a>. Drop one script tag next to them, get a
+badge in the corner of the page, and click it for a dense panel showing every
+module the loader knows, every federation container, every share scope, and
+what actually resolved against what.</p>
+<p>The same code is an ES library, so a Chrome DevTools extension can be built on
+it without a rewrite.</p>
+<pre><code class="language-html">&lt;script src=&quot;/federation-inspector.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<h2 id="what-it-answers">What it answers</h2>
+<p>Things the browser's own devtools cannot tell you about a federated page:</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What is loaded, and what stage is each module in?</td>
+<td>Modules</td>
+</tr>
+<tr>
+<td>What depends on this? What does it depend on?</td>
+<td>Modules, Graph</td>
+</tr>
+<tr>
+<td>Which container owns this chunk?</td>
+<td>Modules</td>
+</tr>
+<tr>
+<td>Which versions of a container are live side by side?</td>
+<td>Containers</td>
+</tr>
+<tr>
+<td>Who shares <code>esm-react</code>, at what versions, from where?</td>
+<td>Shares</td>
+</tr>
+<tr>
+<td>Which copy did each app actually get, and does its semver range allow it?</td>
+<td>Shares, Containers</td>
+</tr>
+<tr>
+<td><strong>Are there two copies of a singleton in play?</strong></td>
+<td>Issues</td>
+</tr>
+<tr>
+<td>Which modules arrived inside a combined bundle?</td>
+<td>Modules</td>
+</tr>
+<tr>
+<td>What failed, and what else is stuck behind it?</td>
+<td>Issues</td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage">Usage</h2>
+<h3 id="standalone">Standalone</h3>
+<p>Configuration goes on the script tag:</p>
+<pre><code class="language-html">&lt;script src=&quot;/federation-inspector.js&quot;
+        data-corner=&quot;top-right&quot;
+        data-theme=&quot;dark&quot;
+        data-hotkey=&quot;ctrl+i&quot;
+        data-open=&quot;true&quot;&gt;&lt;/script&gt;
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data-auto</code></td>
+<td><code>true</code></td>
+<td>mount automatically; <code>false</code> to call <code>mount()</code> yourself</td>
+</tr>
+<tr>
+<td><code>data-corner</code></td>
+<td><code>bottom-right</code></td>
+<td><code>bottom-right</code>, <code>bottom-left</code>, <code>top-right</code>, <code>top-left</code></td>
+</tr>
+<tr>
+<td><code>data-theme</code></td>
+<td>remembered, else <code>auto</code></td>
+<td><code>auto</code>, <code>light</code>, <code>dark</code> -- setting it overrides what the panel remembers</td>
+</tr>
+<tr>
+<td><code>data-density</code></td>
+<td>remembered, else <code>normal</code></td>
+<td><code>compact</code>, <code>normal</code>, <code>relaxed</code> text size</td>
+</tr>
+<tr>
+<td><code>data-hotkey</code></td>
+<td><code>ctrl+shift+m</code></td>
+<td>toggle combination, or <code>false</code> for none</td>
+</tr>
+<tr>
+<td><code>data-open</code></td>
+<td><code>false</code></td>
+<td>open the panel immediately</td>
+</tr>
+<tr>
+<td><code>data-launcher</code></td>
+<td><code>true</code></td>
+<td><code>false</code> hides the badge (hotkey/API only)</td>
+</tr>
+<tr>
+<td><code>data-poll</code></td>
+<td><code>500</code></td>
+<td>live-refresh interval in ms, or <code>false</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>data-theme</code> and <code>data-density</code> are the two attributes the panel itself can
+change, and it remembers what you set. Omitting the attribute keeps the
+remembered value; supplying one is an instruction and wins over it.</p>
+<p>The panel's <strong>Settings</strong> menu, in the header at every width, holds the same
+two choices plus the dock mode -- right, bottom, floating, fullscreen -- and
+<em>Copy snapshot</em>. When the panel is too narrow for every tab the tab strip
+scrolls: arrows appear at its ends, and the active tab is always brought into
+view.</p>
+<p>The bundle also installs <code>globalThis.FederationInspector</code>:</p>
+<pre><code class="language-js">FederationInspector.instance.open(&quot;shares&quot;);
+FederationInspector.instance.close();
+const snapshot = FederationInspector.collect();
+</code></pre>
+<h3 id="as-a-library">As a library</h3>
+<pre><code class="language-ts">import { collect, analyse, mount } from &quot;federation-inspector&quot;;
+
+const snapshot = collect();      // plain JSON, no live loader objects
+analyse(snapshot);               // graph, share resolution, diagnostics
+const handle = mount({ open: true, corner: &quot;top-left&quot; });
+</code></pre>
+<p>Importing the library has <strong>no side effects</strong> — nothing is mounted, no hook is
+installed, no global is written.</p>
+<h3 id="keyboard">Keyboard</h3>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl+Shift+M</code></td>
+<td>toggle the panel</td>
+</tr>
+<tr>
+<td><code>Esc</code></td>
+<td>close the settings menu, then clear the filter, then close</td>
+</tr>
+<tr>
+<td><code>[</code> / <code>]</code></td>
+<td>previous / next tab</td>
+</tr>
+<tr>
+<td><code>←</code> / <code>→</code>, <code>Home</code> / <code>End</code></td>
+<td>move between tabs while one has focus</td>
+</tr>
+<tr>
+<td><code>j</code> / <code>k</code>, arrows</td>
+<td>move the row cursor</td>
+</tr>
+<tr>
+<td><code>Enter</code></td>
+<td>expand the selected row</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-graph">The graph</h3>
+<table>
+<thead>
+<tr>
+<th>Gesture</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>drag</td>
+<td>pan the canvas</td>
+</tr>
+<tr>
+<td><code>Ctrl</code>/<code>Cmd</code> + wheel, trackpad pinch</td>
+<td>zoom about the pointer</td>
+</tr>
+<tr>
+<td>wheel</td>
+<td>scroll</td>
+</tr>
+<tr>
+<td>click a node</td>
+<td>focus its neighbourhood (a beat later, see below)</td>
+</tr>
+<tr>
+<td>double-click a node</td>
+<td>open it in Modules</td>
+</tr>
+<tr>
+<td><code>−</code> / <code>%</code> / <code>+</code></td>
+<td>zoom out, reset to 100%, zoom in</td>
+</tr>
+</tbody>
+</table>
+<p>Focusing a node re-lays out the graph around it, which moves the node you just
+clicked -- so the click waits one double-click interval before it acts. That is
+the price of keeping both gestures on the same target: without the pause the
+second click of a double-click landed on empty canvas, because the first click
+had already slid the node out from under the pointer.</p>
+<p>Layout is <a href="https://github.com/kieler/elkjs">ELK</a>'s layered algorithm —
+crossing minimisation and orthogonal edge routing — bundled into the drop-in,
+not fetched. It runs once per <em>shape</em>: the panel re-collects every 500ms, and a
+graph that re-laid-out on each pass would move under you while you read it. A
+module changing stage therefore redraws in place. Until the first layout
+resolves (and if it ever fails) the view falls back to the built-in layered
+placement, which is instant and unrouted.</p>
+<h3 id="filter-grammar">Filter grammar</h3>
+<p>The search box is the single source of filter state, so any view can be
+reproduced from one string:</p>
+<pre><code>esm-react              fuzzy match on id + url
+container:fynapp-1     stage:errored     kind:exposed
+scope:fynmesh          share:esm-react   version:19
+bundle:true            orphan:true       error:true
+deps:&gt;3                dependents:&gt;=1
+id:&lt;full or part&gt;      url:&lt;full or part&gt;
+-stage:executed        any term negates with a leading &quot;-&quot;
+</code></pre>
+<p><code>id:</code> and <code>url:</code> match alike — a case-insensitive substring — so half of an id
+finds the module you half-remember. Deep links write the whole id, which no
+other module's id contains, so they still land on the one module.</p>
+<h2 id="how-it-reads-the-page">How it reads the page</h2>
+<p>Read-only, and non-invasive by default. It installs no loader hook, mutates no
+record, and calls no federation method that could load or resolve anything.</p>
+<p>Its sources are:</p>
+<ul>
+<li><strong><code>@fynmesh/systemjs</code>'s Record Exposure API</strong> — <code>System.records</code>,
+<code>System.aliases</code>, <code>System.registrations</code>, <code>System.stageOf</code>. Documented,
+stable, and the reason this tool needs no cooperation from the page.</li>
+<li><strong><code>Federation.$SS</code></strong> — the share store: scope → key → version → providers.</li>
+<li><strong>Container objects</strong>, reached through the loader rather than through
+federation's own registry (see below), for <code>$E</code> (exposes), <code>$SC</code> (share
+config with the requested semver ranges), and <code>__FYNAPP_MANIFEST__</code> where a
+FynMesh build supplies one.</li>
+</ul>
+<h3 id="working-with-a-minified-federation-build">Working with a minified federation build</h3>
+<p><code>federation-js</code> ships terser-minified with property mangling, and the mangling
+is not uniform. Measured against the shipped <code>federation-js.min.js</code>: <code>$SS</code>,
+<code>$SC</code>, <code>$E</code> and the <code>_mf*</code> methods survive; <code>$C</code> — the runtime's container
+registry — and <code>_mfGetContainer</code> do not.</p>
+<p>So containers are enumerated from the <strong>loader</strong>, not the runtime. federation
+files every container under a deterministic id (<code>__mf_container_&lt;name&gt;</code>,
+qualified by version) and <code>System.registrations</code> holds it with its entry url;
+the record for that url exports the live <code>Container</code>, because every generated
+container entry does <code>exports({ container, get, init })</code>.</p>
+<p>Anything still unreadable is reported as a capability note in a banner at the
+top of the panel, rather than silently rendering an empty table. With no
+federation on the page at all, it is a perfectly good SystemJS module browser.</p>
+<h3 id="live-refresh">Live refresh</h3>
+<p>While open, the panel re-collects every 500ms behind a cheap fingerprint check
+(record count, failed record identities, registration count, share-store shape),
+so a full collect only runs when the fingerprint changes. A module rejection
+refreshes diagnostics even when no new module has arrived. Ordinary stage
+advancement still waits for the next fingerprint change or a manual refresh.</p>
+<h2 id="architecture">Architecture</h2>
+<p>The UI renders a plain, structured-clone-safe <code>Snapshot</code> and never touches a
+live loader object. That one constraint is what makes a devtools extension a
+packaging exercise rather than a rewrite — in an extension the panel runs in a
+different realm and only JSON can cross.</p>
+<pre><code>core/        collectors + Snapshot model      no DOM, no framework
+analysis/    graph, share resolution, issues  pure functions over a Snapshot
+adapters/    LiveAdapter | RemoteAdapter      same interface, either realm
+ui/          Preact + signals in a Shadow DOM renders a Snapshot, nothing else
+</code></pre>
+<p>Everything it needs is compiled into the drop-in: Preact, signals and the ELK
+layout engine. Nothing is imported through the page's SystemJS or federation,
+nothing is fetched at runtime, and no module is registered with the loader —
+an observer that participated in what it observes would be reporting on
+itself. (This is why ELK's <em>bundled</em> build is used rather than its worker
+build, which fetches <code>elk-worker.js</code> on first layout.)</p>
+<p><code>adapters/remote.ts</code> ships both ends of a <code>postMessage</code> bridge:
+<code>serveRemote(transport)</code> in a content script, <code>new RemoteAdapter(transport)</code> in
+a devtools panel, and the existing UI on top of it unchanged.</p>
+<h2 id="development">Development</h2>
+<pre><code class="language-sh">fyn            # install
+fyn run build  # tsc + rollup + terser -&gt; dist/
+fyn run test   # vitest
+</code></pre>
+<p>Outputs:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Format</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dist/federation-inspector.js</code></td>
+<td>IIFE, Preact bundled in</td>
+<td>the drop-in</td>
+</tr>
+<tr>
+<td><code>dist/federation-inspector.min.js</code></td>
+<td>IIFE, minified</td>
+<td>production drop-in</td>
+</tr>
+<tr>
+<td><code>dist/index.js</code></td>
+<td>ESM, Preact external</td>
+<td>library / extension</td>
+</tr>
+<tr>
+<td><code>dist/*.d.ts</code></td>
+<td>—</td>
+<td>types</td>
+</tr>
+</tbody>
+</table>
+<p>Design notes: <a href="https://github.com/jchip/fynmesh/blob/main/notes/federation-inspector-design.md"><code>../../notes/federation-inspector-design.md</code></a>.</p>
+
+            </div>
+            
+            <nav class="fm-pager" aria-label="More pages">
+                <a href="/docs/rollup-plugin-federation"><small>Previous</small><span>rollup-plugin-federation</span></a>
+                <a class="fm-pager-next" href="/docs/changelog"><small>Next</small><span>Changelog</span></a>
+            </nav>
+            
+        </article>
+
+        
+        <nav class="fm-doc-toc" aria-label="On this page">
+            <span class="fm-eyebrow">On this page</span>
+            
+            <a href="#what-it-answers">What it answers</a>
+            
+            <a href="#usage">Usage</a>
+            
+            <a href="#how-it-reads-the-page">How it reads the page</a>
+            
+            <a href="#architecture">Architecture</a>
+            
+            <a href="#development">Development</a>
+            
+        </nav>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>

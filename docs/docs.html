@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FynMesh Docs: Kernel, Federation and Tooling</title>
+    
+    
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    
+    
+    
+    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="FynMesh docs: getting started, the FynApp contract, reference for the kernel, federation-js, the Rollup plugin and the inspector, and the release notes.">
+    <meta name="author" content="FynMesh">
+    <meta name="theme-color" content="#3b82f6">
+    
+    
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.fynmesh.fyi/docs">
+    <meta property="og:title" content="FynMesh Docs: Kernel, Federation and Tooling">
+    <meta property="og:description" content="FynMesh docs: getting started, the FynApp contract, reference for the kernel, federation-js, the Rollup plugin and the inspector, and the release notes.">
+    <meta property="og:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="FynMesh Docs: Kernel, Federation and Tooling">
+    <meta property="og:site_name" content="FynMesh">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://www.fynmesh.fyi/docs">
+    <meta name="twitter:title" content="FynMesh Docs: Kernel, Federation and Tooling">
+    <meta name="twitter:description" content="FynMesh docs: getting started, the FynApp contract, reference for the kernel, federation-js, the Rollup plugin and the inspector, and the release notes.">
+    <meta name="twitter:image" content="https://www.fynmesh.fyi/og-image.png">
+    <meta name="twitter:image:alt" content="FynMesh Docs: Kernel, Federation and Tooling">
+
+    <!-- Canonical URL -->
+    
+    
+    <link rel="canonical" href="https://www.fynmesh.fyi/docs">
+    
+    
+
+    
+    
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://www.fynmesh.fyi/#website",
+      "name": "FynMesh",
+      "url": "https://www.fynmesh.fyi/",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "inLanguage": "en"
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "SoftwareSourceCode"
+      ],
+      "@id": "https://www.fynmesh.fyi/#software",
+      "name": "FynMesh",
+      "description": "FynMesh is an open source micro frontend framework built on Module Federation and Rollup.",
+      "url": "https://www.fynmesh.fyi/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "softwareVersion": "1.1.5",
+      "programmingLanguage": "TypeScript",
+      "codeRepository": "https://github.com/jchip/fynmesh",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "sameAs": [
+        "https://github.com/jchip/fynmesh",
+        "https://www.npmjs.com/package/@fynmesh/kernel"
+      ],
+      "image": "https://www.fynmesh.fyi/og-image.png",
+      "keywords": "micro frontend, microfrontend, module federation, rollup, multiple versions, shared dependencies, semver, react, vue, preact, solid, svelte, marko, requirejs, amd, webpack externals, legacy micro frontends"
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://www.fynmesh.fyi/docs#webpage",
+      "url": "https://www.fynmesh.fyi/docs",
+      "name": "FynMesh Docs: Kernel, Federation and Tooling",
+      "description": "FynMesh docs: getting started, the FynApp contract, reference for the kernel, federation-js, the Rollup plugin and the inspector, and the release notes.",
+      "isPartOf": {
+        "@id": "https://www.fynmesh.fyi/#website"
+      },
+      "about": {
+        "@id": "https://www.fynmesh.fyi/#software"
+      },
+      "inLanguage": "en",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.fynmesh.fyi/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Docs",
+            "item": "https://www.fynmesh.fyi/docs"
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    
+    
+
+    
+    
+    <link rel="stylesheet" href="/site.css">
+    
+    
+</head>
+<body class="fm-site">
+    
+
+<header class="fm-header">
+    <nav aria-label="Site">
+        <a class="fm-brand" href="/">FynMesh</a>
+        <div class="fm-nav-links">
+            
+            <a href="/why-fynmesh">Why FynMesh</a>
+            
+            <a href="/how-it-works">How it works</a>
+            
+            <a href="/features">Features</a>
+            
+            <a href="/docs" aria-current="page">Docs</a>
+            
+            <a href="/guides">Guides</a>
+            
+            <a href="/demos">Demos</a>
+            
+            <a href="/faq">FAQ</a>
+            
+        </div>
+    </nav>
+</header>
+
+    
+<a class="fm-gh" href="https://github.com/jchip/fynmesh" target="_blank" rel="noopener noreferrer" aria-label="FynMesh on GitHub" title="View source on GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+</a>
+
+    
+<main>
+    <div class="fm-container fm-index">
+        <div class="fm-index-head">
+            <nav class="fm-crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span>Docs</nav>
+            <h1>Docs</h1>
+            <p class="fm-lead">Start with Getting Started to build your first FynApp. Read the FynApp contract next, and keep the reference open while you work.</p>
+        </div>
+        
+        <section class="fm-index-group">
+            <h2>Start here</h2>
+            <div class="fm-grid">
+                
+                <a class="fm-card" href="/docs/getting-started">
+                    <span class="fm-card-title">Getting Started</span>
+                    <p>Scaffold a FynApp with create-fynapp, run it next to other apps, and ship it. The quickest path from an empty folder to a working micro frontend.</p>
+                </a>
+                
+                <a class="fm-card" href="/docs/fynapp-guide">
+                    <span class="fm-card-title">FynApp Guide</span>
+                    <p>A step by step guide to create a new FynApp or change an existing one. It is written for developers and for coding agents that follow the FynApp contract.</p>
+                </a>
+                
+            </div>
+        </section>
+        
+        <section class="fm-index-group">
+            <h2>Concepts</h2>
+            <div class="fm-grid">
+                
+                <a class="fm-card" href="/docs/fynapp-contract">
+                    <span class="fm-card-title">FynApp Contract</span>
+                    <p>The rules every FynApp follows: exports, lifecycle, shared dependencies and middleware. Read it before you write an app or ask an agent to write one.</p>
+                </a>
+                
+                <a class="fm-card" href="/how-it-works">
+                    <span class="fm-card-title">How it works</span>
+                    <p>From build to boot: manifests, loading by range, shared modules and boot order.</p>
+                </a>
+                
+            </div>
+        </section>
+        
+        <section class="fm-index-group">
+            <h2>Reference</h2>
+            <div class="fm-grid">
+                
+                <a class="fm-card" href="/docs/kernel">
+                    <span class="fm-card-title">Kernel</span>
+                    <p>How the FynMesh kernel loads FynApps, runs their lifecycle, wires middleware and connects apps with FynBus. API reference with the core concepts.</p>
+                </a>
+                
+                <a class="fm-card" href="/docs/federation-js">
+                    <span class="fm-card-title">federation-js</span>
+                    <p>federation-js is the small runtime that loads federated modules in the browser. It resolves shared dependencies by semver range, so versions can coexist.</p>
+                </a>
+                
+                <a class="fm-card" href="/docs/rollup-plugin-federation">
+                    <span class="fm-card-title">rollup-plugin-federation</span>
+                    <p>Configure the Rollup plugin that builds FynApps: what to expose, what to share, and how version ranges decide which copy of a library each app gets.</p>
+                </a>
+                
+                <a class="fm-card" href="/docs/federation-inspector">
+                    <span class="fm-card-title">Federation Inspector</span>
+                    <p>A browser tool that shows which shared modules each app loaded and which version won. Use it to debug dependency sharing on a live page.</p>
+                </a>
+                
+                <a class="fm-card" href="/api/">
+                    <span class="fm-card-title">API reference</span>
+                    <p>Every exported type and function of the kernel, federation-js and the Rollup plugin.</p>
+                </a>
+                
+            </div>
+        </section>
+        
+        <section class="fm-index-group">
+            <h2>Releases</h2>
+            <div class="fm-grid">
+                
+                <a class="fm-card" href="/docs/changelog">
+                    <span class="fm-card-title">Changelog</span>
+                    <p>Release notes for FynMesh packages, grouped by date. Each entry lists the published package versions and the changes behind them.</p>
+                </a>
+                
+            </div>
+        </section>
+        
+    </div>
+</main>
+
+    
+
+<footer class="fm-footer">
+    <div class="fm-footer-inner">
+        <div class="fm-footer-cols">
+            <div class="fm-footer-about">
+                <a class="fm-brand" href="/">FynMesh</a>
+                <p>FynMesh is an open source micro frontend framework built on Module Federation and Rollup.</p>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Learn</span>
+                <a href="/why-fynmesh">Why FynMesh</a>
+                <a href="/how-it-works">How it works</a>
+                <a href="/features">Features</a>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Build</span>
+                <a href="/docs">Docs</a>
+                <a href="/api/">API reference</a>
+                <a href="/guides">Guides</a>
+                <a href="/docs/changelog">Changelog</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Demos</span>
+                <a href="/demos">All demos</a>
+                <a href="/demo">Six frameworks</a>
+                <a href="/shell">Shell layout</a>
+                <a href="/fynops">FynOps console</a>
+            </div>
+            <div class="fm-footer-col">
+                <span class="fm-footer-label">Project</span>
+                <a href="https://github.com/jchip/fynmesh">GitHub</a>
+                <a href="https://www.npmjs.com/package/@fynmesh/kernel">npm</a>
+                <a href="https://github.com/jchip/fynmesh/blob/main/LICENSE">Apache-2.0 license</a>
+            </div>
+        </div>
+        <div class="fm-footer-base">www.fynmesh.fyi</div>
+    </div>
+</footer>
+
+    
+</body>
+</html>
