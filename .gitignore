@@ -22,3 +22,4 @@ docs-temp
 
 # safesh writes shell state here
 .local/
+.playwright-cli/

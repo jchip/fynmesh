@@ -61,7 +61,10 @@
             } catch (e) {
                 return;
             }
-            var route = location.hash.replace(/^#/, "").split("?")[0] || "{{ defaultRoute }}";
+            // Routes stay in hash form ("#/map") here: crawlers read a quoted
+            // route path without the hash as a link and report it 404.
+            var route = location.hash.split("?")[0];
+            if (route.length < 2) route = "#{{ defaultRoute }}";
             ({{ routeHints | dump | safe }}[route] || []).forEach(function (hint) {
                 var link = document.createElement("link");
                 link.rel = "preload";

@@ -181,9 +181,12 @@
       </ol>
 
       <div class="bar">
+        {# nofollow: the switches are query-string variants of this page, canonical
+           to it. Without it Google crawled every combination (Search Console
+           "Alternate page with proper canonical tag", Nov 2026). #}
         <nav class="seg" id="cwp-switch">
-          <a data-cwp="cwp3">CWP 3: React 18</a>
-          <a data-cwp="cwp4">CWP 4: React 19</a>
+          <a data-cwp="cwp3" rel="nofollow">CWP 3: React 18</a>
+          <a data-cwp="cwp4" rel="nofollow">CWP 4: React 19</a>
         </nav>
         <span class="source">The federated CWP release. A page runs one, and every federated set uses it.</span>
       </div>
@@ -194,8 +197,8 @@
           <h2>Set {{set}}: unchanged webpack AMD bundles</h2>
           <div class="bar">
             <nav class="seg" id="set{{set}}-switch">
-              <a data-source="legacy">Legacy CWP</a>
-              <a data-source="federated">Federated CWP</a>
+              <a data-source="legacy" rel="nofollow">Legacy CWP</a>
+              <a data-source="federated" rel="nofollow">Federated CWP</a>
             </nav>
           </div>
           <p class="source" id="set{{set}}-text"></p>

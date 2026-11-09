@@ -384,7 +384,7 @@ describe("collectFynOps route hints", () => {
     };
 
     const routeHrefs = (route: string) =>
-        collectFynOps(repoRoot, "/").routeHints[route].map((hint) => hint.href);
+        collectFynOps(repoRoot, "/").routeHints[`#${route}`].map((hint) => hint.href);
 
     afterEach(() => {
         repoRoot && rmSync(repoRoot, { recursive: true, force: true });

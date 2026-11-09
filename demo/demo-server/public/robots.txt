@@ -10,3 +10,13 @@ Sitemap: https://www.fynmesh.fyi/sitemap.xml
 # Disallow development/internal paths
 Disallow: /node_modules/
 Disallow: /*.map$
+
+# FynApp base urls appear as strings in page scripts (loadFynApp calls, bundle
+# maps, the legacy-amd CWP table). Crawlers read them as links and fetched the
+# bare directories, which 404 (Search Console "Not found", Nov 2026). Only the
+# directory urls are blocked: the files inside stay crawlable, so rendering a
+# page is unaffected.
+Disallow: /*/dist$
+Disallow: /*/dist/$
+Disallow: /fynapp-*/$
+Disallow: /legacy-components/$

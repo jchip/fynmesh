@@ -475,17 +475,22 @@ function collectFynOps(
     const hints = startup.flatMap(({ dir, apps }) => collectShellPreloadModules(dir, pathPrefix, warn, apps));
     const hinted = new Set(hints.map((hint) => hint.href));
 
+    // Keyed by the hash form, "#/shipments", not the route path. The map is
+    // dumped into fynops.html, and Googlebot read path-like keys such as "/map"
+    // as links, crawled them and reported them 404 (Search Console, Nov 2026).
+    // A fragment resolves to the page itself.
     const routeHints: Record<string, ShellPreloadHint[]> = {};
     // Every route app's map is declared, since any of them can load later.
     const bundleMaps = startup.flatMap(({ dir, apps }) => collectShellBundleMaps(dir, pathPrefix, warn, apps));
     for (const [route, list] of Object.entries(FYNOPS_ROUTE_STARTUP)) {
         const seen = new Set(hinted);
-        routeHints[route] = [];
+        const key = `#${route}`;
+        routeHints[key] = [];
         for (const { dir, apps } of rooted(list)) {
             for (const hint of collectShellPreloadModules(dir, pathPrefix, warn, apps)) {
                 if (seen.has(hint.href)) continue;
                 seen.add(hint.href);
-                routeHints[route].push({ href: hint.href, priority: "low" });
+                routeHints[key].push({ href: hint.href, priority: "low" });
             }
             for (const map of collectShellBundleMaps(dir, pathPrefix, warn, apps)) {
                 if (!bundleMaps.some((m) => m.base === map.base)) bundleMaps.push(map);
